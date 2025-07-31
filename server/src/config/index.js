@@ -1,0 +1,45 @@
+require('dotenv').config()
+
+const config = {
+  // 服务器配置
+  server: {
+    port: process.env.PORT || 3001,
+    env: process.env.NODE_ENV || 'development'
+  },
+  
+  // 数据库配置
+  database: {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'panorama_map',
+    connectionLimit: 10,
+    acquireTimeout: 60000,
+    timeout: 60000
+  },
+  
+  // 文件上传配置
+  upload: {
+    dir: process.env.UPLOAD_DIR || 'uploads',
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024, // 10MB
+    allowedTypes: process.env.ALLOWED_FILE_TYPES?.split(',') || [
+      'image/jpeg',
+      'image/png',
+      'image/jpg'
+    ]
+  },
+  
+  // 安全配置
+  security: {
+    jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000'
+  },
+  
+  // 日志配置
+  logging: {
+    level: process.env.LOG_LEVEL || 'info'
+  }
+}
+
+module.exports = config
