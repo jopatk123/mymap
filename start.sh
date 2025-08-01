@@ -64,8 +64,8 @@ check_dependencies() {
     
     # 检查项目依赖
     if [[ ! -d "server/node_modules" ]]; then
-        log_warning "服务器依赖未安装，正在安装..."
-        cd server && npm install && cd ..
+        log_warning "服务器依赖未安装，正在安装和更新..."
+        cd server && npm install && npm update && cd ..
         if [[ $? -ne 0 ]]; then
             log_error "服务器依赖安装失败"
             return 1
@@ -74,8 +74,8 @@ check_dependencies() {
     fi
     
     if [[ ! -d "client/node_modules" ]]; then
-        log_warning "客户端依赖未安装，正在安装..."
-        cd client && npm install && cd ..
+        log_warning "客户端依赖未安装，正在安装和更新..."
+        cd client && npm install && npm update && cd ..
         if [[ $? -ne 0 ]]; then
             log_error "客户端依赖安装失败"
             return 1

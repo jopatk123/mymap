@@ -157,6 +157,7 @@
     <PanoramaModal
       v-model="showPanoramaModal"
       :panorama="selectedPanorama"
+      @panorama-deleted="handlePanoramaDeleted"
     />
     
     <!-- 上传对话框 -->
@@ -326,6 +327,34 @@ const togglePanoramaList = () => {
 const handleUploadSuccess = () => {
   refreshData()
   ElMessage.success('上传成功')
+}
+
+// 处理全景图删除
+const handlePanoramaDeleted = async (deletedId) => {
+  try {
+    // 从store中移除已删除的全景图
+    await panoramaStore.deletePanorama(deletedId)
+    
+    // 更新地图上的标记
+    if (mapRef.value) {
+      mapRef.value.removePanoramaMarker(deletedId)
+    }
+    
+    // 如果当前选中的就是这个全景图，清空选择
+    if (currentPanorama.value?.id === deletedId) {
+      panoramaStore.setCurrentPanorama(null)
+    }
+    
+    // 如果侧边栏中选中的也是这个全景图，清空选择
+    if (selectedPanorama.value?.id === deletedId) {
+      selectedPanorama.value = null
+    }
+    
+    ElMessage.success('全景图已从地图中移除')
+  } catch (error) {
+    console.error('删除全景图后更新失败:', error)
+    ElMessage.error('更新失败，请刷新页面')
+  }
 }
 
 // 图片加载错误处理

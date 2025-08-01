@@ -33,6 +33,14 @@ const routes = [
     ]
   },
   {
+    path: '/panorama/:id',
+    name: 'PanoramaViewer',
+    component: () => import('@/views/PanoramaViewer.vue'),
+    meta: {
+      title: '全景图查看'
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),

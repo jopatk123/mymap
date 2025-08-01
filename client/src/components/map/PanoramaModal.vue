@@ -42,6 +42,10 @@
           <el-icon><Link /></el-icon>
           新窗口打开
         </el-button>
+        <el-button @click="deletePanorama" type="danger">
+          <el-icon><Delete /></el-icon>
+          删除
+        </el-button>
       </div>
     </div>
     
@@ -86,9 +90,10 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { View, CopyDocument, Link, Refresh, FullScreen, RefreshLeft } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { View, CopyDocument, Link, Refresh, FullScreen, RefreshLeft, Delete } from '@element-plus/icons-vue'
 import { usePanorama } from '@/composables/usePanorama.js'
+import { deletePanorama as deletePanoramaAPI } from '@/api/panorama.js'
 
 const props = defineProps({
   modelValue: {
@@ -101,7 +106,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'panorama-deleted'])
 
 const visible = computed({
   get: () => props.modelValue,
@@ -196,12 +201,56 @@ const copyCoordinate = async () => {
 
 // 在新窗口打开
 const openInNewTab = () => {
-  if (!props.panorama?.imageUrl) {
-    ElMessage.error('全景图地址不存在')
+  if (!props.panorama?.id) {
+    ElMessage.error('全景图ID不存在')
     return
   }
   
-  window.open(props.panorama.imageUrl, '_blank')
+  window.open(`/panorama/${props.panorama.id}`, '_blank')
+}
+
+// 删除全景图
+const deletePanorama = async () => {
+  if (!props.panorama?.id) {
+    ElMessage.error('全景图ID不存在')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这个全景图吗？此操作将永久删除该点位及其所有信息，且无法恢复。',
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true,
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+
+    // 用户确认删除
+    await callDeletePanoramaAPI(props.panorama.id)
+    
+    ElMessage.success('全景图删除成功')
+    
+    // 关闭模态框并通知父组件
+    visible.value = false
+    emit('panorama-deleted', props.panorama.id)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除全景图失败:', error)
+      ElMessage.error('删除失败，请稍后重试')
+    }
+  }
+}
+
+// 调用API删除全景图
+const callDeletePanoramaAPI = async (id) => {
+  const response = await deletePanoramaAPI(id)
+  if (response.code !== 200) {
+    throw new Error(response.message || '删除失败')
+  }
 }
 
 // 格式化坐标

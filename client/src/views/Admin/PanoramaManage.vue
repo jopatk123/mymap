@@ -133,6 +133,7 @@
     <PanoramaModal
       v-model="showViewDialog"
       :panorama="currentPanorama"
+      @panorama-deleted="handlePanoramaDeleted"
     />
   </div>
 </template>
@@ -277,6 +278,18 @@ const handleUploadSuccess = async () => {
 // 编辑成功
 const handleEditSuccess = async () => {
   await loadData()
+}
+
+// 处理全景图删除
+const handlePanoramaDeleted = async (deletedId) => {
+  try {
+    await loadData()
+    showViewDialog.value = false
+    ElMessage.success('全景图已从列表中移除')
+  } catch (error) {
+    console.error('删除全景图后更新失败:', error)
+    ElMessage.error('更新失败，请刷新页面')
+  }
 }
 
 // 图片加载错误

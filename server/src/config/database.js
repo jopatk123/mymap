@@ -9,12 +9,9 @@ const pool = mysql.createPool({
   password: config.database.password,
   database: config.database.database,
   connectionLimit: config.database.connectionLimit,
+  connectTimeout: config.database.connectTimeout || 10000, // 10秒连接超时
   acquireTimeout: config.database.acquireTimeout,
-  timeout: config.database.timeout,
-  reconnect: true,
-  charset: 'utf8mb4',
-  // 强制设置字符编码
-  initSql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+  charset: 'utf8mb4'
 })
 
 // 测试数据库连接
