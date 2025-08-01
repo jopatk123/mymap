@@ -70,7 +70,8 @@
             <el-icon class="upload-icon"><UploadFilled /></el-icon>
             <div class="upload-text">
               <p>将全景图拖拽到此处，或<em>点击上传</em></p>
-              <p class="upload-tip">支持 JPG、PNG 格式，建议尺寸 4096x2048</p>
+              <p class="upload-tip">支持 JPG、PNG 格式，宽高比约2:1的全景图</p>
+              <p class="upload-tip">自动提取文件名和GPS坐标，大于8000x4000会自动压缩</p>
             </div>
           </div>
         </el-upload>
@@ -80,6 +81,14 @@
       <el-form-item v-if="previewUrl" label="预览">
         <div class="preview-container">
           <img :src="previewUrl" alt="预览" class="preview-image" />
+        </div>
+      </el-form-item>
+      
+      <!-- 处理状态 -->
+      <el-form-item v-if="processing" label="处理状态">
+        <div class="processing-status">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>{{ processingText }}</span>
         </div>
       </el-form-item>
       
@@ -99,7 +108,7 @@
           @click="handleSubmit"
           type="primary"
           :loading="uploading"
-          :disabled="!form.file"
+          :disabled="!form.file || processing || uploading"
         >
           {{ uploading ? '上传中...' : '确定上传' }}
         </el-button>
@@ -111,9 +120,17 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location, UploadFilled } from '@element-plus/icons-vue'
+import { Location, UploadFilled, Loading } from '@element-plus/icons-vue'
 import { uploadPanoramaImage } from '@/api/panorama.js'
 import { usePanoramaStore } from '@/store/panorama.js'
+import { 
+  isPanoramaImage, 
+  extractTitleFromFilename, 
+  extractGPSFromImage, 
+  compressImage,
+  getImageDimensions,
+  isImageFile 
+} from '@/utils/image-utils.js'
 
 const props = defineProps({
   modelValue: {
@@ -189,18 +206,71 @@ const uploading = ref(false)
 const uploadProgress = ref(0)
 const locating = ref(false)
 const previewUrl = ref('')
+const processing = ref(false)
+const processingText = ref('')
 
 // 文件变化处理
-const handleFileChange = (file) => {
-  form.file = file.raw
+const handleFileChange = async (file) => {
+  const rawFile = file.raw
   
-  // 生成预览
-  if (file.raw) {
+  processing.value = true
+  processingText.value = '正在检查文件...'
+  
+  try {
+    // 检查是否为图片文件
+    if (!isImageFile(rawFile)) {
+      ElMessage.error('请选择图片文件！')
+      uploadRef.value?.clearFiles()
+      return
+    }
+    
+    processingText.value = '正在验证全景图格式...'
+    
+    // 检查是否为全景图
+    const isPanorama = await isPanoramaImage(rawFile)
+    if (!isPanorama) {
+      ElMessage.error('请选择全景图！全景图的宽高比应该约为2:1，且尺寸不小于1000x500')
+      uploadRef.value?.clearFiles()
+      return
+    }
+    
+    form.file = rawFile
+    
+    // 自动设置标题为文件名（不含扩展名）
+    const title = extractTitleFromFilename(file.name)
+    form.title = title
+    
+    processingText.value = '正在提取GPS坐标...'
+    
+    // 尝试从图片中提取GPS坐标
+    try {
+      const gpsData = await extractGPSFromImage(rawFile)
+      if (gpsData) {
+        form.lat = gpsData.lat.toString()
+        form.lng = gpsData.lng.toString()
+        ElMessage.success('已自动提取图片中的GPS坐标')
+      }
+    } catch (error) {
+      console.warn('提取GPS坐标失败:', error)
+    }
+    
+    processingText.value = '正在生成预览...'
+    
+    // 生成预览
     const reader = new FileReader()
     reader.onload = (e) => {
       previewUrl.value = e.target.result
+      processing.value = false
+      processingText.value = ''
     }
-    reader.readAsDataURL(file.raw)
+    reader.readAsDataURL(rawFile)
+    
+  } catch (error) {
+    console.error('处理文件时出错:', error)
+    ElMessage.error('处理文件时出错，请重试')
+    processing.value = false
+    processingText.value = ''
+    uploadRef.value?.clearFiles()
   }
 }
 
@@ -213,14 +283,14 @@ const handleFileRemove = () => {
 // 上传前检查
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/')
-  const isLt10M = file.size / 1024 / 1024 < 10
+  const isLt50M = file.size / 1024 / 1024 < 50
 
   if (!isImage) {
     ElMessage.error('只能上传图片文件!')
     return false
   }
-  if (!isLt10M) {
-    ElMessage.error('图片大小不能超过 10MB!')
+  if (!isLt50M) {
+    ElMessage.error('图片大小不能超过 50MB!')
     return false
   }
   return true
@@ -266,9 +336,19 @@ const handleSubmit = async () => {
     uploading.value = true
     uploadProgress.value = 0
     
+    // 检查图片尺寸并压缩
+    let fileToUpload = form.file
+    const dimensions = await getImageDimensions(form.file)
+    
+    if (dimensions.width > 8000 || dimensions.height > 4000) {
+      ElMessage.info('图片尺寸较大，正在压缩...')
+      fileToUpload = await compressImage(form.file, 8000, 4000, 0.9)
+      ElMessage.success(`图片已压缩：${dimensions.width}x${dimensions.height} → 8000x4000`)
+    }
+    
     // 准备上传数据
     const formData = new FormData()
-    formData.append('file', form.file)
+    formData.append('file', fileToUpload)
     formData.append('title', form.title)
     formData.append('description', form.description)
     formData.append('lat', form.lat)
@@ -322,6 +402,8 @@ const resetForm = () => {
   
   previewUrl.value = ''
   uploadProgress.value = 0
+  processing.value = false
+  processingText.value = ''
   
   if (uploadRef.value) {
     uploadRef.value.clearFiles()
@@ -402,6 +484,17 @@ const resetForm = () => {
     width: 100%;
     height: auto;
     display: block;
+  }
+}
+
+.processing-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #409eff;
+  
+  .el-icon {
+    font-size: 16px;
   }
 }
 

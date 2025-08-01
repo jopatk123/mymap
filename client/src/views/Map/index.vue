@@ -11,16 +11,10 @@
     />
     
     <!-- 侧边栏 -->
-    <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+    <div class="sidebar" :class="{ collapsed: sidebarCollapsed, hidden: !panoramaListVisible }">
       <div class="sidebar-header">
         <h3>全景图列表</h3>
         <div class="header-actions">
-          <el-button 
-            @click="togglePanoramaList" 
-            type="text" 
-            :icon="panoramaListVisible ? Hide : View"
-            :title="panoramaListVisible ? '隐藏列表' : '显示列表'"
-          />
           <el-button 
             @click="toggleSidebar" 
             type="text" 
@@ -59,25 +53,8 @@
           </el-select>
         </div>
         
-        <!-- 全景图列表隐藏提示 -->
-        <div class="list-hidden-hint" v-show="!panoramaListVisible">
-          <div class="hint-content">
-            <el-icon class="hint-icon"><Hide /></el-icon>
-            <p>全景图列表已隐藏</p>
-            <el-button 
-              @click="togglePanoramaList" 
-              type="primary" 
-              size="small"
-              plain
-            >
-              <el-icon><View /></el-icon>
-              显示列表
-            </el-button>
-          </div>
-        </div>
-        
         <!-- 全景图列表 -->
-        <div class="panorama-list" v-show="panoramaListVisible">
+        <div class="panorama-list">
           <div
             v-for="panorama in panoramas"
             :key="panorama.id"
@@ -147,6 +124,14 @@
     <!-- 工具栏 -->
     <div class="toolbar">
       <el-button-group>
+        <el-button 
+          @click="togglePanoramaList" 
+          type="primary"
+          :icon="panoramaListVisible ? Hide : View"
+          :title="panoramaListVisible ? '隐藏全景图列表' : '显示全景图列表'"
+        >
+          {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
+        </el-button>
         <el-button @click="refreshData" :loading="loading" type="primary">
           <el-icon><Refresh /></el-icon>
           刷新
@@ -384,6 +369,10 @@ const formatDate = (dateString) => {
   
   &.collapsed {
     transform: translateX(-310px);
+  }
+  
+  &.hidden {
+    transform: translateX(-100%);
   }
   
   .sidebar-header {
