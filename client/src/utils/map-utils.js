@@ -12,7 +12,7 @@ export function createAMapTileLayer(type = 'normal') {
     satellite: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
     roadnet: 'https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}'
   }
-  
+
   return L.tileLayer(urls[type], {
     subdomains: ['1', '2', '3', '4'],
     attribution: '© 高德地图',
@@ -40,7 +40,7 @@ export function createPanoramaMarker(latlng, options = {}) {
     iconSize: [24, 24],
     iconAnchor: [12, 12]
   })
-  
+
   return L.marker(latlng, { icon, ...options })
 }
 
@@ -60,7 +60,7 @@ export class CoordinateConverter {
     const [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat)
     return [gcjLat, gcjLng]
   }
-  
+
   /**
    * 将高德坐标转换为WGS84
    * @param {number} lat 纬度
@@ -82,15 +82,15 @@ export class CoordinateConverter {
 export function calculateDistance(point1, point2) {
   const [lat1, lng1] = point1
   const [lat2, lng2] = point2
-  
+
   const R = 6371000 // 地球半径（米）
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
-  
+
   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLng / 2) * Math.sin(dLng / 2)
-  
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }

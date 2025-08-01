@@ -180,7 +180,12 @@ create_mysql_container() {
         -e MYSQL_DATABASE=${DB_NAME} \
         -p ${DB_PORT}:3306 \
         --restart=unless-stopped \
-        mysql:8.0
+        --character-set-server=utf8mb4 \
+        --collation-server=utf8mb4_unicode_ci \
+        mysql:8.0 \
+        --character-set-server=utf8mb4 \
+        --collation-server=utf8mb4_unicode_ci \
+        --default-authentication-plugin=mysql_native_password
     
     log_info "等待MySQL容器启动..."
     
@@ -214,8 +219,11 @@ init_database() {
         return 1
     fi
     
+    # 设置字符编码
+    docker exec ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} -e "SET GLOBAL character_set_client = utf8mb4; SET GLOBAL character_set_connection = utf8mb4; SET GLOBAL character_set_results = utf8mb4;"
+    
     # 导入数据库结构和数据
-    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} ${DB_NAME} < setup-mysql.sql; then
+    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} ${DB_NAME} --default-character-set=utf8mb4 < setup-mysql.sql; then
         log_success "数据库初始化完成"
     else
         log_error "数据库初始化失败"

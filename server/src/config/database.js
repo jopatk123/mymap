@@ -12,7 +12,9 @@ const pool = mysql.createPool({
   acquireTimeout: config.database.acquireTimeout,
   timeout: config.database.timeout,
   reconnect: true,
-  charset: 'utf8mb4'
+  charset: 'utf8mb4',
+  // 强制设置字符编码
+  initSql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
 })
 
 // 测试数据库连接

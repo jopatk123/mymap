@@ -208,9 +208,12 @@ reset_database() {
             # 删除并重新创建数据库
             docker exec ${CONTAINER_NAME} mysql -u ${DB_USER} -p${DB_PASSWORD} -e "DROP DATABASE IF EXISTS ${DB_NAME}; CREATE DATABASE ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
             
+            # 设置字符编码
+            docker exec ${CONTAINER_NAME} mysql -u ${DB_USER} -p${DB_PASSWORD} -e "SET GLOBAL character_set_client = utf8mb4; SET GLOBAL character_set_connection = utf8mb4; SET GLOBAL character_set_results = utf8mb4;"
+            
             # 重新导入数据
             if [[ -f "setup-mysql.sql" ]]; then
-                docker exec -i ${CONTAINER_NAME} mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} < setup-mysql.sql
+                docker exec -i ${CONTAINER_NAME} mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME} --default-character-set=utf8mb4 < setup-mysql.sql
                 log_success "数据库重置完成"
             else
                 log_error "未找到 setup-mysql.sql 文件"

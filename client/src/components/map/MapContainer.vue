@@ -32,6 +32,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Location, FullScreen } from '@element-plus/icons-vue'
 import { useMap } from '@/composables/useMap.js'
 import { createAMapTileLayer } from '@/utils/map-utils.js'
@@ -76,10 +77,13 @@ onMounted(() => {
     zoom: props.zoom
   })
   
-  // 设置标记点击事件
-  onMarkerClick = (panorama) => {
+  // 设置标记点击事件处理函数
+  const handleMarkerClick = (panorama) => {
     emit('panorama-click', panorama)
   }
+  
+  // 更新 useMap 的 onMarkerClick
+  onMarkerClick.value = handleMarkerClick
   
   // 添加地图点击事件
   if (mapInstance) {

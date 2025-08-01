@@ -62,7 +62,7 @@ export function useMap(containerId) {
     
     // 添加点击事件
     marker.on('click', () => {
-      onMarkerClick(panorama)
+      onMarkerClick.value(panorama)
     })
     
     marker.addTo(map.value)
@@ -97,10 +97,10 @@ export function useMap(containerId) {
   }
   
   // 标记点击事件处理
-  const onMarkerClick = (panorama) => {
+  const onMarkerClick = ref((panorama) => {
     // 这里可以触发自定义事件或调用回调
     console.log('全景图标记被点击:', panorama)
-  }
+  })
   
   // 设置地图中心
   const setCenter = (lat, lng, zoom) => {

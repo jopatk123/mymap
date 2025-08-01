@@ -36,8 +36,7 @@ class PanoramaModel {
     
     // 分页
     const offset = (page - 1) * pageSize
-    sql += ' LIMIT ? OFFSET ?'
-    params.push(pageSize, offset)
+    sql += ` LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`
     
     const rows = await query(sql, params)
     
@@ -251,8 +250,7 @@ class PanoramaModel {
     // 排序和分页
     sql += ' ORDER BY created_at DESC'
     const offset = (page - 1) * pageSize
-    sql += ' LIMIT ? OFFSET ?'
-    params.push(pageSize, offset)
+    sql += ` LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`
     
     const rows = await query(sql, params)
     

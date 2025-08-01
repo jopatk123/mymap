@@ -18,7 +18,7 @@
           <el-button 
             @click="togglePanoramaList" 
             type="text" 
-            :icon="panoramaListVisible ? EyeClose : View"
+            :icon="panoramaListVisible ? Hide : View"
             :title="panoramaListVisible ? '隐藏列表' : '显示列表'"
           />
           <el-button 
@@ -62,7 +62,7 @@
         <!-- 全景图列表隐藏提示 -->
         <div class="list-hidden-hint" v-show="!panoramaListVisible">
           <div class="hint-content">
-            <el-icon class="hint-icon"><EyeClose /></el-icon>
+            <el-icon class="hint-icon"><Hide /></el-icon>
             <p>全景图列表已隐藏</p>
             <el-button 
               @click="togglePanoramaList" 
@@ -193,7 +193,7 @@ import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { 
   Search, View, Location, Refresh, Plus, Setting, 
-  Expand, Fold, EyeClose 
+  Expand, Fold, Hide 
 } from '@element-plus/icons-vue'
 
 import MapContainer from '@/components/map/MapContainer.vue'
