@@ -34,8 +34,16 @@ app.use(loggerMiddleware)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// 静态文件服务
-app.use(`/${config.upload.dir}`, express.static(path.join(__dirname, '../', config.upload.dir)))
+// 静态文件服务，带CORS支持
+app.use(`/${config.upload.dir}`, 
+  express.static(path.join(__dirname, '../', config.upload.dir), {
+    setHeaders: (res, path) => {
+      res.set('Access-Control-Allow-Origin', '*')
+      res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+      res.set('Access-Control-Allow-Headers', 'Content-Type')
+    }
+  })
+)
 
 // 设置信任代理（用于获取真实IP）
 app.set('trust proxy', true)

@@ -64,7 +64,7 @@
           >
             <div class="panorama-thumbnail">
               <img 
-                :src="panorama.thumbnailUrl || '/default-panorama.jpg'" 
+                :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'" 
                 :alt="panorama.title"
                 @error="handleImageError"
               />

@@ -89,9 +89,44 @@ const autoRotating = ref(false)
 
 // 加载全景图数据
 const loadPanorama = async () => {
-  const id = route.params.id
-  if (!id) {
+  const id = route.params.id || route.query.id
+  const imageFromQuery = route.query.image
+  
+  if (!id && !imageFromQuery) {
     error.value = '未提供全景图ID'
+    return
+  }
+  
+  // 如果有图片URL参数，直接使用
+  if (imageFromQuery) {
+    const imageUrl = decodeURIComponent(imageFromQuery)
+    console.log('使用查询参数图片URL:', imageUrl)
+    panorama.value = {
+      id: id || 'direct',
+      title: route.query.title ? decodeURIComponent(route.query.title) : '全景图',
+      imageUrl: imageUrl,
+      lat: route.query.lat || 0,
+      lng: route.query.lng || 0,
+      createdAt: route.query.createdAt || new Date().toISOString()
+    }
+    
+    // 直接初始化查看器
+    setTimeout(async () => {
+      try {
+        console.log('开始初始化查看器(直接模式):', imageUrl)
+        await initViewer('panorama-viewer', imageUrl, {
+          autoRotate: -2,
+          compass: true,
+          showZoomCtrl: true,
+          showFullscreenCtrl: true,
+          autoLoad: true
+        })
+        autoRotating.value = true
+      } catch (err) {
+        console.error('初始化全景图查看器失败:', err)
+        error.value = '初始化全景图查看器失败'
+      }
+    }, 100)
     return
   }
 
@@ -99,15 +134,22 @@ const loadPanorama = async () => {
     isLoading.value = true
     error.value = ''
     
+    console.log('开始加载全景图ID:', id)
     const response = await getPanoramaById(id)
-    if (response.data) {
-      panorama.value = response.data
+    console.log('API响应:', response)
+    
+    // 处理不同的响应格式
+    const data = response.data || response
+    if (data) {
+      panorama.value = data
+      console.log('全景图数据:', data)
       
       // 初始化全景图查看器
-      if (response.data.imageUrl) {
+      if (data.imageUrl) {
         setTimeout(async () => {
           try {
-            await initViewer('panorama-viewer', response.data.imageUrl, {
+            console.log('开始初始化查看器:', data.imageUrl)
+            await initViewer('panorama-viewer', data.imageUrl, {
               autoRotate: -2,
               compass: true,
               showZoomCtrl: true,
@@ -116,7 +158,7 @@ const loadPanorama = async () => {
             })
             autoRotating.value = true
           } catch (err) {
-            console.error('Failed to initialize panorama viewer:', err)
+            console.error('初始化全景图查看器失败:', err)
             error.value = '初始化全景图查看器失败'
           }
         }, 100)
@@ -127,8 +169,8 @@ const loadPanorama = async () => {
       error.value = '全景图不存在'
     }
   } catch (err) {
-    console.error('Failed to load panorama:', err)
-    error.value = '加载全景图失败'
+    console.error('加载全景图失败:', err)
+    error.value = '加载全景图失败: ' + (err.message || '未知错误')
   } finally {
     isLoading.value = false
   }
@@ -199,7 +241,10 @@ const handleKeyPress = (event) => {
 }
 
 onMounted(() => {
-  loadPanorama()
+  // 确保DOM完全加载后再加载数据
+  setTimeout(() => {
+    loadPanorama()
+  }, 100)
   document.addEventListener('keydown', handleKeyPress)
 })
 

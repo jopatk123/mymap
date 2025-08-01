@@ -59,7 +59,7 @@ api.interceptors.response.use(
           ElMessage.error('权限不足')
           break
         case 404:
-          ElMessage.error('请求的资源不存在')
+          // ElMessage.error('请求的资源不存在')
           break
         case 500:
           ElMessage.error('服务器内部错误')

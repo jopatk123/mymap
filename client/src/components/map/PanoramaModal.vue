@@ -137,23 +137,36 @@ const handleClose = () => {
 
 // 打开全景图查看器
 const openViewer = async () => {
+  console.log('打开全景图查看器，数据:', props.panorama)
+  
   if (!props.panorama?.imageUrl) {
     ElMessage.error('全景图地址不存在')
+    console.error('全景图数据缺失:', props.panorama)
+    return
+  }
+  
+  // 检查图片URL是否有效
+  const imageUrl = props.panorama.imageUrl
+  if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+    ElMessage.error('全景图地址格式不正确')
+    console.error('无效的图片URL:', imageUrl)
     return
   }
   
   viewerVisible.value = true
   
-  // 等待DOM渲染完成后初始化查看器
+  // 等待DOM渲染完成后初始化查看器 - 增加延迟确保容器完全渲染
   setTimeout(async () => {
-    await initViewer('panorama-viewer', props.panorama.imageUrl, {
-      autoRotate: -2,
-      compass: true,
-      showZoomCtrl: true,
-      showFullscreenCtrl: true
-    })
-    autoRotating.value = true
-  }, 100)
+    try {
+      console.log('开始初始化Pannellum查看器...')
+      const viewer = await initViewer('panorama-viewer', imageUrl)
+      console.log('Pannellum查看器初始化完成:', viewer)
+      autoRotating.value = true
+    } catch (error) {
+      console.error('初始化全景图查看器失败:', error)
+      ElMessage.error('加载全景图失败，请检查图片地址')
+    }
+  }, 500) // 增加延迟时间
 }
 
 // 关闭全景图查看器
@@ -200,14 +213,21 @@ const copyCoordinate = async () => {
   }
 }
 
-// 在新窗口打开
+// 在新窗口打开全景图查看器
 const openInNewTab = () => {
   if (!props.panorama?.id) {
     ElMessage.error('全景图ID不存在')
     return
   }
   
-  window.open(`/panorama/${props.panorama.id}`, '_blank')
+  if (!props.panorama?.imageUrl) {
+    ElMessage.error('全景图地址不存在，无法打开')
+    return
+  }
+  
+  // 创建全景图查看页面URL，使用查询参数方式
+  const viewerUrl = `/panorama?id=${props.panorama.id}&image=${encodeURIComponent(props.panorama.imageUrl)}&title=${encodeURIComponent(props.panorama.title || '全景图')}`
+  window.open(viewerUrl, '_blank')
 }
 
 // 删除全景图

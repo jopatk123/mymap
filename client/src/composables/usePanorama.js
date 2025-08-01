@@ -8,10 +8,21 @@ export function usePanorama() {
   
   // 初始化全景查看器
   const initViewer = async (containerId, panoramaUrl, options = {}) => {
+    console.log('开始初始化Pannellum查看器:', { containerId, panoramaUrl, options })
+    
     if (!window.pannellum) {
       console.error('Pannellum library not loaded')
       return null
     }
+    
+    // 检查容器是否存在
+    const container = document.getElementById(containerId)
+    if (!container) {
+      console.error('容器不存在:', containerId)
+      return null
+    }
+    
+    console.log('找到容器:', container)
     
     const defaultOptions = {
       type: 'equirectangular',
@@ -27,6 +38,28 @@ export function usePanorama() {
       doubleClickZoom: true,
       draggable: true,
       keyboardZoom: true,
+      crossOrigin: 'anonymous',
+      
+      // 关键的全景图参数 - 确保正确识别等距柱状投影
+      haov: 360,
+      vaov: 180,
+      vOffset: 0,
+      
+      // 视角设置
+      hfov: 75,
+      minHfov: 50,
+      maxHfov: 120,
+      
+      // 防止显示为平面图片的关键参数
+      pitch: 0,
+      yaw: 0,
+      
+      // 调试信息
+      debug: true,
+      
+      // 确保渲染模式正确
+      backgroundColor: [0, 0, 0],
+      
       ...options
     }
     
@@ -36,10 +69,73 @@ export function usePanorama() {
       // 等待DOM更新
       await nextTick()
       
+      // 等待额外时间确保容器完全渲染
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // 检查容器样式
+      const computedStyle = window.getComputedStyle(container)
+      console.log('容器样式:', {
+        width: computedStyle.width,
+        height: computedStyle.height,
+        display: computedStyle.display,
+        visibility: computedStyle.visibility
+      })
+      
+      // 确保容器有尺寸 - 使用固定像素值确保最小尺寸
+      if (computedStyle.width === '0px' || computedStyle.height === '0px') {
+        console.warn('容器尺寸为0，正在设置最小尺寸...')
+        container.style.width = '100%'
+        container.style.height = '400px' // 确保最小高度
+        container.style.minHeight = '400px'
+      }
+      
+      // 强制设置父容器高度
+      const parent = container.parentElement
+      if (parent) {
+        parent.style.height = '100%'
+      }
+      
+      // 验证图片URL - 检查是否为2:1比例的全景图
+      const testImg = new Image()
+      testImg.onload = () => {
+        const ratio = testImg.width / testImg.height
+        console.log('图片验证成功:', {
+          width: testImg.width,
+          height: testImg.height,
+          ratio: ratio,
+          isPanorama: Math.abs(ratio - 2) < 0.1
+        })
+        
+        // 警告非标准比例
+        if (Math.abs(ratio - 2) > 0.1) {
+          console.warn('图片比例可能不是标准全景图比例(2:1), 当前比例:', ratio)
+        }
+      }
+      testImg.onerror = () => {
+        console.error('图片加载失败:', panoramaUrl)
+      }
+      testImg.src = panoramaUrl
+      
       viewer.value = window.pannellum.viewer(containerId, defaultOptions)
       
       // 添加事件监听
       setupViewerEvents()
+      
+      // 强制重新渲染 - 增加延迟确保容器完全加载
+      setTimeout(() => {
+        if (viewer.value) {
+          console.log('强制重新渲染...')
+          viewer.value.resize()
+          
+          // 再次检查渲染状态
+          setTimeout(() => {
+            if (viewer.value) {
+              console.log('二次强制重新渲染...')
+              viewer.value.resize()
+            }
+          }, 1000)
+        }
+      }, 500)
       
       isLoading.value = false
       return viewer.value
@@ -62,6 +158,10 @@ export function usePanorama() {
     viewer.value.on('error', (error) => {
       console.error('全景图加载错误:', error)
       isLoading.value = false
+    })
+    
+    viewer.value.on('scenechange', (sceneId) => {
+      console.log('场景切换:', sceneId)
     })
     
     viewer.value.on('mousedown', () => {

@@ -42,7 +42,7 @@
           <el-table-column label="缩略图" width="100">
             <template #default="{ row }">
               <img
-                :src="row.thumbnailUrl || '/default-panorama.jpg'"
+                :src="row.thumbnailUrl || row.imageUrl || '/default-panorama.jpg'"
                 :alt="row.title"
                 class="thumbnail"
                 @error="handleImageError"
