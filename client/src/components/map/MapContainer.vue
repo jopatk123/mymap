@@ -5,10 +5,10 @@
     <!-- 地图控制面板 -->
     <div class="map-controls">
       <el-button-group>
-        <el-button @click="changeMapType('normal')" :type="mapType === 'normal' ? 'primary' : ''">
+        <el-button @click="handleMapTypeChange('normal')" :type="mapType === 'normal' ? 'primary' : ''">
           普通
         </el-button>
-        <el-button @click="changeMapType('satellite')" :type="mapType === 'satellite' ? 'primary' : ''">
+        <el-button @click="handleMapTypeChange('satellite')" :type="mapType === 'satellite' ? 'primary' : ''">
           卫星
         </el-button>
       </el-button-group>
@@ -31,11 +31,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Location, FullScreen } from '@element-plus/icons-vue'
 import { useMap } from '@/composables/useMap.js'
-import { createAMapTileLayer } from '@/utils/map-utils.js'
+import { useAppStore } from '@/store/app.js'
 
 const props = defineProps({
   panoramas: {
@@ -54,15 +54,17 @@ const props = defineProps({
 
 const emit = defineEmits(['panorama-click', 'map-click'])
 
-const mapType = ref('normal')
+// 全局状态管理
+const appStore = useAppStore()
+const mapType = computed(() => appStore.mapSettings.mapType)
+
 const locating = ref(false)
-const tileLayer = ref(null)
 
 const {
   map,
-  markers,
   isLoading,
   initMap,
+  changeMapType,
   addPanoramaMarkers,
   clearMarkers,
   setCenter,
@@ -72,10 +74,13 @@ const {
 
 // 初始化地图
 onMounted(() => {
-  const mapInstance = initMap({
-    center: props.center,
-    zoom: props.zoom
-  })
+  const mapInstance = initMap(
+    {
+      center: props.center,
+      zoom: props.zoom
+    },
+    mapType.value // 使用 store 中的地图类型进行初始化
+  )
   
   // 设置标记点击事件处理函数
   const handleMarkerClick = (panorama) => {
@@ -101,20 +106,15 @@ watch(() => props.panoramas, (newPanoramas) => {
   }
 }, { immediate: true })
 
-// 切换地图类型
-const changeMapType = (type) => {
-  if (!map.value) return
-  
-  mapType.value = type
-  
-  // 移除当前瓦片层
-  if (tileLayer.value) {
-    map.value.removeLayer(tileLayer.value)
-  }
-  
-  // 添加新的瓦片层
-  tileLayer.value = createAMapTileLayer(type)
-  tileLayer.value.addTo(map.value)
+// 监听来自 store 的地图类型变化
+watch(mapType, (newType) => {
+  changeMapType(newType)
+})
+
+// 切换地图类型 (更新全局状态)
+const handleMapTypeChange = (type) => {
+  if (mapType.value === type) return
+  appStore.updateMapSettings({ mapType: type })
 }
 
 // 定位用户位置

@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import L from 'leaflet'
 import { createAMapTileLayer, createPanoramaMarker } from '@/utils/map-utils.js'
 
@@ -6,9 +6,10 @@ export function useMap(containerId) {
   const map = ref(null)
   const markers = ref([])
   const isLoading = ref(false)
+  const tileLayer = ref(null)
   
   // 初始化地图
-  const initMap = (options = {}) => {
+  const initMap = (options = {}, initialMapType = 'satellite') => {
     const defaultOptions = {
       center: [39.9042, 116.4074], // 北京天安门
       zoom: 13,
@@ -22,8 +23,8 @@ export function useMap(containerId) {
     map.value = L.map(containerId, mapOptions)
     
     // 添加高德地图瓦片层
-    const tileLayer = createAMapTileLayer('normal')
-    tileLayer.addTo(map.value)
+    tileLayer.value = createAMapTileLayer(initialMapType)
+    tileLayer.value.addTo(map.value)
     
     // 添加地图事件监听
     setupMapEvents()
@@ -31,6 +32,20 @@ export function useMap(containerId) {
     return map.value
   }
   
+  // 切换地图类型
+  const changeMapType = (type) => {
+    if (!map.value) return
+    
+    // 移除旧图层
+    if (tileLayer.value) {
+      map.value.removeLayer(tileLayer.value)
+    }
+    
+    // 添加新图层
+    tileLayer.value = createAMapTileLayer(type)
+    tileLayer.value.addTo(map.value)
+  }
+
   // 设置地图事件
   const setupMapEvents = () => {
     if (!map.value) return
@@ -150,6 +165,7 @@ export function useMap(containerId) {
     markers,
     isLoading,
     initMap,
+    changeMapType,
     addPanoramaMarker,
     addPanoramaMarkers,
     removeMarker,
