@@ -164,6 +164,10 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(false)
       }
     },
+
+    addPanorama(panorama) {
+      this.panoramas.unshift(panorama);
+    },
     
     // 更新全景图
     async updatePanorama(id, panoramaData) {

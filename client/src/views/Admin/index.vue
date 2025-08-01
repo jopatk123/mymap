@@ -5,7 +5,7 @@
         <h1>管理后台</h1>
       </div>
       <div class="header-right">
-        <el-button @click="goHome" type="text">
+        <el-button @click="goHome" link>
           <el-icon><HomeFilled /></el-icon>
           返回首页
         </el-button>

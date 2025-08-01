@@ -59,11 +59,12 @@
       destroy-on-close
       append-to-body
     >
-      <div class="viewer-container">
-        <div v-if="isLoading" class="viewer-loading">
-          <el-loading-spinner size="large" />
-          <span>全景图加载中...</span>
-        </div>
+      <div
+        class="viewer-container"
+        v-loading="isLoading"
+        element-loading-text="全景图加载中..."
+        element-loading-background="rgba(0, 0, 0, 0.7)"
+      >
         <div id="panorama-viewer" class="panorama-viewer"></div>
       </div>
       
@@ -248,7 +249,8 @@ const deletePanorama = async () => {
 // 调用API删除全景图
 const callDeletePanoramaAPI = async (id) => {
   const response = await deletePanoramaAPI(id)
-  if (response.code !== 200) {
+  // 检查响应结构：成功时返回 { success: true, message: "删除成功" }
+  if (!response.success) {
     throw new Error(response.message || '删除失败')
   }
 }
@@ -312,22 +314,7 @@ const formatDate = (dateString) => {
     width: 100%;
     height: 100%;
     
-    .viewer-loading {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      
-      span {
-        font-size: 16px;
-        color: #666;
-      }
-    }
+    
     
     .panorama-viewer {
       width: 100%;

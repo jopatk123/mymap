@@ -17,7 +17,7 @@
         <div class="header-actions">
           <el-button 
             @click="toggleSidebar" 
-            type="text" 
+            link
             :icon="sidebarCollapsed ? Expand : Fold"
             :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           />
@@ -106,7 +106,7 @@
             <el-button 
               @click="loadMore" 
               :loading="loading" 
-              type="text"
+              link
               style="width: 100%"
             >
               加载更多

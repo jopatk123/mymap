@@ -1,5 +1,10 @@
 <template>
-  <div class="map-container">
+  <div
+    class="map-container"
+    v-loading="isLoading"
+    element-loading-text="地图加载中..."
+    element-loading-background="rgba(255, 255, 255, 0.8)"
+  >
     <div id="map" class="map-view"></div>
     
     <!-- 地图控制面板 -->
@@ -20,12 +25,6 @@
       <el-button @click="fitAllMarkers" type="success" circle>
         <el-icon><FullScreen /></el-icon>
       </el-button>
-    </div>
-    
-    <!-- 加载状态 -->
-    <div v-if="isLoading" class="map-loading">
-      <el-loading-spinner />
-      <span>地图加载中...</span>
     </div>
   </div>
 </template>
@@ -185,25 +184,6 @@ defineExpose({
     }
   }
   
-  .map-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    
-    span {
-      font-size: 14px;
-      color: #666;
-    }
-  }
+  
 }
 </style>

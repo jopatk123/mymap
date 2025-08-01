@@ -11,7 +11,6 @@ const routes = [
   },
   {
     path: '/admin',
-    name: 'Admin',
     component: () => import('@/views/Admin/index.vue'),
     meta: {
       title: '管理后台',
@@ -20,6 +19,7 @@ const routes = [
     children: [
       {
         path: '',
+        name: 'Admin',
         redirect: '/admin/panorama'
       },
       {

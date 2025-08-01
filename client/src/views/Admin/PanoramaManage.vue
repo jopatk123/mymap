@@ -72,17 +72,17 @@
           
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
-              <el-button @click="viewPanorama(row)" type="text" size="small">
+              <el-button @click="viewPanorama(row)" link size="small">
                 <el-icon><View /></el-icon>
                 查看
               </el-button>
-              <el-button @click="editPanorama(row)" type="text" size="small">
+              <el-button @click="editPanorama(row)" link size="small">
                 <el-icon><Edit /></el-icon>
                 编辑
               </el-button>
               <el-button
                 @click="deletePanorama(row)"
-                type="text"
+                link
                 size="small"
                 class="danger-button"
               >

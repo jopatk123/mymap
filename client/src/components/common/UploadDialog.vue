@@ -355,19 +355,12 @@ const handleSubmit = async () => {
     formData.append('lng', form.lng)
     
     // 上传文件
-    const response = await uploadPanoramaImage(formData, (progress) => {
+    const newPanorama = await uploadPanoramaImage(formData, (progress) => {
       uploadProgress.value = progress
     })
     
-    // 创建全景图记录
-    await panoramaStore.createPanorama({
-      title: form.title,
-      description: form.description,
-      lat: parseFloat(form.lat),
-      lng: parseFloat(form.lng),
-      imageUrl: response.url,
-      thumbnailUrl: response.thumbnailUrl
-    })
+    // 将返回的新全景图添加到 store
+    panoramaStore.addPanorama(newPanorama)
     
     ElMessage.success('上传成功')
     emit('success')
