@@ -14,11 +14,20 @@
     <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <h3>全景图列表</h3>
-        <el-button 
-          @click="toggleSidebar" 
-          type="text" 
-          :icon="sidebarCollapsed ? Expand : Fold"
-        />
+        <div class="header-actions">
+          <el-button 
+            @click="togglePanoramaList" 
+            type="text" 
+            :icon="panoramaListVisible ? EyeClose : View"
+            :title="panoramaListVisible ? '隐藏列表' : '显示列表'"
+          />
+          <el-button 
+            @click="toggleSidebar" 
+            type="text" 
+            :icon="sidebarCollapsed ? Expand : Fold"
+            :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
+          />
+        </div>
       </div>
       
       <div class="sidebar-content" v-show="!sidebarCollapsed">
@@ -50,8 +59,25 @@
           </el-select>
         </div>
         
+        <!-- 全景图列表隐藏提示 -->
+        <div class="list-hidden-hint" v-show="!panoramaListVisible">
+          <div class="hint-content">
+            <el-icon class="hint-icon"><EyeClose /></el-icon>
+            <p>全景图列表已隐藏</p>
+            <el-button 
+              @click="togglePanoramaList" 
+              type="primary" 
+              size="small"
+              plain
+            >
+              <el-icon><View /></el-icon>
+              显示列表
+            </el-button>
+          </div>
+        </div>
+        
         <!-- 全景图列表 -->
-        <div class="panorama-list">
+        <div class="panorama-list" v-show="panoramaListVisible">
           <div
             v-for="panorama in panoramas"
             :key="panorama.id"
@@ -167,7 +193,7 @@ import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { 
   Search, View, Location, Refresh, Plus, Setting, 
-  Expand, Fold 
+  Expand, Fold, EyeClose 
 } from '@element-plus/icons-vue'
 
 import MapContainer from '@/components/map/MapContainer.vue'
@@ -193,6 +219,7 @@ const {
 
 const { 
   sidebarCollapsed, 
+  panoramaListVisible,
   mapConfig, 
   isOnline 
 } = storeToRefs(appStore)
@@ -305,6 +332,11 @@ const toggleSidebar = () => {
   appStore.toggleSidebar()
 }
 
+// 切换全景图列表显示/隐藏
+const togglePanoramaList = () => {
+  appStore.togglePanoramaList()
+}
+
 // 上传成功处理
 const handleUploadSuccess = () => {
   refreshData()
@@ -367,6 +399,11 @@ const formatDate = (dateString) => {
       font-size: 16px;
       font-weight: 500;
     }
+    
+    .header-actions {
+      display: flex;
+      gap: 4px;
+    }
   }
   
   .sidebar-content {
@@ -386,6 +423,30 @@ const formatDate = (dateString) => {
     border-bottom: 1px solid #eee;
   }
   
+  .list-hidden-hint {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    
+    .hint-content {
+      text-align: center;
+      color: #909399;
+      
+      .hint-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #c0c4cc;
+      }
+      
+      p {
+        margin: 0 0 16px;
+        font-size: 14px;
+      }
+    }
+  }
+  
   .panorama-list {
     flex: 1;
     overflow-y: auto;
@@ -402,12 +463,12 @@ const formatDate = (dateString) => {
       transition: all 0.3s ease;
       
       &:hover {
-        border-color: $primary-color;
+        border-color: #409eff;
         box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
       }
       
       &.active {
-        border-color: $primary-color;
+        border-color: #409eff;
         background: rgba(64, 158, 255, 0.05);
       }
       
@@ -505,7 +566,7 @@ const formatDate = (dateString) => {
   z-index: 1000;
   
   .offline-indicator {
-    color: $warning-color;
+    color: #e6a23c;
     font-weight: 500;
   }
 }

@@ -8,6 +8,8 @@ export const useAppStore = defineStore('app', {
     theme: 'light',
     // 侧边栏状态
     sidebarCollapsed: false,
+    // 全景图列表显示状态
+    panoramaListVisible: false, // 默认隐藏
     // 地图设置
     mapSettings: {
       defaultCenter: [39.9042, 116.4074], // 北京天安门
@@ -88,6 +90,18 @@ export const useAppStore = defineStore('app', {
     // 切换侧边栏
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
+      this.saveToLocalStorage()
+    },
+    
+    // 设置全景图列表显示状态
+    setPanoramaListVisible(visible) {
+      this.panoramaListVisible = visible
+      this.saveToLocalStorage()
+    },
+    
+    // 切换全景图列表显示状态
+    togglePanoramaList() {
+      this.panoramaListVisible = !this.panoramaListVisible
       this.saveToLocalStorage()
     },
     
@@ -176,6 +190,7 @@ export const useAppStore = defineStore('app', {
       const settings = {
         theme: this.theme,
         sidebarCollapsed: this.sidebarCollapsed,
+        panoramaListVisible: this.panoramaListVisible,
         mapSettings: this.mapSettings,
         panoramaSettings: this.panoramaSettings,
         userPreferences: this.userPreferences
@@ -197,6 +212,7 @@ export const useAppStore = defineStore('app', {
           
           this.theme = parsed.theme || this.theme
           this.sidebarCollapsed = parsed.sidebarCollapsed ?? this.sidebarCollapsed
+          this.panoramaListVisible = parsed.panoramaListVisible ?? this.panoramaListVisible
           this.mapSettings = { ...this.mapSettings, ...parsed.mapSettings }
           this.panoramaSettings = { ...this.panoramaSettings, ...parsed.panoramaSettings }
           this.userPreferences = { ...this.userPreferences, ...parsed.userPreferences }
@@ -210,6 +226,7 @@ export const useAppStore = defineStore('app', {
     resetSettings() {
       this.theme = 'light'
       this.sidebarCollapsed = false
+      this.panoramaListVisible = false
       this.mapSettings = {
         defaultCenter: [39.9042, 116.4074],
         defaultZoom: 13,
