@@ -25,133 +25,38 @@
       </div>
       
       <div class="sidebar-content" v-show="!sidebarCollapsed">
-        <!-- 搜索框 -->
-        <div class="search-section">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索全景图..."
-            @input="handleSearch"
-            clearable
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </div>
-        
-        <!-- 筛选选项 -->
-        <div class="filter-section">
-          <el-select
-            v-model="sortBy"
-            placeholder="排序方式"
-            @change="handleSortChange"
-            style="width: 100%"
-          >
-            <el-option label="创建时间" value="createdAt" />
-            <el-option label="标题" value="title" />
-            <el-option label="距离" value="distance" />
-          </el-select>
-        </div>
+        <!-- 搜索和筛选 -->
+        <SearchFilter
+          v-model="searchParams"
+          @search="handleSearch"
+          @sort-change="handleSortChange"
+        />
         
         <!-- 全景图列表 -->
-        <div class="panorama-list">
-          <div
-            v-for="panorama in panoramas"
-            :key="panorama.id"
-            class="panorama-item"
-            :class="{ active: currentPanorama?.id === panorama.id }"
-            @click="selectPanorama(panorama)"
-          >
-            <div class="panorama-thumbnail">
-              <img 
-                :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'" 
-                :alt="panorama.title"
-                @error="handleImageError"
-              />
-            </div>
-            <div class="panorama-info">
-              <h4>{{ panorama.title || '未命名' }}</h4>
-              <p class="description">{{ panorama.description || '暂无描述' }}</p>
-              <div class="meta">
-                <span class="coordinate">
-                  {{ formatCoordinate(panorama.lat, panorama.lng) }}
-                </span>
-                <span class="date">
-                  {{ formatDate(panorama.createdAt) }}
-                </span>
-              </div>
-            </div>
-            <div class="panorama-actions">
-              <el-button 
-                @click.stop="viewPanorama(panorama)" 
-                type="primary" 
-                size="small"
-                circle
-              >
-                <el-icon><View /></el-icon>
-              </el-button>
-              <el-button 
-                @click.stop="locatePanorama(panorama)" 
-                type="info" 
-                size="small"
-                circle
-              >
-                <el-icon><Location /></el-icon>
-              </el-button>
-            </div>
-          </div>
-          
-          <!-- 加载更多 -->
-          <div class="load-more" v-if="hasMore">
-            <el-button 
-              @click="loadMore" 
-              :loading="loading" 
-              link
-              style="width: 100%"
-            >
-              加载更多
-            </el-button>
-          </div>
-          
-          <!-- 空状态 -->
-          <div class="empty-state" v-if="!loading && panoramas.length === 0">
-            <el-empty description="暂无全景图数据" />
-          </div>
-        </div>
+        <PanoramaList
+          :panoramas="panoramas"
+          :current-panorama="currentPanorama"
+          :loading="loading"
+          :has-more="hasMore"
+          @select-panorama="selectPanorama"
+          @view-panorama="viewPanorama"
+          @locate-panorama="locatePanorama"
+          @load-more="loadMore"
+        />
       </div>
     </div>
     
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <el-button-group>
-        <el-button 
-          @click="togglePanoramaList" 
-          type="primary"
-          :icon="panoramaListVisible ? Hide : View"
-          :title="panoramaListVisible ? '隐藏全景图列表' : '显示全景图列表'"
-        >
-          {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
-        </el-button>
-        <el-button @click="refreshData" :loading="loading" type="primary">
-          <el-icon><Refresh /></el-icon>
-          刷新
-        </el-button>
-        <el-button @click="showUploadDialog = true" type="success">
-          <el-icon><Plus /></el-icon>
-          添加
-        </el-button>
-        <el-button @click="showSettings = true" type="info">
-          <el-icon><Setting /></el-icon>
-          设置
-        </el-button>
-      </el-button-group>
-    </div>
-    
-    <!-- 状态栏 -->
-    <div class="status-bar">
-      <span>共 {{ totalCount }} 个全景图</span>
-      <span v-if="!isOnline" class="offline-indicator">离线模式</span>
-    </div>
+    <!-- 地图控件 -->
+    <MapControls
+      :panorama-list-visible="panoramaListVisible"
+      :loading="loading"
+      :total-count="totalCount"
+      :is-online="isOnline"
+      @toggle-panorama-list="togglePanoramaList"
+      @refresh-data="refreshData"
+      @show-upload="showUploadDialog = true"
+      @show-settings="showSettings = true"
+    />
     
     <!-- 全景图详情模态框 -->
     <PanoramaModal
@@ -174,18 +79,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
-import { 
-  Search, View, Location, Refresh, Plus, Setting, 
-  Expand, Fold, Hide 
-} from '@element-plus/icons-vue'
+import { Expand, Fold } from '@element-plus/icons-vue'
 
 import MapContainer from '@/components/map/MapContainer.vue'
 import PanoramaModal from '@/components/map/PanoramaModal.vue'
 import UploadDialog from '@/components/common/UploadDialog.vue'
 import SettingsDialog from '@/components/common/SettingsDialog.vue'
+import PanoramaList from '@/components/map/PanoramaList.vue'
+import SearchFilter from '@/components/map/SearchFilter.vue'
+import MapControls from '@/components/map/MapControls.vue'
 
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
@@ -214,8 +119,10 @@ const {
 const mapRef = ref(null)
 
 // 响应式数据
-const searchKeyword = ref('')
-const sortBy = ref('createdAt')
+const searchParams = reactive({
+  keyword: '',
+  sortBy: 'createdAt'
+})
 const selectedPanorama = ref(null)
 const showPanoramaModal = ref(false)
 const showUploadDialog = ref(false)
@@ -292,11 +199,9 @@ const locatePanorama = (panorama) => {
 }
 
 // 搜索处理
-const handleSearch = async () => {
-  if (searchKeyword.value.trim()) {
-    panoramaStore.setSearchParams({ 
-      keyword: searchKeyword.value.trim() 
-    })
+const handleSearch = async (params) => {
+  if (params.keyword.trim()) {
+    panoramaStore.setSearchParams(params)
   } else {
     panoramaStore.clearSearchParams()
   }
@@ -305,12 +210,8 @@ const handleSearch = async () => {
 }
 
 // 排序变化处理
-const handleSortChange = async () => {
-  panoramaStore.setSearchParams({ 
-    ...panoramaStore.searchParams,
-    sortBy: sortBy.value 
-  })
-  
+const handleSortChange = async (params) => {
+  panoramaStore.setSearchParams(params)
   await panoramaStore.fetchPanoramas()
 }
 
@@ -367,22 +268,7 @@ const handlePanoramaDeleted = async (deletedId) => {
   }
 }
 
-// 图片加载错误处理
-const handleImageError = (event) => {
-  event.target.src = '/default-panorama.jpg'
-}
 
-// 格式化坐标
-const formatCoordinate = (lat, lng) => {
-  if (!lat || !lng) return '未知位置'
-  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-}
-
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return '未知时间'
-  return new Date(dateString).toLocaleDateString('zh-CN')
-}
 </script>
 
 <style lang="scss" scoped>
@@ -440,164 +326,9 @@ const formatDate = (dateString) => {
     flex-direction: column;
     overflow: hidden;
   }
-  
-  .search-section {
-    padding: 16px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .filter-section {
-    padding: 0 16px 16px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .list-hidden-hint {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    
-    .hint-content {
-      text-align: center;
-      color: #909399;
-      
-      .hint-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        color: #c0c4cc;
-      }
-      
-      p {
-        margin: 0 0 16px;
-        font-size: 14px;
-      }
-    }
-  }
-  
-  .panorama-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px;
-    
-    .panorama-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      margin-bottom: 8px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        border-color: #409eff;
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
-      }
-      
-      &.active {
-        border-color: #409eff;
-        background: rgba(64, 158, 255, 0.05);
-      }
-      
-      .panorama-thumbnail {
-        width: 60px;
-        height: 60px;
-        border-radius: 6px;
-        overflow: hidden;
-        margin-right: 12px;
-        flex-shrink: 0;
-        
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-      
-      .panorama-info {
-        flex: 1;
-        min-width: 0;
-        
-        h4 {
-          margin: 0 0 4px;
-          font-size: 14px;
-          font-weight: 500;
-          color: #303133;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        
-        .description {
-          margin: 0 0 8px;
-          font-size: 12px;
-          color: #909399;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        
-        .meta {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          
-          span {
-            font-size: 11px;
-            color: #c0c4cc;
-          }
-        }
-      }
-      
-      .panorama-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        margin-left: 8px;
-      }
-    }
-    
-    .load-more {
-      padding: 16px;
-      text-align: center;
-    }
-    
-    .empty-state {
-      padding: 40px 16px;
-      text-align: center;
-    }
-  }
 }
 
-.toolbar {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-}
 
-.status-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.9);
-  border-top: 1px solid #eee;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  font-size: 12px;
-  color: #666;
-  z-index: 1000;
-  
-  .offline-indicator {
-    color: #e6a23c;
-    font-weight: 500;
-  }
-}
 
 // 移动端适配
 @media (max-width: 768px) {
@@ -606,19 +337,6 @@ const formatDate = (dateString) => {
     
     &.collapsed {
       transform: translateX(-100%);
-    }
-  }
-  
-  .toolbar {
-    top: 10px;
-    right: 10px;
-    
-    .el-button-group {
-      flex-direction: column;
-      
-      .el-button {
-        margin: 0 0 4px 0;
-      }
     }
   }
 }

@@ -123,14 +123,8 @@ import { ElMessage } from 'element-plus'
 import { Location, UploadFilled, Loading } from '@element-plus/icons-vue'
 import { uploadPanoramaImage } from '@/api/panorama.js'
 import { usePanoramaStore } from '@/store/panorama.js'
-import { 
-  isPanoramaImage, 
-  extractTitleFromFilename, 
-  extractGPSFromImage, 
-  compressImage,
-  getImageDimensions,
-  isImageFile 
-} from '@/utils/image-utils.js'
+import { imageProcessor } from '@/services/ImageProcessor.js'
+import { locationService } from '@/services/LocationService.js'
 
 const props = defineProps({
   modelValue: {
@@ -172,9 +166,9 @@ const rules = {
     { required: true, message: '请输入纬度', trigger: 'blur' },
     { 
       validator: (rule, value, callback) => {
-        const lat = parseFloat(value)
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-          callback(new Error('纬度必须在 -90 到 90 之间'))
+        const validation = locationService.validateCoordinates(value, form.lng)
+        if (!validation.valid && validation.errors.some(err => err.includes('纬度'))) {
+          callback(new Error(validation.errors.find(err => err.includes('纬度'))))
         } else {
           callback()
         }
@@ -186,9 +180,9 @@ const rules = {
     { required: true, message: '请输入经度', trigger: 'blur' },
     { 
       validator: (rule, value, callback) => {
-        const lng = parseFloat(value)
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-          callback(new Error('经度必须在 -180 到 180 之间'))
+        const validation = locationService.validateCoordinates(form.lat, value)
+        if (!validation.valid && validation.errors.some(err => err.includes('经度'))) {
+          callback(new Error(validation.errors.find(err => err.includes('经度'))))
         } else {
           callback()
         }
@@ -209,68 +203,54 @@ const previewUrl = ref('')
 const processing = ref(false)
 const processingText = ref('')
 
+// 设置服务回调
+imageProcessor.setCallbacks({
+  onProcessingChange: (isProcessing) => {
+    processing.value = isProcessing
+  },
+  onTextChange: (text) => {
+    processingText.value = text
+  },
+  onError: (error) => {
+    ElMessage.error(error.message)
+    uploadRef.value?.clearFiles()
+  },
+  onSuccess: (result) => {
+    form.file = result.file
+    form.title = result.title
+    previewUrl.value = result.previewUrl
+    
+    if (result.gpsData) {
+      form.lat = result.gpsData.lat.toString()
+      form.lng = result.gpsData.lng.toString()
+      ElMessage.success('已自动提取图片中的GPS坐标')
+    }
+  }
+})
+
+locationService.setCallbacks({
+  onLocationStart: () => {
+    locating.value = true
+  },
+  onLocationSuccess: (location) => {
+    form.lat = location.lat.toFixed(6)
+    form.lng = location.lng.toFixed(6)
+    ElMessage.success('定位成功')
+  },
+  onLocationError: (error) => {
+    ElMessage.error(error.message)
+  },
+  onLocationEnd: () => {
+    locating.value = false
+  }
+})
+
 // 文件变化处理
 const handleFileChange = async (file) => {
-  const rawFile = file.raw
-  
-  processing.value = true
-  processingText.value = '正在检查文件...'
-  
   try {
-    // 检查是否为图片文件
-    if (!isImageFile(rawFile)) {
-      ElMessage.error('请选择图片文件！')
-      uploadRef.value?.clearFiles()
-      return
-    }
-    
-    processingText.value = '正在验证全景图格式...'
-    
-    // 检查是否为全景图
-    const isPanorama = await isPanoramaImage(rawFile)
-    if (!isPanorama) {
-      ElMessage.error('请选择全景图！全景图的宽高比应该约为2:1，且尺寸不小于1000x500')
-      uploadRef.value?.clearFiles()
-      return
-    }
-    
-    form.file = rawFile
-    
-    // 自动设置标题为文件名（不含扩展名）
-    const title = extractTitleFromFilename(file.name)
-    form.title = title
-    
-    processingText.value = '正在提取GPS坐标...'
-    
-    // 尝试从图片中提取GPS坐标
-    try {
-      const gpsData = await extractGPSFromImage(rawFile)
-      if (gpsData) {
-        form.lat = gpsData.lat.toString()
-        form.lng = gpsData.lng.toString()
-        ElMessage.success('已自动提取图片中的GPS坐标')
-      }
-    } catch (error) {
-      console.warn('提取GPS坐标失败:', error)
-    }
-    
-    processingText.value = '正在生成预览...'
-    
-    // 生成预览
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      previewUrl.value = e.target.result
-      processing.value = false
-      processingText.value = ''
-    }
-    reader.readAsDataURL(rawFile)
-    
+    await imageProcessor.processFile(file.raw)
   } catch (error) {
-    console.error('处理文件时出错:', error)
-    ElMessage.error('处理文件时出错，请重试')
-    processing.value = false
-    processingText.value = ''
-    uploadRef.value?.clearFiles()
+    console.error('处理文件失败:', error)
   }
 }
 
@@ -297,32 +277,12 @@ const beforeUpload = (file) => {
 }
 
 // 获取当前位置
-const getCurrentLocation = () => {
-  if (!navigator.geolocation) {
-    ElMessage.warning('浏览器不支持地理定位')
-    return
+const getCurrentLocation = async () => {
+  try {
+    await locationService.getCurrentLocation()
+  } catch (error) {
+    console.error('定位失败:', error)
   }
-  
-  locating.value = true
-  
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      form.lat = position.coords.latitude.toFixed(6)
-      form.lng = position.coords.longitude.toFixed(6)
-      locating.value = false
-      ElMessage.success('定位成功')
-    },
-    (error) => {
-      console.error('定位失败:', error)
-      locating.value = false
-      ElMessage.error('定位失败，请手动输入坐标')
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000
-    }
-  )
 }
 
 // 提交表单
@@ -337,13 +297,12 @@ const handleSubmit = async () => {
     uploadProgress.value = 0
     
     // 检查图片尺寸并压缩
-    let fileToUpload = form.file
-    const dimensions = await getImageDimensions(form.file)
+    const compressionResult = await imageProcessor.compressImageIfNeeded(form.file)
+    let fileToUpload = compressionResult.file
     
-    if (dimensions.width > 8000 || dimensions.height > 4000) {
+    if (compressionResult.compressed) {
       ElMessage.info('图片尺寸较大，正在压缩...')
-      fileToUpload = await compressImage(form.file, 8000, 4000, 0.9)
-      ElMessage.success(`图片已压缩：${dimensions.width}x${dimensions.height} → 8000x4000`)
+      ElMessage.success(`图片已压缩：${compressionResult.originalDimensions.width}x${compressionResult.originalDimensions.height} → ${compressionResult.newDimensions.width}x${compressionResult.newDimensions.height}`)
     }
     
     // 准备上传数据
