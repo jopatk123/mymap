@@ -29,7 +29,7 @@
               <span class="node-label" :class="{ 'hidden': !data.is_visible }">
                 {{ data.name }}
               </span>
-              <span class="panorama-count">({{ data.panoramaCount || 0 }})</span>
+              <span class="panorama-count">({{ (data.panoramaCount || 0) + (data.videoPointCount || 0) }})</span>
             </div>
             
             <div class="node-actions">
