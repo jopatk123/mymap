@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="上传全景图"
+    title="添加视频点位"
     width="600px"
     @close="handleClose"
     destroy-on-close
@@ -15,7 +15,7 @@
       <el-form-item label="标题" prop="title">
         <el-input
           v-model="form.title"
-          placeholder="请输入全景图标题"
+          placeholder="请输入视频标题"
           maxlength="100"
           show-word-limit
         />
@@ -26,13 +26,13 @@
           v-model="form.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入全景图描述"
+          placeholder="请输入视频描述"
           maxlength="500"
           show-word-limit
         />
       </el-form-item>
       
-      <el-form-item label="坐标" prop="coordinate">
+      <el-form-item label="拍摄坐标" prop="coordinate" required>
         <div class="coordinate-input">
           <el-input
             v-model="form.lat"
@@ -52,26 +52,41 @@
             定位
           </el-button>
         </div>
+        <div class="coordinate-tip">
+          <el-icon><InfoFilled /></el-icon>
+          <span>视频文件无法自动获取GPS信息，请手动输入拍摄地点的经纬度</span>
+        </div>
       </el-form-item>
       
-      <el-form-item label="全景图" prop="file">
+      <el-form-item label="视频时长" prop="duration">
+        <el-input
+          v-model="form.duration"
+          placeholder="视频时长（秒）"
+          type="number"
+          min="0"
+        >
+          <template #suffix>秒</template>
+        </el-input>
+      </el-form-item>
+      
+      <el-form-item label="视频文件" prop="file">
         <el-upload
           ref="uploadRef"
-          class="panorama-upload"
+          class="video-upload"
           drag
           :auto-upload="false"
           :limit="1"
-          accept="image/*"
+          accept="video/*"
           :on-change="handleFileChange"
           :on-remove="handleFileRemove"
           :before-upload="beforeUpload"
         >
           <div class="upload-content">
-            <el-icon class="upload-icon"><UploadFilled /></el-icon>
+            <el-icon class="upload-icon"><VideoPlay /></el-icon>
             <div class="upload-text">
-              <p>将全景图拖拽到此处，或<em>点击上传</em></p>
-              <p class="upload-tip">支持 JPG、PNG 格式，宽高比约2:1的全景图</p>
-              <p class="upload-tip">自动提取文件名和GPS坐标，大于8000x4000会自动压缩</p>
+              <p>将视频文件拖拽到此处，或<em>点击上传</em></p>
+              <p class="upload-tip">支持 MP4、AVI、MOV 等常见视频格式</p>
+              <p class="upload-tip">文件大小不超过 500MB</p>
             </div>
           </div>
         </el-upload>
@@ -80,7 +95,9 @@
       <!-- 预览 -->
       <el-form-item v-if="previewUrl" label="预览">
         <div class="preview-container">
-          <img :src="previewUrl" alt="预览" class="preview-image" />
+          <video :src="previewUrl" controls class="preview-video">
+            您的浏览器不支持视频播放
+          </video>
         </div>
       </el-form-item>
       
@@ -105,14 +122,6 @@
         </el-select>
       </el-form-item>
       
-      <!-- 处理状态 -->
-      <el-form-item v-if="processing" label="处理状态">
-        <div class="processing-status">
-          <el-icon class="is-loading"><Loading /></el-icon>
-          <span>{{ processingText }}</span>
-        </div>
-      </el-form-item>
-      
       <!-- 上传进度 -->
       <el-form-item v-if="uploading" label="上传进度">
         <el-progress
@@ -129,7 +138,7 @@
           @click="handleSubmit"
           type="primary"
           :loading="uploading"
-          :disabled="!form.file || processing || uploading"
+          :disabled="!form.file || uploading"
         >
           {{ uploading ? '上传中...' : '确定上传' }}
         </el-button>
@@ -139,12 +148,9 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location, UploadFilled, Loading } from '@element-plus/icons-vue'
-import { uploadPanoramaImage } from '@/api/panorama.js'
-import { usePanoramaStore } from '@/store/panorama.js'
-import { imageProcessor } from '@/services/ImageProcessor.js'
+import { Location, VideoPlay, InfoFilled } from '@element-plus/icons-vue'
 import { locationService } from '@/services/LocationService.js'
 
 const props = defineProps({
@@ -165,23 +171,8 @@ const visible = computed({
 const formRef = ref(null)
 const uploadRef = ref(null)
 
-// Store
-const panoramaStore = usePanoramaStore()
-
 // 文件夹数据
 const folders = ref([])
-
-// 加载文件夹
-const loadFolders = async () => {
-  try {
-    const { folderApi } = await import('@/api/folder.js')
-    const response = await folderApi.getFolders()
-    folders.value = response || []
-  } catch (error) {
-    console.error('加载文件夹失败:', error)
-    folders.value = []
-  }
-}
 
 // 表单数据
 const form = reactive({
@@ -189,6 +180,7 @@ const form = reactive({
   description: '',
   lat: '',
   lng: '',
+  duration: '',
   file: null,
   folderId: 0
 })
@@ -203,9 +195,9 @@ const rules = {
     { required: true, message: '请输入纬度', trigger: 'blur' },
     { 
       validator: (rule, value, callback) => {
-        const validation = locationService.validateCoordinates(value, form.lng)
-        if (!validation.valid && validation.errors.some(err => err.includes('纬度'))) {
-          callback(new Error(validation.errors.find(err => err.includes('纬度'))))
+        const lat = parseFloat(value)
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+          callback(new Error('纬度必须在 -90 到 90 之间'))
         } else {
           callback()
         }
@@ -217,9 +209,9 @@ const rules = {
     { required: true, message: '请输入经度', trigger: 'blur' },
     { 
       validator: (rule, value, callback) => {
-        const validation = locationService.validateCoordinates(form.lat, value)
-        if (!validation.valid && validation.errors.some(err => err.includes('经度'))) {
-          callback(new Error(validation.errors.find(err => err.includes('经度'))))
+        const lng = parseFloat(value)
+        if (isNaN(lng) || lng < -180 || lng > 180) {
+          callback(new Error('经度必须在 -180 到 180 之间'))
         } else {
           callback()
         }
@@ -228,7 +220,7 @@ const rules = {
     }
   ],
   file: [
-    { required: true, message: '请选择全景图文件', trigger: 'change' }
+    { required: true, message: '请选择视频文件', trigger: 'change' }
   ]
 }
 
@@ -237,34 +229,25 @@ const uploading = ref(false)
 const uploadProgress = ref(0)
 const locating = ref(false)
 const previewUrl = ref('')
-const processing = ref(false)
-const processingText = ref('')
 
-// 设置服务回调
-imageProcessor.setCallbacks({
-  onProcessingChange: (isProcessing) => {
-    processing.value = isProcessing
-  },
-  onTextChange: (text) => {
-    processingText.value = text
-  },
-  onError: (error) => {
-    ElMessage.error(error.message)
-    uploadRef.value?.clearFiles()
-  },
-  onSuccess: (result) => {
-    form.file = result.file
-    form.title = result.title
-    previewUrl.value = result.previewUrl
-    
-    if (result.gpsData) {
-      form.lat = result.gpsData.lat.toString()
-      form.lng = result.gpsData.lng.toString()
-      ElMessage.success('已自动提取图片中的GPS坐标')
-    }
-  }
+// 初始化
+onMounted(() => {
+  loadFolders()
 })
 
+// 加载文件夹
+const loadFolders = async () => {
+  try {
+    const { folderApi } = await import('@/api/folder.js')
+    const response = await folderApi.getFolders()
+    folders.value = response || []
+  } catch (error) {
+    console.error('加载文件夹失败:', error)
+    folders.value = []
+  }
+}
+
+// 设置定位服务回调
 locationService.setCallbacks({
   onLocationStart: () => {
     locating.value = true
@@ -283,31 +266,41 @@ locationService.setCallbacks({
 })
 
 // 文件变化处理
-const handleFileChange = async (file) => {
-  try {
-    await imageProcessor.processFile(file.raw)
-  } catch (error) {
-    console.error('处理文件失败:', error)
+const handleFileChange = (file) => {
+  form.file = file.raw
+  
+  // 自动提取文件名作为标题（如果标题为空）
+  if (!form.title && file.name) {
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
+    form.title = nameWithoutExt
+  }
+  
+  // 创建预览URL
+  if (file.raw) {
+    previewUrl.value = URL.createObjectURL(file.raw)
   }
 }
 
 // 文件移除处理
 const handleFileRemove = () => {
   form.file = null
-  previewUrl.value = ''
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = ''
+  }
 }
 
 // 上传前检查
 const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt50M = file.size / 1024 / 1024 < 50
+  const isVideo = file.type.startsWith('video/')
+  const isLt500M = file.size / 1024 / 1024 < 500
 
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
+  if (!isVideo) {
+    ElMessage.error('只能上传视频文件!')
     return false
   }
-  if (!isLt50M) {
-    ElMessage.error('图片大小不能超过 50MB!')
+  if (!isLt500M) {
+    ElMessage.error('视频大小不能超过 500MB!')
     return false
   }
   return true
@@ -333,46 +326,40 @@ const handleSubmit = async () => {
     uploading.value = true
     uploadProgress.value = 0
     
-    // 检查图片尺寸并压缩
-    const compressionResult = await imageProcessor.compressImageIfNeeded(form.file)
-    let fileToUpload = compressionResult.file
-    
-    if (compressionResult.compressed) {
-      ElMessage.info('图片尺寸较大，正在压缩...')
-      ElMessage.success(`图片已压缩：${compressionResult.originalDimensions.width}x${compressionResult.originalDimensions.height} → ${compressionResult.newDimensions.width}x${compressionResult.newDimensions.height}`)
-    }
-    
     // 准备上传数据
     const formData = new FormData()
-    formData.append('file', fileToUpload)
+    formData.append('file', form.file)
     formData.append('title', form.title)
     formData.append('description', form.description)
     formData.append('lat', form.lat)
     formData.append('lng', form.lng)
+    if (form.duration) {
+      formData.append('duration', form.duration)
+    }
     if (form.folderId !== undefined && form.folderId !== null) {
       formData.append('folderId', form.folderId)
     }
     
     // 上传文件
-    const newPanorama = await uploadPanoramaImage(formData, (progress) => {
-      uploadProgress.value = progress
+    const response = await fetch('/api/video-points/upload', {
+      method: 'POST',
+      body: formData,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.lengthComputable) {
+          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }
+      }
     })
     
-    // 将返回的新全景图添加到 store
-    panoramaStore.addPanorama(newPanorama)
+    const result = await response.json()
     
-    // 重新加载文件夹数据以更新点位数量
-    try {
-      const { useFolderStore } = await import('@/store/folder.js')
-      const folderStore = useFolderStore()
-      await folderStore.fetchFolders()
-    } catch (error) {
-      console.warn('重新加载文件夹数据失败:', error)
+    if (result.success) {
+      ElMessage.success('视频点位上传成功')
+      emit('success')
+      handleClose()
+    } else {
+      throw new Error(result.message || '上传失败')
     }
-    
-    ElMessage.success('上传成功')
-    emit('success')
-    handleClose()
     
   } catch (error) {
     console.error('上传失败:', error)
@@ -399,13 +386,15 @@ const resetForm = () => {
   form.description = ''
   form.lat = ''
   form.lng = ''
+  form.duration = ''
   form.file = null
   form.folderId = 0
   
-  previewUrl.value = ''
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = ''
+  }
   uploadProgress.value = 0
-  processing.value = false
-  processingText.value = ''
   
   if (uploadRef.value) {
     uploadRef.value.clearFiles()
@@ -429,7 +418,20 @@ const resetForm = () => {
   }
 }
 
-.panorama-upload {
+.coordinate-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+  
+  .el-icon {
+    font-size: 14px;
+  }
+}
+
+.video-upload {
   width: 100%;
   
   :deep(.el-upload) {
@@ -462,7 +464,7 @@ const resetForm = () => {
         color: #606266;
         
         em {
-          color: $primary-color;
+          color: #409eff;
           font-style: normal;
         }
       }
@@ -477,26 +479,16 @@ const resetForm = () => {
 
 .preview-container {
   width: 100%;
-  max-height: 200px;
+  max-height: 300px;
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid #dcdfe6;
   
-  .preview-image {
+  .preview-video {
     width: 100%;
     height: auto;
+    max-height: 300px;
     display: block;
-  }
-}
-
-.processing-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #409eff;
-  
-  .el-icon {
-    font-size: 16px;
   }
 }
 

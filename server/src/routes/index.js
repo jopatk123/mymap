@@ -42,4 +42,12 @@ router.use('/panoramas', panoramaRoutes)
 const folderRoutes = require('./folder.routes')
 router.use('/folders', folderRoutes)
 
+// 视频点位相关路由
+const videoPointRoutes = require('./videoPoint.routes')
+router.use('/video-points', videoPointRoutes)
+
+// KML文件相关路由
+const kmlFileRoutes = require('./kmlFile.routes')
+router.use('/kml-files', kmlFileRoutes)
+
 module.exports = router

@@ -7,6 +7,14 @@
           <el-icon><Plus /></el-icon>
           添加全景图
         </el-button>
+        <el-button @click="showVideoUploadDialog = true" type="success">
+          <el-icon><VideoPlay /></el-icon>
+          添加视频点位
+        </el-button>
+        <el-button @click="showKmlUploadDialog = true" type="warning">
+          <el-icon><Document /></el-icon>
+          添加KML文件
+        </el-button>
       </div>
     </div>
     
@@ -233,6 +241,18 @@
       @success="handleUploadSuccess"
     />
     
+    <!-- 视频上传对话框 -->
+    <VideoUploadDialog
+      v-model="showVideoUploadDialog"
+      @success="handleUploadSuccess"
+    />
+    
+    <!-- KML上传对话框 -->
+    <KmlUploadDialog
+      v-model="showKmlUploadDialog"
+      @success="handleUploadSuccess"
+    />
+    
     <!-- 编辑对话框 -->
     <EditDialog
       v-model="showEditDialog"
@@ -295,10 +315,14 @@ import {
   Hide, 
   MoreFilled, 
   FolderOpened, 
-  ArrowDown 
+  ArrowDown,
+  VideoPlay,
+  Document
 } from '@element-plus/icons-vue'
 
 import UploadDialog from '@/components/common/UploadDialog.vue'
+import VideoUploadDialog from '@/components/common/VideoUploadDialog.vue'
+import KmlUploadDialog from '@/components/common/KmlUploadDialog.vue'
 import EditDialog from '@/components/admin/EditDialog.vue'
 import PanoramaModal from '@/components/map/PanoramaModal.vue'
 import FolderTree from '@/components/admin/FolderTree.vue'
@@ -321,6 +345,8 @@ const searchForm = reactive({
 const selectedRows = ref([])
 const currentPanorama = ref(null)
 const showUploadDialog = ref(false)
+const showVideoUploadDialog = ref(false)
+const showKmlUploadDialog = ref(false)
 const showEditDialog = ref(false)
 const showViewDialog = ref(false)
 const showMoveDialog = ref(false)
