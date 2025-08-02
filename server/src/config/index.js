@@ -26,7 +26,21 @@ const config = {
     allowedTypes: process.env.ALLOWED_FILE_TYPES?.split(',') || [
       'image/jpeg',
       'image/png',
-      'image/jpg'
+      'image/jpg',
+      'video/mp4',
+      'video/avi',
+      'video/mov',
+      'video/wmv',
+      'video/flv',
+      'video/webm',
+      'video/mkv',
+      'video/quicktime'
+    ],
+    kmlTypes: [
+      'application/vnd.google-earth.kml+xml',
+      'application/xml',
+      'text/xml',
+      'text/plain'  // 某些系统可能将KML识别为纯文本
     ]
   },
   

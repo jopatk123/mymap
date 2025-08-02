@@ -1,4 +1,4 @@
-const db = require('../config/database')
+const { pool } = require('../config/database')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
 
 class VideoPointModel {
@@ -21,7 +21,7 @@ class VideoPointModel {
       // 坐标转换
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude)
       
-      const [result] = await db.execute(
+      const [result] = await pool.execute(
         `INSERT INTO video_points (
           title, description, video_url, thumbnail_url,
           latitude, longitude, gcj02_lat, gcj02_lng,
@@ -55,7 +55,7 @@ class VideoPointModel {
   // 根据ID查找视频点位
   static async findById(id) {
     try {
-      const [rows] = await db.execute(
+      const [rows] = await pool.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -81,18 +81,19 @@ class VideoPointModel {
       let whereConditions = []
       let params = []
 
-      if (keyword) {
+      // 构建WHERE条件
+      if (keyword && keyword.trim()) {
         whereConditions.push('(vp.title LIKE ? OR vp.description LIKE ?)')
         params.push(`%${keyword}%`, `%${keyword}%`)
       }
 
-      if (folderId !== null) {
+      if (folderId !== null && folderId !== undefined && folderId !== '') {
         whereConditions.push('vp.folder_id = ?')
-        params.push(folderId)
+        params.push(parseInt(folderId))
       }
 
       if (!includeHidden) {
-        whereConditions.push('vp.is_visible = TRUE')
+        whereConditions.push('vp.is_visible = 1')
       }
 
       const whereClause = whereConditions.length > 0 
@@ -100,32 +101,26 @@ class VideoPointModel {
         : ''
 
       // 获取总数
-      const [countResult] = await db.execute(
-        `SELECT COUNT(*) as total 
-         FROM video_points vp 
-         LEFT JOIN folders f ON vp.folder_id = f.id 
-         ${whereClause}`,
-        params
-      )
+      const countSql = `SELECT COUNT(*) as total FROM video_points vp ${whereClause}`
+      const [countResult] = await pool.execute(countSql, params)
       const total = countResult[0].total
 
       // 获取数据
-      const offset = (page - 1) * pageSize
-      const [rows] = await db.execute(
-        `SELECT vp.*, f.name as folder_name 
-         FROM video_points vp 
-         LEFT JOIN folders f ON vp.folder_id = f.id 
-         ${whereClause}
-         ORDER BY vp.sort_order ASC, vp.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, pageSize, offset]
-      )
+      const offset = (parseInt(page) - 1) * parseInt(pageSize)
+      const dataSql = `SELECT vp.*, f.name as folder_name 
+                       FROM video_points vp 
+                       LEFT JOIN folders f ON vp.folder_id = f.id 
+                       ${whereClause}
+                       ORDER BY vp.sort_order ASC, vp.created_at DESC 
+                       LIMIT ${parseInt(pageSize)} OFFSET ${offset}`
+      
+      const [rows] = await pool.execute(dataSql, params)
 
       return {
         data: rows,
-        total,
-        page,
-        pageSize,
+        total: parseInt(total),
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
         totalPages: Math.ceil(total / pageSize)
       }
     } catch (error) {
@@ -144,7 +139,7 @@ class VideoPointModel {
         whereClause += ' AND vp.is_visible = TRUE'
       }
 
-      const [rows] = await db.execute(
+      const [rows] = await pool.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -170,7 +165,7 @@ class VideoPointModel {
         whereClause += ' AND vp.is_visible = TRUE'
       }
 
-      const [rows] = await db.execute(
+      const [rows] = await pool.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -223,7 +218,7 @@ class VideoPointModel {
       
       params.push(id)
       
-      await db.execute(
+      await pool.execute(
         `UPDATE video_points SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         params
       )
@@ -238,7 +233,7 @@ class VideoPointModel {
   // 删除视频点位
   static async delete(id) {
     try {
-      const [result] = await db.execute('DELETE FROM video_points WHERE id = ?', [id])
+      const [result] = await pool.execute('DELETE FROM video_points WHERE id = ?', [id])
       return result.affectedRows > 0
     } catch (error) {
       console.error('删除视频点位失败:', error)
@@ -254,7 +249,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await db.execute(
+      const [result] = await pool.execute(
         `DELETE FROM video_points WHERE id IN (${placeholders})`,
         ids
       )
@@ -274,7 +269,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await db.execute(
+      const [result] = await pool.execute(
         `UPDATE video_points SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [isVisible, ...ids]
       )
@@ -294,7 +289,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await db.execute(
+      const [result] = await pool.execute(
         `UPDATE video_points SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [folderId, ...ids]
       )
@@ -309,7 +304,7 @@ class VideoPointModel {
   // 获取统计信息
   static async getStats() {
     try {
-      const [rows] = await db.execute(`
+      const [rows] = await pool.execute(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,

@@ -239,6 +239,7 @@ const loadFolders = async () => {
 
 // 文件变化处理
 const handleFileChange = async (file) => {
+  console.log('文件变化:', file.name, file.type, file.size)
   form.file = file.raw
   
   // 自动提取文件名作为标题（如果标题为空）
@@ -282,29 +283,35 @@ const validateKmlFile = async (file) => {
     const formData = new FormData()
     formData.append('file', file)
     
-    const response = await fetch('/api/kml-files/validate', {
-      method: 'POST',
-      body: formData
-    })
+    // 导入KML API
+    const { kmlApi } = await import('@/api/kml.js')
     
-    const result = await response.json()
+    const response = await kmlApi.validateKmlFile(formData)
     
-    if (result.success) {
-      validationResult.value = result.data
-      if (result.data.valid) {
-        ElMessage.success(`KML文件验证成功，包含 ${result.data.placemarkCount} 个地标`)
+    console.log('验证响应:', response)
+    
+    if (response.success) {
+      validationResult.value = response.data
+      if (response.data.valid) {
+        ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount} 个地标`)
       } else {
-        ElMessage.error('KML文件格式错误: ' + result.data.error)
+        ElMessage.error('KML文件格式错误: ' + response.data.error)
       }
     } else {
-      throw new Error(result.message || '验证失败')
+      throw new Error(response.message || '验证失败')
     }
   } catch (error) {
     console.error('验证KML文件失败:', error)
+    console.error('错误详情:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      stack: error.stack
+    })
     ElMessage.error('验证KML文件失败: ' + error.message)
     validationResult.value = {
       valid: false,
-      error: error.message
+      error: error.message || '网络错误或服务器连接失败'
     }
   } finally {
     processing.value = false
@@ -347,30 +354,27 @@ const handleSubmit = async () => {
       formData.append('folderId', form.folderId)
     }
     
+    // 导入KML API
+    const { kmlApi } = await import('@/api/kml.js')
+    
     // 上传文件
-    const response = await fetch('/api/kml-files/upload', {
-      method: 'POST',
-      body: formData,
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.lengthComputable) {
-          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }
+    const response = await kmlApi.uploadKmlFile(formData, (progressEvent) => {
+      if (progressEvent.lengthComputable) {
+        uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
       }
     })
     
-    const result = await response.json()
-    
-    if (result.success) {
+    if (response.data.success) {
       ElMessage.success('KML文件上传成功')
       emit('success')
       handleClose()
     } else {
-      throw new Error(result.message || '上传失败')
+      throw new Error(response.data.message || '上传失败')
     }
     
   } catch (error) {
     console.error('上传失败:', error)
-    ElMessage.error('上传失败: ' + error.message)
+    ElMessage.error('上传KML文件失败')
   } finally {
     uploading.value = false
     uploadProgress.value = 0

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const VideoPointController = require('../controllers/videoPoint.controller')
-const { handleSingleUpload } = require('../middleware/upload.middleware')
+const { handleVideoUpload } = require('../middleware/upload.middleware')
 const { 
   validateId,
   validateBatchIds,
@@ -18,7 +18,7 @@ router.get('/bounds', validateBoundsParams, VideoPointController.getVideoPointsB
 router.get('/stats', VideoPointController.getVideoPointStats)
 
 // 上传视频文件
-router.post('/upload', handleSingleUpload, (req, res) => {
+router.post('/upload', handleVideoUpload, (req, res) => {
   const { uploadedFile } = req
   const { title, description, lat, lng, folderId, duration } = req.body
 
@@ -37,8 +37,13 @@ router.post('/upload', handleSingleUpload, (req, res) => {
     })
   }
 
-  // 验证文件类型
-  if (!uploadedFile.mimetype.startsWith('video/')) {
+  // 验证文件类型 - 检查MIME类型或文件扩展名
+  const isVideoMimeType = uploadedFile.mimetype.startsWith('video/')
+  const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
+  const fileExtension = require('path').extname(uploadedFile.originalname).toLowerCase()
+  const isVideoExtension = videoExtensions.includes(fileExtension)
+  
+  if (!isVideoMimeType && !isVideoExtension) {
     return res.status(400).json({
       success: false,
       message: '只支持视频文件格式'

@@ -129,7 +129,7 @@ class VideoPointController {
         fileSize: uploadedFile.size,
         fileType: uploadedFile.mimetype,
         duration: duration ? parseInt(duration) : null,
-        folderId: folderId ? parseInt(folderId) : null
+        folderId: (folderId && parseInt(folderId) !== 0) ? parseInt(folderId) : null
       })
 
       res.status(201).json({

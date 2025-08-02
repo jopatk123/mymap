@@ -79,10 +79,15 @@ class FolderModel {
     }
 
     // 检查是否有全景图
-    const panoramaCountSql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?'
-    const [{ count }] = await query(panoramaCountSql, [id])
-    if (count > 0) {
+    const panoramaCount = await this.getPanoramaCount(id)
+    if (panoramaCount > 0) {
       throw new Error('无法删除包含全景图的文件夹')
+    }
+
+    // 检查是否有视频点位
+    const videoPointCount = await this.getVideoPointCount(id)
+    if (videoPointCount > 0) {
+      throw new Error('无法删除包含视频点位的文件夹')
     }
 
     const sql = 'DELETE FROM folders WHERE id = ?'
@@ -114,6 +119,20 @@ class FolderModel {
     const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?'
     const [{ count }] = await query(sql, [folderId])
     return count
+  }
+
+  // 获取文件夹中的视频点位数量
+  static async getVideoPointCount(folderId) {
+    const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?'
+    const [{ count }] = await query(sql, [folderId])
+    return count
+  }
+
+  // 获取文件夹中的总内容数量（全景图 + 视频点位）
+  static async getTotalContentCount(folderId) {
+    const panoramaCount = await this.getPanoramaCount(folderId)
+    const videoPointCount = await this.getVideoPointCount(folderId)
+    return panoramaCount + videoPointCount
   }
 
   // 构建树形结构

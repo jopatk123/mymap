@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const KmlFileController = require('../controllers/kmlFile.controller')
-const { handleSingleUpload } = require('../middleware/upload.middleware')
+const { handleKmlUpload } = require('../middleware/upload.middleware')
 const { 
   validateId,
   validateBatchIds,
@@ -18,7 +18,7 @@ router.get('/points/bounds', validateBoundsParams, KmlFileController.getKmlPoint
 router.get('/stats', KmlFileController.getKmlFileStats)
 
 // 上传KML文件
-router.post('/upload', handleSingleUpload, (req, res) => {
+router.post('/upload', handleKmlUpload, (req, res) => {
   const { uploadedFile } = req
   const { title, description, folderId } = req.body
 
@@ -37,20 +37,12 @@ router.post('/upload', handleSingleUpload, (req, res) => {
     })
   }
 
-  // 验证文件类型
-  if (!uploadedFile.originalname.toLowerCase().endsWith('.kml')) {
-    return res.status(400).json({
-      success: false,
-      message: '只支持KML格式文件'
-    })
-  }
-
   // 调用上传KML文件的方法
   KmlFileController.uploadKmlFile(req, res)
 })
 
 // 验证KML文件
-router.post('/validate', handleSingleUpload, KmlFileController.validateKmlFile)
+router.post('/validate', handleKmlUpload, KmlFileController.validateKmlFile)
 
 // 批量操作路由 - 这些需要在具体ID路由之前定义
 // 批量删除KML文件

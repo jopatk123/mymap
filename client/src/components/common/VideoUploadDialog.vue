@@ -32,21 +32,25 @@
         />
       </el-form-item>
       
-      <el-form-item label="拍摄坐标" prop="coordinate" required>
+      <el-form-item label="拍摄坐标" required>
         <div class="coordinate-input">
-          <el-input
-            v-model="form.lat"
-            placeholder="纬度"
-            type="number"
-            step="0.000001"
-          />
+          <el-form-item prop="lat" style="margin-bottom: 0; flex: 1;">
+            <el-input
+              v-model="form.lat"
+              placeholder="纬度"
+              type="number"
+              step="0.000001"
+            />
+          </el-form-item>
           <span class="separator">,</span>
-          <el-input
-            v-model="form.lng"
-            placeholder="经度"
-            type="number"
-            step="0.000001"
-          />
+          <el-form-item prop="lng" style="margin-bottom: 0; flex: 1;">
+            <el-input
+              v-model="form.lng"
+              placeholder="经度"
+              type="number"
+              step="0.000001"
+            />
+          </el-form-item>
           <el-button @click="getCurrentLocation" :loading="locating" type="info">
             <el-icon><Location /></el-icon>
             定位
@@ -110,13 +114,9 @@
           style="width: 100%"
         >
           <el-option
-            label="默认文件夹"
-            :value="0"
-          />
-          <el-option
             v-for="folder in validFolders"
             :key="folder.id"
-            :label="folder.name || '未命名文件夹'"
+            :label="`${folder.name || '未命名文件夹'} (${folder.totalCount || 0})`"
             :value="folder.id"
           />
         </el-select>
@@ -195,7 +195,7 @@ const form = reactive({
   lng: '',
   duration: '',
   file: null,
-  folderId: 0
+  folderId: null
 })
 
 // 表单验证规则
@@ -252,8 +252,13 @@ onMounted(() => {
 const loadFolders = async () => {
   try {
     const { folderApi } = await import('@/api/folder.js')
-    const response = await folderApi.getFolders()
+    const response = await folderApi.getFoldersFlat()
     folders.value = Array.isArray(response) ? response : []
+    
+    // 自动选择第一个可用的文件夹作为默认值
+    if (folders.value.length > 0 && !form.folderId) {
+      form.folderId = folders.value[0].id
+    }
   } catch (error) {
     console.error('加载文件夹失败:', error)
     folders.value = []
@@ -401,7 +406,7 @@ const resetForm = () => {
   form.lng = ''
   form.duration = ''
   form.file = null
-  form.folderId = 0
+  form.folderId = validFolders.value.length > 0 ? validFolders.value[0].id : null
   
   if (previewUrl.value) {
     URL.revokeObjectURL(previewUrl.value)

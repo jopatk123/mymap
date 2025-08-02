@@ -7,17 +7,19 @@ class FolderController {
     try {
       const folders = await FolderModel.findAll()
       
-      // 为每个文件夹添加全景图数量
-      const addPanoramaCount = async (folderList) => {
+      // 为每个文件夹添加内容数量
+      const addContentCount = async (folderList) => {
         for (const folder of folderList) {
-          folder.panoramaCount = await FolderModel.getPanoramaCount(folder.id)
+          folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id))
+          folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id))
+          folder.totalCount = folder.panoramaCount + folder.videoPointCount
           if (folder.children) {
-            await addPanoramaCount(folder.children)
+            await addContentCount(folder.children)
           }
         }
       }
       
-      await addPanoramaCount(folders)
+      await addContentCount(folders)
       
       res.json({
         success: true,
@@ -36,6 +38,13 @@ class FolderController {
   static async getFoldersFlat(req, res) {
     try {
       const folders = await FolderModel.findAllFlat()
+      
+      // 为每个文件夹添加内容计数
+      for (const folder of folders) {
+        folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id))
+        folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id))
+        folder.totalCount = folder.panoramaCount + folder.videoPointCount
+      }
       
       res.json({
         success: true,

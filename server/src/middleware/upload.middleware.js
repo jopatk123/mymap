@@ -10,11 +10,15 @@ const ensureUploadDir = async () => {
   const uploadDir = path.join(__dirname, '../../', config.upload.dir)
   const panoramaDir = path.join(uploadDir, 'panoramas')
   const thumbnailDir = path.join(uploadDir, 'thumbnails')
+  const kmlDir = path.join(uploadDir, 'kml')
+  const videoDir = path.join(uploadDir, 'videos')
   
   try {
     await fs.mkdir(uploadDir, { recursive: true })
     await fs.mkdir(panoramaDir, { recursive: true })
     await fs.mkdir(thumbnailDir, { recursive: true })
+    await fs.mkdir(kmlDir, { recursive: true })
+    await fs.mkdir(videoDir, { recursive: true })
   } catch (error) {
     console.error('创建上传目录失败:', error)
   }
@@ -162,6 +166,208 @@ const handleSingleUpload = (req, res, next) => {
 }
 
 /**
+ * 处理视频文件上传
+ */
+const handleVideoUpload = (req, res, next) => {
+  // 视频文件专用的存储配置
+  const videoStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadPath = path.join(__dirname, '../../', config.upload.dir, 'videos')
+      cb(null, uploadPath)
+    },
+    filename: (req, file, cb) => {
+      // 生成唯一文件名
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const ext = path.extname(file.originalname)
+      cb(null, `video-${uniqueSuffix}${ext}`)
+    }
+  })
+
+  // 视频文件过滤器
+  const videoFileFilter = (req, file, cb) => {
+    // 检查文件类型是否为视频
+    if (file.mimetype.startsWith('video/')) {
+      return cb(null, true)
+    }
+    
+    // 检查文件扩展名是否为视频格式
+    const videoExtensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv']
+    const fileExtension = path.extname(file.originalname).toLowerCase()
+    
+    if (videoExtensions.includes(fileExtension)) {
+      return cb(null, true)
+    }
+    
+    return cb(new Error('不支持的文件类型'), false)
+  }
+
+  // 创建视频专用的multer实例
+  const videoUpload = multer({
+    storage: videoStorage,
+    fileFilter: videoFileFilter,
+    limits: {
+      fileSize: 500 * 1024 * 1024, // 500MB for videos
+      files: 1
+    }
+  })
+
+  videoUpload.single('file')(req, res, async (err) => {
+    if (err) {
+      console.error('视频文件上传错误:', err)
+      
+      if (err instanceof multer.MulterError) {
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return res.status(400).json(errorResponse('文件大小超出限制'))
+          case 'LIMIT_FILE_COUNT':
+            return res.status(400).json(errorResponse('文件数量超出限制'))
+          case 'LIMIT_UNEXPECTED_FILE':
+            return res.status(400).json(errorResponse('意外的文件字段'))
+          default:
+            return res.status(400).json(errorResponse('文件上传失败'))
+        }
+      }
+      
+      return res.status(400).json(errorResponse(err.message))
+    }
+    
+    if (!req.file) {
+      return res.status(400).json(errorResponse('请选择要上传的文件'))
+    }
+    
+    try {
+      // 构建文件URL
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const videoUrl = `${baseUrl}/${config.upload.dir}/videos/${req.file.filename}`
+      
+      // 将文件信息添加到请求对象
+      req.uploadedFile = {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        url: videoUrl
+      }
+      
+      next()
+    } catch (error) {
+      console.error('处理视频文件失败:', error)
+      
+      // 清理已上传的文件
+      try {
+        await fs.unlink(req.file.path)
+      } catch (cleanupError) {
+        console.error('清理文件失败:', cleanupError)
+      }
+      
+      return res.status(500).json(errorResponse('处理视频文件失败'))
+    }
+  })
+}
+
+/**
+ * 处理KML文件上传
+ */
+const handleKmlUpload = (req, res, next) => {
+  // KML文件专用的存储配置
+  const kmlStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadPath = path.join(__dirname, '../../', config.upload.dir, 'kml')
+      cb(null, uploadPath)
+    },
+    filename: (req, file, cb) => {
+      // 生成唯一文件名
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+      const ext = path.extname(file.originalname)
+      cb(null, `kml-${uniqueSuffix}${ext}`)
+    }
+  })
+
+  // KML文件过滤器
+  const kmlFileFilter = (req, file, cb) => {
+    // 检查文件扩展名和MIME类型
+    const isKmlExtension = file.originalname.toLowerCase().endsWith('.kml')
+    const isAllowedMimeType = config.upload.kmlTypes.includes(file.mimetype)
+    
+    if (isKmlExtension && isAllowedMimeType) {
+      return cb(null, true)
+    }
+    
+    // 如果扩展名是.kml，即使MIME类型不匹配也允许上传
+    if (isKmlExtension) {
+      return cb(null, true)
+    }
+    
+    return cb(new Error('不支持的文件类型'), false)
+  }
+
+  // 创建KML专用的multer实例
+  const kmlUpload = multer({
+    storage: kmlStorage,
+    fileFilter: kmlFileFilter,
+    limits: {
+      fileSize: config.upload.maxFileSize,
+      files: 1
+    }
+  })
+
+  kmlUpload.single('file')(req, res, async (err) => {
+    if (err) {
+      console.error('KML文件上传错误:', err)
+      
+      if (err instanceof multer.MulterError) {
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return res.status(400).json(errorResponse('文件大小超出限制'))
+          case 'LIMIT_FILE_COUNT':
+            return res.status(400).json(errorResponse('文件数量超出限制'))
+          case 'LIMIT_UNEXPECTED_FILE':
+            return res.status(400).json(errorResponse('意外的文件字段'))
+          default:
+            return res.status(400).json(errorResponse('文件上传失败'))
+        }
+      }
+      
+      return res.status(400).json(errorResponse(err.message))
+    }
+    
+    if (!req.file) {
+      return res.status(400).json(errorResponse('请选择要上传的文件'))
+    }
+    
+    try {
+      // 构建文件URL
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const fileUrl = `${baseUrl}/${config.upload.dir}/kml/${req.file.filename}`
+      
+      // 将文件信息添加到请求对象
+      req.uploadedFile = {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        url: fileUrl
+      }
+      
+      next()
+    } catch (error) {
+      console.error('处理KML文件失败:', error)
+      
+      // 清理已上传的文件
+      try {
+        await fs.unlink(req.file.path)
+      } catch (cleanupError) {
+        console.error('清理文件失败:', cleanupError)
+      }
+      
+      return res.status(500).json(errorResponse('处理KML文件失败'))
+    }
+  })
+}
+
+/**
  * 处理批量文件上传
  */
 const handleBatchUpload = (req, res, next) => {
@@ -272,6 +478,8 @@ const getFileInfo = async (filePath) => {
 module.exports = {
   handleSingleUpload,
   handleBatchUpload,
+  handleKmlUpload,
+  handleVideoUpload,
   generateThumbnail,
   deleteFile,
   getFileInfo
