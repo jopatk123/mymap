@@ -10,7 +10,9 @@ class PanoramaQueryController {
         pageSize = 20,
         sortBy = 'created_at',
         sortOrder = 'DESC',
-        keyword = ''
+        keyword = '',
+        folderId,
+        includeHidden = false
       } = req.query
       
       const options = {
@@ -18,7 +20,9 @@ class PanoramaQueryController {
         pageSize: parseInt(pageSize),
         sortBy,
         sortOrder,
-        keyword
+        keyword,
+        folderId: folderId ? parseInt(folderId) : null,
+        includeHidden: includeHidden === 'true'
       }
       
       const result = await PanoramaService.getPanoramas(options)

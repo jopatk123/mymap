@@ -11,23 +11,63 @@
     </div>
     
     <div class="page-content">
-      <!-- 搜索和筛选 -->
-      <div class="search-section">
-        <el-form :model="searchForm" inline>
-          <el-form-item label="关键词">
-            <el-input
-              v-model="searchForm.keyword"
-              placeholder="搜索标题或描述"
-              @keyup.enter="handleSearch"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button @click="handleSearch" type="primary">搜索</el-button>
-            <el-button @click="resetSearch">重置</el-button>
-          </el-form-item>
-        </el-form>
+      <!-- 左侧文件夹树 -->
+      <div class="sidebar">
+        <FolderTree
+          @folder-selected="handleFolderSelected"
+          @folder-updated="handleFolderUpdated"
+        />
       </div>
+      
+      <!-- 右侧内容区 -->
+      <div class="main-content">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb-section" v-if="selectedFolder">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item>全部文件夹</el-breadcrumb-item>
+            <el-breadcrumb-item
+              v-for="folder in folderPath"
+              :key="folder.id"
+            >
+              {{ folder.name }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+        
+        <!-- 搜索和筛选 -->
+        <div class="search-section">
+          <el-form :model="searchForm" inline>
+            <el-form-item label="关键词">
+              <el-input
+                v-model="searchForm.keyword"
+                placeholder="搜索标题或描述"
+                @keyup.enter="handleSearch"
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="显示隐藏">
+              <el-switch
+                v-model="searchForm.includeHidden"
+                active-text="是"
+                inactive-text="否"
+                @change="handleSearch"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button @click="handleSearch" type="primary">搜索</el-button>
+              <el-button @click="resetSearch">重置</el-button>
+              <el-button 
+                @click="batchDelete" 
+                type="danger" 
+                :disabled="selectedRows.length === 0"
+                :loading="loading"
+              >
+                <el-icon><Delete /></el-icon>
+                删除{{ selectedRows.length > 0 ? ` (${selectedRows.length})` : '' }}
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       
       <!-- 数据表格 -->
       <div class="table-section">
@@ -50,11 +90,25 @@
             </template>
           </el-table-column>
           
-          <el-table-column prop="title" label="标题" min-width="150" />
+          <el-table-column prop="title" label="标题" min-width="150">
+            <template #default="{ row }">
+              <span :class="{ 'hidden-item': !row.is_visible }">
+                {{ row.title }}
+              </span>
+            </template>
+          </el-table-column>
           
           <el-table-column prop="description" label="描述" min-width="200">
             <template #default="{ row }">
-              <span class="description">{{ row.description || '暂无描述' }}</span>
+              <span class="description" :class="{ 'hidden-item': !row.is_visible }">
+                {{ row.description || '暂无描述' }}
+              </span>
+            </template>
+          </el-table-column>
+          
+          <el-table-column prop="folder_name" label="文件夹" width="120">
+            <template #default="{ row }">
+              <span class="folder-name">{{ row.folder_name || '默认文件夹' }}</span>
             </template>
           </el-table-column>
           
@@ -70,8 +124,50 @@
             </template>
           </el-table-column>
           
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="状态" width="80">
             <template #default="{ row }">
+              <el-tag :type="row.is_visible ? 'success' : 'info'" size="small">
+                {{ row.is_visible ? '显示' : '隐藏' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          
+          <el-table-column label="操作" width="280" fixed="right">
+            <template #default="{ row }">
+              <el-dropdown @command="(command) => handleRowAction(command, row)" trigger="click">
+                <el-button link size="small">
+                  <el-icon><MoreFilled /></el-icon>
+                  更多
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="view">
+                      <el-icon><View /></el-icon>
+                      查看
+                    </el-dropdown-item>
+                    <el-dropdown-item command="edit">
+                      <el-icon><Edit /></el-icon>
+                      编辑
+                    </el-dropdown-item>
+                    <el-dropdown-item command="toggle-visibility">
+                      <el-icon>
+                        <View v-if="!row.is_visible" />
+                        <Hide v-else />
+                      </el-icon>
+                      {{ row.is_visible ? '隐藏' : '显示' }}
+                    </el-dropdown-item>
+                    <el-dropdown-item command="move" divided>
+                      <el-icon><FolderOpened /></el-icon>
+                      移动到文件夹
+                    </el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              
               <el-button @click="viewPanorama(row)" link size="small">
                 <el-icon><View /></el-icon>
                 查看
@@ -80,15 +176,6 @@
                 <el-icon><Edit /></el-icon>
                 编辑
               </el-button>
-              <el-button
-                @click="deletePanorama(row)"
-                link
-                size="small"
-                class="danger-button"
-              >
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -96,9 +183,34 @@
         <!-- 批量操作 -->
         <div class="batch-actions" v-if="selectedRows.length > 0">
           <span>已选择 {{ selectedRows.length }} 项</span>
-          <el-button @click="batchDelete" type="danger" size="small">
-            批量删除
-          </el-button>
+          <div class="batch-buttons">
+            <el-dropdown @command="handleBatchAction" trigger="click">
+              <el-button type="primary" size="small">
+                批量操作
+                <el-icon><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="move">
+                    <el-icon><FolderOpened /></el-icon>
+                    移动到文件夹
+                  </el-dropdown-item>
+                  <el-dropdown-item command="show">
+                    <el-icon><View /></el-icon>
+                    批量显示
+                  </el-dropdown-item>
+                  <el-dropdown-item command="hide">
+                    <el-icon><Hide /></el-icon>
+                    批量隐藏
+                  </el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>
+                    <el-icon><Delete /></el-icon>
+                    批量删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
         
         <!-- 分页 -->
@@ -109,11 +221,10 @@
             :total="pagination.total"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
           />
         </div>
       </div>
+    </div>
     </div>
     
     <!-- 上传对话框 -->
@@ -135,28 +246,76 @@
       :panorama="currentPanorama"
       @panorama-deleted="handlePanoramaDeleted"
     />
+    
+    <!-- 移动到文件夹对话框 -->
+    <el-dialog
+      v-model="showMoveDialog"
+      title="移动到文件夹"
+      width="400px"
+    >
+      <el-form label-width="80px">
+        <el-form-item label="目标文件夹">
+          <el-select
+            v-model="moveToFolderId"
+            placeholder="选择文件夹（留空表示移动到根目录）"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="folder in flatFolders"
+              :key="folder.id"
+              :label="folder.name"
+              :value="folder.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showMoveDialog = false">取消</el-button>
+          <el-button @click="handleMoveConfirm" type="primary" :loading="moving">
+            移动
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, View, Edit, Delete } from '@element-plus/icons-vue'
+import { 
+  Plus, 
+  View, 
+  Edit, 
+  Delete, 
+  Hide, 
+  MoreFilled, 
+  FolderOpened, 
+  ArrowDown 
+} from '@element-plus/icons-vue'
 
 import UploadDialog from '@/components/common/UploadDialog.vue'
 import EditDialog from '@/components/admin/EditDialog.vue'
 import PanoramaModal from '@/components/map/PanoramaModal.vue'
+import FolderTree from '@/components/admin/FolderTree.vue'
 
 import { usePanoramaStore } from '@/store/panorama.js'
+import { useFolderStore } from '@/store/folder.js'
 
 // Store
 const panoramaStore = usePanoramaStore()
+const folderStore = useFolderStore()
 const { panoramas, loading, pagination } = storeToRefs(panoramaStore)
+const { flatFolders } = storeToRefs(folderStore)
 
 // 响应式数据
 const searchForm = reactive({
-  keyword: ''
+  keyword: '',
+  includeHidden: false
 })
 
 const selectedRows = ref([])
@@ -164,18 +323,43 @@ const currentPanorama = ref(null)
 const showUploadDialog = ref(false)
 const showEditDialog = ref(false)
 const showViewDialog = ref(false)
+const showMoveDialog = ref(false)
+const selectedFolder = ref(null)
+const moveToFolderId = ref(null)
+const movingPanoramas = ref([])
+const moving = ref(false)
+
+// 计算属性
+const folderPath = computed(() => {
+  if (!selectedFolder.value) return []
+  return folderStore.getFolderPath(selectedFolder.value.id)
+})
 
 // 初始化
 onMounted(() => {
   loadData()
+  loadFolders()
 })
 
 // 加载数据
 const loadData = async () => {
   try {
-    await panoramaStore.fetchPanoramas()
+    const params = {
+      ...searchForm,
+      folderId: selectedFolder.value?.id || null
+    }
+    await panoramaStore.fetchPanoramas(params)
   } catch (error) {
     ElMessage.error('加载数据失败: ' + error.message)
+  }
+}
+
+// 加载文件夹
+const loadFolders = async () => {
+  try {
+    await folderStore.fetchFolders()
+  } catch (error) {
+    ElMessage.error('加载文件夹失败: ' + error.message)
   }
 }
 
@@ -188,8 +372,21 @@ const handleSearch = async () => {
 // 重置搜索
 const resetSearch = async () => {
   searchForm.keyword = ''
+  searchForm.includeHidden = false
   panoramaStore.clearSearchParams()
   await loadData()
+}
+
+// 文件夹选择
+const handleFolderSelected = (folder) => {
+  selectedFolder.value = folder
+  selectedRows.value = []
+  loadData()
+}
+
+// 文件夹更新
+const handleFolderUpdated = () => {
+  loadData()
 }
 
 // 选择变化
@@ -209,6 +406,11 @@ const handleCurrentChange = async (page) => {
   pagination.value.page = page
   await loadData()
 }
+
+// 监听分页变化
+watch([() => pagination.value.page, () => pagination.value.pageSize], async () => {
+  await loadData()
+})
 
 // 查看全景图
 const viewPanorama = (panorama) => {
@@ -242,6 +444,105 @@ const deletePanorama = async (panorama) => {
     if (error !== 'cancel') {
       ElMessage.error('删除失败: ' + error.message)
     }
+  }
+}
+
+// 行操作
+const handleRowAction = async (command, row) => {
+  switch (command) {
+    case 'view':
+      viewPanorama(row)
+      break
+    case 'edit':
+      editPanorama(row)
+      break
+    case 'toggle-visibility':
+      await togglePanoramaVisibility(row)
+      break
+    case 'move':
+      movingPanoramas.value = [row]
+      showMoveDialog.value = true
+      break
+    case 'delete':
+      await deletePanorama(row)
+      break
+  }
+}
+
+// 批量操作
+const handleBatchAction = async (command) => {
+  switch (command) {
+    case 'move':
+      movingPanoramas.value = selectedRows.value
+      showMoveDialog.value = true
+      break
+    case 'show':
+      await batchUpdateVisibility(true)
+      break
+    case 'hide':
+      await batchUpdateVisibility(false)
+      break
+    case 'delete':
+      await batchDelete()
+      break
+  }
+}
+
+// 切换全景图可见性
+const togglePanoramaVisibility = async (panorama) => {
+  try {
+    await panoramaStore.updatePanoramaVisibility(panorama.id, !panorama.is_visible)
+    ElMessage.success(`全景图已${panorama.is_visible ? '隐藏' : '显示'}`)
+    await loadData()
+  } catch (error) {
+    ElMessage.error('更新可见性失败: ' + error.message)
+  }
+}
+
+// 批量更新可见性
+const batchUpdateVisibility = async (isVisible) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要${isVisible ? '显示' : '隐藏'}选中的 ${selectedRows.value.length} 个全景图吗？`,
+      '确认操作',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const ids = selectedRows.value.map(row => row.id)
+    await panoramaStore.batchUpdatePanoramaVisibility(ids, isVisible)
+    ElMessage.success(`批量${isVisible ? '显示' : '隐藏'}成功`)
+    selectedRows.value = []
+    await loadData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(`批量${isVisible ? '显示' : '隐藏'}失败: ` + error.message)
+    }
+  }
+}
+
+// 移动确认
+const handleMoveConfirm = async () => {
+  try {
+    moving.value = true
+    
+    const ids = movingPanoramas.value.map(p => p.id)
+    await panoramaStore.batchMovePanoramasToFolder(ids, moveToFolderId.value)
+    
+    ElMessage.success('移动成功')
+    showMoveDialog.value = false
+    moveToFolderId.value = null
+    movingPanoramas.value = []
+    selectedRows.value = []
+    await loadData()
+    await loadFolders()
+  } catch (error) {
+    ElMessage.error('移动失败: ' + error.message)
+  } finally {
+    moving.value = false
   }
 }
 
@@ -313,6 +614,9 @@ const formatDate = (dateString) => {
 <style lang="scss" scoped>
 .panorama-manage {
   padding: 24px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   
   .page-header {
     display: flex;
@@ -329,61 +633,105 @@ const formatDate = (dateString) => {
   }
   
   .page-content {
-    background: white;
-    border-radius: 8px;
-    padding: 24px;
+    flex: 1;
+    display: flex;
+    gap: 24px;
+    overflow: hidden;
     
-    .search-section {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #eee;
+    .sidebar {
+      width: 300px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
     }
     
-    .table-section {
-      .thumbnail {
-        width: 60px;
-        height: 30px;
-        object-fit: cover;
-        border-radius: 4px;
-        border: 1px solid #eee;
+    .main-content {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      .breadcrumb-section {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f0f0f0;
       }
       
-      .description {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+      .search-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+      }
+      .table-section {
+        flex: 1;
         overflow: hidden;
-        color: #666;
-      }
-      
-      .danger-button {
-        color: $danger-color;
+        display: flex;
+        flex-direction: column;
         
-        &:hover {
-          color: #f78989;
+        .el-table {
+          flex: 1;
+        }
+        
+        .thumbnail {
+          width: 60px;
+          height: 30px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid #eee;
+        }
+        
+        .description {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          color: #666;
+        }
+        
+        .folder-name {
+          color: #409eff;
+          font-size: 12px;
+        }
+        
+        .hidden-item {
+          color: #999;
+          text-decoration: line-through;
+        }
+        
+        .danger-button {
+          color: #f56c6c;
+          
+          &:hover {
+            color: #f78989;
+          }
         }
       }
-    }
-    
-    .batch-actions {
-      margin: 16px 0;
-      padding: 12px 16px;
-      background: #f5f7fa;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      
-      span {
-        color: #606266;
-        font-size: 14px;
+      .batch-actions {
+        margin: 16px 0;
+        padding: 12px 16px;
+        background: #f5f7fa;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        
+        span {
+          color: #606266;
+          font-size: 14px;
+        }
+        
+        .batch-buttons {
+          display: flex;
+          gap: 8px;
+        }
       }
-    }
-    
-    .pagination-section {
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      .pagination-section {
+        margin-top: 24px;
+        display: flex;
+        justify-content: center;
+      }
     }
   }
 }
@@ -399,23 +747,36 @@ const formatDate = (dateString) => {
     }
     
     .page-content {
-      padding: 16px;
+      flex-direction: column;
       
-      .search-section {
-        .el-form {
-          flex-direction: column;
-          
-          .el-form-item {
-            margin-right: 0;
-            margin-bottom: 16px;
-          }
-        }
+      .sidebar {
+        width: 100%;
+        height: 300px;
       }
       
-      .batch-actions {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+      .main-content {
+        padding: 16px;
+        
+        .search-section {
+          .el-form {
+            flex-direction: column;
+            
+            .el-form-item {
+              margin-right: 0;
+              margin-bottom: 16px;
+            }
+          }
+        }
+        
+        .batch-actions {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+          
+          .batch-buttons {
+            width: 100%;
+          }
+        }
       }
     }
   }

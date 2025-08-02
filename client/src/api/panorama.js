@@ -125,3 +125,52 @@ export function getNearbyPanoramas(lat, lng, radius = 1000) {
     params: { lat, lng, radius }
   })
 }
+
+/**
+ * 批量删除全景图
+ * @param {Array} ids 全景图ID数组
+ * @returns {Promise}
+ */
+export function batchDeletePanoramas(ids) {
+  return api.delete('/panoramas', { data: { ids } })
+}
+
+/**
+ * 移动全景图到文件夹
+ * @param {number} id 全景图ID
+ * @param {number|null} folderId 文件夹ID
+ * @returns {Promise}
+ */
+export function movePanoramaToFolder(id, folderId) {
+  return api.patch(`/panoramas/${id}/move`, { folderId })
+}
+
+/**
+ * 批量移动全景图到文件夹
+ * @param {Array} ids 全景图ID数组
+ * @param {number|null} folderId 文件夹ID
+ * @returns {Promise}
+ */
+export function batchMovePanoramasToFolder(ids, folderId) {
+  return api.patch('/panoramas/batch/move', { ids, folderId })
+}
+
+/**
+ * 更新全景图可见性
+ * @param {number} id 全景图ID
+ * @param {boolean} isVisible 是否可见
+ * @returns {Promise}
+ */
+export function updatePanoramaVisibility(id, isVisible) {
+  return api.patch(`/panoramas/${id}/visibility`, { isVisible })
+}
+
+/**
+ * 批量更新全景图可见性
+ * @param {Array} ids 全景图ID数组
+ * @param {boolean} isVisible 是否可见
+ * @returns {Promise}
+ */
+export function batchUpdatePanoramaVisibility(ids, isVisible) {
+  return api.patch('/panoramas/batch/visibility', { ids, isVisible })
+}

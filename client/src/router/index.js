@@ -13,8 +13,7 @@ const routes = [
     path: '/admin',
     component: () => import('@/views/Admin/index.vue'),
     meta: {
-      title: '管理后台',
-      requiresAuth: true
+      title: '管理后台'
     },
     children: [
       {
@@ -73,8 +72,9 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('token')
     if (!token) {
-      // 可以跳转到登录页面
-      console.warn('需要登录才能访问此页面')
+      // 跳转到登录页面或显示提示
+      alert('需要登录才能访问此页面')
+      return next('/') // 重定向到首页
     }
   }
   

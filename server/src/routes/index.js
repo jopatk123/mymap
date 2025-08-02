@@ -38,4 +38,8 @@ router.get('/health', (req, res) => {
 // 全景图相关路由
 router.use('/panoramas', panoramaRoutes)
 
+// 文件夹相关路由
+const folderRoutes = require('./folder.routes')
+router.use('/folders', folderRoutes)
+
 module.exports = router

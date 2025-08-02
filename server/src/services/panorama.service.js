@@ -112,6 +112,42 @@ class PanoramaService {
       // 坐标转换：WGS84 -> GCJ02
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat)
       
+      // 获取默认文件夹ID（如果没有指定文件夹，使用默认文件夹）
+      const FolderModel = require('../models/folder.model')
+      let defaultFolderId = null
+      
+      try {
+        // 查找名为"默认文件夹"的文件夹
+        const result = await FolderModel.findAllFlat()
+        const defaultFolder = result.find(folder => folder.name === '默认文件夹')
+        
+        if (defaultFolder) {
+          defaultFolderId = defaultFolder.id
+        } else {
+          // 如果没有默认文件夹，创建一个
+          const newDefaultFolder = await FolderModel.create({
+            name: '默认文件夹',
+            parentId: null,
+            isVisible: true,
+            sortOrder: 0
+          })
+          defaultFolderId = newDefaultFolder.id
+        }
+      } catch (folderError) {
+        console.warn('获取默认文件夹失败，将使用NULL:', folderError.message)
+        defaultFolderId = null
+      }
+      
+      // 明确处理folderId为0的情况（前端默认文件夹）
+      let finalFolderId;
+      if (panoramaData.folderId === 0) {
+        finalFolderId = defaultFolderId;
+      } else if (panoramaData.folderId !== undefined && panoramaData.folderId !== null) {
+        finalFolderId = panoramaData.folderId;
+      } else {
+        finalFolderId = defaultFolderId;
+      }
+      
       const data = {
         title,
         description,
@@ -122,7 +158,8 @@ class PanoramaService {
         gcj02Lat,
         gcj02Lng,
         fileSize,
-        fileType
+        fileType,
+        folderId: finalFolderId
       }
       
       const panorama = await PanoramaModel.create(data)
@@ -139,6 +176,7 @@ class PanoramaService {
         gcj02Lng: parseFloat(panorama.gcj02_lng),
         fileSize: panorama.file_size,
         fileType: panorama.file_type,
+        folderId: panorama.folder_id,
         createdAt: panorama.created_at,
         updatedAt: panorama.updated_at
       }
@@ -294,6 +332,102 @@ class PanoramaService {
       }
     } catch (error) {
       throw new Error(`坐标转换失败: ${error.message}`)
+    }
+  }
+  
+  // 移动全景图到文件夹
+  static async movePanoramaToFolder(id, folderId) {
+    try {
+      // 检查全景图是否存在
+      const existingPanorama = await PanoramaModel.findById(id)
+      if (!existingPanorama) {
+        throw new Error('全景图不存在')
+      }
+      
+      const panorama = await PanoramaModel.moveToFolder(id, folderId)
+      
+      return {
+        id: panorama.id,
+        title: panorama.title,
+        description: panorama.description,
+        imageUrl: panorama.image_url,
+        thumbnailUrl: panorama.thumbnail_url,
+        lat: parseFloat(panorama.latitude),
+        lng: parseFloat(panorama.longitude),
+        folderId: panorama.folder_id,
+        isVisible: panorama.is_visible,
+        createdAt: panorama.created_at,
+        updatedAt: panorama.updated_at
+      }
+    } catch (error) {
+      throw new Error(`移动全景图失败: ${error.message}`)
+    }
+  }
+
+  // 批量移动全景图到文件夹
+  static async batchMovePanoramasToFolder(ids, folderId) {
+    try {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error('请提供有效的ID列表')
+      }
+      
+      const movedCount = await PanoramaModel.batchMoveToFolder(ids, folderId)
+      
+      return {
+        success: true,
+        movedCount,
+        message: `成功移动 ${movedCount} 个全景图`
+      }
+    } catch (error) {
+      throw new Error(`批量移动全景图失败: ${error.message}`)
+    }
+  }
+
+  // 更新全景图可见性
+  static async updatePanoramaVisibility(id, isVisible) {
+    try {
+      // 检查全景图是否存在
+      const existingPanorama = await PanoramaModel.findById(id)
+      if (!existingPanorama) {
+        throw new Error('全景图不存在')
+      }
+      
+      const panorama = await PanoramaModel.updateVisibility(id, isVisible)
+      
+      return {
+        id: panorama.id,
+        title: panorama.title,
+        description: panorama.description,
+        imageUrl: panorama.image_url,
+        thumbnailUrl: panorama.thumbnail_url,
+        lat: parseFloat(panorama.latitude),
+        lng: parseFloat(panorama.longitude),
+        folderId: panorama.folder_id,
+        isVisible: panorama.is_visible,
+        createdAt: panorama.created_at,
+        updatedAt: panorama.updated_at
+      }
+    } catch (error) {
+      throw new Error(`更新全景图可见性失败: ${error.message}`)
+    }
+  }
+
+  // 批量更新全景图可见性
+  static async batchUpdatePanoramaVisibility(ids, isVisible) {
+    try {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error('请提供有效的ID列表')
+      }
+      
+      const updatedCount = await PanoramaModel.batchUpdateVisibility(ids, isVisible)
+      
+      return {
+        success: true,
+        updatedCount,
+        message: `成功${isVisible ? '显示' : '隐藏'} ${updatedCount} 个全景图`
+      }
+    } catch (error) {
+      throw new Error(`批量更新全景图可见性失败: ${error.message}`)
     }
   }
 }

@@ -84,6 +84,27 @@
         </div>
       </el-form-item>
       
+      <!-- 文件夹选择 -->
+      <el-form-item label="文件夹" prop="folderId">
+        <el-select
+          v-model="form.folderId"
+          placeholder="选择文件夹"
+          clearable
+          style="width: 100%"
+        >
+          <el-option
+            label="默认文件夹"
+            :value="0"
+          />
+          <el-option
+            v-for="folder in folders"
+            :key="folder.id"
+            :label="folder.name"
+            :value="folder.id"
+          />
+        </el-select>
+      </el-form-item>
+      
       <!-- 处理状态 -->
       <el-form-item v-if="processing" label="处理状态">
         <div class="processing-status">
@@ -147,13 +168,29 @@ const uploadRef = ref(null)
 // Store
 const panoramaStore = usePanoramaStore()
 
+// 文件夹数据
+const folders = ref([])
+
+// 加载文件夹
+const loadFolders = async () => {
+  try {
+    const { getFolders } = await import('@/api/folder.js')
+    const response = await getFolders()
+    folders.value = response || []
+  } catch (error) {
+    console.error('加载文件夹失败:', error)
+    folders.value = []
+  }
+}
+
 // 表单数据
 const form = reactive({
   title: '',
   description: '',
   lat: '',
   lng: '',
-  file: null
+  file: null,
+  folderId: 0
 })
 
 // 表单验证规则
@@ -312,6 +349,9 @@ const handleSubmit = async () => {
     formData.append('description', form.description)
     formData.append('lat', form.lat)
     formData.append('lng', form.lng)
+    if (form.folderId !== undefined && form.folderId !== null) {
+      formData.append('folderId', form.folderId)
+    }
     
     // 上传文件
     const newPanorama = await uploadPanoramaImage(formData, (progress) => {
@@ -320,6 +360,15 @@ const handleSubmit = async () => {
     
     // 将返回的新全景图添加到 store
     panoramaStore.addPanorama(newPanorama)
+    
+    // 重新加载文件夹数据以更新点位数量
+    try {
+      const { useFolderStore } = await import('@/store/folder.js')
+      const folderStore = useFolderStore()
+      await folderStore.fetchFolders()
+    } catch (error) {
+      console.warn('重新加载文件夹数据失败:', error)
+    }
     
     ElMessage.success('上传成功')
     emit('success')
@@ -351,6 +400,7 @@ const resetForm = () => {
   form.lat = ''
   form.lng = ''
   form.file = null
+  form.folderId = 0
   
   previewUrl.value = ''
   uploadProgress.value = 0

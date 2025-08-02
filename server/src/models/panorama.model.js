@@ -9,30 +9,48 @@ class PanoramaModel {
       sortBy = 'created_at',
       sortOrder = 'DESC',
       keyword = '',
-      bounds = null
+      bounds = null,
+      folderId = null,
+      includeHidden = false
     } = options
     
-    let sql = 'SELECT * FROM panoramas WHERE 1=1'
+    let sql = `
+      SELECT p.*, f.name as folder_name 
+      FROM panoramas p 
+      LEFT JOIN folders f ON p.folder_id = f.id 
+      WHERE 1=1
+    `
     const params = []
+    
+    // 可见性筛选
+    if (!includeHidden) {
+      sql += ' AND p.is_visible = TRUE'
+    }
+    
+    // 文件夹筛选
+    if (folderId !== null) {
+      sql += ' AND p.folder_id = ?'
+      params.push(folderId)
+    }
     
     // 关键词搜索
     if (keyword) {
-      sql += ' AND (title LIKE ? OR description LIKE ?)'
+      sql += ' AND (p.title LIKE ? OR p.description LIKE ?)'
       params.push(`%${keyword}%`, `%${keyword}%`)
     }
     
     // 地图边界筛选
     if (bounds) {
       const { north, south, east, west } = bounds
-      sql += ' AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?'
+      sql += ' AND p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?'
       params.push(south, north, west, east)
     }
     
     // 排序
-    const allowedSortFields = ['created_at', 'title', 'latitude', 'longitude']
+    const allowedSortFields = ['created_at', 'title', 'latitude', 'longitude', 'sort_order']
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at'
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-    sql += ` ORDER BY ${sortField} ${order}`
+    sql += ` ORDER BY p.${sortField} ${order}`
     
     // 分页
     const offset = (page - 1) * pageSize
@@ -41,17 +59,26 @@ class PanoramaModel {
     const rows = await query(sql, params)
     
     // 获取总数
-    let countSql = 'SELECT COUNT(*) as total FROM panoramas WHERE 1=1'
+    let countSql = 'SELECT COUNT(*) as total FROM panoramas p WHERE 1=1'
     const countParams = []
     
+    if (!includeHidden) {
+      countSql += ' AND p.is_visible = TRUE'
+    }
+    
+    if (folderId !== null) {
+      countSql += ' AND p.folder_id = ?'
+      countParams.push(folderId)
+    }
+    
     if (keyword) {
-      countSql += ' AND (title LIKE ? OR description LIKE ?)'
+      countSql += ' AND (p.title LIKE ? OR p.description LIKE ?)'
       countParams.push(`%${keyword}%`, `%${keyword}%`)
     }
     
     if (bounds) {
       const { north, south, east, west } = bounds
-      countSql += ' AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?'
+      countSql += ' AND p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?'
       countParams.push(south, north, west, east)
     }
     
@@ -116,15 +143,18 @@ class PanoramaModel {
       gcj02Lat,
       gcj02Lng,
       fileSize,
-      fileType
+      fileType,
+      folderId,
+      isVisible = true,
+      sortOrder = 0
     } = panoramaData
     
     const sql = `
       INSERT INTO panoramas (
         title, description, image_url, thumbnail_url,
         latitude, longitude, gcj02_lat, gcj02_lng,
-        file_size, file_type
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        file_size, file_type, folder_id, is_visible, sort_order
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     
     const params = [
@@ -137,7 +167,10 @@ class PanoramaModel {
       gcj02Lat || null,
       gcj02Lng || null,
       fileSize || null,
-      fileType || null
+      fileType || null,
+      folderId || null,
+      isVisible,
+      sortOrder
     ]
     
     const result = await query(sql, params)
@@ -154,7 +187,10 @@ class PanoramaModel {
       latitude,
       longitude,
       gcj02Lat,
-      gcj02Lng
+      gcj02Lng,
+      folderId,
+      isVisible,
+      sortOrder
     } = panoramaData
     
     const sql = `
@@ -167,6 +203,9 @@ class PanoramaModel {
         longitude = ?,
         gcj02_lat = ?,
         gcj02_lng = ?,
+        folder_id = ?,
+        is_visible = ?,
+        sort_order = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `
@@ -180,6 +219,9 @@ class PanoramaModel {
       longitude,
       gcj02Lat || null,
       gcj02Lng || null,
+      folderId || null,
+      isVisible !== undefined ? isVisible : true,
+      sortOrder !== undefined ? sortOrder : 0,
       id
     ]
     
@@ -307,6 +349,65 @@ class PanoramaModel {
       total: totalResult.total,
       recentWeek: recentResult.recent
     }
+  }
+  
+  // 移动全景图到文件夹
+  static async moveToFolder(id, folderId) {
+    const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    await query(sql, [folderId, id])
+    return await this.findById(id)
+  }
+
+  // 批量移动全景图到文件夹
+  static async batchMoveToFolder(ids, folderId) {
+    if (!ids || ids.length === 0) return 0
+    
+    const placeholders = ids.map(() => '?').join(',')
+    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`
+    const params = [folderId, ...ids]
+    const result = await query(sql, params)
+    return result.affectedRows
+  }
+
+  // 更新可见性
+  static async updateVisibility(id, isVisible) {
+    const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    await query(sql, [isVisible, id])
+    return await this.findById(id)
+  }
+
+  // 批量更新可见性
+  static async batchUpdateVisibility(ids, isVisible) {
+    if (!ids || ids.length === 0) return 0
+    
+    const placeholders = ids.map(() => '?').join(',')
+    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`
+    const params = [isVisible, ...ids]
+    const result = await query(sql, params)
+    return result.affectedRows
+  }
+
+  // 根据文件夹获取全景图
+  static async findByFolder(folderId, options = {}) {
+    const {
+      includeHidden = false,
+      sortBy = 'sort_order',
+      sortOrder = 'ASC'
+    } = options
+    
+    let sql = 'SELECT * FROM panoramas WHERE folder_id = ?'
+    const params = [folderId]
+    
+    if (!includeHidden) {
+      sql += ' AND is_visible = TRUE'
+    }
+    
+    const allowedSortFields = ['created_at', 'title', 'sort_order']
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'sort_order'
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+    sql += ` ORDER BY ${sortField} ${order}`
+    
+    return await query(sql, params)
   }
 }
 

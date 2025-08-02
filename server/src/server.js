@@ -1,6 +1,7 @@
 const app = require('./app')
 const config = require('./config')
 const { testConnection, initTables, closePool } = require('./config/database')
+const { initDefaultFolder } = require('./init/init-default-folder')
 
 // 启动服务器
 const startServer = async () => {
@@ -14,6 +15,10 @@ const startServer = async () => {
     
     // 初始化数据库表
     await initTables()
+    
+    // 初始化默认文件夹
+    const defaultFolderId = await initDefaultFolder()
+    console.log(`📁 默认文件夹ID: ${defaultFolderId}`)
     
     // 启动HTTP服务器
     const server = app.listen(config.server.port, () => {

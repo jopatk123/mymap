@@ -20,6 +20,10 @@ class PanoramaController {
   static updatePanorama = PanoramaMutationController.updatePanorama
   static deletePanorama = PanoramaMutationController.deletePanorama
   static batchDeletePanoramas = PanoramaMutationController.batchDeletePanoramas
+  static movePanoramaToFolder = PanoramaMutationController.movePanoramaToFolder
+  static batchMovePanoramasToFolder = PanoramaMutationController.batchMovePanoramasToFolder
+  static updatePanoramaVisibility = PanoramaMutationController.updatePanoramaVisibility
+  static batchUpdatePanoramaVisibility = PanoramaMutationController.batchUpdatePanoramaVisibility
 
   // 工具相关方法
   static convertCoordinate = PanoramaUtilsController.convertCoordinate

@@ -98,7 +98,8 @@ export const usePanoramaStore = defineStore('panorama', {
         // 更新分页信息
         this.pagination = {
           ...this.pagination,
-          ...response.pagination
+          ...response.pagination,
+          total: Number(response.pagination.total) || 0
         }
         
         return response
@@ -309,6 +310,131 @@ export const usePanoramaStore = defineStore('panorama', {
       }
       this.searchParams = {}
       this.mapBounds = null
-    }
-  }
+    },
+    
+    // 批量删除全景图
+    async batchDeletePanoramas(ids) {
+      try {
+        this.setLoading(true)
+        this.setError(null)
+        
+        const { batchDeletePanoramas } = await import('@/api/panorama.js')
+        await batchDeletePanoramas(ids)
+        
+        // 从列表中移除已删除的全景图
+        this.panoramas = this.panoramas.filter(p => !ids.includes(p.id))
+        
+        // 如果当前全景图被删除，清除它
+        if (this.currentPanorama && ids.includes(this.currentPanorama.id)) {
+          this.currentPanorama = null
+        }
+        
+        return true
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      } finally {
+        this.setLoading(false)
+      }
+    },
+    
+    // 移动全景图到文件夹
+    async movePanoramaToFolder(id, folderId) {
+      try {
+        this.setLoading(true)
+        this.setError(null)
+        
+        const { movePanoramaToFolder } = await import('@/api/panorama.js')
+        const response = await movePanoramaToFolder(id, folderId)
+        
+        // 更新列表中的数据
+        const index = this.panoramas.findIndex(p => p.id === id)
+        if (index > -1) {
+          this.panoramas[index] = { ...this.panoramas[index], folderId }
+        }
+        
+        return response
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      } finally {
+        this.setLoading(false)
+      }
+    },
+    
+    // 批量移动全景图到文件夹
+    async batchMovePanoramasToFolder(ids, folderId) {
+      try {
+        this.setLoading(true)
+        this.setError(null)
+        
+        const { batchMovePanoramasToFolder } = await import('@/api/panorama.js')
+        const response = await batchMovePanoramasToFolder(ids, folderId)
+        
+        // 更新列表中的数据
+        this.panoramas = this.panoramas.map(p => {
+          if (ids.includes(p.id)) {
+            return { ...p, folderId }
+          }
+          return p
+        })
+        
+        return response
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      } finally {
+        this.setLoading(false)
+      }
+    },
+    
+    // 更新全景图可见性
+    async updatePanoramaVisibility(id, isVisible) {
+      try {
+        this.setLoading(true)
+        this.setError(null)
+        
+        const { updatePanoramaVisibility } = await import('@/api/panorama.js')
+        const response = await updatePanoramaVisibility(id, isVisible)
+        
+        // 更新列表中的数据
+        const index = this.panoramas.findIndex(p => p.id === id)
+        if (index > -1) {
+          this.panoramas[index] = { ...this.panoramas[index], isVisible }
+        }
+        
+        return response
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      } finally {
+        this.setLoading(false)
+      }
+    },
+    
+    // 批量更新全景图可见性
+    async batchUpdatePanoramaVisibility(ids, isVisible) {
+      try {
+        this.setLoading(true)
+        this.setError(null)
+        
+        const { batchUpdatePanoramaVisibility } = await import('@/api/panorama.js')
+        const response = await batchUpdatePanoramaVisibility(ids, isVisible)
+        
+        // 更新列表中的数据
+        this.panoramas = this.panoramas.map(p => {
+          if (ids.includes(p.id)) {
+            return { ...p, isVisible }
+          }
+          return p
+        })
+        
+        return response
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      } finally {
+        this.setLoading(false)
+      }
+    }  }
 })

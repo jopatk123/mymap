@@ -38,7 +38,7 @@ router.post('/', validatePanoramaData, PanoramaController.createPanorama)
 // 单文件上传
 router.post('/upload', handleSingleUpload, (req, res) => {
   const { uploadedFile } = req
-  const { title, description, lat, lng } = req.body
+  const { title, description, lat, lng, folderId } = req.body
   
   // 构建全景图数据
   const panoramaData = {
@@ -49,7 +49,8 @@ router.post('/upload', handleSingleUpload, (req, res) => {
     imageUrl: uploadedFile.imageUrl,
     thumbnailUrl: uploadedFile.thumbnailUrl,
     fileSize: uploadedFile.size,
-    fileType: uploadedFile.mimetype
+    fileType: uploadedFile.mimetype,
+    folderId: folderId !== undefined && folderId !== null ? (folderId === 0 ? null : parseInt(folderId)) : null
   }
   
   // 将数据添加到请求体中，然后调用创建控制器
@@ -130,5 +131,17 @@ router.delete('/:id', validateId, PanoramaController.deletePanorama)
 
 // 批量删除全景图
 router.delete('/', validateBatchIds, PanoramaController.batchDeletePanoramas)
+
+// 移动全景图到文件夹
+router.patch('/:id/move', validateId, PanoramaController.movePanoramaToFolder)
+
+// 批量移动全景图到文件夹
+router.patch('/batch/move', validateBatchIds, PanoramaController.batchMovePanoramasToFolder)
+
+// 更新全景图可见性
+router.patch('/:id/visibility', validateId, PanoramaController.updatePanoramaVisibility)
+
+// 批量更新全景图可见性
+router.patch('/batch/visibility', validateBatchIds, PanoramaController.batchUpdatePanoramaVisibility)
 
 module.exports = router

@@ -1,0 +1,258 @@
+const FolderModel = require('../models/folder.model')
+const PanoramaModel = require('../models/panorama.model')
+
+class FolderController {
+  // 获取文件夹树
+  static async getFolders(req, res) {
+    try {
+      const folders = await FolderModel.findAll()
+      
+      // 为每个文件夹添加全景图数量
+      const addPanoramaCount = async (folderList) => {
+        for (const folder of folderList) {
+          folder.panoramaCount = await FolderModel.getPanoramaCount(folder.id)
+          if (folder.children) {
+            await addPanoramaCount(folder.children)
+          }
+        }
+      }
+      
+      await addPanoramaCount(folders)
+      
+      res.json({
+        success: true,
+        data: folders
+      })
+    } catch (error) {
+      console.error('获取文件夹失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取文件夹失败: ' + error.message
+      })
+    }
+  }
+
+  // 获取文件夹列表（平铺）
+  static async getFoldersFlat(req, res) {
+    try {
+      const folders = await FolderModel.findAllFlat()
+      
+      res.json({
+        success: true,
+        data: folders
+      })
+    } catch (error) {
+      console.error('获取文件夹列表失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取文件夹列表失败: ' + error.message
+      })
+    }
+  }
+
+  // 创建文件夹
+  static async createFolder(req, res) {
+    try {
+      const { name, parentId, isVisible = true, sortOrder = 0 } = req.body
+      
+      if (!name || name.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          message: '文件夹名称不能为空'
+        })
+      }
+      
+      const folder = await FolderModel.create({
+        name: name.trim(),
+        parentId: parentId || null,
+        isVisible,
+        sortOrder
+      })
+      
+      res.json({
+        success: true,
+        data: folder,
+        message: '文件夹创建成功'
+      })
+    } catch (error) {
+      console.error('创建文件夹失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '创建文件夹失败: ' + error.message
+      })
+    }
+  }
+
+  // 更新文件夹
+  static async updateFolder(req, res) {
+    try {
+      const { id } = req.params
+      const { name, parentId, isVisible, sortOrder } = req.body
+      
+      if (!name || name.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          message: '文件夹名称不能为空'
+        })
+      }
+      
+      const folder = await FolderModel.update(id, {
+        name: name.trim(),
+        parentId: parentId || null,
+        isVisible,
+        sortOrder
+      })
+      
+      if (!folder) {
+        return res.status(404).json({
+          success: false,
+          message: '文件夹不存在'
+        })
+      }
+      
+      res.json({
+        success: true,
+        data: folder,
+        message: '文件夹更新成功'
+      })
+    } catch (error) {
+      console.error('更新文件夹失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '更新文件夹失败: ' + error.message
+      })
+    }
+  }
+
+  // 删除文件夹
+  static async deleteFolder(req, res) {
+    try {
+      const { id } = req.params
+      
+      const success = await FolderModel.delete(id)
+      
+      if (!success) {
+        return res.status(404).json({
+          success: false,
+          message: '文件夹不存在'
+        })
+      }
+      
+      res.json({
+        success: true,
+        message: '文件夹删除成功'
+      })
+    } catch (error) {
+      console.error('删除文件夹失败:', error)
+      res.status(400).json({
+        success: false,
+        message: error.message
+      })
+    }
+  }
+
+  // 移动文件夹
+  static async moveFolder(req, res) {
+    try {
+      const { id } = req.params
+      const { parentId } = req.body
+      
+      const folder = await FolderModel.move(id, parentId || null)
+      
+      res.json({
+        success: true,
+        data: folder,
+        message: '文件夹移动成功'
+      })
+    } catch (error) {
+      console.error('移动文件夹失败:', error)
+      res.status(400).json({
+        success: false,
+        message: error.message
+      })
+    }
+  }
+
+  // 更新文件夹可见性
+  static async updateFolderVisibility(req, res) {
+    try {
+      const { id } = req.params
+      const { isVisible } = req.body
+      
+      const folder = await FolderModel.updateVisibility(id, isVisible)
+      
+      if (!folder) {
+        return res.status(404).json({
+          success: false,
+          message: '文件夹不存在'
+        })
+      }
+      
+      res.json({
+        success: true,
+        data: folder,
+        message: `文件夹已${isVisible ? '显示' : '隐藏'}`
+      })
+    } catch (error) {
+      console.error('更新文件夹可见性失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '更新文件夹可见性失败: ' + error.message
+      })
+    }
+  }
+
+  // 获取文件夹中的全景图
+  static async getFolderPanoramas(req, res) {
+    try {
+      const { id } = req.params
+      const { includeHidden = false } = req.query
+      
+      const panoramas = await PanoramaModel.findByFolder(id, {
+        includeHidden: includeHidden === 'true'
+      })
+      
+      res.json({
+        success: true,
+        data: panoramas
+      })
+    } catch (error) {
+      console.error('获取文件夹全景图失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取文件夹全景图失败: ' + error.message
+      })
+    }
+  }
+
+  // 移动全景图到文件夹
+  static async movePanoramasToFolder(req, res) {
+    try {
+      const { folderId } = req.params
+      const { panoramaIds } = req.body
+      
+      if (!Array.isArray(panoramaIds) || panoramaIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: '请选择要移动的全景图'
+        })
+      }
+      
+      const affectedRows = await PanoramaModel.batchMoveToFolder(panoramaIds, folderId || null)
+      
+      res.json({
+        success: true,
+        data: { affectedRows },
+        message: `成功移动 ${affectedRows} 个全景图`
+      })
+    } catch (error) {
+      console.error('移动全景图失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '移动全景图失败: ' + error.message
+      })
+    }
+  }
+}
+
+module.exports = FolderController
