@@ -1,0 +1,33 @@
+// 地图相关组件样式
+.map-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+}
+
+// 地图容器样式
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  
+  .map-view {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .map-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    
+    .el-button-group {
+      display: flex;
+    }
+  }
+}

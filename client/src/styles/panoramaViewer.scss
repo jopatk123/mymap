@@ -1,0 +1,149 @@
+// 全景图查看器样式
+.panorama-viewer-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  .viewer-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    min-height: 60px;
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .description {
+        color: #ccc;
+        font-size: 14px;
+        max-width: 400px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .viewer-main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+
+    .viewer-loading,
+    .viewer-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      color: #fff;
+
+      h3 {
+        margin: 0;
+        font-weight: 400;
+      }
+    }
+
+    .panorama-viewer {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .viewer-footer {
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+
+    .footer-info {
+      display: flex;
+      gap: 30px;
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #ccc;
+      }
+    }
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .panorama-viewer-page {
+    .viewer-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 10px;
+
+      .toolbar-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+
+        h1 {
+          font-size: 18px;
+        }
+
+        .description {
+          max-width: 100%;
+          white-space: normal;
+        }
+      }
+
+      .toolbar-right {
+        justify-content: center;
+        flex-wrap: wrap;
+
+        .el-button {
+          font-size: 12px;
+          padding: 6px 12px;
+        }
+      }
+    }
+
+    .viewer-footer {
+      padding: 8px 10px;
+
+      .footer-info {
+        flex-direction: column;
+        gap: 5px;
+
+        .info-item {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
