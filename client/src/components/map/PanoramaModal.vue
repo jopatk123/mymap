@@ -225,8 +225,8 @@ const openInNewTab = () => {
     return
   }
   
-  // 创建全景图查看页面URL，使用查询参数方式
-  const viewerUrl = `/panorama?id=${props.panorama.id}&image=${encodeURIComponent(props.panorama.imageUrl)}&title=${encodeURIComponent(props.panorama.title || '全景图')}`
+  // 创建全景图查看页面URL，使用路径参数方式
+  const viewerUrl = `/panorama/${props.panorama.id}`
   window.open(viewerUrl, '_blank')
 }
 

@@ -218,6 +218,22 @@ export const usePanoramaStore = defineStore('panorama', {
         
         return true
       } catch (error) {
+        // 如果是404错误，说明记录已被删除，直接从前端移除
+        if (error.response?.status === 404) {
+          // 从列表中移除
+          const index = this.panoramas.findIndex(p => p.id === id)
+          if (index > -1) {
+            this.panoramas.splice(index, 1)
+          }
+          
+          // 清除当前全景图
+          if (this.currentPanorama?.id === id) {
+            this.currentPanorama = null
+          }
+          
+          return true
+        }
+        
         this.setError(error.message)
         throw error
       } finally {

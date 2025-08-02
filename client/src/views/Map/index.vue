@@ -335,17 +335,16 @@ const handlePanoramaDeleted = async (deletedId) => {
     // 从store中移除已删除的全景图
     await panoramaStore.deletePanorama(deletedId)
     
-    // 更新地图上的标记
+    // 重新加载地图标记
     if (mapRef.value) {
-      mapRef.value.removePanoramaMarker(deletedId)
+      mapRef.value.clearMarkers()
+      mapRef.value.addPanoramaMarkers(visiblePanoramas.value)
     }
     
-    // 如果当前选中的就是这个全景图，清空选择
+    // 清空选择状态
     if (currentPanorama.value?.id === deletedId) {
-      panoramaStore.setCurrentPanorama(null)
+      currentPanorama.value = null
     }
-    
-    // 如果侧边栏中选中的也是这个全景图，清空选择
     if (selectedPanorama.value?.id === deletedId) {
       selectedPanorama.value = null
     }

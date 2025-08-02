@@ -59,7 +59,12 @@ api.interceptors.response.use(
           ElMessage.error('权限不足')
           break
         case 404:
-          // ElMessage.error('请求的资源不存在')
+          // 对于删除操作，404是正常的（记录已被删除）
+          if (error.config?.method?.toLowerCase() === 'delete') {
+            // 删除操作的404不显示错误消息
+          } else {
+            ElMessage.error('请求的资源不存在')
+          }
           break
         case 500:
           ElMessage.error('服务器内部错误')

@@ -51,6 +51,18 @@ app.set('trust proxy', true)
 // API路由
 app.use('/api', routes)
 
+// 静态文件服务（前端构建文件）
+app.use(express.static(path.join(__dirname, '../client/dist'), {
+  setHeaders: (res, path) => {
+    res.set('Access-Control-Allow-Origin', '*')
+  }
+}))
+
+// 处理前端路由的回退（SPA支持）
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'))
+})
+
 // 根路径重定向到API文档
 app.get('/', (req, res) => {
   res.redirect('/api')
