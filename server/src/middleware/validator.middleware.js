@@ -269,6 +269,61 @@ const validateBatchIds = (req, res, next) => {
   next()
 }
 
+// 批量移动参数验证
+const validateBatchMoveParams = (req, res, next) => {
+  const { ids, folderId } = req.body
+  
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json(validationErrorResponse([{
+      field: 'ids',
+      message: 'ids必须是非空数组',
+      value: ids
+    }]))
+  }
+  
+  // folderId 可以是 null（移动到根目录）或正整数
+  if (folderId !== null && folderId !== undefined) {
+    if (isNaN(folderId) || parseInt(folderId) < 0) {
+      return res.status(400).json(validationErrorResponse([{
+        field: 'folderId',
+        message: 'folderId必须是正整数或null',
+        value: folderId
+      }]))
+    }
+  }
+  
+  const validIds = []
+  const errors = []
+  
+  ids.forEach((id, index) => {
+    if (isNaN(id) || parseInt(id) <= 0) {
+      errors.push({
+        field: `ids[${index}]`,
+        message: 'ID必须是正整数',
+        value: id
+      })
+    } else {
+      validIds.push(parseInt(id))
+    }
+  })
+  
+  if (errors.length > 0) {
+    return res.status(400).json(validationErrorResponse(errors))
+  }
+  
+  if (validIds.length === 0) {
+    return res.status(400).json(validationErrorResponse([{
+      field: 'ids',
+      message: '没有有效的ID',
+      value: ids
+    }]))
+  }
+  
+  req.body.ids = validIds
+  req.body.folderId = folderId !== undefined ? (folderId !== null ? parseInt(folderId) : null) : null
+  next()
+}
+
 module.exports = {
   validatePanoramaData,
   validateUpdatePanoramaData,
@@ -276,5 +331,6 @@ module.exports = {
   validateBoundsParams,
   validateId,
   validateBatchIds,
+  validateBatchMoveParams,
   createValidator
 }

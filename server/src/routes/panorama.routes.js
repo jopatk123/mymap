@@ -7,7 +7,8 @@ const {
   validateSearchParams,
   validateBoundsParams,
   validateId,
-  validateBatchIds
+  validateBatchIds,
+  validateBatchMoveParams
 } = require('../middleware/validator.middleware')
 const { handleSingleUpload, handleBatchUpload } = require('../middleware/upload.middleware')
 
@@ -28,9 +29,6 @@ router.get('/stats', PanoramaController.getStats)
 
 // 坐标转换
 router.get('/convert-coordinate', PanoramaController.convertCoordinate)
-
-// 根据ID获取全景图详情
-router.get('/:id', validateId, PanoramaController.getPanoramaById)
 
 // 创建全景图
 router.post('/', validatePanoramaData, PanoramaController.createPanorama)
@@ -123,25 +121,29 @@ router.post('/batch-upload', handleBatchUpload, async (req, res) => {
   }
 })
 
+// 批量操作路由 - 这些需要在具体ID路由之前定义
+// 批量移动全景图到文件夹
+router.patch('/batch/move', validateBatchMoveParams, PanoramaController.batchMovePanoramasToFolder)
+
+// 批量删除全景图
+router.delete('/', validateBatchIds, PanoramaController.batchDeletePanoramas)
+
+// 批量更新全景图可见性
+router.patch('/batch/visibility', validateBatchIds, PanoramaController.batchUpdatePanoramaVisibility)
+
+// 根据ID获取全景图详情
+router.get('/:id', validateId, PanoramaController.getPanoramaById)
+
 // 更新全景图
 router.put('/:id', validateId, validateUpdatePanoramaData, PanoramaController.updatePanorama)
 
 // 删除全景图
 router.delete('/:id', validateId, PanoramaController.deletePanorama)
 
-// 批量删除全景图
-router.delete('/', validateBatchIds, PanoramaController.batchDeletePanoramas)
-
 // 移动全景图到文件夹
 router.patch('/:id/move', validateId, PanoramaController.movePanoramaToFolder)
 
-// 批量移动全景图到文件夹
-router.patch('/batch/move', validateBatchIds, PanoramaController.batchMovePanoramasToFolder)
-
 // 更新全景图可见性
 router.patch('/:id/visibility', validateId, PanoramaController.updatePanoramaVisibility)
-
-// 批量更新全景图可见性
-router.patch('/batch/visibility', validateBatchIds, PanoramaController.batchUpdatePanoramaVisibility)
 
 module.exports = router

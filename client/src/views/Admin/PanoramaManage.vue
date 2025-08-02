@@ -530,7 +530,9 @@ const handleMoveConfirm = async () => {
     moving.value = true
     
     const ids = movingPanoramas.value.map(p => p.id)
-    await panoramaStore.batchMovePanoramasToFolder(ids, moveToFolderId.value)
+    // 确保 folderId 为 null 或数字
+    const targetFolderId = moveToFolderId.value || null
+    await panoramaStore.batchMovePanoramasToFolder(ids, targetFolderId)
     
     ElMessage.success('移动成功')
     showMoveDialog.value = false
