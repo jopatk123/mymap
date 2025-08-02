@@ -114,9 +114,9 @@
             :value="0"
           />
           <el-option
-            v-for="folder in folders"
+            v-for="folder in validFolders"
             :key="folder.id"
-            :label="folder.name"
+            :label="folder.name || '未命名文件夹'"
             :value="folder.id"
           />
         </el-select>
@@ -173,6 +173,19 @@ const uploadRef = ref(null)
 
 // 文件夹数据
 const folders = ref([])
+
+// 有效文件夹（过滤掉无效数据）
+const validFolders = computed(() => {
+  if (!Array.isArray(folders.value)) {
+    return []
+  }
+  return folders.value.filter(folder => 
+    folder && 
+    folder.id !== null && 
+    folder.id !== undefined &&
+    (typeof folder.id === 'number' || typeof folder.id === 'string')
+  )
+})
 
 // 表单数据
 const form = reactive({
@@ -240,7 +253,7 @@ const loadFolders = async () => {
   try {
     const { folderApi } = await import('@/api/folder.js')
     const response = await folderApi.getFolders()
-    folders.value = response || []
+    folders.value = Array.isArray(response) ? response : []
   } catch (error) {
     console.error('加载文件夹失败:', error)
     folders.value = []

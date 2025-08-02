@@ -282,9 +282,9 @@
             style="width: 100%"
           >
             <el-option
-              v-for="folder in flatFolders"
+              v-for="folder in validFolders"
               :key="folder.id"
-              :label="folder.name"
+              :label="folder.name || '未命名文件夹'"
               :value="folder.id"
             />
           </el-select>
@@ -359,6 +359,15 @@ const moving = ref(false)
 const folderPath = computed(() => {
   if (!selectedFolder.value) return []
   return folderStore.getFolderPath(selectedFolder.value.id)
+})
+
+const validFolders = computed(() => {
+  return flatFolders.value.filter(folder => 
+    folder && 
+    folder.id !== null && 
+    folder.id !== undefined &&
+    (typeof folder.id === 'number' || typeof folder.id === 'string')
+  )
 })
 
 // 初始化
