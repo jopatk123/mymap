@@ -70,9 +70,18 @@ export function useMap(containerId) {
   const addPanoramaMarker = (panorama) => {
     if (!map.value) return null
     
-    const { lat, lng, id, title } = panorama
-    const marker = createPanoramaMarker([lat, lng], {
-      title: title || '全景图'
+    // 优先使用 GCJ02 坐标（高德地图瓦片需要）
+    let displayLat = panorama.lat
+    let displayLng = panorama.lng
+    
+    // 如果有 GCJ02 坐标，则使用 GCJ02 坐标
+    if (panorama.gcj02Lat && panorama.gcj02Lng) {
+      displayLat = panorama.gcj02Lat
+      displayLng = panorama.gcj02Lng
+    }
+    
+    const marker = createPanoramaMarker([displayLat, displayLng], {
+      title: panorama.title || '全景图'
     })
     
     // 添加点击事件
@@ -81,7 +90,7 @@ export function useMap(containerId) {
     })
     
     marker.addTo(map.value)
-    markers.value.push({ id, marker })
+    markers.value.push({ id: panorama.id, marker })
     
     return marker
   }

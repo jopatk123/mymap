@@ -42,7 +42,9 @@ export const usePanoramaStore = defineStore('panorama', {
       if (!state.mapBounds) return state.panoramas
       
       return state.panoramas.filter(panorama => {
-        const { lat, lng } = panorama
+        // 优先使用 GCJ02 坐标进行边界检查（因为地图是 GCJ02 坐标系）
+        const lat = panorama.gcj02Lat || panorama.lat
+        const lng = panorama.gcj02Lng || panorama.lng
         const { north, south, east, west } = state.mapBounds
         
         return lat >= south && lat <= north && lng >= west && lng <= east

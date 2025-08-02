@@ -238,6 +238,12 @@ onMounted(async () => {
 const loadInitialData = async () => {
   try {
     await panoramaStore.fetchPanoramas()
+    // 数据加载完成后自动适应所有标记点
+    setTimeout(() => {
+      if (mapRef.value) {
+        mapRef.value.fitBounds()
+      }
+    }, 500)
   } catch (error) {
     ElMessage.error('加载数据失败: ' + error.message)
   }
@@ -261,9 +267,11 @@ const selectPanorama = (panorama) => {
   selectedPanorama.value = panorama
   panoramaStore.setCurrentPanorama(panorama)
   
-  // 地图定位到该全景图
+  // 地图定位到该全景图（优先使用GCJ02坐标）
   if (mapRef.value) {
-    mapRef.value.setCenter(panorama.lat, panorama.lng, 16)
+    const lat = panorama.gcj02Lat || panorama.lat
+    const lng = panorama.gcj02Lng || panorama.lng
+    mapRef.value.setCenter(lat, lng, 16)
   }
 }
 
@@ -276,7 +284,10 @@ const viewPanorama = (panorama) => {
 // 定位到全景图
 const locatePanorama = (panorama) => {
   if (mapRef.value) {
-    mapRef.value.setCenter(panorama.lat, panorama.lng, 18)
+    // 优先使用GCJ02坐标
+    const lat = panorama.gcj02Lat || panorama.lat
+    const lng = panorama.gcj02Lng || panorama.lng
+    mapRef.value.setCenter(lat, lng, 18)
   }
 }
 
