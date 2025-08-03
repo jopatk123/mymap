@@ -90,6 +90,12 @@ class FolderModel {
       throw new Error('无法删除包含视频点位的文件夹')
     }
 
+    // 检查是否有KML文件
+    const kmlFileCount = await this.getKmlFileCount(id)
+    if (kmlFileCount > 0) {
+      throw new Error('无法删除包含KML文件的文件夹')
+    }
+
     const sql = 'DELETE FROM folders WHERE id = ?'
     const result = await query(sql, [id])
     return result.affectedRows > 0
@@ -128,11 +134,19 @@ class FolderModel {
     return count
   }
 
-  // 获取文件夹中的总内容数量（全景图 + 视频点位）
+  // 获取文件夹中的KML文件数量
+  static async getKmlFileCount(folderId) {
+    const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?'
+    const [{ count }] = await query(sql, [folderId])
+    return count
+  }
+
+  // 获取文件夹中的总内容数量（全景图 + 视频点位 + KML文件）
   static async getTotalContentCount(folderId) {
     const panoramaCount = await this.getPanoramaCount(folderId)
     const videoPointCount = await this.getVideoPointCount(folderId)
-    return panoramaCount + videoPointCount
+    const kmlFileCount = await this.getKmlFileCount(folderId)
+    return panoramaCount + videoPointCount + kmlFileCount
   }
 
   // 构建树形结构

@@ -11,8 +11,12 @@ class QueryBuilder {
     
     // 文件夹筛选
     if (options.folderId !== null && options.folderId !== undefined) {
-      conditions.push('p.folder_id = ?')
-      params.push(options.folderId)
+      if (options.folderId === 0) {
+        conditions.push('p.folder_id IS NULL')
+      } else {
+        conditions.push('p.folder_id = ?')
+        params.push(options.folderId)
+      }
     }
     
     // 关键词搜索

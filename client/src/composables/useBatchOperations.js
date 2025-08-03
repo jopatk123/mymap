@@ -4,6 +4,7 @@ import { usePanoramaStore } from '@/store/panorama.js'
 
 export function useBatchOperations() {
   const panoramaStore = usePanoramaStore()
+  const selectedRows = ref([])
   const moving = ref(false)
 
   // 删除单个全景图
@@ -102,8 +103,34 @@ export function useBatchOperations() {
     }
   }
 
+  // 选择变化处理
+  const handleSelectionChange = (selection) => {
+    selectedRows.value = selection
+  }
+
+  // 批量操作处理
+  const handleBatchAction = async (command, onSuccess) => {
+    switch (command) {
+      case 'move':
+        // 移动操作由调用方处理
+        break
+      case 'show':
+        await batchUpdateVisibility(selectedRows.value, true, onSuccess)
+        break
+      case 'hide':
+        await batchUpdateVisibility(selectedRows.value, false, onSuccess)
+        break
+      case 'delete':
+        await batchDelete(selectedRows.value, onSuccess)
+        break
+    }
+  }
+
   return {
+    selectedRows,
     moving,
+    handleSelectionChange,
+    handleBatchAction,
     deletePanorama,
     togglePanoramaVisibility,
     batchUpdateVisibility,

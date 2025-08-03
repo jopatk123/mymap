@@ -13,7 +13,8 @@ class FolderController {
         for (const folder of folderList) {
           folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id))
           folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id))
-          folder.totalCount = folder.panoramaCount + folder.videoPointCount
+          folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id))
+          folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount
           if (folder.children) {
             await addContentCount(folder.children)
           }
@@ -44,7 +45,8 @@ class FolderController {
       for (const folder of folders) {
         folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id))
         folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id))
-        folder.totalCount = folder.panoramaCount + folder.videoPointCount
+        folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id))
+        folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount
       }
       
       res.json({
@@ -260,6 +262,93 @@ class FolderController {
       res.status(500).json({
         success: false,
         message: '移动全景图失败: ' + error.message
+      })
+    }
+  }
+
+  // 获取文件夹内容（所有文件类型）
+  static async getFolderContents(req, res) {
+    try {
+      const { folderId } = req.params
+      const {
+        page = 1,
+        pageSize = 20,
+        keyword = '',
+        includeHidden = false,
+        fileType = 'all' // all, panorama, video, kml
+      } = req.query
+
+      const searchParams = {
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
+        keyword,
+        folderId: folderId ? parseInt(folderId) : null,
+        includeHidden: includeHidden === 'true'
+      }
+
+      let results = []
+
+      if (fileType === 'all' || fileType === 'panorama') {
+        try {
+          const panoramaResult = await PanoramaModel.findAll(searchParams)
+          const panoramasWithType = panoramaResult.data.map(item => ({
+            ...item,
+            fileType: 'panorama',
+            displayType: '全景图'
+          }))
+          results = results.concat(panoramasWithType)
+        } catch (error) {
+          Logger.error('获取全景图数据失败:', error)
+        }
+      }
+
+      if (fileType === 'all' || fileType === 'video') {
+        try {
+          const VideoPointModel = require('../models/videoPoint.model')
+          const videoResult = await VideoPointModel.findAll(searchParams)
+          const videosWithType = videoResult.data.map(item => ({
+            ...item,
+            fileType: 'video',
+            displayType: '视频点位'
+          }))
+          results = results.concat(videosWithType)
+        } catch (error) {
+          Logger.error('获取视频点位数据失败:', error)
+        }
+      }
+
+      if (fileType === 'all' || fileType === 'kml') {
+        try {
+          const KmlFileModel = require('../models/kmlFile.model')
+          const kmlResult = await KmlFileModel.findAll(searchParams)
+          const kmlsWithType = kmlResult.data.map(item => ({
+            ...item,
+            fileType: 'kml',
+            displayType: 'KML文件'
+          }))
+          results = results.concat(kmlsWithType)
+        } catch (error) {
+          Logger.error('获取KML文件数据失败:', error)
+        }
+      }
+
+      // 按创建时间排序
+      results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+      res.json({
+        success: true,
+        data: results,
+        pagination: {
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          total: results.length
+        }
+      })
+    } catch (error) {
+      Logger.error('获取文件夹内容失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取文件夹内容失败: ' + error.message
       })
     }
   }

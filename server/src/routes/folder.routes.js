@@ -30,4 +30,7 @@ router.get('/:id/panoramas', FolderController.getFolderPanoramas)
 // 移动全景图到文件夹
 router.post('/:folderId/panoramas', FolderController.movePanoramasToFolder)
 
+// 获取文件夹内容
+router.get('/:folderId/contents', FolderController.getFolderContents)
+
 module.exports = router
