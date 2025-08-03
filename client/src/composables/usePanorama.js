@@ -8,8 +8,6 @@ export function usePanorama() {
   
   // 初始化全景查看器
   const initViewer = async (containerId, panoramaUrl, options = {}) => {
-    console.log('开始初始化Pannellum查看器:', { containerId, panoramaUrl, options })
-    
     if (!window.pannellum) {
       console.error('Pannellum library not loaded')
       return null
@@ -21,8 +19,6 @@ export function usePanorama() {
       console.error('容器不存在:', containerId)
       return null
     }
-    
-    console.log('找到容器:', container)
     
     const defaultOptions = {
       type: 'equirectangular',
@@ -74,16 +70,9 @@ export function usePanorama() {
       
       // 检查容器样式
       const computedStyle = window.getComputedStyle(container)
-      console.log('容器样式:', {
-        width: computedStyle.width,
-        height: computedStyle.height,
-        display: computedStyle.display,
-        visibility: computedStyle.visibility
-      })
       
       // 确保容器有尺寸 - 使用固定像素值确保最小尺寸
       if (computedStyle.width === '0px' || computedStyle.height === '0px') {
-        console.warn('容器尺寸为0，正在设置最小尺寸...')
         container.style.width = '100%'
         container.style.height = '400px' // 确保最小高度
         container.style.minHeight = '400px'
@@ -99,13 +88,6 @@ export function usePanorama() {
       const testImg = new Image()
       testImg.onload = () => {
         const ratio = testImg.width / testImg.height
-        console.log('图片验证成功:', {
-          width: testImg.width,
-          height: testImg.height,
-          ratio: ratio,
-          isPanorama: Math.abs(ratio - 2) < 0.1
-        })
-        
         // 警告非标准比例
         if (Math.abs(ratio - 2) > 0.1) {
           console.warn('图片比例可能不是标准全景图比例(2:1), 当前比例:', ratio)
@@ -124,13 +106,11 @@ export function usePanorama() {
       // 强制重新渲染 - 增加延迟确保容器完全加载
       setTimeout(() => {
         if (viewer.value) {
-          console.log('强制重新渲染...')
           viewer.value.resize()
           
           // 再次检查渲染状态
           setTimeout(() => {
             if (viewer.value) {
-              console.log('二次强制重新渲染...')
               viewer.value.resize()
             }
           }, 1000)
@@ -151,7 +131,6 @@ export function usePanorama() {
     if (!viewer.value) return
     
     viewer.value.on('load', () => {
-      console.log('全景图加载完成')
       isLoading.value = false
     })
     
@@ -161,15 +140,12 @@ export function usePanorama() {
     })
     
     viewer.value.on('scenechange', (sceneId) => {
-      console.log('场景切换:', sceneId)
     })
     
     viewer.value.on('mousedown', () => {
-      console.log('开始拖拽')
     })
     
     viewer.value.on('mouseup', () => {
-      console.log('结束拖拽')
     })
   }
   

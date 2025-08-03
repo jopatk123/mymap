@@ -472,7 +472,7 @@ const deletePanorama = async (panorama) => {
       }
     )
     
-    await panoramaStore.deletePanorama(panorama.id)
+    await panoramaStore.deletePanoramaAsync(panorama.id)
     ElMessage.success('删除成功')
     await loadData()
   } catch (error) {

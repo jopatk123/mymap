@@ -2,7 +2,8 @@ const KmlFileModel = require('../models/kmlFile.model')
 const KmlPointModel = require('../models/kmlPoint.model')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
-const fs = require('fs').promises
+const fs = require('fs')
+const Logger = require('../utils/logger.js').promises
 
 class KmlFileController {
   // 获取KML文件列表
@@ -35,7 +36,7 @@ class KmlFileController {
         }
       })
     } catch (error) {
-      console.error('获取KML文件列表失败:', error)
+      Logger.error('获取KML文件列表失败:', error)
       res.status(500).json({
         success: false,
         message: '获取KML文件列表失败',
@@ -68,7 +69,7 @@ class KmlFileController {
         }
       })
     } catch (error) {
-      console.error('获取KML文件详情失败:', error)
+      Logger.error('获取KML文件详情失败:', error)
       res.status(500).json({
         success: false,
         message: '获取KML文件详情失败',
@@ -88,7 +89,7 @@ class KmlFileController {
         data: points
       })
     } catch (error) {
-      console.error('获取KML文件点位失败:', error)
+      Logger.error('获取KML文件点位失败:', error)
       res.status(500).json({
         success: false,
         message: '获取KML文件点位失败',
@@ -114,7 +115,7 @@ class KmlFileController {
         data: points
       })
     } catch (error) {
-      console.error('根据边界获取KML点位失败:', error)
+      Logger.error('根据边界获取KML点位失败:', error)
       res.status(500).json({
         success: false,
         message: '获取KML点位失败',
@@ -195,7 +196,7 @@ class KmlFileController {
         data: completeKmlFile
       })
     } catch (error) {
-      console.error('上传KML文件失败:', error)
+      Logger.error('上传KML文件失败:', error)
       res.status(500).json({
         success: false,
         message: '上传KML文件失败',
@@ -223,7 +224,7 @@ class KmlFileController {
         data: validation
       })
     } catch (error) {
-      console.error('验证KML文件失败:', error)
+      Logger.error('验证KML文件失败:', error)
       res.status(500).json({
         success: false,
         message: '验证KML文件失败',
@@ -253,7 +254,7 @@ class KmlFileController {
         data: kmlFile
       })
     } catch (error) {
-      console.error('更新KML文件失败:', error)
+      Logger.error('更新KML文件失败:', error)
       res.status(500).json({
         success: false,
         message: '更新KML文件失败',
@@ -286,7 +287,7 @@ class KmlFileController {
             await fs.unlink(filePath).catch(() => {}) // 忽略文件不存在的错误
           }
         } catch (error) {
-          console.warn('删除KML文件失败:', error)
+          Logger.warn('删除KML文件失败:', error)
         }
 
         res.json({
@@ -300,7 +301,7 @@ class KmlFileController {
         })
       }
     } catch (error) {
-      console.error('删除KML文件失败:', error)
+      Logger.error('删除KML文件失败:', error)
       res.status(500).json({
         success: false,
         message: '删除KML文件失败',
@@ -328,7 +329,7 @@ class KmlFileController {
         message: `成功删除 ${affectedRows} 个KML文件`
       })
     } catch (error) {
-      console.error('批量删除KML文件失败:', error)
+      Logger.error('批量删除KML文件失败:', error)
       res.status(500).json({
         success: false,
         message: '批量删除KML文件失败',
@@ -356,7 +357,7 @@ class KmlFileController {
         message: `成功更新 ${affectedRows} 个KML文件的可见性`
       })
     } catch (error) {
-      console.error('批量更新KML文件可见性失败:', error)
+      Logger.error('批量更新KML文件可见性失败:', error)
       res.status(500).json({
         success: false,
         message: '批量更新KML文件可见性失败',
@@ -384,7 +385,7 @@ class KmlFileController {
         message: `成功移动 ${affectedRows} 个KML文件到文件夹`
       })
     } catch (error) {
-      console.error('批量移动KML文件到文件夹失败:', error)
+      Logger.error('批量移动KML文件到文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '批量移动KML文件到文件夹失败',
@@ -414,7 +415,7 @@ class KmlFileController {
         data: kmlFile
       })
     } catch (error) {
-      console.error('更新KML文件可见性失败:', error)
+      Logger.error('更新KML文件可见性失败:', error)
       res.status(500).json({
         success: false,
         message: '更新KML文件可见性失败',
@@ -444,7 +445,7 @@ class KmlFileController {
         data: kmlFile
       })
     } catch (error) {
-      console.error('移动KML文件到文件夹失败:', error)
+      Logger.error('移动KML文件到文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '移动KML文件到文件夹失败',
@@ -463,7 +464,7 @@ class KmlFileController {
         data: stats
       })
     } catch (error) {
-      console.error('获取KML文件统计失败:', error)
+      Logger.error('获取KML文件统计失败:', error)
       res.status(500).json({
         success: false,
         message: '获取KML文件统计失败',

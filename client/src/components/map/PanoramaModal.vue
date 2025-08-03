@@ -137,7 +137,6 @@ const handleClose = () => {
 
 // 打开全景图查看器
 const openViewer = async () => {
-  console.log('打开全景图查看器，数据:', props.panorama)
   
   if (!props.panorama?.imageUrl) {
     ElMessage.error('全景图地址不存在')
@@ -158,9 +157,7 @@ const openViewer = async () => {
   // 等待DOM渲染完成后初始化查看器 - 增加延迟确保容器完全渲染
   setTimeout(async () => {
     try {
-      console.log('开始初始化Pannellum查看器...')
       const viewer = await initViewer('panorama-viewer', imageUrl)
-      console.log('Pannellum查看器初始化完成:', viewer)
       autoRotating.value = true
     } catch (error) {
       console.error('初始化全景图查看器失败:', error)

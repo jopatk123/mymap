@@ -38,7 +38,6 @@ export class MapService {
    * 处理地图点击
    */
   handleMapClick(latlng) {
-    console.log('地图点击坐标:', latlng)
     // 可以在这里添加新增全景图的逻辑
   }
 
@@ -112,7 +111,7 @@ export class MapService {
   async handlePanoramaDeleted(deletedId, mapRef, currentPanorama, selectedPanorama) {
     try {
       // 从store中移除已删除的全景图
-      await this.panoramaStore.deletePanorama(deletedId)
+      await this.panoramaStore.deletePanoramaAsync(deletedId)
       
       // 重新加载地图标记
       if (mapRef?.value) {

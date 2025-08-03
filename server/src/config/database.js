@@ -23,7 +23,6 @@ const pool = mysql.createPool({
 const testConnection = async () => {
   try {
     const connection = await pool.getConnection()
-    console.log('数据库连接成功')
     connection.release()
     return true
   } catch (error) {
@@ -55,7 +54,6 @@ const initTables = async () => {
     `
 
     await connection.execute(createFoldersTable)
-    console.log('文件夹表创建完成')
 
     // 创建全景图表
     const createPanoramasTable = `
@@ -84,7 +82,6 @@ const initTables = async () => {
     `
 
     await connection.execute(createPanoramasTable)
-    console.log('数据库表初始化完成')
 
     // 创建KML文件表
     const createKmlFilesTable = `
@@ -107,7 +104,6 @@ const initTables = async () => {
     `
 
     await connection.execute(createKmlFilesTable)
-    console.log('KML文件表创建完成')
 
     // 创建KML点位表
     const createKmlPointsTable = `
@@ -135,7 +131,6 @@ const initTables = async () => {
     `
 
     await connection.execute(createKmlPointsTable)
-    console.log('KML点位表创建完成')
 
     // 创建视频点位表
     const createVideoPointsTable = `
@@ -167,7 +162,6 @@ const initTables = async () => {
     `
 
     await connection.execute(createVideoPointsTable)
-    console.log('视频点位表创建完成')
 
     // 初始化默认文件夹
     try {
@@ -216,7 +210,6 @@ const transaction = async (callback) => {
 const closePool = async () => {
   try {
     await pool.end()
-    console.log('数据库连接池已关闭')
   } catch (error) {
     console.error('关闭数据库连接池失败:', error.message)
   }

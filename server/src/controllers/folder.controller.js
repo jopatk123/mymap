@@ -1,5 +1,6 @@
 const FolderModel = require('../models/folder.model')
 const PanoramaModel = require('../models/panorama.model')
+const Logger = require('../utils/logger')
 
 class FolderController {
   // 获取文件夹树
@@ -26,7 +27,7 @@ class FolderController {
         data: folders
       })
     } catch (error) {
-      console.error('获取文件夹失败:', error)
+      Logger.error('获取文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '获取文件夹失败: ' + error.message
@@ -51,7 +52,7 @@ class FolderController {
         data: folders
       })
     } catch (error) {
-      console.error('获取文件夹列表失败:', error)
+      Logger.error('获取文件夹列表失败:', error)
       res.status(500).json({
         success: false,
         message: '获取文件夹列表失败: ' + error.message
@@ -84,7 +85,7 @@ class FolderController {
         message: '文件夹创建成功'
       })
     } catch (error) {
-      console.error('创建文件夹失败:', error)
+      Logger.error('创建文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '创建文件夹失败: ' + error.message
@@ -125,7 +126,7 @@ class FolderController {
         message: '文件夹更新成功'
       })
     } catch (error) {
-      console.error('更新文件夹失败:', error)
+      Logger.error('更新文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '更新文件夹失败: ' + error.message
@@ -152,7 +153,7 @@ class FolderController {
         message: '文件夹删除成功'
       })
     } catch (error) {
-      console.error('删除文件夹失败:', error)
+      Logger.error('删除文件夹失败:', error)
       res.status(400).json({
         success: false,
         message: error.message
@@ -174,7 +175,7 @@ class FolderController {
         message: '文件夹移动成功'
       })
     } catch (error) {
-      console.error('移动文件夹失败:', error)
+      Logger.error('移动文件夹失败:', error)
       res.status(400).json({
         success: false,
         message: error.message
@@ -203,7 +204,7 @@ class FolderController {
         message: `文件夹已${isVisible ? '显示' : '隐藏'}`
       })
     } catch (error) {
-      console.error('更新文件夹可见性失败:', error)
+      Logger.error('更新文件夹可见性失败:', error)
       res.status(500).json({
         success: false,
         message: '更新文件夹可见性失败: ' + error.message
@@ -226,7 +227,7 @@ class FolderController {
         data: panoramas
       })
     } catch (error) {
-      console.error('获取文件夹全景图失败:', error)
+      Logger.error('获取文件夹全景图失败:', error)
       res.status(500).json({
         success: false,
         message: '获取文件夹全景图失败: ' + error.message
@@ -255,7 +256,7 @@ class FolderController {
         message: `成功移动 ${affectedRows} 个全景图`
       })
     } catch (error) {
-      console.error('移动全景图失败:', error)
+      Logger.error('移动全景图失败:', error)
       res.status(500).json({
         success: false,
         message: '移动全景图失败: ' + error.message

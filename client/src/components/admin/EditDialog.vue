@@ -217,7 +217,7 @@ const handleSubmit = async () => {
     submitting.value = true
     
     // 更新全景图
-    await panoramaStore.updatePanorama(props.panorama.id, {
+    await panoramaStore.updatePanoramaAsync(props.panorama.id, {
       title: form.title,
       description: form.description,
       lat: parseFloat(form.lat),

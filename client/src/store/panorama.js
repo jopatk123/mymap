@@ -11,38 +11,35 @@ import {
 
 export const usePanoramaStore = defineStore('panorama', {
   state: () => ({
-    // 全景图列表
+    // 数据状态
     panoramas: [],
-    // 当前选中的全景图
     currentPanorama: null,
-    // 加载状态
-    loading: false,
-    // 错误信息
-    error: null,
-    // 分页信息
     pagination: {
       page: 1,
       pageSize: 20,
       total: 0
     },
-    // 搜索条件
     searchParams: {},
-    // 地图边界
-    mapBounds: null
+    mapBounds: null,
+    
+    // UI 状态
+    loading: false,
+    error: null,
+    selectedIds: [],
+    batchMode: false,
+    currentOperation: null
   }),
   
   getters: {
-    // 获取指定ID的全景图
+    // 数据 getters
     getPanoramaById: (state) => (id) => {
       return state.panoramas.find(p => p.id === id)
     },
     
-    // 获取可见区域内的全景图
     visiblePanoramas: (state) => {
       if (!state.mapBounds) return state.panoramas
       
       return state.panoramas.filter(panorama => {
-        // 优先使用 GCJ02 坐标进行边界检查（因为地图是 GCJ02 坐标系）
         const lat = panorama.gcj02Lat || panorama.lat
         const lng = panorama.gcj02Lng || panorama.lng
         const { north, south, east, west } = state.mapBounds
@@ -51,34 +48,172 @@ export const usePanoramaStore = defineStore('panorama', {
       })
     },
     
-    // 是否有更多数据
     hasMore: (state) => {
       const { page, pageSize, total } = state.pagination
       return page * pageSize < total
+    },
+    
+    // UI getters
+    hasSelected: (state) => state.selectedIds.length > 0,
+    selectedCount: (state) => state.selectedIds.length,
+    isAllSelected: (state) => (totalCount) => {
+      return state.selectedIds.length === totalCount && totalCount > 0
+    },
+    isIndeterminate: (state) => (totalCount) => {
+      return state.selectedIds.length > 0 && state.selectedIds.length < totalCount
     }
   },
   
   actions: {
-    // 设置加载状态
-    setLoading(loading) {
-      this.loading = loading
+    // 数据操作方法
+    setPanoramas(panoramas, append = false) {
+      if (append) {
+        this.panoramas.push(...panoramas)
+      } else {
+        this.panoramas = panoramas
+      }
     },
     
-    // 设置错误信息
-    setError(error) {
-      this.error = error
+    addPanorama(panorama) {
+      this.panoramas.unshift(panorama)
     },
     
-    // 设置地图边界
+    updatePanorama(id, updatedPanorama) {
+      const index = this.panoramas.findIndex(p => p.id === id)
+      if (index > -1) {
+        this.panoramas[index] = updatedPanorama
+      }
+      
+      if (this.currentPanorama?.id === id) {
+        this.currentPanorama = updatedPanorama
+      }
+    },
+    
+    removePanorama(id) {
+      const index = this.panoramas.findIndex(p => p.id === id)
+      if (index > -1) {
+        this.panoramas.splice(index, 1)
+      }
+      
+      if (this.currentPanorama?.id === id) {
+        this.currentPanorama = null
+      }
+    },
+    
+    removePanoramas(ids) {
+      this.panoramas = this.panoramas.filter(p => !ids.includes(p.id))
+      
+      if (this.currentPanorama && ids.includes(this.currentPanorama.id)) {
+        this.currentPanorama = null
+      }
+    },
+    
+    batchUpdatePanoramas(ids, updates) {
+      this.panoramas = this.panoramas.map(p => {
+        if (ids.includes(p.id)) {
+          return { ...p, ...updates }
+        }
+        return p
+      })
+    },
+    
+    setCurrentPanorama(panorama) {
+      this.currentPanorama = panorama
+    },
+    
+    clearCurrentPanorama() {
+      this.currentPanorama = null
+    },
+    
+    setPagination(pagination) {
+      this.pagination = {
+        ...this.pagination,
+        ...pagination,
+        total: Number(pagination.total) || 0
+      }
+    },
+    
+    setSearchParams(params) {
+      this.searchParams = { ...params }
+      this.pagination.page = 1
+    },
+    
+    clearSearchParams() {
+      this.searchParams = {}
+      this.pagination.page = 1
+    },
+    
     setMapBounds(bounds) {
       this.mapBounds = bounds
     },
     
-    // 获取全景图列表
+    // UI 操作方法
+    setLoading(loading, operation = null) {
+      this.loading = loading
+      this.currentOperation = loading ? operation : null
+    },
+    
+    setError(error) {
+      this.error = error
+    },
+    
+    clearError() {
+      this.error = null
+    },
+    
+    toggleBatchMode() {
+      this.batchMode = !this.batchMode
+      if (!this.batchMode) {
+        this.selectedIds = []
+      }
+    },
+    
+    setBatchMode(enabled) {
+      this.batchMode = enabled
+      if (!enabled) {
+        this.selectedIds = []
+      }
+    },
+    
+    selectPanorama(id) {
+      if (!this.selectedIds.includes(id)) {
+        this.selectedIds.push(id)
+      }
+    },
+    
+    deselectPanorama(id) {
+      const index = this.selectedIds.indexOf(id)
+      if (index > -1) {
+        this.selectedIds.splice(index, 1)
+      }
+    },
+    
+    toggleSelection(id) {
+      if (this.selectedIds.includes(id)) {
+        this.deselectPanorama(id)
+      } else {
+        this.selectPanorama(id)
+      }
+    },
+    
+    selectAll(ids) {
+      this.selectedIds = [...ids]
+    },
+    
+    clearSelection() {
+      this.selectedIds = []
+    },
+    
+    invertSelection(allIds) {
+      const unselected = allIds.filter(id => !this.selectedIds.includes(id))
+      this.selectedIds = unselected
+    },
+    
+    // API 调用方法
     async fetchPanoramas(params = {}) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'fetching')
+        this.clearError()
         
         const response = await getPanoramas({
           page: this.pagination.page,
@@ -87,20 +222,8 @@ export const usePanoramaStore = defineStore('panorama', {
           ...params
         })
         
-        if (params.append) {
-          // 追加数据（用于分页加载）
-          this.panoramas.push(...response.data)
-        } else {
-          // 替换数据
-          this.panoramas = response.data
-        }
-        
-        // 更新分页信息
-        this.pagination = {
-          ...this.pagination,
-          ...response.pagination,
-          total: Number(response.pagination.total) || 0
-        }
+        this.setPanoramas(response.data, params.append)
+        this.setPagination(response.pagination)
         
         return response
       } catch (error) {
@@ -111,15 +234,14 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 根据地图边界获取全景图
     async fetchPanoramasByBounds(bounds) {
       try {
-        this.setLoading(true)
-        this.setError(null)
-        this.setMapBounds(bounds)
+        this.setLoading(true, 'fetching')
+        this.clearError()
         
+        this.setMapBounds(bounds)
         const response = await getPanoramasByBounds(bounds)
-        this.panoramas = response.data || response
+        this.setPanoramas(response.data || response)
         
         return response
       } catch (error) {
@@ -130,14 +252,13 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 获取全景图详情
     async fetchPanoramaDetail(id) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'fetching')
+        this.clearError()
         
         const response = await getPanoramaById(id)
-        this.currentPanorama = response
+        this.setCurrentPanorama(response)
         
         return response
       } catch (error) {
@@ -148,16 +269,13 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 创建全景图
-    async createPanorama(panoramaData) {
+    async createPanoramaAsync(panoramaData) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'creating')
+        this.clearError()
         
         const response = await createPanorama(panoramaData)
-        
-        // 添加到列表开头
-        this.panoramas.unshift(response)
+        this.addPanorama(response)
         
         return response
       } catch (error) {
@@ -167,29 +285,14 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(false)
       }
     },
-
-    addPanorama(panorama) {
-      this.panoramas.unshift(panorama);
-    },
     
-    // 更新全景图
-    async updatePanorama(id, panoramaData) {
+    async updatePanoramaAsync(id, panoramaData) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'updating')
+        this.clearError()
         
         const response = await updatePanorama(id, panoramaData)
-        
-        // 更新列表中的数据
-        const index = this.panoramas.findIndex(p => p.id === id)
-        if (index > -1) {
-          this.panoramas[index] = response
-        }
-        
-        // 更新当前全景图
-        if (this.currentPanorama?.id === id) {
-          this.currentPanorama = response
-        }
+        this.updatePanorama(id, response)
         
         return response
       } catch (error) {
@@ -200,40 +303,18 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 删除全景图
-    async deletePanorama(id) {
+    async deletePanoramaAsync(id) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'deleting')
+        this.clearError()
         
         await deletePanorama(id)
-        
-        // 从列表中移除
-        const index = this.panoramas.findIndex(p => p.id === id)
-        if (index > -1) {
-          this.panoramas.splice(index, 1)
-        }
-        
-        // 清除当前全景图
-        if (this.currentPanorama?.id === id) {
-          this.currentPanorama = null
-        }
+        this.removePanorama(id)
         
         return true
       } catch (error) {
-        // 如果是404错误，说明记录已被删除，直接从前端移除
         if (error.response?.status === 404) {
-          // 从列表中移除
-          const index = this.panoramas.findIndex(p => p.id === id)
-          if (index > -1) {
-            this.panoramas.splice(index, 1)
-          }
-          
-          // 清除当前全景图
-          if (this.currentPanorama?.id === id) {
-            this.currentPanorama = null
-          }
-          
+          this.removePanorama(id)
           return true
         }
         
@@ -244,14 +325,12 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 获取附近的全景图
     async fetchNearbyPanoramas(lat, lng, radius = 1000) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'fetching')
+        this.clearError()
         
         const response = await getNearbyPanoramas(lat, lng, radius)
-        
         return response
       } catch (error) {
         this.setError(error.message)
@@ -261,19 +340,16 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 设置搜索参数
-    setSearchParams(params) {
-      this.searchParams = { ...params }
-      this.pagination.page = 1 // 重置页码
+    async handleSearch(params) {
+      if (params.keyword?.trim()) {
+        this.setSearchParams(params)
+      } else {
+        this.clearSearchParams()
+      }
+      
+      return await this.fetchPanoramas()
     },
     
-    // 清除搜索参数
-    clearSearchParams() {
-      this.searchParams = {}
-      this.pagination.page = 1
-    },
-    
-    // 加载更多
     async loadMore() {
       if (!this.hasMore || this.loading) return
       
@@ -281,53 +357,21 @@ export const usePanoramaStore = defineStore('panorama', {
       return await this.fetchPanoramas({ append: true })
     },
     
-    // 刷新数据
     async refresh() {
       this.pagination.page = 1
       return await this.fetchPanoramas()
     },
     
-    // 设置当前全景图
-    setCurrentPanorama(panorama) {
-      this.currentPanorama = panorama
-    },
-    
-    // 清除当前全景图
-    clearCurrentPanorama() {
-      this.currentPanorama = null
-    },
-    
-    // 重置状态
-    reset() {
-      this.panoramas = []
-      this.currentPanorama = null
-      this.loading = false
-      this.error = null
-      this.pagination = {
-        page: 1,
-        pageSize: 20,
-        total: 0
-      }
-      this.searchParams = {}
-      this.mapBounds = null
-    },
-    
-    // 批量删除全景图
     async batchDeletePanoramas(ids) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'deleting')
+        this.clearError()
         
         const { batchDeletePanoramas } = await import('@/api/panorama.js')
         await batchDeletePanoramas(ids)
         
-        // 从列表中移除已删除的全景图
-        this.panoramas = this.panoramas.filter(p => !ids.includes(p.id))
-        
-        // 如果当前全景图被删除，清除它
-        if (this.currentPanorama && ids.includes(this.currentPanorama.id)) {
-          this.currentPanorama = null
-        }
+        this.removePanoramas(ids)
+        this.clearSelection()
         
         return true
       } catch (error) {
@@ -338,20 +382,15 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 移动全景图到文件夹
     async movePanoramaToFolder(id, folderId) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'updating')
+        this.clearError()
         
         const { movePanoramaToFolder } = await import('@/api/panorama.js')
         const response = await movePanoramaToFolder(id, folderId)
         
-        // 更新列表中的数据
-        const index = this.panoramas.findIndex(p => p.id === id)
-        if (index > -1) {
-          this.panoramas[index] = { ...this.panoramas[index], folderId }
-        }
+        this.updatePanorama(id, { ...this.getPanoramaById(id), folderId })
         
         return response
       } catch (error) {
@@ -362,22 +401,16 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 批量移动全景图到文件夹
     async batchMovePanoramasToFolder(ids, folderId) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'updating')
+        this.clearError()
         
         const { batchMovePanoramasToFolder } = await import('@/api/panorama.js')
         const response = await batchMovePanoramasToFolder(ids, folderId)
         
-        // 更新列表中的数据
-        this.panoramas = this.panoramas.map(p => {
-          if (ids.includes(p.id)) {
-            return { ...p, folderId }
-          }
-          return p
-        })
+        this.batchUpdatePanoramas(ids, { folderId })
+        this.clearSelection()
         
         return response
       } catch (error) {
@@ -388,20 +421,15 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 更新全景图可见性
     async updatePanoramaVisibility(id, isVisible) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'updating')
+        this.clearError()
         
         const { updatePanoramaVisibility } = await import('@/api/panorama.js')
         const response = await updatePanoramaVisibility(id, isVisible)
         
-        // 更新列表中的数据
-        const index = this.panoramas.findIndex(p => p.id === id)
-        if (index > -1) {
-          this.panoramas[index] = { ...this.panoramas[index], isVisible }
-        }
+        this.updatePanorama(id, { ...this.getPanoramaById(id), isVisible })
         
         return response
       } catch (error) {
@@ -412,22 +440,16 @@ export const usePanoramaStore = defineStore('panorama', {
       }
     },
     
-    // 批量更新全景图可见性
     async batchUpdatePanoramaVisibility(ids, isVisible) {
       try {
-        this.setLoading(true)
-        this.setError(null)
+        this.setLoading(true, 'updating')
+        this.clearError()
         
         const { batchUpdatePanoramaVisibility } = await import('@/api/panorama.js')
         const response = await batchUpdatePanoramaVisibility(ids, isVisible)
         
-        // 更新列表中的数据
-        this.panoramas = this.panoramas.map(p => {
-          if (ids.includes(p.id)) {
-            return { ...p, isVisible }
-          }
-          return p
-        })
+        this.batchUpdatePanoramas(ids, { isVisible })
+        this.clearSelection()
         
         return response
       } catch (error) {
@@ -436,5 +458,26 @@ export const usePanoramaStore = defineStore('panorama', {
       } finally {
         this.setLoading(false)
       }
-    }  }
+    },
+    
+    // 重置状态
+    reset() {
+      this.panoramas = []
+      this.currentPanorama = null
+      this.pagination = {
+        page: 1,
+        pageSize: 20,
+        total: 0
+      }
+      this.searchParams = {}
+      this.mapBounds = null
+      this.loading = false
+      this.error = null
+      this.selectedIds = []
+      this.batchMode = false
+      this.currentOperation = null
+    }
+  }
 })
+
+

@@ -1,4 +1,4 @@
-const PanoramaService = require('../../services/panorama.service')
+const { PanoramaQueryService } = require('../../services')
 const { successResponse, errorResponse } = require('../../utils/response')
 
 class PanoramaQueryController {
@@ -25,11 +25,11 @@ class PanoramaQueryController {
         includeHidden: includeHidden === 'true'
       }
       
-      const result = await PanoramaService.getPanoramas(options)
+      const result = await PanoramaQueryService.getPanoramas(options)
       
       res.json(successResponse(result, '获取全景图列表成功'))
     } catch (error) {
-      console.error('获取全景图列表失败:', error)
+      Logger.error('获取全景图列表失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -43,11 +43,11 @@ class PanoramaQueryController {
         return res.status(400).json(errorResponse('无效的全景图ID'))
       }
       
-      const panorama = await PanoramaService.getPanoramaById(parseInt(id))
+      const panorama = await PanoramaQueryService.getPanoramaById(parseInt(id))
       
       res.json(successResponse(panorama, '获取全景图详情成功'))
     } catch (error) {
-      console.error('获取全景图详情失败:', error)
+      Logger.error('获取全景图详情失败:', error)
       
       if (error.message.includes('不存在')) {
         res.status(404).json(errorResponse(error.message))
@@ -79,11 +79,11 @@ class PanoramaQueryController {
         return res.status(400).json(errorResponse('边界参数不合理'))
       }
       
-      const panoramas = await PanoramaService.getPanoramasByBounds(bounds)
+      const panoramas = await PanoramaQueryService.getPanoramasByBounds(bounds)
       
       res.json(successResponse(panoramas, '根据边界获取全景图成功'))
     } catch (error) {
-      console.error('根据边界获取全景图失败:', error)
+      Logger.error('根据边界获取全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -106,11 +106,11 @@ class PanoramaQueryController {
         return res.status(400).json(errorResponse('坐标参数超出有效范围'))
       }
       
-      const panoramas = await PanoramaService.getNearbyPanoramas(latitude, longitude, searchRadius)
+      const panoramas = await PanoramaQueryService.getNearbyPanoramas(latitude, longitude, searchRadius)
       
       res.json(successResponse(panoramas, '获取附近全景图成功'))
     } catch (error) {
-      console.error('获取附近全景图失败:', error)
+      Logger.error('获取附近全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -152,11 +152,11 @@ class PanoramaQueryController {
       if (dateFrom) searchParams.dateFrom = dateFrom
       if (dateTo) searchParams.dateTo = dateTo
       
-      const result = await PanoramaService.searchPanoramas(searchParams)
+      const result = await PanoramaQueryService.searchPanoramas(searchParams)
       
       res.json(successResponse(result, '搜索全景图成功'))
     } catch (error) {
-      console.error('搜索全景图失败:', error)
+      Logger.error('搜索全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -164,11 +164,11 @@ class PanoramaQueryController {
   // 获取统计信息
   static async getStats(req, res) {
     try {
-      const stats = await PanoramaService.getStats()
+      const stats = await PanoramaQueryService.getStats()
       
       res.json(successResponse(stats, '获取统计信息成功'))
     } catch (error) {
-      console.error('获取统计信息失败:', error)
+      Logger.error('获取统计信息失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }

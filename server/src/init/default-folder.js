@@ -13,7 +13,6 @@ async function initDefaultFolder() {
     )
 
     if (existingFolder && existingFolder.length > 0) {
-      console.log('默认文件夹已存在，ID:', existingFolder[0].id)
       return existingFolder[0].id
     }
 
@@ -23,7 +22,6 @@ async function initDefaultFolder() {
       ['默认文件夹', null, true, 0]
     )
 
-    console.log('创建默认文件夹成功，ID:', result.insertId)
     return result.insertId
   } catch (error) {
     console.error('初始化默认文件夹失败:', error.message)
@@ -71,7 +69,6 @@ async function initDatabase() {
     `
 
     await query(createFoldersTable)
-    console.log('文件夹表创建/更新完成')
 
     // 创建全景图表（如果还没有）
     const createPanoramasTable = `
@@ -100,7 +97,6 @@ async function initDatabase() {
     `
 
     await query(createPanoramasTable)
-    console.log('全景图表创建/更新完成')
 
     // 初始化默认文件夹
     await initDefaultFolder()

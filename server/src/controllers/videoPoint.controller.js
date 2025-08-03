@@ -1,6 +1,7 @@
 const VideoPointModel = require('../models/videoPoint.model')
 const path = require('path')
-const fs = require('fs').promises
+const fs = require('fs')
+const Logger = require('../utils/logger.js').promises
 
 class VideoPointController {
   // 获取视频点位列表
@@ -33,7 +34,7 @@ class VideoPointController {
         }
       })
     } catch (error) {
-      console.error('获取视频点位列表失败:', error)
+      Logger.error('获取视频点位列表失败:', error)
       res.status(500).json({
         success: false,
         message: '获取视频点位列表失败',
@@ -60,7 +61,7 @@ class VideoPointController {
         data: videoPoint
       })
     } catch (error) {
-      console.error('获取视频点位详情失败:', error)
+      Logger.error('获取视频点位详情失败:', error)
       res.status(500).json({
         success: false,
         message: '获取视频点位详情失败',
@@ -87,7 +88,7 @@ class VideoPointController {
         data: videoPoints
       })
     } catch (error) {
-      console.error('根据边界获取视频点位失败:', error)
+      Logger.error('根据边界获取视频点位失败:', error)
       res.status(500).json({
         success: false,
         message: '获取视频点位失败',
@@ -138,7 +139,7 @@ class VideoPointController {
         data: videoPoint
       })
     } catch (error) {
-      console.error('创建视频点位失败:', error)
+      Logger.error('创建视频点位失败:', error)
       res.status(500).json({
         success: false,
         message: '创建视频点位失败',
@@ -168,7 +169,7 @@ class VideoPointController {
         data: videoPoint
       })
     } catch (error) {
-      console.error('更新视频点位失败:', error)
+      Logger.error('更新视频点位失败:', error)
       res.status(500).json({
         success: false,
         message: '更新视频点位失败',
@@ -205,7 +206,7 @@ class VideoPointController {
             await fs.unlink(thumbPath).catch(() => {}) // 忽略文件不存在的错误
           }
         } catch (error) {
-          console.warn('删除视频文件失败:', error)
+          Logger.warn('删除视频文件失败:', error)
         }
 
         res.json({
@@ -219,7 +220,7 @@ class VideoPointController {
         })
       }
     } catch (error) {
-      console.error('删除视频点位失败:', error)
+      Logger.error('删除视频点位失败:', error)
       res.status(500).json({
         success: false,
         message: '删除视频点位失败',
@@ -247,7 +248,7 @@ class VideoPointController {
         message: `成功删除 ${affectedRows} 个视频点位`
       })
     } catch (error) {
-      console.error('批量删除视频点位失败:', error)
+      Logger.error('批量删除视频点位失败:', error)
       res.status(500).json({
         success: false,
         message: '批量删除视频点位失败',
@@ -275,7 +276,7 @@ class VideoPointController {
         message: `成功更新 ${affectedRows} 个视频点位的可见性`
       })
     } catch (error) {
-      console.error('批量更新视频点位可见性失败:', error)
+      Logger.error('批量更新视频点位可见性失败:', error)
       res.status(500).json({
         success: false,
         message: '批量更新视频点位可见性失败',
@@ -303,7 +304,7 @@ class VideoPointController {
         message: `成功移动 ${affectedRows} 个视频点位到文件夹`
       })
     } catch (error) {
-      console.error('批量移动视频点位到文件夹失败:', error)
+      Logger.error('批量移动视频点位到文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '批量移动视频点位到文件夹失败',
@@ -333,7 +334,7 @@ class VideoPointController {
         data: videoPoint
       })
     } catch (error) {
-      console.error('更新视频点位可见性失败:', error)
+      Logger.error('更新视频点位可见性失败:', error)
       res.status(500).json({
         success: false,
         message: '更新视频点位可见性失败',
@@ -363,7 +364,7 @@ class VideoPointController {
         data: videoPoint
       })
     } catch (error) {
-      console.error('移动视频点位到文件夹失败:', error)
+      Logger.error('移动视频点位到文件夹失败:', error)
       res.status(500).json({
         success: false,
         message: '移动视频点位到文件夹失败',
@@ -382,7 +383,7 @@ class VideoPointController {
         data: stats
       })
     } catch (error) {
-      console.error('获取视频点位统计失败:', error)
+      Logger.error('获取视频点位统计失败:', error)
       res.status(500).json({
         success: false,
         message: '获取视频点位统计失败',

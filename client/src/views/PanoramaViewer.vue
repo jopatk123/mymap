@@ -70,7 +70,6 @@ const loadPanorama = async () => {
     // 初始化查看器
     setTimeout(async () => {
       try {
-        console.log('开始初始化查看器:', loadedPanorama.imageUrl)
         await initViewer('panorama-viewer', loadedPanorama.imageUrl, {
           autoRotate: -2,
           compass: true,

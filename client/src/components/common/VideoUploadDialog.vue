@@ -253,7 +253,6 @@ const loadFolders = async () => {
   try {
     const { folderApi } = await import('@/api/folder.js')
     const response = await folderApi.getFoldersFlat()
-    console.log('文件夹API响应:', response)
     
     // 处理可能的响应格式
     let folderData = response
@@ -262,12 +261,10 @@ const loadFolders = async () => {
     }
     
     folders.value = Array.isArray(folderData) ? folderData : []
-    console.log('加载的文件夹:', folders.value)
     
     // 自动选择第一个可用的文件夹作为默认值
     if (folders.value.length > 0 && !form.folderId) {
       form.folderId = folders.value[0].id
-      console.log('自动选择文件夹ID:', form.folderId)
     } else if (folders.value.length === 0) {
       console.warn('没有可用的文件夹')
     }

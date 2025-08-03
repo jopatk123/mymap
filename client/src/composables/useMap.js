@@ -52,17 +52,14 @@ export function useMap(containerId) {
     
     // 地图点击事件
     map.value.on('click', (e) => {
-      console.log('地图点击坐标:', e.latlng)
     })
     
     // 地图缩放事件
     map.value.on('zoomend', () => {
-      console.log('当前缩放级别:', map.value.getZoom())
     })
     
     // 地图移动事件
     map.value.on('moveend', () => {
-      console.log('地图中心:', map.value.getCenter())
     })
   }
   
@@ -123,7 +120,6 @@ export function useMap(containerId) {
   // 标记点击事件处理
   const onMarkerClick = ref((panorama) => {
     // 这里可以触发自定义事件或调用回调
-    console.log('全景图标记被点击:', panorama)
   })
   
   // 设置地图中心

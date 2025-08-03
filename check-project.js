@@ -16,7 +16,6 @@ const colors = {
 }
 
 function log(message, color = 'reset') {
-  console.log(`${colors[color]}${message}${colors.reset}`)
 }
 
 // 检查文件是否存在
@@ -144,7 +143,7 @@ function checkProject() {
     ['server/src/server.js', '后端服务器入口'],
     ['server/src/app.js', '后端应用配置'],
     ['server/src/controllers/panorama.controller.js', '全景图控制器'],
-    ['server/src/services/panorama.service.js', '全景图服务'],
+
     ['server/src/models/panorama.model.js', '全景图模型'],
     ['server/src/utils/coordinate-transform.js', '坐标转换工具']
   ]

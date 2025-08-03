@@ -2,6 +2,7 @@ const app = require('./app')
 const config = require('./config')
 const { testConnection, initTables, closePool } = require('./config/database')
 const { initDefaultFolder } = require('./init/init-default-folder')
+const Logger = require('./utils/logger')
 
 // 启动服务器
 const startServer = async () => {
@@ -9,7 +10,7 @@ const startServer = async () => {
     // 测试数据库连接
     const dbConnected = await testConnection()
     if (!dbConnected) {
-      console.error('数据库连接失败，服务器启动中止')
+      Logger.error('数据库连接失败，服务器启动中止')
       process.exit(1)
     }
     
@@ -18,11 +19,10 @@ const startServer = async () => {
     
     // 初始化默认文件夹
     const defaultFolderId = await initDefaultFolder()
-    console.log(`📁 默认文件夹ID: ${defaultFolderId}`)
     
     // 启动HTTP服务器
     const server = app.listen(config.server.port, () => {
-      console.log(`
+      Logger.info(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                    地图全景系统服务器                          ║
 ╠══════════════════════════════════════════════════════════════╣
@@ -39,21 +39,18 @@ const startServer = async () => {
     
     // 优雅关闭处理
     const gracefulShutdown = (signal) => {
-      console.log(`\n收到 ${signal} 信号，开始优雅关闭服务器...`)
       
       server.close(async () => {
-        console.log('HTTP服务器已关闭')
         
         // 关闭数据库连接池
         await closePool()
         
-        console.log('服务器已完全关闭')
         process.exit(0)
       })
       
       // 强制关闭超时
       setTimeout(() => {
-        console.error('强制关闭服务器')
+        Logger.error('强制关闭服务器')
         process.exit(1)
       }, 10000)
     }
@@ -64,18 +61,18 @@ const startServer = async () => {
     
     // 监听未捕获的异常
     process.on('uncaughtException', (error) => {
-      console.error('未捕获的异常:', error)
+      Logger.error('未捕获的异常:', error)
       gracefulShutdown('uncaughtException')
     })
     
     process.on('unhandledRejection', (reason, promise) => {
-      console.error('未处理的Promise拒绝:', reason)
-      console.error('Promise:', promise)
+      Logger.error('未处理的Promise拒绝:', reason)
+      Logger.error('Promise:', promise)
       gracefulShutdown('unhandledRejection')
     })
     
   } catch (error) {
-    console.error('服务器启动失败:', error)
+    Logger.error('服务器启动失败:', error)
     process.exit(1)
   }
 }

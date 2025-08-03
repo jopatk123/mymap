@@ -1,4 +1,5 @@
 const { query, transaction } = require('../config/database')
+const QueryBuilder = require('../utils/QueryBuilder')
 
 class PanoramaModel {
   // 获取全景图列表
@@ -14,75 +15,36 @@ class PanoramaModel {
       includeHidden = false
     } = options
     
-    let sql = `
+    // 使用QueryBuilder构建查询条件
+    const { conditions, params } = QueryBuilder.buildPanoramaConditions({
+      includeHidden,
+      folderId,
+      keyword,
+      bounds
+    })
+    
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+    
+    // 构建主查询
+    const sql = `
       SELECT p.*, f.name as folder_name 
       FROM panoramas p 
       LEFT JOIN folders f ON p.folder_id = f.id 
-      WHERE 1=1
+      ${whereClause}
+      ${QueryBuilder.buildOrderClause(sortBy, sortOrder, ['created_at', 'title', 'latitude', 'longitude', 'sort_order'], 'p')}
+      ${QueryBuilder.buildLimitClause(page, pageSize)}
     `
-    const params = []
-    
-    // 可见性筛选
-    if (!includeHidden) {
-      sql += ' AND p.is_visible = TRUE'
-    }
-    
-    // 文件夹筛选
-    if (folderId !== null) {
-      sql += ' AND p.folder_id = ?'
-      params.push(folderId)
-    }
-    
-    // 关键词搜索
-    if (keyword) {
-      sql += ' AND (p.title LIKE ? OR p.description LIKE ?)'
-      params.push(`%${keyword}%`, `%${keyword}%`)
-    }
-    
-    // 地图边界筛选
-    if (bounds) {
-      const { north, south, east, west } = bounds
-      sql += ' AND p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?'
-      params.push(south, north, west, east)
-    }
-    
-    // 排序
-    const allowedSortFields = ['created_at', 'title', 'latitude', 'longitude', 'sort_order']
-    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at'
-    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-    sql += ` ORDER BY p.${sortField} ${order}`
-    
-    // 分页
-    const offset = (page - 1) * pageSize
-    sql += ` LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`
     
     const rows = await query(sql, params)
     
-    // 获取总数
-    let countSql = 'SELECT COUNT(*) as total FROM panoramas p WHERE 1=1'
-    const countParams = []
+    // 构建计数查询
+    const countSql = `
+      SELECT COUNT(*) as total 
+      FROM panoramas p 
+      ${whereClause}
+    `
     
-    if (!includeHidden) {
-      countSql += ' AND p.is_visible = TRUE'
-    }
-    
-    if (folderId !== null) {
-      countSql += ' AND p.folder_id = ?'
-      countParams.push(folderId)
-    }
-    
-    if (keyword) {
-      countSql += ' AND (p.title LIKE ? OR p.description LIKE ?)'
-      countParams.push(`%${keyword}%`, `%${keyword}%`)
-    }
-    
-    if (bounds) {
-      const { north, south, east, west } = bounds
-      countSql += ' AND p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?'
-      countParams.push(south, north, west, east)
-    }
-    
-    const [{ total }] = await query(countSql, countParams)
+    const [{ total }] = await query(countSql, params)
     
     return {
       data: rows,
@@ -116,19 +78,16 @@ class PanoramaModel {
   
   // 获取附近的全景图
   static async findNearby(lat, lng, radius = 1000) {
-    // 使用Haversine公式计算距离
+    const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
+    
     const sql = `
-      SELECT *,
-        (6371000 * acos(
-          cos(radians(?)) * cos(radians(latitude)) * 
-          cos(radians(longitude) - radians(?)) + 
-          sin(radians(?)) * sin(radians(latitude))
-        )) AS distance
+      SELECT *, ${nearbyQuery.selectDistance}
       FROM panoramas
-      HAVING distance <= ?
+      HAVING ${nearbyQuery.havingCondition}
       ORDER BY distance ASC
     `
-    return await query(sql, [lat, lng, lat, radius])
+    
+    return await query(sql, [...nearbyQuery.params, radius])
   }
   
   // 创建全景图
@@ -240,9 +199,9 @@ class PanoramaModel {
   static async batchDelete(ids) {
     if (!ids || ids.length === 0) return 0
     
-    const placeholders = ids.map(() => '?').join(',')
-    const sql = `DELETE FROM panoramas WHERE id IN (${placeholders})`
-    const result = await query(sql, ids)
+    const { clause, params } = QueryBuilder.buildInClause(ids)
+    const sql = `DELETE FROM panoramas WHERE id ${clause}`
+    const result = await query(sql, params)
     return result.affectedRows
   }
   
@@ -259,69 +218,56 @@ class PanoramaModel {
       pageSize = 20
     } = searchParams
     
-    let sql = 'SELECT * FROM panoramas WHERE 1=1'
-    const params = []
+    // 使用QueryBuilder构建查询条件
+    const { conditions, params } = QueryBuilder.buildPanoramaConditions({
+      keyword,
+      dateFrom,
+      dateTo,
+      includeHidden: true // 搜索时包含隐藏项
+    })
     
-    // 关键词搜索
-    if (keyword) {
-      sql += ' AND (title LIKE ? OR description LIKE ?)'
-      params.push(`%${keyword}%`, `%${keyword}%`)
-    }
+    let sql = 'SELECT * FROM panoramas'
+    let finalParams = [...params]
     
-    // 位置搜索
+    // 处理位置搜索
     if (lat && lng && radius) {
-      sql += ` AND (6371000 * acos(
-        cos(radians(?)) * cos(radians(latitude)) * 
-        cos(radians(longitude) - radians(?)) + 
-        sin(radians(?)) * sin(radians(latitude))
-      )) <= ?`
-      params.push(lat, lng, lat, radius)
+      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
+      sql = `SELECT *, ${nearbyQuery.selectDistance} FROM panoramas`
+      finalParams = [...nearbyQuery.params, ...finalParams]
+      
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')} HAVING ${nearbyQuery.havingCondition}`
+        finalParams.push(radius)
+      } else {
+        sql += ` HAVING ${nearbyQuery.havingCondition}`
+        finalParams.push(radius)
+      }
+      sql += ' ORDER BY distance ASC'
+    } else {
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')}`
+      }
+      sql += ' ORDER BY created_at DESC'
     }
     
-    // 日期范围搜索
-    if (dateFrom) {
-      sql += ' AND created_at >= ?'
-      params.push(dateFrom)
-    }
+    sql += ` ${QueryBuilder.buildLimitClause(page, pageSize)}`
     
-    if (dateTo) {
-      sql += ' AND created_at <= ?'
-      params.push(dateTo)
-    }
+    const rows = await query(sql, finalParams)
     
-    // 排序和分页
-    sql += ' ORDER BY created_at DESC'
-    const offset = (page - 1) * pageSize
-    sql += ` LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`
-    
-    const rows = await query(sql, params)
-    
-    // 获取总数
-    let countSql = 'SELECT COUNT(*) as total FROM panoramas WHERE 1=1'
-    const countParams = []
-    
-    if (keyword) {
-      countSql += ' AND (title LIKE ? OR description LIKE ?)'
-      countParams.push(`%${keyword}%`, `%${keyword}%`)
-    }
+    // 构建计数查询
+    let countSql = 'SELECT COUNT(*) as total FROM panoramas'
+    let countParams = [...params]
     
     if (lat && lng && radius) {
-      countSql += ` AND (6371000 * acos(
-        cos(radians(?)) * cos(radians(latitude)) * 
-        cos(radians(longitude) - radians(?)) + 
-        sin(radians(?)) * sin(radians(latitude))
-      )) <= ?`
-      countParams.push(lat, lng, lat, radius)
-    }
-    
-    if (dateFrom) {
-      countSql += ' AND created_at >= ?'
-      countParams.push(dateFrom)
-    }
-    
-    if (dateTo) {
-      countSql += ' AND created_at <= ?'
-      countParams.push(dateTo)
+      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
+      countSql = `SELECT COUNT(*) as total FROM (
+        SELECT *, ${nearbyQuery.selectDistance} FROM panoramas
+        ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''}
+        HAVING ${nearbyQuery.havingCondition}
+      ) as filtered`
+      countParams = [...nearbyQuery.params, ...countParams, radius]
+    } else if (conditions.length > 0) {
+      countSql += ` WHERE ${conditions.join(' AND ')}`
     }
     
     const [{ total }] = await query(countSql, countParams)
@@ -362,10 +308,9 @@ class PanoramaModel {
   static async batchMoveToFolder(ids, folderId) {
     if (!ids || ids.length === 0) return 0
     
-    const placeholders = ids.map(() => '?').join(',')
-    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`
-    const params = [folderId, ...ids]
-    const result = await query(sql, params)
+    const { clause, params } = QueryBuilder.buildInClause(ids)
+    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
+    const result = await query(sql, [folderId, ...params])
     return result.affectedRows
   }
 
@@ -380,10 +325,9 @@ class PanoramaModel {
   static async batchUpdateVisibility(ids, isVisible) {
     if (!ids || ids.length === 0) return 0
     
-    const placeholders = ids.map(() => '?').join(',')
-    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`
-    const params = [isVisible, ...ids]
-    const result = await query(sql, params)
+    const { clause, params } = QueryBuilder.buildInClause(ids)
+    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
+    const result = await query(sql, [isVisible, ...params])
     return result.affectedRows
   }
 

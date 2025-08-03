@@ -47,7 +47,7 @@ const config = {
   // 安全配置
   security: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000'
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
   },
   
   // 日志配置

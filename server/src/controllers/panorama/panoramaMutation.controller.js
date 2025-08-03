@@ -1,4 +1,4 @@
-const PanoramaService = require('../../services/panorama.service')
+const { PanoramaMutationService } = require('../../services')
 const { successResponse, errorResponse } = require('../../utils/response')
 
 class PanoramaMutationController {
@@ -30,11 +30,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('坐标参数超出有效范围'))
       }
       
-      const panorama = await PanoramaService.createPanorama(panoramaData)
+      const panorama = await PanoramaMutationService.createPanorama(panoramaData)
       
       res.status(201).json(successResponse(panorama, '创建全景图成功'))
     } catch (error) {
-      console.error('创建全景图失败:', error)
+      Logger.error('创建全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -67,11 +67,11 @@ class PanoramaMutationController {
         }
       }
       
-      const panorama = await PanoramaService.updatePanorama(parseInt(id), panoramaData)
+      const panorama = await PanoramaMutationService.updatePanorama(parseInt(id), panoramaData)
       
       res.json(successResponse(panorama, '更新全景图成功'))
     } catch (error) {
-      console.error('更新全景图失败:', error)
+      Logger.error('更新全景图失败:', error)
       
       if (error.message.includes('不存在')) {
         res.status(404).json(errorResponse(error.message))
@@ -90,11 +90,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('无效的全景图ID'))
       }
       
-      const result = await PanoramaService.deletePanorama(parseInt(id))
+      const result = await PanoramaMutationService.deletePanorama(parseInt(id))
       
       res.json(successResponse(result, '删除全景图成功'))
     } catch (error) {
-      console.error('删除全景图失败:', error)
+      Logger.error('删除全景图失败:', error)
       
       if (error.message.includes('不存在')) {
         res.status(404).json(errorResponse(error.message))
@@ -120,11 +120,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('没有有效的ID'))
       }
       
-      const result = await PanoramaService.batchDeletePanoramas(validIds)
+      const result = await PanoramaMutationService.batchDeletePanoramas(validIds)
       
       res.json(successResponse(result, '批量删除全景图成功'))
     } catch (error) {
-      console.error('批量删除全景图失败:', error)
+      Logger.error('批量删除全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -139,11 +139,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('无效的全景图ID'))
       }
       
-      const panorama = await PanoramaService.movePanoramaToFolder(parseInt(id), folderId || null)
+      const panorama = await PanoramaMutationService.movePanoramaToFolder(parseInt(id), folderId || null)
       
       res.json(successResponse(panorama, '移动全景图成功'))
     } catch (error) {
-      console.error('移动全景图失败:', error)
+      Logger.error('移动全景图失败:', error)
       
       if (error.message.includes('不存在')) {
         res.status(404).json(errorResponse(error.message))
@@ -168,11 +168,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('没有有效的ID'))
       }
       
-      const result = await PanoramaService.batchMovePanoramasToFolder(validIds, folderId || null)
+      const result = await PanoramaMutationService.batchMovePanoramasToFolder(validIds, folderId || null)
       
       res.json(successResponse(result, '批量移动全景图成功'))
     } catch (error) {
-      console.error('批量移动全景图失败:', error)
+      Logger.error('批量移动全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }
@@ -191,11 +191,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('isVisible必须是布尔值'))
       }
       
-      const panorama = await PanoramaService.updatePanoramaVisibility(parseInt(id), isVisible)
+      const panorama = await PanoramaMutationService.updatePanoramaVisibility(parseInt(id), isVisible)
       
       res.json(successResponse(panorama, `全景图已${isVisible ? '显示' : '隐藏'}`))
     } catch (error) {
-      console.error('更新全景图可见性失败:', error)
+      Logger.error('更新全景图可见性失败:', error)
       
       if (error.message.includes('不存在')) {
         res.status(404).json(errorResponse(error.message))
@@ -224,11 +224,11 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('没有有效的ID'))
       }
       
-      const result = await PanoramaService.batchUpdatePanoramaVisibility(validIds, isVisible)
+      const result = await PanoramaMutationService.batchUpdatePanoramaVisibility(validIds, isVisible)
       
       res.json(successResponse(result, `批量${isVisible ? '显示' : '隐藏'}全景图成功`))
     } catch (error) {
-      console.error('批量更新全景图可见性失败:', error)
+      Logger.error('批量更新全景图可见性失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }}

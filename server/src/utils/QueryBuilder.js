@@ -1,0 +1,91 @@
+class QueryBuilder {
+  // 构建全景图查询条件
+  static buildPanoramaConditions(options) {
+    const conditions = []
+    const params = []
+    
+    // 可见性筛选
+    if (!options.includeHidden) {
+      conditions.push('p.is_visible = TRUE')
+    }
+    
+    // 文件夹筛选
+    if (options.folderId !== null && options.folderId !== undefined) {
+      conditions.push('p.folder_id = ?')
+      params.push(options.folderId)
+    }
+    
+    // 关键词搜索
+    if (options.keyword) {
+      conditions.push('(p.title LIKE ? OR p.description LIKE ?)')
+      params.push(`%${options.keyword}%`, `%${options.keyword}%`)
+    }
+    
+    // 地图边界筛选
+    if (options.bounds) {
+      const { north, south, east, west } = options.bounds
+      conditions.push('p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?')
+      params.push(south, north, west, east)
+    }
+    
+    // 日期范围筛选
+    if (options.dateFrom) {
+      conditions.push('p.created_at >= ?')
+      params.push(options.dateFrom)
+    }
+    
+    if (options.dateTo) {
+      conditions.push('p.created_at <= ?')
+      params.push(options.dateTo)
+    }
+    
+    return { conditions, params }
+  }
+  
+  // 构建附近查询（使用Haversine公式）
+  static buildNearbyQuery(lat, lng, radius) {
+    const distanceFormula = `
+      (6371000 * acos(
+        cos(radians(?)) * cos(radians(latitude)) * 
+        cos(radians(longitude) - radians(?)) + 
+        sin(radians(?)) * sin(radians(latitude))
+      ))
+    `
+    
+    return {
+      selectDistance: `${distanceFormula} AS distance`,
+      havingCondition: 'distance <= ?',
+      params: [lat, lng, lat, radius]
+    }
+  }
+  
+  // 构建排序子句
+  static buildOrderClause(sortBy, sortOrder, allowedFields, tableAlias = '') {
+    const field = allowedFields.includes(sortBy) ? sortBy : allowedFields[0]
+    const order = ['ASC', 'DESC'].includes(sortOrder?.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC'
+    const prefix = tableAlias ? `${tableAlias}.` : ''
+    
+    return `ORDER BY ${prefix}${field} ${order}`
+  }
+  
+  // 构建分页子句
+  static buildLimitClause(page, pageSize) {
+    const offset = (page - 1) * pageSize
+    return `LIMIT ${parseInt(pageSize)} OFFSET ${parseInt(offset)}`
+  }
+  
+  // 构建批量操作的IN子句
+  static buildInClause(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { clause: '', params: [] }
+    }
+    
+    const placeholders = ids.map(() => '?').join(',')
+    return {
+      clause: `IN (${placeholders})`,
+      params: ids
+    }
+  }
+}
+
+module.exports = QueryBuilder

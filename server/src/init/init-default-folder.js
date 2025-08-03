@@ -1,4 +1,5 @@
 const { query } = require('../config/database')
+const Logger = require('../utils/logger')
 
 /**
  * 初始化默认文件夹
@@ -6,7 +7,6 @@ const { query } = require('../config/database')
  */
 async function initDefaultFolder() {
   try {
-    console.log('📁 初始化默认文件夹...')
     
     // 检查是否已存在名为"默认文件夹"的文件夹
     const existingFolder = await query(
@@ -15,7 +15,6 @@ async function initDefaultFolder() {
     )
     
     if (existingFolder && existingFolder.length > 0) {
-      console.log(`✅ 默认文件夹已存在，ID: ${existingFolder[0].id}`)
       return existingFolder[0].id
     }
 
@@ -25,10 +24,9 @@ async function initDefaultFolder() {
       ['默认文件夹', null, true, 0]
     )
 
-    console.log(`✅ 创建默认文件夹成功，ID: ${result.insertId}`)
     return result.insertId
   } catch (error) {
-    console.error('❌ 初始化默认文件夹失败:', error.message)
+    Logger.error('❌ 初始化默认文件夹失败:', error.message)
     throw error
   }
 }

@@ -62,9 +62,7 @@ export class PanoramaViewerService {
    * 从API加载全景图数据
    */
   async _loadFromAPI(id) {
-    console.log('开始加载全景图ID:', id)
     const response = await getPanoramaById(id)
-    console.log('API响应:', response)
     
     const data = response.data || response
     if (!data) {
@@ -76,7 +74,6 @@ export class PanoramaViewerService {
     }
     
     this.panorama = data
-    console.log('全景图数据:', data)
     
     return this.panorama
   }

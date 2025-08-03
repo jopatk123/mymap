@@ -95,7 +95,7 @@ import MapControls from '@/components/map/MapControls.vue'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 
-// Store
+// Stores
 const panoramaStore = usePanoramaStore()
 const appStore = useAppStore()
 
@@ -103,9 +103,10 @@ const appStore = useAppStore()
 const { 
   panoramas, 
   currentPanorama, 
-  loading, 
   pagination,
-  visiblePanoramas 
+  visiblePanoramas,
+  hasMore,
+  loading
 } = storeToRefs(panoramaStore)
 
 const { 
@@ -130,7 +131,6 @@ const showSettings = ref(false)
 
 // 计算属性
 const totalCount = computed(() => pagination.value.total)
-const hasMore = computed(() => panoramaStore.hasMore)
 
 // 初始化
 onMounted(async () => {
@@ -165,7 +165,6 @@ const handlePanoramaClick = (panorama) => {
 
 // 处理地图点击
 const handleMapClick = (latlng) => {
-  console.log('地图点击坐标:', latlng)
   // 可以在这里添加新增全景图的逻辑
 }
 
@@ -245,7 +244,7 @@ const handleUploadSuccess = () => {
 const handlePanoramaDeleted = async (deletedId) => {
   try {
     // 从store中移除已删除的全景图
-    await panoramaStore.deletePanorama(deletedId)
+    await panoramaStore.deletePanoramaAsync(deletedId)
     
     // 重新加载地图标记
     if (mapRef.value) {
@@ -255,7 +254,7 @@ const handlePanoramaDeleted = async (deletedId) => {
     
     // 清空选择状态
     if (currentPanorama.value?.id === deletedId) {
-      currentPanorama.value = null
+      panoramaStore.setCurrentPanorama(null)
     }
     if (selectedPanorama.value?.id === deletedId) {
       selectedPanorama.value = null

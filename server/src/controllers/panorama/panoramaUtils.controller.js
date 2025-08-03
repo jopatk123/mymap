@@ -1,4 +1,4 @@
-const PanoramaService = require('../../services/panorama.service')
+const { CoordinateService } = require('../../services')
 const { successResponse, errorResponse } = require('../../utils/response')
 
 class PanoramaUtilsController {
@@ -25,11 +25,11 @@ class PanoramaUtilsController {
         return res.status(400).json(errorResponse('不支持的坐标系'))
       }
       
-      const result = PanoramaService.convertCoordinate(latitude, longitude, from, to)
+      const result = CoordinateService.convertCoordinate(latitude, longitude, from, to)
       
       res.json(successResponse(result, '坐标转换成功'))
     } catch (error) {
-      console.error('坐标转换失败:', error)
+      Logger.error('坐标转换失败:', error)
       res.status(500).json(errorResponse(error.message))
     }
   }

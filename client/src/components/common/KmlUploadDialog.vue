@@ -239,7 +239,6 @@ const loadFolders = async () => {
 
 // 文件变化处理
 const handleFileChange = async (file) => {
-  console.log('文件变化:', file.name, file.type, file.size)
   form.file = file.raw
   
   // 自动提取文件名作为标题（如果标题为空）
@@ -288,7 +287,6 @@ const validateKmlFile = async (file) => {
     
     const response = await kmlApi.validateKmlFile(formData)
     
-    console.log('验证响应:', response)
     
     if (response.success) {
       validationResult.value = response.data
