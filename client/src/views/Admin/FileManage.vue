@@ -286,8 +286,9 @@
       </template>
     </el-dialog>
   </div>
-</template><scrip
-t setup>
+</template>
+
+<script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -630,8 +631,9 @@ const formatDate = (dateString) => {
   if (!dateString) return '未知时间'
   return new Date(dateString).toLocaleString('zh-CN')
 }
-</script><st
-yle lang="scss" scoped>
+</script>
+
+<style lang="scss" scoped>
 .file-manage {
   padding: 24px;
   height: 100vh;
