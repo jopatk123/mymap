@@ -52,7 +52,7 @@ export const kmlApi = {
 
   // 批量删除KML文件
   batchDeleteKmlFiles(ids) {
-    return api.delete('/kml-files/batch', { data: { ids } })
+    return api.delete('/kml-files', { data: { ids } })
   },
 
   // 批量更新KML文件可见性
