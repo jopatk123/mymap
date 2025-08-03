@@ -96,17 +96,18 @@ class KmlFileModel {
       const total = countResult[0].total
 
       // 获取数据
-      const offset = (parseInt(page) - 1) * parseInt(pageSize)
-      const [rows] = await pool.execute(
-        `SELECT kf.*, f.name as folder_name,
-         (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
-         FROM kml_files kf 
-         LEFT JOIN folders f ON kf.folder_id = f.id 
-         ${whereClause}
-         ORDER BY kf.sort_order ASC, kf.created_at DESC
-         LIMIT ? OFFSET ?`,
-        [...params, parseInt(pageSize), offset]
-      )
+      const limit = Number.parseInt(pageSize, 10) || 20
+      const offset = (Number.parseInt(page, 10) - 1) * limit
+      const sql = `
+        SELECT kf.*, f.name as folder_name,
+        (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
+        FROM kml_files kf 
+        LEFT JOIN folders f ON kf.folder_id = f.id 
+        ${whereClause}
+        ORDER BY kf.sort_order ASC, kf.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      const [rows] = await pool.execute(sql, params)
 
       return {
         data: rows,

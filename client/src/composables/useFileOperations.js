@@ -1,5 +1,8 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { deletePanorama } from '@/api/panorama.js'
+import { videoApi } from '@/api/video.js'
+import { kmlApi } from '@/api/kml.js'
 
 export function useFileOperations() {
   // 当前操作的文件
@@ -43,7 +46,22 @@ export function useFileOperations() {
       )
       
       // 根据文件类型调用相应的删除API
-      // 这里需要根据实际的API实现
+      let req
+      switch (file.fileType) {
+        case 'panorama':
+          req = deletePanorama(file.id)
+          break
+        case 'video':
+          req = videoApi.deleteVideoPoint(file.id)
+          break
+        case 'kml':
+          req = kmlApi.deleteKmlFile(file.id)
+          break
+        default:
+          throw new Error('未知文件类型')
+      }
+      await req
+      
       ElMessage.success('删除成功')
       onSuccess?.()
     } catch (error) {
