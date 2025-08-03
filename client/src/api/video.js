@@ -30,5 +30,20 @@ export const videoApi = {
   // 删除视频点位
   deleteVideoPoint(id) {
     return api.delete(`/video-points/${id}`)
+  },
+
+  // 批量删除视频点位
+  batchDeleteVideoPoints(ids) {
+    return api.delete('/video-points', { data: { ids } })
+  },
+
+  // 批量更新视频点位可见性
+  batchUpdateVideoPointsVisibility(ids, isVisible) {
+    return api.patch('/video-points/batch/visibility', { ids, isVisible })
+  },
+
+  // 批量移动视频点位到文件夹
+  batchMoveVideoPointsToFolder(ids, folderId) {
+    return api.patch('/video-points/batch/move', { ids, folderId })
   }
 }

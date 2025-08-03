@@ -1,6 +1,9 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
+import { videoApi } from '@/api/video.js'
+import { kmlApi } from '@/api/kml.js'
+import * as panoramaApi from '@/api/panorama.js'
 
 export function useBatchOperations() {
   const panoramaStore = usePanoramaStore()
@@ -45,7 +48,7 @@ export function useBatchOperations() {
   const batchUpdateVisibility = async (selectedRows, isVisible, onSuccess) => {
     try {
       await ElMessageBox.confirm(
-        `确定要${isVisible ? '显示' : '隐藏'}选中的 ${selectedRows.length} 个全景图吗？`,
+        `确定要${isVisible ? '显示' : '隐藏'}选中的 ${selectedRows.length} 个文件吗？`,
         '确认操作',
         {
           confirmButtonText: '确定',
@@ -54,9 +57,33 @@ export function useBatchOperations() {
         }
       )
       
-      const ids = selectedRows.map(row => row.id)
-      await panoramaStore.batchUpdatePanoramaVisibility(ids, isVisible)
-      ElMessage.success(`批量${isVisible ? '显示' : '隐藏'}成功`)
+      // 按文件类型分组
+      const panoramas = selectedRows.filter(row => row.fileType === 'panorama').map(row => row.id)
+      const videos = selectedRows.filter(row => row.fileType === 'video').map(row => row.id)
+      const kmls = selectedRows.filter(row => row.fileType === 'kml').map(row => row.id)
+      
+      const updatePromises = []
+      
+      if (panoramas.length > 0) {
+        updatePromises.push(panoramaApi.batchUpdatePanoramaVisibility(panoramas, isVisible))
+      }
+      if (videos.length > 0) {
+        updatePromises.push(videoApi.batchUpdateVideoPointsVisibility(videos, isVisible))
+      }
+      if (kmls.length > 0) {
+        updatePromises.push(kmlApi.batchUpdateKmlFileVisibility(kmls, isVisible))
+      }
+      
+      const results = await Promise.allSettled(updatePromises)
+      const failedUpdates = results.filter(result => result.status === 'rejected')
+      
+      if (failedUpdates.length > 0) {
+        ElMessage.error('部分文件更新可见性失败')
+        console.error('更新失败详情:', failedUpdates)
+      } else {
+        ElMessage.success(`批量${isVisible ? '显示' : '隐藏'}成功`)
+      }
+      
       onSuccess?.()
     } catch (error) {
       if (error !== 'cancel') {
@@ -69,7 +96,7 @@ export function useBatchOperations() {
   const batchDelete = async (selectedRows, onSuccess) => {
     try {
       await ElMessageBox.confirm(
-        `确定要删除选中的 ${selectedRows.length} 个全景图吗？`,
+        `确定要删除选中的 ${selectedRows.length} 个文件吗？`,
         '确认批量删除',
         {
           confirmButtonText: '确定',
@@ -78,9 +105,33 @@ export function useBatchOperations() {
         }
       )
       
-      const ids = selectedRows.map(row => row.id)
-      await panoramaStore.batchDeletePanoramas(ids)
-      ElMessage.success('批量删除成功')
+      // 按文件类型分组
+      const panoramas = selectedRows.filter(row => row.fileType === 'panorama').map(row => row.id)
+      const videos = selectedRows.filter(row => row.fileType === 'video').map(row => row.id)
+      const kmls = selectedRows.filter(row => row.fileType === 'kml').map(row => row.id)
+      
+      const deletePromises = []
+      
+      if (panoramas.length > 0) {
+        deletePromises.push(panoramaApi.batchDeletePanoramas(panoramas))
+      }
+      if (videos.length > 0) {
+        deletePromises.push(videoApi.batchDeleteVideoPoints(videos))
+      }
+      if (kmls.length > 0) {
+        deletePromises.push(kmlApi.batchDeleteKmlFiles(kmls))
+      }
+      
+      const results = await Promise.allSettled(deletePromises)
+      const failedDeletes = results.filter(result => result.status === 'rejected')
+      
+      if (failedDeletes.length > 0) {
+        ElMessage.error('部分文件删除失败')
+        console.error('删除失败详情:', failedDeletes)
+      } else {
+        ElMessage.success('批量删除成功')
+      }
+      
       onSuccess?.()
     } catch (error) {
       if (error !== 'cancel') {
@@ -89,12 +140,38 @@ export function useBatchOperations() {
     }
   }
 
-  // 移动全景图
-  const movePanoramas = async (panoramaIds, targetFolderId, onSuccess) => {
+  // 批量移动文件到文件夹
+  const moveFilesToFolder = async (selectedRows, targetFolderId, onSuccess) => {
     try {
       moving.value = true
-      await panoramaStore.batchMovePanoramasToFolder(panoramaIds, targetFolderId)
-      ElMessage.success('移动成功')
+      
+      // 按文件类型分组
+      const panoramas = selectedRows.filter(row => row.fileType === 'panorama').map(row => row.id)
+      const videos = selectedRows.filter(row => row.fileType === 'video').map(row => row.id)
+      const kmls = selectedRows.filter(row => row.fileType === 'kml').map(row => row.id)
+      
+      const movePromises = []
+      
+      if (panoramas.length > 0) {
+        movePromises.push(panoramaApi.batchMovePanoramasToFolder(panoramas, targetFolderId))
+      }
+      if (videos.length > 0) {
+        movePromises.push(videoApi.batchMoveVideoPointsToFolder(videos, targetFolderId))
+      }
+      if (kmls.length > 0) {
+        movePromises.push(kmlApi.batchMoveKmlFilesToFolder(kmls, targetFolderId))
+      }
+      
+      const results = await Promise.allSettled(movePromises)
+      const failedMoves = results.filter(result => result.status === 'rejected')
+      
+      if (failedMoves.length > 0) {
+        ElMessage.error('部分文件移动失败')
+        console.error('移动失败详情:', failedMoves)
+      } else {
+        ElMessage.success('移动成功')
+      }
+      
       onSuccess?.()
     } catch (error) {
       ElMessage.error('移动失败: ' + error.message)
@@ -135,6 +212,6 @@ export function useBatchOperations() {
     togglePanoramaVisibility,
     batchUpdateVisibility,
     batchDelete,
-    movePanoramas
+    moveFilesToFolder
   }
 }
