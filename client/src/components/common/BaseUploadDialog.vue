@@ -70,7 +70,7 @@
           @click="handleSubmit"
           type="primary"
           :loading="uploading"
-          :disabled="!canSubmit"
+          :disabled="!effectiveCanSubmit"
         >
           {{ submitButtonText }}
         </el-button>
@@ -95,7 +95,8 @@ const props = defineProps({
   showLocationBtn: { type: Boolean, default: false },
   additionalRules: { type: Object, default: () => ({}) },
   fileValidator: { type: Function, default: null },
-  submitHandler: { type: Function, required: true }
+  submitHandler: { type: Function, required: true },
+  externalCanSubmit: { type: Boolean, default: true }
 })
 
 const emit = defineEmits(['update:modelValue', 'success'])
@@ -117,6 +118,11 @@ const {
   handleSubmit,
   resetForm
 } = useBaseUploadDialog(props, emit)
+
+// 添加最终的canSubmit逻辑
+const effectiveCanSubmit = computed(() => {
+  return canSubmit.value && props.externalCanSubmit
+})
 </script>
 
 <style scoped>

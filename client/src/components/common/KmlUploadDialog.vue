@@ -6,6 +6,7 @@
     title-placeholder="请输入KML文件标题"
     description-placeholder="请输入KML文件描述"
     :submit-handler="handleKmlUpload"
+    :external-can-submit="kmlCanSubmit"
     @success="$emit('success')"
   >
     <template #file-upload="{ form, uploadRef }">
@@ -56,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps } from 'vue'
+import { ref, computed, defineEmits, defineProps } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import KmlUploadArea from './KmlUploadArea.vue'
@@ -71,9 +72,15 @@ defineEmits(['update:modelValue', 'success'])
 
 const { validationResult, processFile, validateFile } = useKmlProcessor()
 
+// 添加KML特定的提交检查
+const kmlCanSubmit = computed(() => {
+  console.log('kmlCanSubmit 更新:', validationResult.value?.valid) // 调试用
+  return validationResult.value?.valid === true
+})
+
 const handleFileChange = async (file) => {
-  if (validateFile(file.raw)) {
-    await processFile(file.raw, form)
+  if (validateFile(file)) {
+    await processFile(file)
   }
 }
 

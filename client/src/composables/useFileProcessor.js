@@ -52,9 +52,9 @@ export function useVideoProcessor() {
 export function useKmlProcessor() {
   const validationResult = ref(null)
   
-  const processFile = async (file, form) => {
-    // 自动提取文件名作为标题
-    if (!form.title && file.name) {
+  const processFile = async (file, form = null) => {
+    // 如果传入了 form 且没有标题，则自动提取文件名作为标题
+    if (form && !form.title && file.name) {
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       form.title = nameWithoutExt
     }
@@ -71,21 +71,51 @@ export function useKmlProcessor() {
       const { kmlApi } = await import('@/api/kml.js')
       const response = await kmlApi.validateKmlFile(formData)
       
-      if (response.success) {
-        validationResult.value = response.data
-        if (response.data.valid) {
-          ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount} 个地标`)
+      console.log('KML验证API响应:', response)
+      
+      // 修改：直接处理响应数据，因为响应拦截器已经处理了success字段
+      if (response && response.valid !== undefined) {
+        validationResult.value = response
+        if (response.valid) {
+          ElMessage.success(`KML文件验证成功，包含 ${response.placemarkCount} 个地标`)
         } else {
-          ElMessage.error('KML文件格式错误: ' + response.data.error)
+          ElMessage.error('KML文件格式错误: ' + response.error)
+        }
+      } else {
+        // 兼容旧格式的响应处理
+        if (response && response.success) {
+          validationResult.value = response.data
+          if (response.data.valid) {
+            ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount} 个地标`)
+          } else {
+            ElMessage.error('KML文件格式错误: ' + response.data.error)
+          }
+        } else {
+          const errorMsg = response?.message || '验证失败'
+          ElMessage.error('验证失败: ' + errorMsg)
+          validationResult.value = { valid: false, error: errorMsg }
         }
       }
     } catch (error) {
+      console.error('验证KML文件失败:', error)
       ElMessage.error('验证KML文件失败: ' + error.message)
       validationResult.value = { valid: false, error: error.message }
     }
   }
   
   const validateFile = (file) => {
+    if (!file || typeof file !== 'object') {
+      console.error('validateFile: 无效的文件对象', file)
+      ElMessage.error('文件对象无效!')
+      return false
+    }
+    
+    if (!file.name || !file.size) {
+      console.error('validateFile: 文件对象缺少必要属性', file)
+      ElMessage.error('文件信息不完整!')
+      return false
+    }
+    
     const isKml = file.name.toLowerCase().endsWith('.kml')
     const isLt10M = file.size / 1024 / 1024 < 10
     
