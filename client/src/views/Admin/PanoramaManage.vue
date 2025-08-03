@@ -260,6 +260,12 @@ const handlePanoramaDeleted = async () => {
   loadData()
   ElMessage.success('全景图已从列表中移除')
 }
+
+// 添加缺失的文件夹更新处理函数
+const handleFolderUpdated = () => {
+  // 当文件夹更新时，重新加载数据以保持同步
+  loadData()
+}
 </script>
 
 <style lang="scss" scoped>
