@@ -25,15 +25,33 @@ export function useFileManagement() {
     try {
       loading.value = true
       const folderId = selectedFolder.value?.id || 0
+      console.log('=== 前端调试信息 ===')
+      console.log('请求参数:', {
+        folderId,
+        selectedFolder: selectedFolder.value,
+        searchForm,
+        page: pagination.page,
+        pageSize: pagination.pageSize
+      })
+      
       const response = await folderApi.getFolderContents(folderId, {
         ...searchForm,
         page: pagination.page,
         pageSize: pagination.pageSize
       })
       
-      fileList.value = response.data.data
-      pagination.total = response.data.pagination?.total || response.data.data.length
+      console.log('API返回数据:', response)
+      console.log('文件类型统计:', {
+        total: response.data.length,
+        panorama: response.data.filter(f => f.fileType === 'panorama').length,
+        video: response.data.filter(f => f.fileType === 'video').length,
+        kml: response.data.filter(f => f.fileType === 'kml').length
+      })
+      
+      fileList.value = response.data
+      pagination.total = response.pagination?.total || response.data.length
     } catch (error) {
+      console.error('请求详细错误:', error)
       ElMessage.error('加载文件列表失败: ' + error.message)
     } finally {
       loading.value = false
@@ -97,8 +115,16 @@ export function useFileManagement() {
   }
 
   const formatCoordinate = (lat, lng) => {
-    if (!lat || !lng) return '未知位置'
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+    // 转换为数字类型
+    const numLat = parseFloat(lat)
+    const numLng = parseFloat(lng)
+    
+    // 检查是否为有效数字（包括 0）
+    if (isNaN(numLat) || isNaN(numLng)) {
+      return '未知位置'
+    }
+    
+    return `${numLat.toFixed(4)}, ${numLng.toFixed(4)}`
   }
 
   const formatDate = (dateString) => {

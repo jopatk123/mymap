@@ -282,11 +282,15 @@ class FolderController {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         keyword,
-        folderId: folderId !== undefined && folderId !== null ? parseInt(folderId) : null,
+        folderId: folderId === '0' ? null : (parseInt(folderId) || null), // 修复folderId处理
         includeHidden: includeHidden === 'true'
       }
 
+      console.log('=== 后端调试信息 ===')
+      console.log('请求参数:', { folderId, searchParams, fileType })
+
       let results = []
+      let totalCount = 0
 
       if (fileType === 'all' || fileType === 'panorama') {
         try {
@@ -297,9 +301,12 @@ class FolderController {
             displayType: '全景图'
           }))
           results = results.concat(panoramasWithType)
+          totalCount += panoramaResult.total || 0
+          console.log('全景图查询结果:', panoramasWithType.length)
         } catch (error) {
           Logger.error('获取全景图数据失败:', error)
-          return res.status(500).json({ success: false, message: '获取全景图数据失败: ' + error.message })
+          // 不要直接返回错误，而是记录错误并继续处理其他类型
+          console.error('全景图查询失败，跳过:', error.message)
         }
       }
 
@@ -313,9 +320,11 @@ class FolderController {
             displayType: '视频点位'
           }))
           results = results.concat(videosWithType)
+          totalCount += videoResult.total || 0
+          console.log('视频点位查询结果:', videosWithType.length)
         } catch (error) {
           Logger.error('获取视频点位数据失败:', error)
-          return res.status(500).json({ success: false, message: '获取视频点位数据失败: ' + error.message })
+          console.error('视频点位查询失败，跳过:', error.message)
         }
       }
 
@@ -329,11 +338,20 @@ class FolderController {
             displayType: 'KML文件'
           }))
           results = results.concat(kmlsWithType)
+          totalCount += kmlResult.total || 0
+          console.log('KML文件查询结果:', kmlsWithType.length)
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error)
-          return res.status(500).json({ success: false, message: '获取KML文件数据失败: ' + error.message })
+          console.error('KML文件查询失败，跳过:', error.message)
         }
       }
+
+      console.log('最终结果统计:', {
+        total: results.length,
+        panorama: results.filter(r => r.fileType === 'panorama').length,
+        video: results.filter(r => r.fileType === 'video').length,
+        kml: results.filter(r => r.fileType === 'kml').length
+      })
 
       // 按创建时间排序
       results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))

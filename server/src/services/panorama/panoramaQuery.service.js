@@ -9,7 +9,12 @@ class PanoramaQueryService {
     try {
       Logger.debug('获取全景图列表', options)
       const result = await PanoramaModel.findAll(options)
-      return Formatters.formatPaginatedResponse(result.data, result.pagination)
+      return Formatters.formatPaginatedResponse(result.data, {
+        page: result.page,
+        pageSize: result.pageSize,
+        total: result.total,
+        totalPages: result.totalPages
+      })
     } catch (error) {
       Logger.error('获取全景图列表失败', error)
       throw new Error(`${PANORAMA.NOT_FOUND.message}: ${error.message}`)

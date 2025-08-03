@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+const { pool } = require('../config/database')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
 const QueryBuilder = require('../utils/QueryBuilder')
 
@@ -14,7 +14,7 @@ class KmlFileModel {
     sortOrder = 0
   }) {
     try {
-      const result = await query(
+      const [result] = await pool.execute(
         `INSERT INTO kml_files (
           title, description, file_url, file_size, 
           folder_id, is_visible, sort_order
@@ -40,7 +40,7 @@ class KmlFileModel {
   // 根据ID查找KML文件
   static async findById(id) {
     try {
-      const rows = await query(
+      const [rows] = await pool.execute(
         `SELECT kf.*, f.name as folder_name 
          FROM kml_files kf 
          LEFT JOIN folders f ON kf.folder_id = f.id 
@@ -66,12 +66,15 @@ class KmlFileModel {
       let whereConditions = []
       let params = []
 
+      console.log('KML Debug - Input folderId:', folderId, 'type:', typeof folderId)
+
       if (keyword) {
         whereConditions.push('(kf.title LIKE ? OR kf.description LIKE ?)')
         params.push(`%${keyword}%`, `%${keyword}%`)
       }
 
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf')
+      console.log('KML Debug - Folder condition:', folderCondition)
       whereConditions = whereConditions.concat(folderCondition.conditions)
       params = params.concat(folderCondition.params)
 
@@ -84,18 +87,17 @@ class KmlFileModel {
         : ''
 
       // 获取总数
-      const countResult = await query(
+      const [countResult] = await pool.execute(
         `SELECT COUNT(*) as total 
          FROM kml_files kf 
-         LEFT JOIN folders f ON kf.folder_id = f.id 
          ${whereClause}`,
         params
       )
       const total = countResult[0].total
 
       // 获取数据
-      const offset = (page - 1) * pageSize
-      const rows = await query(
+      const offset = (parseInt(page) - 1) * parseInt(pageSize)
+      const [rows] = await pool.execute(
         `SELECT kf.*, f.name as folder_name,
          (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
          FROM kml_files kf 
@@ -103,14 +105,14 @@ class KmlFileModel {
          ${whereClause}
          ORDER BY kf.sort_order ASC, kf.created_at DESC
          LIMIT ? OFFSET ?`,
-        [...params, pageSize, offset]
+        [...params, parseInt(pageSize), offset]
       )
 
       return {
         data: rows,
-        total,
-        page,
-        pageSize,
+        total: parseInt(total),
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
         totalPages: Math.ceil(total / pageSize)
       }
     } catch (error) {
@@ -130,7 +132,7 @@ class KmlFileModel {
         whereClause += ' AND kf.is_visible = TRUE'
       }
 
-      const rows = await query(
+      const [rows] = await pool.execute(
         `SELECT kf.*, f.name as folder_name,
          (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
          FROM kml_files kf 
@@ -170,7 +172,7 @@ class KmlFileModel {
       
       params.push(id)
       
-      await query(
+      await pool.execute(
         `UPDATE kml_files SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         params
       )
@@ -185,7 +187,7 @@ class KmlFileModel {
   // 删除KML文件（会级联删除相关的点位数据）
   static async delete(id) {
     try {
-      const result = await query('DELETE FROM kml_files WHERE id = ?', [id])
+      const [result] = await pool.execute('DELETE FROM kml_files WHERE id = ?', [id])
       return result.affectedRows > 0
     } catch (error) {
       console.error('删除KML文件失败:', error)
@@ -201,7 +203,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const result = await query(
+      const [result] = await pool.execute(
         `DELETE FROM kml_files WHERE id IN (${placeholders})`,
         ids
       )
@@ -221,7 +223,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const result = await query(
+      const [result] = await pool.execute(
         `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [isVisible, ...ids]
       )
@@ -241,7 +243,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const result = await query(
+      const [result] = await pool.execute(
         `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [folderId, ...ids]
       )
@@ -256,7 +258,7 @@ class KmlFileModel {
   // 获取统计信息
   static async getStats() {
     try {
-      const rows = await query(`
+      const [rows] = await pool.execute(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,

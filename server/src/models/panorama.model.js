@@ -1,4 +1,4 @@
-const { query, transaction } = require('../config/database')
+const { pool } = require('../config/database')
 const QueryBuilder = require('../utils/QueryBuilder')
 
 class PanoramaModel {
@@ -15,52 +15,52 @@ class PanoramaModel {
       includeHidden = false
     } = options
     
-    // 使用QueryBuilder构建查询条件
-    const { conditions, params } = QueryBuilder.buildPanoramaConditions({
-      includeHidden,
-      folderId,
-      keyword,
-      bounds
-    })
-    
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-    
-    // 构建主查询
-    const sql = `
-      SELECT p.*, f.name as folder_name 
-      FROM panoramas p 
-      LEFT JOIN folders f ON p.folder_id = f.id 
-      ${whereClause}
-      ${QueryBuilder.buildOrderClause(sortBy, sortOrder, ['created_at', 'title', 'latitude', 'longitude', 'sort_order'], 'p')}
-      ${QueryBuilder.buildLimitClause(page, pageSize)}
-    `
-    
-    const rows = await query(sql, params)
-    
-    // 构建计数查询
-    const countSql = `
-      SELECT COUNT(*) as total 
-      FROM panoramas p 
-      ${whereClause}
-    `
-    
-    const [{ total }] = await query(countSql, params)
-    
-    return {
-      data: rows,
-      pagination: {
-        page,
-        pageSize,
-        total,
+    try {
+      // 使用QueryBuilder构建查询条件
+      const { conditions, params } = QueryBuilder.buildPanoramaConditions({
+        includeHidden,
+        folderId,
+        keyword,
+        bounds
+      })
+      
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+      
+      // 获取总数
+      const countSql = `SELECT COUNT(*) as total FROM panoramas p ${whereClause}`
+      const [countResult] = await pool.execute(countSql, params)
+      const total = countResult[0].total
+      
+      // 获取数据
+      const offset = (parseInt(page) - 1) * parseInt(pageSize)
+      const dataSql = `
+        SELECT p.*, f.name as folder_name 
+        FROM panoramas p 
+        LEFT JOIN folders f ON p.folder_id = f.id 
+        ${whereClause}
+        ${QueryBuilder.buildOrderClause(sortBy, sortOrder, ['created_at', 'title', 'latitude', 'longitude', 'sort_order'], 'p')}
+        LIMIT ${parseInt(pageSize)} OFFSET ${offset}
+      `
+      
+      const [rows] = await pool.execute(dataSql, params)
+      
+      return {
+        data: rows,
+        total: parseInt(total),
+        page: parseInt(page),
+        pageSize: parseInt(pageSize),
         totalPages: Math.ceil(total / pageSize)
       }
+    } catch (error) {
+      console.error('获取全景图列表失败:', error)
+      throw error
     }
   }
   
   // 根据ID获取全景图
   static async findById(id) {
     const sql = 'SELECT * FROM panoramas WHERE id = ?'
-    const rows = await query(sql, [id])
+    const [rows] = await pool.execute(sql, [id])
     return rows[0] || null
   }
   
@@ -73,7 +73,8 @@ class PanoramaModel {
       AND longitude BETWEEN ? AND ?
       ORDER BY created_at DESC
     `
-    return await query(sql, [south, north, west, east])
+    const [rows] = await pool.execute(sql, [south, north, west, east])
+    return rows
   }
   
   // 获取附近的全景图
@@ -87,7 +88,8 @@ class PanoramaModel {
       ORDER BY distance ASC
     `
     
-    return await query(sql, [...nearbyQuery.params, radius])
+    const [rows] = await pool.execute(sql, [...nearbyQuery.params, radius])
+    return rows
   }
   
   // 创建全景图
@@ -132,7 +134,7 @@ class PanoramaModel {
       sortOrder
     ]
     
-    const result = await query(sql, params)
+    const [result] = await pool.execute(sql, params)
     return await this.findById(result.insertId)
   }
   
@@ -184,14 +186,14 @@ class PanoramaModel {
       id
     ]
     
-    await query(sql, params)
+    await pool.execute(sql, params)
     return await this.findById(id)
   }
   
   // 删除全景图
   static async delete(id) {
     const sql = 'DELETE FROM panoramas WHERE id = ?'
-    const result = await query(sql, [id])
+    const [result] = await pool.execute(sql, [id])
     return result.affectedRows > 0
   }
   
@@ -201,7 +203,7 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `DELETE FROM panoramas WHERE id ${clause}`
-    const result = await query(sql, params)
+    const [result] = await pool.execute(sql, params)
     return result.affectedRows
   }
   
@@ -252,7 +254,7 @@ class PanoramaModel {
     
     sql += ` ${QueryBuilder.buildLimitClause(page, pageSize)}`
     
-    const rows = await query(sql, finalParams)
+    const [rows] = await pool.execute(sql, finalParams)
     
     // 构建计数查询
     let countSql = 'SELECT COUNT(*) as total FROM panoramas'
@@ -270,16 +272,15 @@ class PanoramaModel {
       countSql += ` WHERE ${conditions.join(' AND ')}`
     }
     
-    const [{ total }] = await query(countSql, countParams)
+    const [countResult] = await pool.execute(countSql, countParams)
+    const total = countResult[0].total
     
     return {
       data: rows,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize)
-      }
+      total: parseInt(total),
+      page: parseInt(page),
+      pageSize: parseInt(pageSize),
+      totalPages: Math.ceil(total / pageSize)
     }
   }
   
@@ -288,19 +289,19 @@ class PanoramaModel {
     const totalSql = 'SELECT COUNT(*) as total FROM panoramas'
     const recentSql = 'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
     
-    const [totalResult] = await query(totalSql)
-    const [recentResult] = await query(recentSql)
+    const [totalResult] = await pool.execute(totalSql)
+    const [recentResult] = await pool.execute(recentSql)
     
     return {
-      total: totalResult.total,
-      recentWeek: recentResult.recent
+      total: totalResult[0].total,
+      recentWeek: recentResult[0].recent
     }
   }
   
   // 移动全景图到文件夹
   static async moveToFolder(id, folderId) {
     const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await query(sql, [folderId, id])
+    await pool.execute(sql, [folderId, id])
     return await this.findById(id)
   }
 
@@ -310,14 +311,14 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const result = await query(sql, [folderId, ...params])
+    const [result] = await pool.execute(sql, [folderId, ...params])
     return result.affectedRows
   }
 
   // 更新可见性
   static async updateVisibility(id, isVisible) {
     const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await query(sql, [isVisible, id])
+    await pool.execute(sql, [isVisible, id])
     return await this.findById(id)
   }
 
@@ -327,7 +328,7 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const result = await query(sql, [isVisible, ...params])
+    const [result] = await pool.execute(sql, [isVisible, ...params])
     return result.affectedRows
   }
 
@@ -352,7 +353,8 @@ class PanoramaModel {
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
     sql += ` ORDER BY ${sortField} ${order}`
     
-    return await query(sql, params)
+    const [rows] = await pool.execute(sql, params)
+    return rows
   }
 }
 

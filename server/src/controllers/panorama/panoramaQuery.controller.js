@@ -1,5 +1,6 @@
 const { PanoramaQueryService } = require('../../services')
 const { successResponse, errorResponse } = require('../../utils/response')
+const Logger = require('../../utils/logger')
 
 class PanoramaQueryController {
   // 获取全景图列表
