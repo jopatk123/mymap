@@ -1,5 +1,6 @@
 const { query } = require('../config/database')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
+const QueryBuilder = require('../utils/QueryBuilder')
 
 class KmlFileModel {
   // 创建KML文件记录
@@ -70,10 +71,9 @@ class KmlFileModel {
         params.push(`%${keyword}%`, `%${keyword}%`)
       }
 
-      if (folderId !== null) {
-        whereConditions.push('kf.folder_id = ?')
-        params.push(folderId)
-      }
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf')
+      whereConditions = whereConditions.concat(folderCondition.conditions)
+      params = params.concat(folderCondition.params)
 
       if (!includeHidden) {
         whereConditions.push('kf.is_visible = TRUE')
@@ -122,8 +122,9 @@ class KmlFileModel {
   // 根据文件夹查找KML文件
   static async findByFolder(folderId, { includeHidden = false } = {}) {
     try {
-      let whereClause = 'WHERE kf.folder_id = ?'
-      let params = [folderId]
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf')
+      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`
+      let params = folderCondition.params
 
       if (!includeHidden) {
         whereClause += ' AND kf.is_visible = TRUE'

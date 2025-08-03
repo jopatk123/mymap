@@ -339,11 +339,12 @@ class PanoramaModel {
       sortOrder = 'ASC'
     } = options
     
-    let sql = 'SELECT * FROM panoramas WHERE folder_id = ?'
-    const params = [folderId]
+    const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'p')
+    let sql = `SELECT p.* FROM panoramas p WHERE ${folderCondition.conditions.join(' AND ')}`
+    const params = folderCondition.params
     
     if (!includeHidden) {
-      sql += ' AND is_visible = TRUE'
+      sql += ' AND p.is_visible = TRUE'
     }
     
     const allowedSortFields = ['created_at', 'title', 'sort_order']

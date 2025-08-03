@@ -1,5 +1,6 @@
 const { pool } = require('../config/database')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
+const QueryBuilder = require('../utils/QueryBuilder')
 
 class VideoPointModel {
   // 创建视频点位
@@ -87,10 +88,10 @@ class VideoPointModel {
         params.push(`%${keyword}%`, `%${keyword}%`)
       }
 
-      if (folderId !== null && folderId !== undefined && folderId !== '') {
-        whereConditions.push('vp.folder_id = ?')
-        params.push(parseInt(folderId))
-      }
+      // 文件夹筛选
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'vp')
+      whereConditions = whereConditions.concat(folderCondition.conditions)
+      params = params.concat(folderCondition.params)
 
       if (!includeHidden) {
         whereConditions.push('vp.is_visible = 1')
@@ -132,8 +133,9 @@ class VideoPointModel {
   // 根据文件夹查找视频点位
   static async findByFolder(folderId, { includeHidden = false } = {}) {
     try {
-      let whereClause = 'WHERE vp.folder_id = ?'
-      let params = [folderId]
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'vp')
+      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`
+      let params = folderCondition.params
 
       if (!includeHidden) {
         whereClause += ' AND vp.is_visible = TRUE'

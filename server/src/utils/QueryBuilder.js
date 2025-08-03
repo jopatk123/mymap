@@ -1,48 +1,65 @@
 class QueryBuilder {
-  // 构建全景图查询条件
-  static buildPanoramaConditions(options) {
+  // 构建文件夹查询条件
+  static buildFolderCondition(folderId, tableAlias = '') {
     const conditions = []
     const params = []
-    
+    const prefix = tableAlias ? `${tableAlias}.` : ''
+
+    if (folderId !== null && folderId !== undefined && folderId !== '') {
+      if (folderId === 0 || folderId === '0') {
+        conditions.push(`${prefix}folder_id IS NULL`)
+      } else {
+        conditions.push(`${prefix}folder_id = ?`)
+        params.push(parseInt(folderId))
+      }
+    } else {
+      conditions.push(`${prefix}folder_id IS NULL`)
+    }
+
+    return { conditions, params }
+  }
+
+  // 构建全景图查询条件
+  static buildPanoramaConditions(options) {
+    let conditions = []
+    let params = []
+
     // 可见性筛选
     if (!options.includeHidden) {
       conditions.push('p.is_visible = TRUE')
     }
-    
+
     // 文件夹筛选
     if (options.folderId !== null && options.folderId !== undefined) {
-      if (options.folderId === 0) {
-        conditions.push('p.folder_id IS NULL')
-      } else {
-        conditions.push('p.folder_id = ?')
-        params.push(options.folderId)
-      }
+      const folderConditions = this.buildFolderCondition(options.folderId, 'p')
+      conditions = conditions.concat(folderConditions.conditions)
+      params = params.concat(folderConditions.params)
     }
-    
+
     // 关键词搜索
     if (options.keyword) {
       conditions.push('(p.title LIKE ? OR p.description LIKE ?)')
       params.push(`%${options.keyword}%`, `%${options.keyword}%`)
     }
-    
+
     // 地图边界筛选
     if (options.bounds) {
       const { north, south, east, west } = options.bounds
       conditions.push('p.latitude BETWEEN ? AND ? AND p.longitude BETWEEN ? AND ?')
       params.push(south, north, west, east)
     }
-    
+
     // 日期范围筛选
     if (options.dateFrom) {
       conditions.push('p.created_at >= ?')
       params.push(options.dateFrom)
     }
-    
+
     if (options.dateTo) {
       conditions.push('p.created_at <= ?')
       params.push(options.dateTo)
     }
-    
+
     return { conditions, params }
   }
   

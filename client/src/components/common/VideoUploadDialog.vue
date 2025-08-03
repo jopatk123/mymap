@@ -152,6 +152,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Location, VideoPlay, InfoFilled } from '@element-plus/icons-vue'
 import { locationService } from '@/services/LocationService.js'
+import { videoApi } from '@/api/video.js'
 
 const props = defineProps({
   modelValue: {
@@ -367,30 +368,24 @@ const handleSubmit = async () => {
       formData.append('folderId', form.folderId)
     }
     
-    // 上传文件
-    const response = await fetch('/api/video-points/upload', {
-      method: 'POST',
-      body: formData,
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.lengthComputable) {
-          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }
+    // 使用专门的视频API上传文件
+    const response = await videoApi.uploadVideo(formData, (progressEvent) => {
+      if (progressEvent.lengthComputable) {
+        uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
       }
     })
     
-    const result = await response.json()
-    
-    if (result.success) {
+    if (response) {
       ElMessage.success('视频点位上传成功')
       emit('success')
       handleClose()
     } else {
-      throw new Error(result.message || '上传失败')
+      throw new Error('上传失败')
     }
     
   } catch (error) {
     console.error('上传失败:', error)
-    ElMessage.error('上传失败: ' + error.message)
+    ElMessage.error('上传失败: ' + (error.message || error.toString()))
   } finally {
     uploading.value = false
     uploadProgress.value = 0

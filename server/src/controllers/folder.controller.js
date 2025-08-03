@@ -282,7 +282,7 @@ class FolderController {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         keyword,
-        folderId: folderId ? parseInt(folderId) : null,
+        folderId: folderId !== undefined && folderId !== null ? parseInt(folderId) : null,
         includeHidden: includeHidden === 'true'
       }
 
@@ -299,6 +299,7 @@ class FolderController {
           results = results.concat(panoramasWithType)
         } catch (error) {
           Logger.error('获取全景图数据失败:', error)
+          return res.status(500).json({ success: false, message: '获取全景图数据失败: ' + error.message })
         }
       }
 
@@ -314,6 +315,7 @@ class FolderController {
           results = results.concat(videosWithType)
         } catch (error) {
           Logger.error('获取视频点位数据失败:', error)
+          return res.status(500).json({ success: false, message: '获取视频点位数据失败: ' + error.message })
         }
       }
 
@@ -329,6 +331,7 @@ class FolderController {
           results = results.concat(kmlsWithType)
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error)
+          return res.status(500).json({ success: false, message: '获取KML文件数据失败: ' + error.message })
         }
       }
 

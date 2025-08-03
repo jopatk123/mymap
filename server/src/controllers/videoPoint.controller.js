@@ -1,7 +1,7 @@
 const VideoPointModel = require('../models/videoPoint.model')
 const path = require('path')
 const fs = require('fs')
-const Logger = require('../utils/logger.js').promises
+const Logger = require('../utils/logger')
 
 class VideoPointController {
   // 获取视频点位列表

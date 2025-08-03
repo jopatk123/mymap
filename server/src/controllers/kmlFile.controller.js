@@ -3,7 +3,7 @@ const KmlPointModel = require('../models/kmlPoint.model')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
 const fs = require('fs')
-const Logger = require('../utils/logger.js').promises
+const Logger = require('../utils/logger')
 
 class KmlFileController {
   // 获取KML文件列表

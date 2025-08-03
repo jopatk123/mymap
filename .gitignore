@@ -149,6 +149,8 @@ debug-startup.js
 !*.vue
 !*.md
 !README.md
+*.mp4
+*.kml
 
 # Claude Code files
 .claude/settings.local.json

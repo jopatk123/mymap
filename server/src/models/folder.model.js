@@ -129,16 +129,28 @@ class FolderModel {
 
   // 获取文件夹中的视频点位数量
   static async getVideoPointCount(folderId) {
-    const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?'
-    const [{ count }] = await query(sql, [folderId])
-    return count
+    if (folderId === 0 || folderId === '0') {
+      const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id IS NULL'
+      const [{ count }] = await query(sql, [])
+      return count
+    } else {
+      const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?'
+      const [{ count }] = await query(sql, [folderId])
+      return count
+    }
   }
 
   // 获取文件夹中的KML文件数量
   static async getKmlFileCount(folderId) {
-    const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?'
-    const [{ count }] = await query(sql, [folderId])
-    return count
+    if (folderId === 0 || folderId === '0') {
+      const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id IS NULL'
+      const [{ count }] = await query(sql, [])
+      return count
+    } else {
+      const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?'
+      const [{ count }] = await query(sql, [folderId])
+      return count
+    }
   }
 
   // 获取文件夹中的总内容数量（全景图 + 视频点位 + KML文件）
