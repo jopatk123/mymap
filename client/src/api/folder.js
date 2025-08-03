@@ -44,5 +44,15 @@ export const folderApi = {
   // 移动全景图到文件夹
   movePanoramasToFolder(folderId, data) {
     return request.post(`/folders/${folderId}/panoramas`, data)
+  },
+
+  // 获取文件夹内容（统一接口）
+  getFolderContents(folderId, params = {}) {
+    return request.get(`/folders/${folderId}/contents`, { params })
+  },
+
+  // 获取根目录内容
+  getRootContents(params = {}) {
+    return request.get('/folders/0/contents', { params })
   }
 }

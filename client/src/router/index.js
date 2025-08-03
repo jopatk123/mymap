@@ -28,6 +28,14 @@ const routes = [
         meta: {
           title: '全景图管理'
         }
+      },
+      {
+        path: 'files',
+        name: 'FileManage',
+        component: () => import('@/views/Admin/FileManage.vue'),
+        meta: {
+          title: '文件管理'
+        }
       }
     ]
   },
