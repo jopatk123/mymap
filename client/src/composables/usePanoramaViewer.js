@@ -18,14 +18,14 @@ export function usePanoramaViewer() {
   
   // 打开全景图查看器
   const openViewer = async (panorama) => {
-    if (!panorama?.imageUrl) {
+    if (!panorama?.image_url) {
       ElMessage.error('全景图地址不存在')
       console.error('全景图数据缺失:', panorama)
       return
     }
     
     // 检查图片URL是否有效
-    const imageUrl = panorama.imageUrl
+    const imageUrl = panorama.image_url
     if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
       ElMessage.error('全景图地址格式不正确')
       console.error('无效的图片URL:', imageUrl)
