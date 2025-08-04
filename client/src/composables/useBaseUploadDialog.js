@@ -34,7 +34,19 @@ export function useBaseUploadDialog(props, emit) {
       { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
     ],
     file: [
-      { required: true, message: '请选择文件', trigger: 'change' }
+      { 
+        required: true, 
+        message: '请选择文件', 
+        trigger: 'change',
+        validator: (rule, value, callback) => {
+          console.log('File validation - value:', value)
+          if (!value) {
+            callback(new Error('请选择文件'))
+          } else {
+            callback()
+          }
+        }
+      }
     ]
   }
 
@@ -55,7 +67,10 @@ export function useBaseUploadDialog(props, emit) {
 
   // 提交按钮状态
   const canSubmit = computed(() => {
-    return form.file && !uploading.value && !processing.value
+    const hasFile = form.file && form.file instanceof File
+    const notUploading = !uploading.value && !processing.value
+    console.log('canSubmit check - hasFile:', hasFile, 'notUploading:', notUploading, 'form.file:', form.file)
+    return hasFile && notUploading
   })
 
   const submitButtonText = computed(() => {

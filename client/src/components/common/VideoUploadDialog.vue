@@ -34,7 +34,7 @@
         :ref="uploadRef"
         v-model:file="form.file"
         :preview-url="previewUrl"
-        @file-change="handleFileChange"
+        @file-change="(file) => handleFileChange(file, form)"
         @file-remove="handleFileRemove"
       />
     </template>
@@ -57,17 +57,6 @@ defineEmits(['update:modelValue', 'success'])
 
 const { previewUrl, processFile, validateFile, cleanup } = useVideoProcessor()
 
-// 创建本地表单对象用于文件处理
-const form = reactive({
-  title: '',
-  description: '',
-  lat: '',
-  lng: '',
-  file: null,
-  duration: '',
-  folderId: 0
-})
-
 // 视频特有的验证规则
 const videoRules = {
   duration: [
@@ -84,15 +73,23 @@ const videoRules = {
   ]
 }
 
-const handleFileChange = async (file) => {
+const handleFileChange = async (file, form) => {
+  console.log('VideoUploadDialog handleFileChange called with:', file, 'form:', form)
+  
   // 确保file参数存在且有效
   if (!file || !file.raw) {
     console.error('文件对象无效:', file)
     return
   }
   
+  console.log('File raw object:', file.raw)
+  
   if (validateFile(file.raw)) {
+    console.log('File validation passed, processing...')
     await processFile(file.raw, form)
+    console.log('File processed, form updated:', form)
+  } else {
+    console.log('File validation failed')
   }
 }
 

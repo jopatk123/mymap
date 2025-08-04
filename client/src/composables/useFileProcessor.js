@@ -5,15 +5,23 @@ export function useVideoProcessor() {
   const previewUrl = ref('')
   
   const processFile = async (file, form) => {
+    console.log('useVideoProcessor processFile called with:', file, 'form:', form)
+    
+    // 设置文件到表单
+    form.file = file
+    console.log('Form file set to:', form.file)
+    
     // 自动提取文件名作为标题
     if (!form.title && file.name) {
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       form.title = nameWithoutExt
+      console.log('Form title set to:', form.title)
     }
     
     // 创建预览URL
     if (file) {
       previewUrl.value = URL.createObjectURL(file)
+      console.log('Preview URL created:', previewUrl.value)
     }
     
     return { previewUrl: previewUrl.value }
