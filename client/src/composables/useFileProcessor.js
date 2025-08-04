@@ -73,28 +73,18 @@ export function useKmlProcessor() {
       
       console.log('KML验证API响应:', response)
       
-      // 修改：直接处理响应数据，因为响应拦截器已经处理了success字段
-      if (response && response.valid !== undefined) {
-        validationResult.value = response
-        if (response.valid) {
-          ElMessage.success(`KML文件验证成功，包含 ${response.placemarkCount} 个地标`)
+      // response 现在是后端返回的完整响应体：{ success: true, data: {...} }
+      if (response && response.success && response.data) {
+        validationResult.value = response.data
+        if (response.data.valid) {
+          ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount || 0} 个地标`)
         } else {
-          ElMessage.error('KML文件格式错误: ' + response.error)
+          ElMessage.error('KML文件格式错误: ' + response.data.error)
         }
       } else {
-        // 兼容旧格式的响应处理
-        if (response && response.success) {
-          validationResult.value = response.data
-          if (response.data.valid) {
-            ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount} 个地标`)
-          } else {
-            ElMessage.error('KML文件格式错误: ' + response.data.error)
-          }
-        } else {
-          const errorMsg = response?.message || '验证失败'
-          ElMessage.error('验证失败: ' + errorMsg)
-          validationResult.value = { valid: false, error: errorMsg }
-        }
+        const errorMsg = response?.message || '验证失败'
+        ElMessage.error('验证失败: ' + errorMsg)
+        validationResult.value = { valid: false, error: errorMsg }
       }
     } catch (error) {
       console.error('验证KML文件失败:', error)
