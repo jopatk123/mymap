@@ -5,6 +5,8 @@ const Formatters = require('../../utils/formatters')
 const Validators = require('../../utils/validators')
 const Logger = require('../../utils/logger')
 const { PANORAMA } = require('../../constants/errors')
+const fs = require('fs').promises
+const path = require('path')
 
 class PanoramaMutationService {
   // 创建全景图
@@ -123,6 +125,9 @@ class PanoramaMutationService {
         throw new Error('删除失败')
       }
       
+      // 删除相关的物理文件
+      await this.deletePhysicalFiles(existingPanorama)
+      
       return Formatters.formatSuccess(null, '删除成功')
     } catch (error) {
       Logger.error('删除全景图失败', error)
@@ -140,7 +145,25 @@ class PanoramaMutationService {
         throw new Error('请提供有效的ID列表')
       }
       
+      // 先获取所有要删除的全景图信息，用于删除物理文件
+      const panoramasToDelete = []
+      for (const id of validIds) {
+        try {
+          const panorama = await PanoramaModel.findById(id)
+          if (panorama) {
+            panoramasToDelete.push(panorama)
+          }
+        } catch (error) {
+          Logger.warn(`获取全景图信息失败 (ID: ${id})`, error)
+        }
+      }
+      
       const deletedCount = await PanoramaModel.batchDelete(validIds)
+      
+      // 删除物理文件
+      for (const panorama of panoramasToDelete) {
+        await this.deletePhysicalFiles(panorama)
+      }
       
       return Formatters.formatSuccess(
         { deletedCount },
@@ -231,6 +254,42 @@ class PanoramaMutationService {
     } catch (error) {
       Logger.error('批量更新全景图可见性失败', error)
       throw new Error(`批量更新全景图可见性失败: ${error.message}`)
+    }
+  }
+  
+  // 删除物理文件
+  static async deletePhysicalFiles(panorama) {
+    try {
+      Logger.debug('删除全景图物理文件', { 
+        id: panorama.id, 
+        imageUrl: panorama.image_url, 
+        thumbnailUrl: panorama.thumbnail_url 
+      })
+      
+      // 删除主图片文件
+      if (panorama.image_url) {
+        try {
+          const imagePath = path.join(process.cwd(), 'uploads', path.basename(panorama.image_url))
+          await fs.unlink(imagePath)
+          Logger.debug('删除主图片文件成功', { imagePath })
+        } catch (error) {
+          Logger.warn('删除主图片文件失败', { error: error.message, imageUrl: panorama.image_url })
+        }
+      }
+      
+      // 删除缩略图文件
+      if (panorama.thumbnail_url) {
+        try {
+          const thumbnailPath = path.join(process.cwd(), 'uploads', path.basename(panorama.thumbnail_url))
+          await fs.unlink(thumbnailPath)
+          Logger.debug('删除缩略图文件成功', { thumbnailPath })
+        } catch (error) {
+          Logger.warn('删除缩略图文件失败', { error: error.message, thumbnailUrl: panorama.thumbnail_url })
+        }
+      }
+    } catch (error) {
+      Logger.error('删除物理文件时发生错误', error)
+      // 不抛出错误，因为数据库记录已经删除，文件删除失败不应该影响整个删除操作
     }
   }
   

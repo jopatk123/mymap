@@ -35,6 +35,8 @@ export function useFileOperations() {
   // 删除文件
   const deleteFile = async (file, onSuccess) => {
     try {
+      console.log('准备删除文件:', file)
+      
       await ElMessageBox.confirm(
         `确定要删除${file.displayType}"${file.title}"吗？`,
         '确认删除',
@@ -45,28 +47,46 @@ export function useFileOperations() {
         }
       )
       
+      console.log('用户确认删除，开始调用API')
+      
       // 根据文件类型调用相应的删除API
       let req
       switch (file.fileType) {
         case 'panorama':
+          console.log('调用全景图删除API, ID:', file.id)
           req = deletePanorama(file.id)
           break
         case 'video':
+          console.log('调用视频删除API, ID:', file.id)
           req = videoApi.deleteVideoPoint(file.id)
           break
         case 'kml':
+          console.log('调用KML删除API, ID:', file.id)
           req = kmlApi.deleteKmlFile(file.id)
           break
         default:
           throw new Error('未知文件类型')
       }
-      await req
+      
+      const result = await req
+      console.log('删除API调用成功，结果:', result)
       
       ElMessage.success('删除成功')
-      onSuccess?.()
+      
+      console.log('准备调用onSuccess回调')
+      if (onSuccess) {
+        await onSuccess()
+        console.log('onSuccess回调执行完成')
+      } else {
+        console.warn('onSuccess回调未提供')
+      }
+      
     } catch (error) {
       if (error !== 'cancel') {
+        console.error('删除失败:', error)
         ElMessage.error('删除失败: ' + error.message)
+      } else {
+        console.log('用户取消删除')
       }
     }
   }

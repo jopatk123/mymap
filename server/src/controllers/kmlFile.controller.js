@@ -322,7 +322,32 @@ class KmlFileController {
         })
       }
 
+      // 先获取所有要删除的KML文件信息，用于删除物理文件
+      const kmlFilesToDelete = []
+      for (const id of ids) {
+        try {
+          const kmlFile = await KmlFileModel.findById(parseInt(id))
+          if (kmlFile) {
+            kmlFilesToDelete.push(kmlFile)
+          }
+        } catch (error) {
+          Logger.warn(`获取KML文件信息失败 (ID: ${id})`, error)
+        }
+      }
+
       const affectedRows = await KmlFileModel.batchDelete(ids)
+
+      // 删除物理文件
+      for (const kmlFile of kmlFilesToDelete) {
+        try {
+          if (kmlFile.file_url) {
+            const filePath = path.join(process.cwd(), 'uploads', path.basename(kmlFile.file_url))
+            await fs.unlink(filePath).catch(() => {}) // 忽略文件不存在的错误
+          }
+        } catch (error) {
+          Logger.warn(`删除KML文件失败 (ID: ${kmlFile.id}):`, error)
+        }
+      }
 
       res.json({
         success: true,

@@ -23,8 +23,16 @@ export function useFileManagement() {
   // 加载文件列表
   const loadFileList = async () => {
     try {
+      console.log('开始加载文件列表...')
       loading.value = true
       const folderId = selectedFolder.value?.id || 0
+      
+      console.log('请求参数:', {
+        folderId,
+        searchForm,
+        page: pagination.page,
+        pageSize: pagination.pageSize
+      })
       
       const response = await folderApi.getFolderContents(folderId, {
         ...searchForm,
@@ -32,8 +40,13 @@ export function useFileManagement() {
         pageSize: pagination.pageSize
       })
       
+      console.log('API响应:', response)
+      console.log('文件列表数据:', response.data)
+      
       fileList.value = response.data
       pagination.total = response.pagination?.total || response.data.length
+      
+      console.log('文件列表更新完成，当前文件数量:', fileList.value.length)
     } catch (error) {
       console.error('请求详细错误:', error)
       ElMessage.error('加载文件列表失败: ' + error.message)

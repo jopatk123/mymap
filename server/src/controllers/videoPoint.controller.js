@@ -241,7 +241,36 @@ class VideoPointController {
         })
       }
 
+      // 先获取所有要删除的视频点位信息，用于删除物理文件
+      const videoPointsToDelete = []
+      for (const id of ids) {
+        try {
+          const videoPoint = await VideoPointModel.findById(parseInt(id))
+          if (videoPoint) {
+            videoPointsToDelete.push(videoPoint)
+          }
+        } catch (error) {
+          Logger.warn(`获取视频点位信息失败 (ID: ${id})`, error)
+        }
+      }
+
       const affectedRows = await VideoPointModel.batchDelete(ids)
+
+      // 删除物理文件
+      for (const videoPoint of videoPointsToDelete) {
+        try {
+          if (videoPoint.video_url) {
+            const videoPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.video_url))
+            await fs.unlink(videoPath).catch(() => {}) // 忽略文件不存在的错误
+          }
+          if (videoPoint.thumbnail_url) {
+            const thumbPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.thumbnail_url))
+            await fs.unlink(thumbPath).catch(() => {}) // 忽略文件不存在的错误
+          }
+        } catch (error) {
+          Logger.warn(`删除视频文件失败 (ID: ${videoPoint.id}):`, error)
+        }
+      }
 
       res.json({
         success: true,
