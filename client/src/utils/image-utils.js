@@ -102,7 +102,7 @@ function convertDMSToDD(dms, ref) {
  * @param {number} quality 压缩质量 (0-1)
  * @returns {Promise<File>}
  */
-export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality = 0.9) {
+export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality = 0.5) {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')

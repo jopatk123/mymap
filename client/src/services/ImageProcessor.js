@@ -1,10 +1,10 @@
-import { 
-  isPanoramaImage, 
-  extractTitleFromFilename, 
-  extractGPSFromImage, 
+import {
+  isPanoramaImage,
+  extractTitleFromFilename,
+  extractGPSFromImage,
   compressImage,
   getImageDimensions,
-  isImageFile 
+  isImageFile
 } from '@/utils/image-utils.js'
 
 export class ImageProcessor {
@@ -28,7 +28,7 @@ export class ImageProcessor {
   updateProcessing(processing, text = '') {
     this.processing = processing
     this.processingText = text
-    
+
     if (this.callbacks.onProcessingChange) {
       this.callbacks.onProcessingChange(processing)
     }
@@ -40,26 +40,26 @@ export class ImageProcessor {
   // 处理文件
   async processFile(file) {
     this.updateProcessing(true, '正在检查文件...')
-    
+
     try {
       // 检查是否为图片文件
       if (!isImageFile(file)) {
         throw new Error('请选择图片文件！')
       }
-      
+
       this.updateProcessing(true, '正在验证全景图格式...')
-      
+
       // 检查是否为全景图
       const isPanorama = await isPanoramaImage(file)
       if (!isPanorama) {
         throw new Error('请选择全景图！全景图的宽高比应该约为2:1，且尺寸不小于1000x500')
       }
-      
+
       // 自动设置标题为文件名（不含扩展名）
       const title = extractTitleFromFilename(file.name)
-      
+
       this.updateProcessing(true, '正在提取GPS坐标...')
-      
+
       // 尝试从图片中提取GPS坐标
       let gpsData = null
       try {
@@ -67,34 +67,34 @@ export class ImageProcessor {
       } catch (error) {
         console.warn('提取GPS坐标失败:', error)
       }
-      
+
       this.updateProcessing(true, '正在生成预览...')
-      
+
       // 生成预览URL
       const previewUrl = await this.generatePreview(file)
-      
+
       const result = {
         file,
         title,
         gpsData,
         previewUrl
       }
-      
+
       this.updateProcessing(false)
-      
+
       if (this.callbacks.onSuccess) {
         this.callbacks.onSuccess(result)
       }
-      
+
       return result
-      
+
     } catch (error) {
       this.updateProcessing(false)
-      
+
       if (this.callbacks.onError) {
         this.callbacks.onError(error)
       }
-      
+
       throw error
     }
   }
@@ -113,7 +113,7 @@ export class ImageProcessor {
   async compressImageIfNeeded(file, maxWidth = 8000, maxHeight = 4000, quality = 0.9) {
     try {
       const dimensions = await getImageDimensions(file)
-      
+
       if (dimensions.width > maxWidth || dimensions.height > maxHeight) {
         const compressedFile = await compressImage(file, maxWidth, maxHeight, quality)
         return {
@@ -123,7 +123,7 @@ export class ImageProcessor {
           newDimensions: { width: maxWidth, height: maxHeight }
         }
       }
-      
+
       return {
         file,
         compressed: false,
@@ -142,18 +142,18 @@ export class ImageProcessor {
   // 验证文件
   async validateFile(file) {
     const errors = []
-    
+
     // 检查文件类型
     if (!isImageFile(file)) {
       errors.push('文件类型不正确，请选择图片文件')
     }
-    
+
     // 检查文件大小
     const maxSize = 50 * 1024 * 1024 // 50MB
     if (file.size > maxSize) {
       errors.push('文件大小不能超过50MB')
     }
-    
+
     // 检查是否为全景图
     try {
       const isPanorama = await isPanoramaImage(file)
@@ -163,7 +163,7 @@ export class ImageProcessor {
     } catch (error) {
       errors.push('无法验证图片格式')
     }
-    
+
     return {
       valid: errors.length === 0,
       errors

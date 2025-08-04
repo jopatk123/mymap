@@ -90,11 +90,30 @@ const gpsInfo = computed({
 })
 
 const handleFileChange = async (file) => {
+  console.log('PanoramaUploadArea handleFileChange called with:', file)
+  
+  // 检查文件对象是否有效
+  if (!file || !file.raw) {
+    console.error('PanoramaUploadArea: 文件对象无效!', file)
+    ElMessage.error('文件对象无效!')
+    return false
+  }
+  
   const rawFile = file.raw
+  console.log('PanoramaUploadArea: Raw file object:', rawFile)
+  
+  // 检查原始文件对象
+  if (!rawFile || !rawFile.type || !rawFile.size) {
+    console.error('PanoramaUploadArea: 文件信息不完整!', rawFile)
+    ElMessage.error('文件信息不完整!')
+    return false
+  }
   
   // 验证文件
   const isImage = rawFile.type.startsWith('image/')
   const isLt50M = rawFile.size / 1024 / 1024 < 50
+  
+  console.log('PanoramaUploadArea: File validation - isImage:', isImage, 'isLt50M:', isLt50M)
   
   if (!isImage) {
     ElMessage.error('只能上传图片文件!')
@@ -107,6 +126,7 @@ const handleFileChange = async (file) => {
   }
   
   file.value = rawFile
+  console.log('PanoramaUploadArea: Emitting file-change event with rawFile:', rawFile)
   emit('file-change', rawFile)
   
   return true

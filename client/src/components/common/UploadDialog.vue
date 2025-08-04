@@ -17,7 +17,7 @@
         v-model:file="form.file"
         v-model:preview-url="previewUrl"
         v-model:gps-info="gpsInfo"
-        @file-change="handleFileChange"
+        @file-change="(file) => handleFileChange(file, form)"
         @file-remove="handleFileRemove"
       />
     </template>
@@ -75,15 +75,26 @@ const panoramaRules = {
   ]
 }
 
-const handleFileChange = async (file) => {
-  if (validateFile(file.raw)) {
-    await processFile(file.raw, form)
+const handleFileChange = async (file, form) => {
+  console.log('UploadDialog handleFileChange called with:', file, 'form:', form)
+  
+  // 检查文件对象是否有效
+  if (!file || typeof file !== 'object') {
+    console.error('UploadDialog: 文件对象无效!', file)
+    return
+  }
+  
+  if (validateFile(file)) {
+    console.log('File validation passed, processing...')
     
-    // 更新GPS信息
-    if (gpsInfo.value) {
-      form.lat = gpsInfo.value.lat.toString()
-      form.lng = gpsInfo.value.lng.toString()
+    try {
+      await processFile(file, form)
+      console.log('File processing completed successfully')
+    } catch (error) {
+      console.error('处理文件时出错:', error)
     }
+  } else {
+    console.log('File validation failed')
   }
 }
 
