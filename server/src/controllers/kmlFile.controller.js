@@ -2,7 +2,7 @@ const KmlFileModel = require('../models/kmlFile.model')
 const KmlPointModel = require('../models/kmlPoint.model')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs').promises
 const Logger = require('../utils/logger')
 
 class KmlFileController {
@@ -356,7 +356,19 @@ class KmlFileController {
           if (kmlFile.file_url) {
             const filename = path.basename(kmlFile.file_url)
             const filePath = path.join(process.cwd(), 'uploads', 'kml', filename)
-            await fs.unlink(filePath).catch(() => {}) // 忽略文件不存在的错误
+            Logger.debug('准备删除KML文件', { filename, filePath })
+            
+            // 检查文件是否存在
+            try {
+              await fs.access(filePath)
+              Logger.debug('KML文件存在，开始删除')
+            } catch (accessError) {
+              Logger.warn('KML文件不存在', { filePath })
+              continue
+            }
+            
+            await fs.unlink(filePath)
+            Logger.debug('删除KML文件成功', { filePath })
           }
         } catch (error) {
           Logger.warn(`删除KML文件失败 (ID: ${kmlFile.id}):`, error)

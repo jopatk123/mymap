@@ -1,6 +1,6 @@
 const VideoPointModel = require('../models/videoPoint.model')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs').promises
 const Logger = require('../utils/logger')
 
 class VideoPointController {
@@ -117,14 +117,11 @@ class VideoPointController {
         })
       }
 
-      // 生成缩略图（这里简化处理，实际项目中可能需要使用ffmpeg等工具）
-      const thumbnailUrl = uploadedFile.url.replace(/\.[^.]+$/, '_thumb.jpg')
-
       const videoPoint = await VideoPointModel.create({
         title,
         description: description || '',
         videoUrl: uploadedFile.url,
-        thumbnailUrl,
+        thumbnailUrl: null, // 不生成缩略图
         latitude: parseFloat(lat),
         longitude: parseFloat(lng),
         fileSize: uploadedFile.size,
@@ -195,24 +192,21 @@ class VideoPointController {
       const success = await VideoPointModel.delete(parseInt(id))
 
       if (success) {
-        // 删除相关文件
+        // 删除视频文件
         try {
           if (videoPoint.video_url) {
             const filename = path.basename(videoPoint.video_url)
             const videoPath = path.join(process.cwd(), 'uploads', 'videos', filename)
             Logger.debug('准备删除视频文件', { filename, videoPath })
-            await fs.unlink(videoPath).catch((error) => {
-              Logger.warn('删除视频文件失败', { videoPath, error: error.message })
-            })
-          }
-          if (videoPoint.thumbnail_url) {
-            const filename = path.basename(videoPoint.thumbnail_url)
-            // 视频缩略图也在videos目录下，不是thumbnails目录
-            const thumbPath = path.join(process.cwd(), 'uploads', 'videos', filename)
-            Logger.debug('准备删除视频缩略图', { filename, thumbPath })
-            await fs.unlink(thumbPath).catch((error) => {
-              Logger.warn('删除视频缩略图失败', { thumbPath, error: error.message })
-            })
+            
+            // 检查文件是否存在
+            try {
+              await fs.access(videoPath)
+              await fs.unlink(videoPath)
+              Logger.debug('删除视频文件成功', { videoPath })
+            } catch (error) {
+              Logger.warn('视频文件不存在或删除失败', { videoPath, error: error.message })
+            }
           }
         } catch (error) {
           Logger.warn('删除视频文件失败:', error)
@@ -272,18 +266,15 @@ class VideoPointController {
             const filename = path.basename(videoPoint.video_url)
             const videoPath = path.join(process.cwd(), 'uploads', 'videos', filename)
             Logger.debug('准备删除视频文件', { filename, videoPath })
-            await fs.unlink(videoPath).catch((error) => {
-              Logger.warn('删除视频文件失败', { videoPath, error: error.message })
-            })
-          }
-          if (videoPoint.thumbnail_url) {
-            const filename = path.basename(videoPoint.thumbnail_url)
-            // 视频缩略图也在videos目录下，不是thumbnails目录
-            const thumbPath = path.join(process.cwd(), 'uploads', 'videos', filename)
-            Logger.debug('准备删除视频缩略图', { filename, thumbPath })
-            await fs.unlink(thumbPath).catch((error) => {
-              Logger.warn('删除视频缩略图失败', { thumbPath, error: error.message })
-            })
+            
+            // 检查文件是否存在
+            try {
+              await fs.access(videoPath)
+              await fs.unlink(videoPath)
+              Logger.debug('删除视频文件成功', { videoPath })
+            } catch (error) {
+              Logger.warn('视频文件不存在或删除失败', { videoPath, error: error.message })
+            }
           }
         } catch (error) {
           Logger.warn(`删除视频文件失败 (ID: ${videoPoint.id}):`, error)

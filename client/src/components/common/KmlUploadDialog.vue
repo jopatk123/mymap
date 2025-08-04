@@ -22,7 +22,7 @@
         :ref="uploadRef"
         v-model="form.file"
         v-model:validation-result="validationResult"
-        @file-change="handleFileChange"
+        @file-change="(file) => handleFileChange(file, form)"
         @file-remove="handleFileRemove"
       />
       
@@ -72,24 +72,19 @@ defineEmits(['update:modelValue', 'success'])
 
 const { validationResult, processFile, validateFile } = useKmlProcessor()
 
-// ★ 新增：本地文件状态
-const selectedFile = ref(null)
-
 // 添加KML特定的提交检查
 const kmlCanSubmit = computed(() => {
   const isValid = validationResult.value?.valid === true
   return isValid
 })
 
-// 监听selectedFile变化，同步到BaseUploadDialog的form中
-watch(selectedFile, (newFile) => {
-  // 尝试通过uploadRef获取form并设置file
-  // 这里我们通过一个更直接的方式：在submit时使用selectedFile
-}, { immediate: true })
-
-const handleFileChange = async (file) => {
-  // 确保文件正确设置
-  selectedFile.value = file
+const handleFileChange = async (file, form) => {
+  console.log('KML handleFileChange called with:', file, 'form:', form)
+  
+  // 设置文件到表单
+  if (form) {
+    form.file = file
+  }
   
   if (validateFile(file)) {
     await processFile(file)
@@ -97,7 +92,6 @@ const handleFileChange = async (file) => {
 }
 
 const handleFileRemove = () => {
-  selectedFile.value = null
   validationResult.value = null
 }
 
@@ -111,30 +105,41 @@ const getPlacemarkTypeText = (type) => {
 }
 
 const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
+  console.log('KML上传开始，form:', form, 'validationResult:', validationResult.value)
+  
   if (!validationResult.value?.valid) {
     throw new Error('请先上传有效的KML文件')
   }
   
-  // 使用selectedFile而不是form.file
-  if (!selectedFile.value) {
+  // 使用form.file而不是selectedFile
+  if (!form.file) {
     throw new Error('请选择文件')
   }
   
   setProcessing(true, '正在处理KML文件...')
   
   const formData = new FormData()
-  formData.append('file', selectedFile.value)  // ★ 使用selectedFile
+  formData.append('file', form.file)  // ★ 使用form.file
   formData.append('title', form.title)
   formData.append('description', form.description)
   if (form.folderId !== undefined && form.folderId !== null) {
     formData.append('folderId', form.folderId)
   }
   
+  console.log('准备上传KML文件，FormData内容:', {
+    file: form.file.name,
+    title: form.title,
+    description: form.description,
+    folderId: form.folderId
+  })
+  
   const res = await kmlApi.uploadKmlFile(formData, (progressEvent) => {
     if (progressEvent.lengthComputable) {
       setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total))
     }
   })
+  
+  console.log('KML上传API响应:', res)
   
   if (!res.success) {
     throw new Error(res.message || '上传失败')

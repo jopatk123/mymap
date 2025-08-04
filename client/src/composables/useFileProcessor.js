@@ -84,29 +84,92 @@ export function useKmlProcessor() {
   
   const validateKmlFile = async (file) => {
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      console.log('开始前端KML文件验证:', file.name)
       
-      const { kmlApi } = await import('@/api/kml.js')
-      const response = await kmlApi.validateKmlFile(formData)
+      // 前端基本验证：读取文件内容并检查XML格式
+      const fileContent = await readFileAsText(file)
+      const validation = await validateKmlContent(fileContent)
       
-      // response 现在是后端返回的完整响应体：{ success: true, data: {...} }
-      if (response && response.success && response.data) {
-        validationResult.value = response.data
-        if (response.data.valid) {
-          ElMessage.success(`KML文件验证成功，包含 ${response.data.placemarkCount || 0} 个地标`)
-        } else {
-          ElMessage.error('KML文件格式错误: ' + response.data.error)
-        }
+      validationResult.value = validation
+      
+      if (validation.valid) {
+        ElMessage.success(`KML文件验证成功，包含 ${validation.placemarkCount || 0} 个地标`)
       } else {
-        const errorMsg = response?.message || '验证失败'
-        ElMessage.error('验证失败: ' + errorMsg)
-        validationResult.value = { valid: false, error: errorMsg }
+        ElMessage.error('KML文件格式错误: ' + validation.error)
       }
+      
     } catch (error) {
       console.error('验证KML文件失败:', error)
       ElMessage.error('验证KML文件失败: ' + error.message)
       validationResult.value = { valid: false, error: error.message }
+    }
+  }
+  
+  // 读取文件内容为文本
+  const readFileAsText = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target.result)
+      reader.onerror = (e) => reject(new Error('读取文件失败'))
+      reader.readAsText(file, 'utf-8')
+    })
+  }
+  
+  // 验证KML内容
+  const validateKmlContent = async (content) => {
+    try {
+      // 基本XML格式检查
+      const parser = new DOMParser()
+      const xmlDoc = parser.parseFromString(content, 'text/xml')
+      
+      // 检查是否有解析错误
+      const parseError = xmlDoc.getElementsByTagName('parsererror')
+      if (parseError.length > 0) {
+        return { valid: false, error: 'XML格式错误' }
+      }
+      
+      // 检查是否是KML文件
+      const kmlElement = xmlDoc.getElementsByTagName('kml')[0]
+      if (!kmlElement) {
+        return { valid: false, error: '不是有效的KML文件' }
+      }
+      
+      // 提取地标信息
+      const placemarks = []
+      const placemarkElements = xmlDoc.getElementsByTagName('Placemark')
+      
+      for (let i = 0; i < placemarkElements.length; i++) {
+        const placemark = placemarkElements[i]
+        const name = placemark.getElementsByTagName('name')[0]?.textContent || `地标${i + 1}`
+        
+        // 检查坐标
+        const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent
+        if (coordinates) {
+          const coords = coordinates.trim().split(/[\s,]+/)
+          if (coords.length >= 2) {
+            const lng = parseFloat(coords[0])
+            const lat = parseFloat(coords[1])
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+              placemarks.push({
+                name,
+                latitude: lat,
+                longitude: lng,
+                pointType: 'Point' // 简化处理，都当作点
+              })
+            }
+          }
+        }
+      }
+      
+      return {
+        valid: true,
+        placemarkCount: placemarks.length,
+        placemarks: placemarks.slice(0, 10) // 只返回前10个用于预览
+      }
+      
+    } catch (error) {
+      return { valid: false, error: '解析KML文件失败: ' + error.message }
     }
   }
   
