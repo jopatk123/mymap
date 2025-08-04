@@ -6,7 +6,7 @@ const routes = [
     name: 'Home',
     component: () => import('@/views/Map/index.vue'),
     meta: {
-      title: '地图全景系统'
+      title: '点位展示系统'
     }
   },
   {

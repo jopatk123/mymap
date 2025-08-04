@@ -58,11 +58,6 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     await panoramaStore.fetchPanoramas()
   }
 
-  // 排序变化处理
-  const handleSortChange = async (params) => {
-    panoramaStore.setSearchParams(params)
-    await panoramaStore.fetchPanoramas()
-  }
 
   // 切换侧边栏
   const toggleSidebar = () => {
@@ -114,7 +109,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     viewPanorama,
     locatePanorama,
     handleSearch,
-    handleSortChange,
+
     toggleSidebar,
     togglePanoramaList,
     handleUploadSuccess,

@@ -12,15 +12,12 @@
       <el-icon><Link /></el-icon>
       新窗口打开
     </el-button>
-    <el-button @click="$emit('delete')" type="danger">
-      <el-icon><Delete /></el-icon>
-      删除
-    </el-button>
+
   </div>
 </template>
 
 <script setup>
-import { View, CopyDocument, Link, Delete } from '@element-plus/icons-vue'
+import { View, CopyDocument, Link } from '@element-plus/icons-vue'
 
 defineProps({
   panorama: {
@@ -33,7 +30,7 @@ defineProps({
   }
 })
 
-defineEmits(['view', 'copy-coordinate', 'open-new-tab', 'delete'])
+defineEmits(['view', 'copy-coordinate', 'open-new-tab'])
 </script>
 
 <style lang="scss" scoped>

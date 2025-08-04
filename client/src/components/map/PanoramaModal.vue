@@ -7,7 +7,7 @@
     @view="handleOpenViewer"
     @copy-coordinate="handleCopyCoordinate"
     @open-new-tab="handleOpenInNewTab"
-    @delete="handleDeletePanorama"
+
   />
   
   <PanoramaViewer
@@ -85,13 +85,7 @@ const handleOpenInNewTab = () => {
   openInNewTab(props.panorama)
 }
 
-const handleDeletePanorama = async () => {
-  const success = await deletePanorama(props.panorama)
-  if (success) {
-    modalVisible.value = false
-    emit('panorama-deleted', props.panorama.id)
-  }
-}
+
 </script>
 
 <style lang="scss" scoped>

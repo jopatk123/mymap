@@ -7,7 +7,7 @@
           @click="togglePanoramaList" 
           type="primary"
           :icon="panoramaListVisible ? Hide : View"
-          :title="panoramaListVisible ? '隐藏全景图列表' : '显示全景图列表'"
+          :title="panoramaListVisible ? '隐藏点位列表' : '显示点位列表'"
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
@@ -15,10 +15,7 @@
           <el-icon><Refresh /></el-icon>
           刷新
         </el-button>
-        <el-button @click="showUpload" type="success">
-          <el-icon><Plus /></el-icon>
-          添加
-        </el-button>
+
         <el-button @click="showSettings" type="info">
           <el-icon><Setting /></el-icon>
           设置
@@ -28,7 +25,7 @@
     
     <!-- 状态栏 -->
     <div class="status-bar">
-      <span>共 {{ totalCount }} 个全景图</span>
+      <span>共 {{ totalCount }} 个点位</span>
       <span v-if="!isOnline" class="offline-indicator">离线模式</span>
     </div>
   </div>
@@ -36,7 +33,7 @@
 
 <script setup>
 import { 
-  Refresh, Plus, Setting, 
+  Refresh, Setting, 
   View, Hide 
 } from '@element-plus/icons-vue'
 
@@ -62,7 +59,6 @@ const props = defineProps({
 const emit = defineEmits([
   'toggle-panorama-list',
   'refresh-data',
-  'show-upload',
   'show-settings'
 ])
 
@@ -74,9 +70,7 @@ const refreshData = () => {
   emit('refresh-data')
 }
 
-const showUpload = () => {
-  emit('show-upload')
-}
+
 
 const showSettings = () => {
   emit('show-settings')

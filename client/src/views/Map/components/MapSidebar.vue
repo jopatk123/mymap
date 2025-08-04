@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar" :class="{ collapsed: sidebarCollapsed, hidden: !panoramaListVisible }">
     <div class="sidebar-header">
-      <h3>全景图列表</h3>
+      <h3>点位列表</h3>
       <div class="header-actions">
         <el-button 
           @click="$emit('toggle-sidebar')" 
@@ -18,10 +18,10 @@
         :model-value="searchParams"
         @update:model-value="$emit('update:searchParams', $event)"
         @search="$emit('search', $event)"
-        @sort-change="$emit('sort-change', $event)"
+
       />
       
-      <!-- 全景图列表 -->
+      <!-- 点位列表 -->
       <PanoramaList
         :panoramas="panoramas"
         :current-panorama="currentPanorama"
@@ -76,7 +76,6 @@ defineEmits([
   'toggle-sidebar',
   'update:searchParams',
   'search',
-  'sort-change',
   'select-panorama',
   'view-panorama',
   'locate-panorama',

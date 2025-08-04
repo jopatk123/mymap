@@ -21,7 +21,7 @@
       @toggle-sidebar="toggleSidebar"
       @update:search-params="Object.assign(searchParams, $event)"
       @search="handleSearch"
-      @sort-change="handleSortChange"
+
       @select-panorama="selectPanorama"
       @view-panorama="viewPanorama"
       @locate-panorama="locatePanorama"
@@ -36,7 +36,7 @@
       :is-online="isOnline"
       @toggle-panorama-list="togglePanoramaList"
       @refresh-data="refreshData"
-      @show-upload="showUploadDialog = true"
+
       @show-settings="showSettings = true"
     />
     
@@ -100,7 +100,7 @@ const {
   viewPanorama,
   locatePanorama,
   handleSearch,
-  handleSortChange,
+
   toggleSidebar,
   togglePanoramaList,
   handleUploadSuccess,

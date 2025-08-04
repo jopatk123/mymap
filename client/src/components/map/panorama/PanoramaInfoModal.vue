@@ -16,7 +16,7 @@
         @view="$emit('view')"
         @copy-coordinate="$emit('copy-coordinate')"
         @open-new-tab="$emit('open-new-tab')"
-        @delete="$emit('delete')"
+
       />
     </div>
   </el-dialog>
@@ -46,8 +46,7 @@ defineEmits([
   'close',
   'view',
   'copy-coordinate',
-  'open-new-tab',
-  'delete'
+  'open-new-tab'
 ])
 </script>
 
