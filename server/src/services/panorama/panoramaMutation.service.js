@@ -269,7 +269,20 @@ class PanoramaMutationService {
       // 删除主图片文件
       if (panorama.image_url) {
         try {
-          const imagePath = path.join(process.cwd(), 'uploads', path.basename(panorama.image_url))
+          // 从URL中提取文件名，然后构建正确的文件路径
+          const filename = path.basename(panorama.image_url)
+          const imagePath = path.join(process.cwd(), 'uploads', 'panoramas', filename)
+          Logger.debug('准备删除主图片文件', { filename, imagePath })
+          
+          // 检查文件是否存在
+          try {
+            await fs.access(imagePath)
+            Logger.debug('主图片文件存在，开始删除')
+          } catch (accessError) {
+            Logger.warn('主图片文件不存在', { imagePath })
+            return
+          }
+          
           await fs.unlink(imagePath)
           Logger.debug('删除主图片文件成功', { imagePath })
         } catch (error) {
@@ -280,7 +293,20 @@ class PanoramaMutationService {
       // 删除缩略图文件
       if (panorama.thumbnail_url) {
         try {
-          const thumbnailPath = path.join(process.cwd(), 'uploads', path.basename(panorama.thumbnail_url))
+          // 从URL中提取文件名，然后构建正确的文件路径
+          const filename = path.basename(panorama.thumbnail_url)
+          const thumbnailPath = path.join(process.cwd(), 'uploads', 'thumbnails', filename)
+          Logger.debug('准备删除缩略图文件', { filename, thumbnailPath })
+          
+          // 检查文件是否存在
+          try {
+            await fs.access(thumbnailPath)
+            Logger.debug('缩略图文件存在，开始删除')
+          } catch (accessError) {
+            Logger.warn('缩略图文件不存在', { thumbnailPath })
+            return
+          }
+          
           await fs.unlink(thumbnailPath)
           Logger.debug('删除缩略图文件成功', { thumbnailPath })
         } catch (error) {

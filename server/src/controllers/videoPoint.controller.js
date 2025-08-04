@@ -198,12 +198,21 @@ class VideoPointController {
         // 删除相关文件
         try {
           if (videoPoint.video_url) {
-            const videoPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.video_url))
-            await fs.unlink(videoPath).catch(() => {}) // 忽略文件不存在的错误
+            const filename = path.basename(videoPoint.video_url)
+            const videoPath = path.join(process.cwd(), 'uploads', 'videos', filename)
+            Logger.debug('准备删除视频文件', { filename, videoPath })
+            await fs.unlink(videoPath).catch((error) => {
+              Logger.warn('删除视频文件失败', { videoPath, error: error.message })
+            })
           }
           if (videoPoint.thumbnail_url) {
-            const thumbPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.thumbnail_url))
-            await fs.unlink(thumbPath).catch(() => {}) // 忽略文件不存在的错误
+            const filename = path.basename(videoPoint.thumbnail_url)
+            // 视频缩略图也在videos目录下，不是thumbnails目录
+            const thumbPath = path.join(process.cwd(), 'uploads', 'videos', filename)
+            Logger.debug('准备删除视频缩略图', { filename, thumbPath })
+            await fs.unlink(thumbPath).catch((error) => {
+              Logger.warn('删除视频缩略图失败', { thumbPath, error: error.message })
+            })
           }
         } catch (error) {
           Logger.warn('删除视频文件失败:', error)
@@ -260,12 +269,21 @@ class VideoPointController {
       for (const videoPoint of videoPointsToDelete) {
         try {
           if (videoPoint.video_url) {
-            const videoPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.video_url))
-            await fs.unlink(videoPath).catch(() => {}) // 忽略文件不存在的错误
+            const filename = path.basename(videoPoint.video_url)
+            const videoPath = path.join(process.cwd(), 'uploads', 'videos', filename)
+            Logger.debug('准备删除视频文件', { filename, videoPath })
+            await fs.unlink(videoPath).catch((error) => {
+              Logger.warn('删除视频文件失败', { videoPath, error: error.message })
+            })
           }
           if (videoPoint.thumbnail_url) {
-            const thumbPath = path.join(process.cwd(), 'uploads', path.basename(videoPoint.thumbnail_url))
-            await fs.unlink(thumbPath).catch(() => {}) // 忽略文件不存在的错误
+            const filename = path.basename(videoPoint.thumbnail_url)
+            // 视频缩略图也在videos目录下，不是thumbnails目录
+            const thumbPath = path.join(process.cwd(), 'uploads', 'videos', filename)
+            Logger.debug('准备删除视频缩略图', { filename, thumbPath })
+            await fs.unlink(thumbPath).catch((error) => {
+              Logger.warn('删除视频缩略图失败', { thumbPath, error: error.message })
+            })
           }
         } catch (error) {
           Logger.warn(`删除视频文件失败 (ID: ${videoPoint.id}):`, error)

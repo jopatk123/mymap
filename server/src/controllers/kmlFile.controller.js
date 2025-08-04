@@ -283,8 +283,21 @@ class KmlFileController {
         // 删除相关文件
         try {
           if (kmlFile.file_url) {
-            const filePath = path.join(process.cwd(), 'uploads', path.basename(kmlFile.file_url))
-            await fs.unlink(filePath).catch(() => {}) // 忽略文件不存在的错误
+            const filename = path.basename(kmlFile.file_url)
+            const filePath = path.join(process.cwd(), 'uploads', 'kml', filename)
+            Logger.debug('准备删除KML文件', { filename, filePath })
+            
+            // 检查文件是否存在
+            try {
+              await fs.access(filePath)
+              Logger.debug('KML文件存在，开始删除')
+            } catch (accessError) {
+              Logger.warn('KML文件不存在', { filePath })
+              return
+            }
+            
+            await fs.unlink(filePath)
+            Logger.debug('删除KML文件成功', { filePath })
           }
         } catch (error) {
           Logger.warn('删除KML文件失败:', error)
@@ -341,7 +354,8 @@ class KmlFileController {
       for (const kmlFile of kmlFilesToDelete) {
         try {
           if (kmlFile.file_url) {
-            const filePath = path.join(process.cwd(), 'uploads', path.basename(kmlFile.file_url))
+            const filename = path.basename(kmlFile.file_url)
+            const filePath = path.join(process.cwd(), 'uploads', 'kml', filename)
             await fs.unlink(filePath).catch(() => {}) // 忽略文件不存在的错误
           }
         } catch (error) {
