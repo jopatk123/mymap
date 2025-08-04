@@ -29,8 +29,13 @@ defineProps({
 
 // 格式化坐标
 const formatCoordinate = (lat, lng) => {
-  if (!lat || !lng) return '未知'
-  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+  if (lat == null || lng == null) return '未知';
+  const numLat = parseFloat(lat);
+  const numLng = parseFloat(lng);
+  if (isNaN(numLat) || isNaN(numLng)) {
+    return '未知';
+  }
+  return `${numLat.toFixed(6)}, ${numLng.toFixed(6)}`;
 }
 
 // 格式化日期
