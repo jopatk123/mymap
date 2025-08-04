@@ -8,7 +8,11 @@
       @click="selectPanorama(panorama)"
     >
       <div class="panorama-thumbnail">
+        <div v-if="panorama.type === 'video'" class="video-thumbnail-placeholder">
+          <el-icon><VideoCamera /></el-icon>
+        </div>
         <img 
+          v-else
           :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'" 
           :alt="panorama.title"
           @error="handleImageError"
@@ -60,13 +64,13 @@
     
     <!-- 空状态 -->
     <div class="empty-state" v-if="!loading && panoramas.length === 0">
-      <el-empty description="暂无全景图数据" />
+      <el-empty description="暂无点位数据" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { View, Location } from '@element-plus/icons-vue'
+import { View, Location, VideoCamera } from '@element-plus/icons-vue'
 
 const props = defineProps({
   panoramas: {
@@ -158,11 +162,28 @@ const formatDate = (dateString) => {
       overflow: hidden;
       margin-right: 12px;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f0f2f5;
       
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+      }
+
+      .video-thumbnail-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, #eef5ff, #d9e8ff);
+        color: #409eff;
+        .el-icon {
+          font-size: 32px;
+        }
       }
     }
     
