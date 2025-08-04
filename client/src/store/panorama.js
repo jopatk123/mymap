@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
+import { pointsApi } from '@/api/points.js'
 import { 
-  getPanoramas, 
   getPanoramaById, 
   getPanoramasByBounds,
   createPanorama,
@@ -215,7 +215,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'fetching')
         this.clearError()
         
-        const response = await getPanoramas({
+        const response = await pointsApi.getAllPoints({
           page: this.pagination.page,
           pageSize: this.pagination.pageSize,
           ...this.searchParams,

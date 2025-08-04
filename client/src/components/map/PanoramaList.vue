@@ -115,8 +115,8 @@ const handleImageError = (event) => {
 }
 
 const formatCoordinate = (lat, lng) => {
-  if (!lat || !lng) return '未知位置'
-  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  if (lat == null || lng == null) return '未知位置'
+  return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
 }
 
 const formatDate = (dateString) => {
