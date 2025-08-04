@@ -71,8 +71,6 @@ export function useKmlProcessor() {
       const { kmlApi } = await import('@/api/kml.js')
       const response = await kmlApi.validateKmlFile(formData)
       
-      console.log('KML验证API响应:', response)
-      
       // response 现在是后端返回的完整响应体：{ success: true, data: {...} }
       if (response && response.success && response.data) {
         validationResult.value = response.data
@@ -95,13 +93,11 @@ export function useKmlProcessor() {
   
   const validateFile = (file) => {
     if (!file || typeof file !== 'object') {
-      console.error('validateFile: 无效的文件对象', file)
       ElMessage.error('文件对象无效!')
       return false
     }
     
     if (!file.name || !file.size) {
-      console.error('validateFile: 文件对象缺少必要属性', file)
       ElMessage.error('文件信息不完整!')
       return false
     }

@@ -75,41 +75,28 @@ const { validationResult, processFile, validateFile } = useKmlProcessor()
 // ★ 新增：本地文件状态
 const selectedFile = ref(null)
 
-// 添加KML特定的提交检查 - 增加调试信息
+// 添加KML特定的提交检查
 const kmlCanSubmit = computed(() => {
   const isValid = validationResult.value?.valid === true
-  console.log('=== kmlCanSubmit 调试信息 ===')
-  console.log('validationResult.value:', validationResult.value)
-  console.log('selectedFile.value:', selectedFile.value)
-  console.log('isValid:', isValid)
   return isValid
 })
 
-// ★ 监听selectedFile变化，同步到BaseUploadDialog的form中
+// 监听selectedFile变化，同步到BaseUploadDialog的form中
 watch(selectedFile, (newFile) => {
-  console.log('=== selectedFile 变化 ===')
-  console.log('新文件:', newFile)
-  
   // 尝试通过uploadRef获取form并设置file
   // 这里我们通过一个更直接的方式：在submit时使用selectedFile
 }, { immediate: true })
 
 const handleFileChange = async (file) => {
-  console.log('=== handleFileChange 调试信息 ===')
-  console.log('传入的文件:', file)
-  console.log('selectedFile.value before:', selectedFile.value)
-  
-  // ★ 确保文件正确设置
+  // 确保文件正确设置
   selectedFile.value = file
   
   if (validateFile(file)) {
     await processFile(file)
-    console.log('processFile 完成，validationResult:', validationResult.value)
   }
 }
 
 const handleFileRemove = () => {
-  console.log('=== handleFileRemove 调试信息 ===')
   selectedFile.value = null
   validationResult.value = null
 }
@@ -124,16 +111,11 @@ const getPlacemarkTypeText = (type) => {
 }
 
 const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
-  console.log('=== handleKmlUpload 调试信息 ===')
-  console.log('form:', form)
-  console.log('selectedFile.value:', selectedFile.value)
-  console.log('validationResult.value:', validationResult.value)
-  
   if (!validationResult.value?.valid) {
     throw new Error('请先上传有效的KML文件')
   }
   
-  // ★ 使用selectedFile而不是form.file
+  // 使用selectedFile而不是form.file
   if (!selectedFile.value) {
     throw new Error('请选择文件')
   }

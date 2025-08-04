@@ -119,19 +119,11 @@ const {
   resetForm
 } = useBaseUploadDialog(props, emit)
 
-// 添加最终的canSubmit逻辑 - 增加调试信息
+// 添加最终的canSubmit逻辑
 const effectiveCanSubmit = computed(() => {
   const baseCanSubmit = canSubmit.value
   const externalCanSubmit = props.externalCanSubmit
   const result = baseCanSubmit && externalCanSubmit
-  
-  console.log('=== effectiveCanSubmit 调试信息 ===')
-  console.log('form.file:', form.file)
-  console.log('uploading.value:', uploading.value)
-  console.log('processing.value:', processing.value)
-  console.log('canSubmit.value:', baseCanSubmit)
-  console.log('props.externalCanSubmit:', externalCanSubmit)
-  console.log('effectiveCanSubmit result:', result)
   
   return result
 })

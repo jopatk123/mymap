@@ -75,8 +75,6 @@ const uploadRef = ref(null)
 const file = computed({
   get: () => props.modelValue,
   set: (value) => {
-    console.log('=== KmlUploadArea file.set 调试信息 ===')
-    console.log('设置文件:', value)
     emit('update:modelValue', value)
   }
 })
@@ -88,9 +86,6 @@ const validationResult = computed({
 
 const handleFileChange = async (file) => {
   const rawFile = file.raw
-  
-  console.log('=== KmlUploadArea handleFileChange 调试信息 ===')
-  console.log('rawFile:', rawFile)
   
   // 验证文件
   const isKml = rawFile.name.toLowerCase().endsWith('.kml')
@@ -106,12 +101,8 @@ const handleFileChange = async (file) => {
     return false
   }
   
-  // ★ 修复：直接调用emit，不通过computed setter
-  console.log('直接调用 emit update:modelValue')
+  // 直接调用emit，不通过computed setter
   emit('update:modelValue', rawFile)
-  
-  console.log('设置文件后，file.value:', file.value)
-  console.log('props.modelValue:', props.modelValue)
   
   // 发送file-change事件
   emit('file-change', rawFile)
@@ -120,7 +111,6 @@ const handleFileChange = async (file) => {
 }
 
 const handleFileRemove = () => {
-  console.log('=== KmlUploadArea handleFileRemove 调试信息 ===')
   // 同样直接调用emit
   emit('update:modelValue', null)
   emit('update:validationResult', null)
