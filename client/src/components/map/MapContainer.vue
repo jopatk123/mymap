@@ -65,6 +65,7 @@ const {
   initMap,
   changeMapType,
   addPanoramaMarkers,
+  addPointMarkers,
   clearMarkers,
   setCenter,
   fitBounds,
@@ -102,6 +103,11 @@ watch(() => props.panoramas, (newPanoramas) => {
   clearMarkers()
   if (newPanoramas && newPanoramas.length > 0) {
     addPanoramaMarkers(newPanoramas)
+  }
+  
+  // 同时显示所有点位（包括视频点位）
+  if (window.allPoints && window.allPoints.length > 0) {
+    addPointMarkers(window.allPoints)
   }
 }, { immediate: true })
 
@@ -155,6 +161,7 @@ defineExpose({
   setCenter,
   fitBounds,
   addPanoramaMarkers,
+  addPointMarkers,
   clearMarkers
 })
 </script>

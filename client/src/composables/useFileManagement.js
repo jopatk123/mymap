@@ -1,6 +1,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { folderApi } from '@/api/folder.js'
+import { pointsApi } from '@/api/points.js'
 
 export function useFileManagement() {
   // 响应式数据
@@ -25,7 +26,7 @@ export function useFileManagement() {
     try {
       console.log('开始加载文件列表...')
       loading.value = true
-      const folderId = selectedFolder.value?.id || 0
+      const folderId = selectedFolder.value?.id || null
       
       console.log('请求参数:', {
         folderId,
@@ -34,16 +35,34 @@ export function useFileManagement() {
         pageSize: pagination.pageSize
       })
       
-      const response = await folderApi.getFolderContents(folderId, {
-        ...searchForm,
+      // 使用统一的点位API获取所有类型的点位
+      console.log('🔥 调用统一点位API: /api/points')
+      const response = await pointsApi.getAllPoints({
+        folderId: folderId === 0 ? null : folderId,
+        keyword: searchForm.keyword,
+        includeHidden: searchForm.includeHidden,
         page: pagination.page,
         pageSize: pagination.pageSize
       })
+      console.log('🔥 统一点位API响应:', response)
       
       console.log('API响应:', response)
       console.log('文件列表数据:', response.data)
       
-      fileList.value = response.data
+      // 转换数据格式以适配现有组件
+      fileList.value = response.data.map(item => ({
+        ...item,
+        fileType: item.type, // 'panorama' 或 'video'
+        imageUrl: item.url,
+        thumbnailUrl: item.thumbnailUrl,
+        latitude: item.lat,
+        longitude: item.lng,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        folderId: item.folder_id,
+        folderName: item.folder_name
+      }))
+      
       pagination.total = response.pagination?.total || response.data.length
       
       console.log('文件列表更新完成，当前文件数量:', fileList.value.length)

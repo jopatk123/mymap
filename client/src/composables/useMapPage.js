@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
+import { pointsApi } from '@/api/points.js'
 
 export function useMapPage() {
   // Stores
@@ -54,7 +55,11 @@ export function useMapPage() {
   // 加载初始数据
   const loadInitialData = async () => {
     try {
-      await panoramaStore.fetchPanoramas()
+      // 同时加载全景图和所有点位数据
+      await Promise.all([
+        panoramaStore.fetchPanoramas(),
+        loadAllPoints()
+      ])
       // 数据加载完成后自动适应所有标记点
       setTimeout(() => {
         if (mapRef.value) {
@@ -66,9 +71,24 @@ export function useMapPage() {
     }
   }
 
+  // 加载所有点位数据
+  const loadAllPoints = async () => {
+    try {
+      const response = await pointsApi.getAllPoints({ pageSize: 1000 })
+      // 将点位数据存储到全局状态中，供地图组件使用
+      window.allPoints = response.data || []
+    } catch (error) {
+      console.error('加载点位数据失败:', error)
+      window.allPoints = []
+    }
+  }
+
   // 刷新数据
   const refreshData = async () => {
-    await panoramaStore.refresh()
+    await Promise.all([
+      panoramaStore.refresh(),
+      loadAllPoints()
+    ])
   }
 
   // 加载更多

@@ -50,4 +50,8 @@ router.use('/video-points', videoPointRoutes)
 const kmlFileRoutes = require('./kmlFile.routes')
 router.use('/kml-files', kmlFileRoutes)
 
+// 统一点位相关路由（全景图 + 视频点位）
+const pointsRoutes = require('./points.routes')
+router.use('/points', pointsRoutes)
+
 module.exports = router

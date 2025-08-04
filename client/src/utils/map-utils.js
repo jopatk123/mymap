@@ -45,6 +45,53 @@ export function createPanoramaMarker(latlng, options = {}) {
 }
 
 /**
+ * 创建自定义视频点位标记
+ * @param {Array} latlng [lat, lng]
+ * @param {Object} options 选项
+ * @returns {L.Marker}
+ */
+export function createVideoMarker(latlng, options = {}) {
+  const icon = L.divIcon({
+    className: 'video-marker',
+    html: `<div style="
+      width: 20px;
+      height: 20px;
+      background-color: #28a745;
+      border: 2px solid white;
+      border-radius: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+    ">▶</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  })
+
+  return L.marker(latlng, { icon, ...options })
+}
+
+/**
+ * 根据点位类型创建对应的标记
+ * @param {Array} latlng [lat, lng]
+ * @param {string} type 点位类型 'panorama' | 'video'
+ * @param {Object} options 选项
+ * @returns {L.Marker}
+ */
+export function createPointMarker(latlng, type, options = {}) {
+  switch (type) {
+    case 'video':
+      return createVideoMarker(latlng, options)
+    case 'panorama':
+    default:
+      return createPanoramaMarker(latlng, options)
+  }
+}
+
+/**
  * 坐标转换工具类
  */
 export class CoordinateConverter {

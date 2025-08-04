@@ -10,19 +10,48 @@
     <el-table-column label="类型" width="100">
       <template #default="{ row }">
         <el-tag :type="getFileTypeColor(row.fileType)">
-          {{ row.displayType }}
+          {{ getDisplayType(row.fileType) }}
         </el-tag>
       </template>
     </el-table-column>
     
     <el-table-column label="缩略图" width="100">
       <template #default="{ row }">
-        <img
-          :src="getFileThumbnail(row)"
-          :alt="row.title"
-          class="thumbnail"
-          @error="$emit('image-error', $event)"
-        />
+        <div class="thumbnail-container">
+          <img
+            v-if="row.fileType === 'panorama' && (row.thumbnailUrl || row.imageUrl)"
+            :src="getFileThumbnail(row)"
+            :alt="row.title"
+            class="thumbnail"
+            @error="$emit('image-error', $event)"
+          />
+          <div
+            v-else-if="row.fileType === 'video'"
+            class="video-thumbnail"
+          >
+            <img
+              v-if="row.thumbnailUrl"
+              :src="row.thumbnailUrl"
+              :alt="row.title"
+              class="thumbnail"
+              @error="showVideoPlaceholder = true"
+            />
+            <div v-else class="video-placeholder">
+              <span class="video-icon">▶</span>
+              <span class="video-text">视频</span>
+            </div>
+          </div>
+          <div
+            v-else-if="row.fileType === 'kml'"
+            class="kml-placeholder"
+          >
+            <span class="kml-icon">📍</span>
+            <span class="kml-text">KML</span>
+          </div>
+          <div v-else class="default-placeholder">
+            <span>文件</span>
+          </div>
+        </div>
       </template>
     </el-table-column>
     
@@ -113,15 +142,85 @@ const props = defineProps({
 })
 
 defineEmits(['selection-change', 'view-file', 'edit-file', 'delete-file', 'image-error'])
+
+// 获取显示类型
+const getDisplayType = (fileType) => {
+  const types = {
+    panorama: '全景图',
+    video: '视频',
+    kml: 'KML文件'
+  }
+  return types[fileType] || '未知'
+}
 </script>
 
 <style lang="scss" scoped>
+.thumbnail-container {
+  width: 60px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .thumbnail {
   width: 60px;
   height: 30px;
   object-fit: cover;
   border-radius: 4px;
   border: 1px solid #eee;
+}
+
+.video-placeholder,
+.kml-placeholder,
+.default-placeholder {
+  width: 60px;
+  height: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 10px;
+  color: #666;
+}
+
+.video-placeholder {
+  background-color: #f0f9ff;
+  border-color: #28a745;
+}
+
+.video-icon {
+  font-size: 12px;
+  color: #28a745;
+  margin-bottom: 2px;
+}
+
+.video-text {
+  font-size: 8px;
+  color: #28a745;
+}
+
+.kml-placeholder {
+  background-color: #fff7e6;
+  border-color: #ffa940;
+}
+
+.kml-icon {
+  font-size: 12px;
+  color: #ffa940;
+  margin-bottom: 2px;
+}
+
+.kml-text {
+  font-size: 8px;
+  color: #ffa940;
+}
+
+.default-placeholder {
+  background-color: #f5f5f5;
+  border-color: #ccc;
 }
 
 .description {

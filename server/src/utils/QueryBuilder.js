@@ -12,9 +12,8 @@ class QueryBuilder {
         conditions.push(`${prefix}folder_id = ?`)
         params.push(parseInt(folderId))
       }
-    } else {
-      conditions.push(`${prefix}folder_id IS NULL`)
     }
+    // 如果folderId为null/undefined，不添加任何文件夹筛选条件，返回所有数据
 
     return { conditions, params }
   }

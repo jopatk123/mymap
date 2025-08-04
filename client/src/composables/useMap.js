@@ -1,6 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import L from 'leaflet'
-import { createAMapTileLayer, createPanoramaMarker } from '@/utils/map-utils.js'
+import { createAMapTileLayer, createPointMarker } from '@/utils/map-utils.js'
 
 export function useMap(containerId) {
   const map = ref(null)
@@ -63,39 +63,55 @@ export function useMap(containerId) {
     })
   }
   
-  // 添加全景图标记
-  const addPanoramaMarker = (panorama) => {
+  // 添加点位标记（支持全景图和视频）
+  const addPointMarker = (point) => {
     if (!map.value) return null
     
     // 优先使用 GCJ02 坐标（高德地图瓦片需要）
-    let displayLat = panorama.lat
-    let displayLng = panorama.lng
+    let displayLat = point.lat || point.latitude
+    let displayLng = point.lng || point.longitude
     
     // 如果有 GCJ02 坐标，则使用 GCJ02 坐标
-    if (panorama.gcj02Lat && panorama.gcj02Lng) {
-      displayLat = panorama.gcj02Lat
-      displayLng = panorama.gcj02Lng
+    if (point.gcj02Lat && point.gcj02Lng) {
+      displayLat = point.gcj02Lat
+      displayLng = point.gcj02Lng
+    } else if (point.gcj02_lat && point.gcj02_lng) {
+      displayLat = point.gcj02_lat
+      displayLng = point.gcj02_lng
     }
     
-    const marker = createPanoramaMarker([displayLat, displayLng], {
-      title: panorama.title || '全景图'
+    const pointType = point.type || 'panorama'
+    const marker = createPointMarker([displayLat, displayLng], pointType, {
+      title: point.title || (pointType === 'video' ? '视频点位' : '全景图')
     })
     
     // 添加点击事件
     marker.on('click', () => {
-      onMarkerClick.value(panorama)
+      onMarkerClick.value(point)
     })
     
     marker.addTo(map.value)
-    markers.value.push({ id: panorama.id, marker })
+    markers.value.push({ id: point.id, marker, type: pointType })
     
     return marker
+  }
+
+  // 保持向后兼容的全景图标记方法
+  const addPanoramaMarker = (panorama) => {
+    return addPointMarker({ ...panorama, type: 'panorama' })
   }
   
   // 批量添加标记
   const addPanoramaMarkers = (panoramas) => {
     panoramas.forEach(panorama => {
       addPanoramaMarker(panorama)
+    })
+  }
+
+  // 批量添加点位标记（支持混合类型）
+  const addPointMarkers = (points) => {
+    points.forEach(point => {
+      addPointMarker(point)
     })
   }
   
@@ -171,8 +187,10 @@ export function useMap(containerId) {
     isLoading,
     initMap,
     changeMapType,
+    addPointMarker,
     addPanoramaMarker,
     addPanoramaMarkers,
+    addPointMarkers,
     removeMarker,
     clearMarkers,
     setCenter,
