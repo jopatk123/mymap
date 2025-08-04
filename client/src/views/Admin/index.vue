@@ -19,10 +19,7 @@
           router
           class="admin-menu"
         >
-          <el-menu-item index="/admin/panorama">
-            <el-icon><Picture /></el-icon>
-            <span>全景图管理</span>
-          </el-menu-item>
+
           <el-menu-item index="/admin/files">
             <el-icon><Folder /></el-icon>
             <span>文件管理</span>
@@ -40,7 +37,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Picture, Folder } from '@element-plus/icons-vue'
+import { HomeFilled, Folder } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -19,15 +19,7 @@ const routes = [
       {
         path: '',
         name: 'Admin',
-        redirect: '/admin/panorama'
-      },
-      {
-        path: 'panorama',
-        name: 'PanoramaManage',
-        component: () => import('@/views/Admin/PanoramaManage.vue'),
-        meta: {
-          title: '全景图管理'
-        }
+        redirect: '/admin/files'
       },
       {
         path: 'files',
@@ -75,7 +67,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.title) {
     document.title = to.meta.title
   }
-  
+
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('token')
@@ -85,7 +77,7 @@ router.beforeEach((to, from, next) => {
       return next('/') // 重定向到首页
     }
   }
-  
+
   next()
 })
 
