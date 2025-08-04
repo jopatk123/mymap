@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps } from 'vue'
+import { defineEmits, defineProps, reactive } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import VideoUploadArea from './VideoUploadArea.vue'
@@ -57,29 +57,24 @@ defineEmits(['update:modelValue', 'success'])
 
 const { previewUrl, processFile, validateFile, cleanup } = useVideoProcessor()
 
+// 创建本地表单对象用于文件处理
+const form = reactive({
+  title: '',
+  description: '',
+  lat: '',
+  lng: '',
+  file: null,
+  duration: '',
+  folderId: 0
+})
+
 // 视频特有的验证规则
 const videoRules = {
-  lat: [
-    { required: true, message: '请输入纬度', trigger: 'blur' },
+  duration: [
     { 
       validator: (rule, value, callback) => {
-        const lat = parseFloat(value)
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-          callback(new Error('纬度必须在 -90 到 90 之间'))
-        } else {
-          callback()
-        }
-      }, 
-      trigger: 'blur' 
-    }
-  ],
-  lng: [
-    { required: true, message: '请输入经度', trigger: 'blur' },
-    { 
-      validator: (rule, value, callback) => {
-        const lng = parseFloat(value)
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-          callback(new Error('经度必须在 -180 到 180 之间'))
+        if (value && (isNaN(value) || value < 0)) {
+          callback(new Error('视频时长必须是大于等于0的数字'))
         } else {
           callback()
         }
@@ -90,6 +85,12 @@ const videoRules = {
 }
 
 const handleFileChange = async (file) => {
+  // 确保file参数存在且有效
+  if (!file || !file.raw) {
+    console.error('文件对象无效:', file)
+    return
+  }
+  
   if (validateFile(file.raw)) {
     await processFile(file.raw, form)
   }

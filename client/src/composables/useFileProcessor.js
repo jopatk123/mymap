@@ -20,6 +20,17 @@ export function useVideoProcessor() {
   }
   
   const validateFile = (file) => {
+    // 检查文件对象是否有效
+    if (!file || typeof file !== 'object') {
+      ElMessage.error('文件对象无效!')
+      return false
+    }
+    
+    if (!file.type || !file.size) {
+      ElMessage.error('文件信息不完整!')
+      return false
+    }
+    
     const isVideo = file.type.startsWith('video/')
     const isLt500M = file.size / 1024 / 1024 < 500
     
@@ -148,6 +159,17 @@ export function usePanoramaProcessor() {
   }
   
   const validateFile = (file) => {
+    // 检查文件对象是否有效
+    if (!file || typeof file !== 'object') {
+      ElMessage.error('文件对象无效!')
+      return false
+    }
+    
+    if (!file.type || !file.size) {
+      ElMessage.error('文件信息不完整!')
+      return false
+    }
+    
     const isImage = file.type.startsWith('image/')
     const isLt50M = file.size / 1024 / 1024 < 50
     

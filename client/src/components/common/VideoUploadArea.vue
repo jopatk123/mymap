@@ -72,7 +72,19 @@ const previewUrl = computed({
 })
 
 const handleFileChange = (file) => {
+  // 检查文件对象是否有效
+  if (!file || !file.raw) {
+    ElMessage.error('文件对象无效!')
+    return false
+  }
+  
   const rawFile = file.raw
+  
+  // 检查原始文件对象
+  if (!rawFile || !rawFile.type || !rawFile.size) {
+    ElMessage.error('文件信息不完整!')
+    return false
+  }
   
   // 验证文件
   const isVideo = rawFile.type.startsWith('video/')
@@ -94,7 +106,7 @@ const handleFileChange = (file) => {
   }
   
   file.value = rawFile
-  emit('file-change', rawFile)
+  emit('file-change', file)
   
   return true
 }

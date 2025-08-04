@@ -112,12 +112,49 @@ const {
   uploading,
   uploadProgress,
   computedRules,
+  coordinates,
   canSubmit,
   submitButtonText,
   handleClose,
   handleSubmit,
   resetForm
 } = useBaseUploadDialog(props, emit)
+
+// 坐标验证规则
+const coordinateRules = computed(() => {
+  if (!props.needsCoordinates) return {}
+  
+  return {
+    lat: [
+      { required: true, message: '请输入纬度', trigger: 'blur' },
+      { 
+        validator: (rule, value, callback) => {
+          const lat = parseFloat(value)
+          if (isNaN(lat) || lat < -90 || lat > 90) {
+            callback(new Error('纬度必须在 -90 到 90 之间'))
+          } else {
+            callback()
+          }
+        }, 
+        trigger: 'blur' 
+      }
+    ],
+    lng: [
+      { required: true, message: '请输入经度', trigger: 'blur' },
+      { 
+        validator: (rule, value, callback) => {
+          const lng = parseFloat(value)
+          if (isNaN(lng) || lng < -180 || lng > 180) {
+            callback(new Error('经度必须在 -180 到 180 之间'))
+          } else {
+            callback()
+          }
+        }, 
+        trigger: 'blur' 
+      }
+    ]
+  }
+})
 
 // 添加最终的canSubmit逻辑
 const effectiveCanSubmit = computed(() => {
