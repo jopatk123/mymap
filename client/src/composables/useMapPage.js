@@ -45,6 +45,7 @@ export function useMapPage() {
   const panoramaViewerLoading = ref(false)
   const autoRotating = ref(false)
   const kmlLayersVisible = ref(true)
+  const showKmlSettings = ref(false)
 
   // 计算属性
   const totalCount = computed(() => pagination.value.total)
@@ -181,6 +182,7 @@ export function useMapPage() {
     panoramaViewerLoading,
     autoRotating,
     kmlLayersVisible,
+    showKmlSettings,
 
     // 方法
     initializePage,

@@ -1,5 +1,7 @@
 const KmlFileModel = require('../models/kmlFile.model')
 const KmlPointModel = require('../models/kmlPoint.model')
+const KmlFileStyleModel = require('../models/kmlFileStyle.model')
+const PanoramaClusterConfigModel = require('../models/panoramaClusterConfig.model')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
 const fs = require('fs').promises
@@ -14,16 +16,26 @@ class KmlFileController {
         pageSize = 20,
         keyword = '',
         folderId = null,
-        includeHidden = false
+        includeHidden = false,
+        respectFolderVisibility = false
       } = req.query
 
-      const result = await KmlFileModel.findAll({
+      let searchParams = {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
         includeHidden: includeHidden === 'true'
-      })
+      }
+
+      // 如果需要考虑文件夹可见性，获取可见文件夹列表
+      if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
+        const FolderModel = require('../models/folder.model')
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds()
+        searchParams.visibleFolderIds = visibleFolderIds
+      }
+
+      const result = await KmlFileModel.findAll(searchParams)
 
       res.json({
         success: true,
@@ -519,6 +531,169 @@ class KmlFileController {
       res.status(500).json({
         success: false,
         message: '获取KML文件统计失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 获取KML文件样式配置
+  static async getKmlFileStyles(req, res) {
+    try {
+      const { id } = req.params
+      let styles = await KmlFileStyleModel.findByKmlFileId(parseInt(id))
+      
+      // 如果没有自定义样式，返回默认样式
+      if (!styles) {
+        styles = KmlFileStyleModel.getDefaultStyles()
+      }
+      
+      res.json({
+        success: true,
+        data: styles
+      })
+    } catch (error) {
+      Logger.error('获取KML文件样式配置失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取样式配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 更新KML文件样式配置
+  static async updateKmlFileStyles(req, res) {
+    try {
+      const { id } = req.params
+      const styleConfig = req.body
+      
+      // 验证KML文件是否存在
+      const kmlFile = await KmlFileModel.findById(parseInt(id))
+      if (!kmlFile) {
+        return res.status(404).json({
+          success: false,
+          message: 'KML文件不存在'
+        })
+      }
+      
+      // 更新或创建样式配置
+      const styles = await KmlFileStyleModel.upsert(parseInt(id), styleConfig)
+      
+      res.json({
+        success: true,
+        message: '样式配置更新成功',
+        data: styles
+      })
+    } catch (error) {
+      Logger.error('更新KML文件样式配置失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '更新样式配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 重置KML文件样式为默认
+  static async resetKmlFileStyles(req, res) {
+    try {
+      const { id } = req.params
+      
+      // 验证KML文件是否存在
+      const kmlFile = await KmlFileModel.findById(parseInt(id))
+      if (!kmlFile) {
+        return res.status(404).json({
+          success: false,
+          message: 'KML文件不存在'
+        })
+      }
+      
+      // 删除自定义样式配置
+      await KmlFileStyleModel.delete(parseInt(id))
+      
+      // 返回默认样式
+      const defaultStyles = KmlFileStyleModel.getDefaultStyles()
+      
+      res.json({
+        success: true,
+        message: '样式配置已重置为默认',
+        data: defaultStyles
+      })
+    } catch (error) {
+      Logger.error('重置KML文件样式失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '重置样式配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 批量更新KML文件样式配置
+  static async batchUpdateKmlFileStyles(req, res) {
+    try {
+      const { styleConfigs } = req.body
+      
+      if (!Array.isArray(styleConfigs) || styleConfigs.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: '请提供有效的样式配置列表'
+        })
+      }
+      
+      const results = await KmlFileStyleModel.batchUpsert(styleConfigs)
+      
+      res.json({
+        success: true,
+        message: `成功更新 ${results.length} 个KML文件的样式配置`,
+        data: results
+      })
+    } catch (error) {
+      Logger.error('批量更新KML文件样式配置失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '批量更新样式配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 获取全景图聚合配置
+  static async getPanoramaClusterConfig(req, res) {
+    try {
+      const config = await PanoramaClusterConfigModel.getConfig()
+      
+      res.json({
+        success: true,
+        data: config
+      })
+    } catch (error) {
+      Logger.error('获取全景图聚合配置失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取聚合配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 更新全景图聚合配置
+  static async updatePanoramaClusterConfig(req, res) {
+    try {
+      const config = req.body
+      
+      const updatedConfig = await PanoramaClusterConfigModel.updateConfig(config)
+      
+      res.json({
+        success: true,
+        message: '聚合配置更新成功',
+        data: updatedConfig
+      })
+    } catch (error) {
+      Logger.error('更新全景图聚合配置失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '更新聚合配置失败',
         error: error.message
       })
     }

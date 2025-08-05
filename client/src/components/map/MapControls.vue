@@ -25,6 +25,11 @@
           <el-icon><Setting /></el-icon>
           设置
         </el-button>
+
+        <el-button @click="showKmlSettings" type="success">
+          <el-icon><Tools /></el-icon>
+          KML设置
+        </el-button>
       </el-button-group>
     </div>
     
@@ -39,7 +44,7 @@
 <script setup>
 import { 
   Setting, 
-  View, Hide 
+  View, Hide, Tools 
 } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -68,7 +73,8 @@ const props = defineProps({
 const emit = defineEmits([
   'toggle-panorama-list',
   'toggle-kml-layers',
-  'show-settings'
+  'show-settings',
+  'show-kml-settings'
 ])
 
 const togglePanoramaList = () => {
@@ -81,6 +87,10 @@ const toggleKmlLayers = () => {
 
 const showSettings = () => {
   emit('show-settings')
+}
+
+const showKmlSettings = () => {
+  emit('show-kml-settings')
 }
 </script>
 

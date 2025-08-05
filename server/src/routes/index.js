@@ -54,4 +54,8 @@ router.use('/kml-files', kmlFileRoutes)
 const pointsRoutes = require('./points.routes')
 router.use('/points', pointsRoutes)
 
+// 全景图聚合配置路由
+const panoramaClusterRoutes = require('./panoramaCluster.routes')
+router.use('/panorama-cluster-config', panoramaClusterRoutes)
+
 module.exports = router

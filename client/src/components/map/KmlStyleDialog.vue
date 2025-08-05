@@ -1,0 +1,464 @@
+<template>
+  <el-dialog
+    v-model="visible"
+    title="KML样式配置"
+    width="80%"
+    :close-on-click-modal="false"
+    class="kml-style-dialog"
+  >
+    <div class="kml-style-container">
+      <!-- 左侧：KML文件列表 -->
+      <div class="kml-file-list">
+        <div class="list-header">
+          <h3>KML文件列表</h3>
+          <div class="global-cluster-control">
+            <el-switch 
+              v-model="globalClusterEnabled" 
+              active-text="启用全景图聚合"
+              @change="handleGlobalClusterChange"
+            />
+          </div>
+        </div>
+        
+        <el-scrollbar height="500px">
+          <div 
+            v-for="kmlFile in kmlFiles"
+            :key="kmlFile.id"
+            class="kml-file-item"
+            :class="{ active: selectedKmlFile?.id === kmlFile.id }"
+            @click="selectKmlFile(kmlFile)"
+          >
+            <div class="file-info">
+              <span class="file-name">{{ kmlFile.title }}</span>
+              <span class="point-count">{{ kmlFile.point_count || 0 }} 个点位</span>
+            </div>
+            <div class="file-preview">
+              <StylePreview :style-config="kmlFile.styleConfig" />
+            </div>
+          </div>
+        </el-scrollbar>
+      </div>
+
+      <!-- 右侧：样式编辑器 -->
+      <div class="style-editor-panel">
+        <el-tabs v-model="activeTab" v-if="selectedKmlFile">
+          <el-tab-pane label="点样式" name="point">
+            <PointStyleEditor 
+              v-model="currentStyles.point"
+              @change="handleStyleChange"
+            />
+          </el-tab-pane>
+          
+          <el-tab-pane label="线样式" name="line">
+            <LineStyleEditor 
+              v-model="currentStyles.line"
+              @change="handleStyleChange"
+            />
+          </el-tab-pane>
+          
+          <el-tab-pane label="面样式" name="polygon">
+            <PolygonStyleEditor 
+              v-model="currentStyles.polygon"
+              @change="handleStyleChange"
+            />
+          </el-tab-pane>
+          
+          <el-tab-pane label="聚合设置" name="cluster">
+            <ClusterStyleEditor 
+              v-model="currentStyles.cluster"
+              @change="handleStyleChange"
+            />
+          </el-tab-pane>
+        </el-tabs>
+        
+        <div v-else class="no-selection">
+          <el-empty description="请选择要配置的KML文件" />
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button @click="handleReset" type="warning">重置为默认</el-button>
+        <el-button @click="handleSave" type="primary" :loading="saving">
+          保存配置
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+</template>
+
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { kmlApi } from '@/api/kml.js'
+import PointStyleEditor from './styles/PointStyleEditor.vue'
+import LineStyleEditor from './styles/LineStyleEditor.vue'
+import PolygonStyleEditor from './styles/PolygonStyleEditor.vue'
+import ClusterStyleEditor from './styles/ClusterStyleEditor.vue'
+import StylePreview from './styles/StylePreview.vue'
+
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'styles-updated'])
+
+// 响应式数据
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
+const kmlFiles = ref([])
+const selectedKmlFile = ref(null)
+const activeTab = ref('point')
+const saving = ref(false)
+const globalClusterEnabled = ref(true)
+
+// 当前样式配置
+const currentStyles = reactive({
+  point: {},
+  line: {},
+  polygon: {},
+  cluster: {}
+})
+
+// 原始样式配置（用于取消时恢复）
+const originalStyles = ref({})
+
+// 监听对话框显示状态
+watch(visible, async (newVisible) => {
+  if (newVisible) {
+    await loadKmlFiles()
+    await loadGlobalClusterConfig()
+  }
+})
+
+// 加载KML文件列表
+const loadKmlFiles = async () => {
+  try {
+    // 使用与地图页面相同的API，确保考虑文件夹可见性
+    const response = await kmlApi.getKmlFiles({ 
+      includeHidden: false,
+      respectFolderVisibility: true 
+    })
+    kmlFiles.value = response.data.data || []
+    
+    // 为每个KML文件加载样式配置
+    for (const kmlFile of kmlFiles.value) {
+      try {
+        const styleResponse = await kmlApi.getKmlFileStyles(kmlFile.id)
+        kmlFile.styleConfig = styleResponse.data
+      } catch (error) {
+        console.warn(`加载KML文件 ${kmlFile.id} 样式失败:`, error)
+        kmlFile.styleConfig = getDefaultStyles()
+      }
+    }
+  } catch (error) {
+    console.error('加载KML文件列表失败:', error)
+    ElMessage.error('加载KML文件列表失败')
+  }
+}
+
+// 加载全景图聚合配置
+const loadGlobalClusterConfig = async () => {
+  try {
+    const response = await kmlApi.getPanoramaClusterConfig()
+    globalClusterEnabled.value = response.data.cluster_enabled
+  } catch (error) {
+    console.error('加载全景图聚合配置失败:', error)
+  }
+}
+
+// 选择KML文件
+const selectKmlFile = async (kmlFile) => {
+  selectedKmlFile.value = kmlFile
+  
+  // 加载该文件的样式配置
+  try {
+    const response = await kmlApi.getKmlFileStyles(kmlFile.id)
+    const styles = response.data
+    
+    // 分组样式配置
+    currentStyles.point = {
+      color: styles.point_color,
+      size: styles.point_size,
+      opacity: styles.point_opacity,
+      iconType: styles.point_icon_type,
+      labelSize: styles.point_label_size,
+      labelColor: styles.point_label_color
+    }
+    
+    currentStyles.line = {
+      color: styles.line_color,
+      width: styles.line_width,
+      opacity: styles.line_opacity,
+      style: styles.line_style
+    }
+    
+    currentStyles.polygon = {
+      fillColor: styles.polygon_fill_color,
+      fillOpacity: styles.polygon_fill_opacity,
+      strokeColor: styles.polygon_stroke_color,
+      strokeWidth: styles.polygon_stroke_width,
+      strokeStyle: styles.polygon_stroke_style
+    }
+    
+    currentStyles.cluster = {
+      enabled: styles.cluster_enabled,
+      radius: styles.cluster_radius,
+      minPoints: styles.cluster_min_points,
+      maxZoom: styles.cluster_max_zoom,
+      iconColor: styles.cluster_icon_color,
+      textColor: styles.cluster_text_color
+    }
+    
+    // 保存原始配置
+    originalStyles.value = JSON.parse(JSON.stringify(currentStyles))
+    
+  } catch (error) {
+    console.error('加载KML文件样式失败:', error)
+    ElMessage.error('加载样式配置失败')
+  }
+}
+
+// 处理样式变化
+const handleStyleChange = () => {
+  // 实时预览功能可以在这里实现
+  // 暂时只更新选中文件的样式配置用于预览
+  if (selectedKmlFile.value) {
+    selectedKmlFile.value.styleConfig = convertToApiFormat(currentStyles)
+  }
+}
+
+// 处理全局聚合开关变化
+const handleGlobalClusterChange = async (enabled) => {
+  try {
+    await kmlApi.updatePanoramaClusterConfig({ cluster_enabled: enabled })
+    ElMessage.success('全景图聚合设置已更新')
+  } catch (error) {
+    console.error('更新全景图聚合设置失败:', error)
+    ElMessage.error('更新聚合设置失败')
+    // 恢复原状态
+    globalClusterEnabled.value = !enabled
+  }
+}
+
+// 保存配置
+const handleSave = async () => {
+  if (!selectedKmlFile.value) {
+    ElMessage.warning('请选择要保存的KML文件')
+    return
+  }
+  
+  saving.value = true
+  
+  try {
+    const styleConfig = convertToApiFormat(currentStyles)
+    await kmlApi.updateKmlFileStyles(selectedKmlFile.value.id, styleConfig)
+    
+    ElMessage.success('样式配置保存成功')
+    emit('styles-updated')
+    
+    // 更新文件列表中的样式配置
+    const fileIndex = kmlFiles.value.findIndex(f => f.id === selectedKmlFile.value.id)
+    if (fileIndex !== -1) {
+      kmlFiles.value[fileIndex].styleConfig = styleConfig
+    }
+    
+  } catch (error) {
+    console.error('保存样式配置失败:', error)
+    ElMessage.error('保存样式配置失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+// 重置为默认
+const handleReset = async () => {
+  if (!selectedKmlFile.value) {
+    ElMessage.warning('请选择要重置的KML文件')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm('确定要重置为默认样式吗？', '确认重置', {
+      type: 'warning'
+    })
+    
+    await kmlApi.resetKmlFileStyles(selectedKmlFile.value.id)
+    
+    // 重新加载样式配置
+    await selectKmlFile(selectedKmlFile.value)
+    
+    ElMessage.success('样式已重置为默认')
+    emit('styles-updated')
+    
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('重置样式失败:', error)
+      ElMessage.error('重置样式失败')
+    }
+  }
+}
+
+// 取消
+const handleCancel = () => {
+  visible.value = false
+  
+  // 恢复原始样式配置
+  if (originalStyles.value && selectedKmlFile.value) {
+    Object.assign(currentStyles, originalStyles.value)
+  }
+}
+
+// 转换样式格式为API格式
+const convertToApiFormat = (styles) => {
+  return {
+    point_color: styles.point.color,
+    point_size: styles.point.size,
+    point_opacity: styles.point.opacity,
+    point_icon_type: styles.point.iconType,
+    point_label_size: styles.point.labelSize,
+    point_label_color: styles.point.labelColor,
+    
+    line_color: styles.line.color,
+    line_width: styles.line.width,
+    line_opacity: styles.line.opacity,
+    line_style: styles.line.style,
+    
+    polygon_fill_color: styles.polygon.fillColor,
+    polygon_fill_opacity: styles.polygon.fillOpacity,
+    polygon_stroke_color: styles.polygon.strokeColor,
+    polygon_stroke_width: styles.polygon.strokeWidth,
+    polygon_stroke_style: styles.polygon.strokeStyle,
+    
+    cluster_enabled: styles.cluster.enabled,
+    cluster_radius: styles.cluster.radius,
+    cluster_min_points: styles.cluster.minPoints,
+    cluster_max_zoom: styles.cluster.maxZoom,
+    cluster_icon_color: styles.cluster.iconColor,
+    cluster_text_color: styles.cluster.textColor
+  }
+}
+
+// 获取默认样式
+const getDefaultStyles = () => {
+  return {
+    point_color: '#ff7800',
+    point_size: 8,
+    point_opacity: 1.0,
+    point_icon_type: 'circle',
+    point_label_size: 12,
+    point_label_color: '#000000',
+    
+    line_color: '#ff7800',
+    line_width: 2,
+    line_opacity: 0.8,
+    line_style: 'solid',
+    
+    polygon_fill_color: '#ff7800',
+    polygon_fill_opacity: 0.3,
+    polygon_stroke_color: '#ff7800',
+    polygon_stroke_width: 2,
+    polygon_stroke_style: 'solid',
+    
+    cluster_enabled: true,
+    cluster_radius: 50,
+    cluster_min_points: 2,
+    cluster_max_zoom: 16,
+    cluster_icon_color: '#409EFF',
+    cluster_text_color: '#FFFFFF'
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.kml-style-dialog {
+  .kml-style-container {
+    display: flex;
+    height: 600px;
+    gap: 20px;
+  }
+  
+  .kml-file-list {
+    width: 300px;
+    border-right: 1px solid #e4e7ed;
+    padding-right: 20px;
+    
+    .list-header {
+      margin-bottom: 16px;
+      
+      h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      
+      .global-cluster-control {
+        padding: 8px 0;
+        border-bottom: 1px solid #e4e7ed;
+      }
+    }
+    
+    .kml-file-item {
+      padding: 12px;
+      border: 1px solid #e4e7ed;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        border-color: #409eff;
+        background-color: #f0f9ff;
+      }
+      
+      &.active {
+        border-color: #409eff;
+        background-color: #e6f7ff;
+      }
+      
+      .file-info {
+        .file-name {
+          display: block;
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+        
+        .point-count {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+      
+      .file-preview {
+        margin-top: 8px;
+        height: 20px;
+      }
+    }
+  }
+  
+  .style-editor-panel {
+    flex: 1;
+    
+    .no-selection {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+  }
+  
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+}
+</style>

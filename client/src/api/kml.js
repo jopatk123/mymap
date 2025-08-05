@@ -78,5 +78,36 @@ export const kmlApi = {
   // 获取KML文件统计信息
   getKmlFileStats() {
     return api.get('/kml-files/stats')
+  },
+
+  // 样式配置相关API
+  // 获取KML文件样式配置
+  getKmlFileStyles(id) {
+    return api.get(`/kml-files/${id}/styles`)
+  },
+
+  // 更新KML文件样式配置
+  updateKmlFileStyles(id, styleConfig) {
+    return api.put(`/kml-files/${id}/styles`, styleConfig)
+  },
+
+  // 重置KML文件样式为默认
+  resetKmlFileStyles(id) {
+    return api.delete(`/kml-files/${id}/styles`)
+  },
+
+  // 批量更新KML文件样式配置
+  batchUpdateKmlFileStyles(styleConfigs) {
+    return api.put('/kml-files/styles/batch', { styleConfigs })
+  },
+
+  // 获取全景图聚合配置
+  getPanoramaClusterConfig() {
+    return api.get('/panorama-cluster-config')
+  },
+
+  // 更新全景图聚合配置
+  updatePanoramaClusterConfig(config) {
+    return api.put('/panorama-cluster-config', config)
   }
 }

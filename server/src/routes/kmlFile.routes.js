@@ -72,4 +72,17 @@ router.patch('/:id/move', validateId, KmlFileController.moveKmlFileToFolder)
 // 更新KML文件可见性
 router.patch('/:id/visibility', validateId, KmlFileController.updateKmlFileVisibility)
 
+// 样式配置相关路由
+// 获取KML文件样式配置
+router.get('/:id/styles', validateId, KmlFileController.getKmlFileStyles)
+
+// 更新KML文件样式配置
+router.put('/:id/styles', validateId, KmlFileController.updateKmlFileStyles)
+
+// 重置KML文件样式为默认
+router.delete('/:id/styles', validateId, KmlFileController.resetKmlFileStyles)
+
+// 批量更新KML文件样式配置
+router.put('/styles/batch', KmlFileController.batchUpdateKmlFileStyles)
+
 module.exports = router

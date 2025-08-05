@@ -38,6 +38,7 @@
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
       @show-settings="showSettings = true"
+      @show-kml-settings="showKmlSettings = true"
     />
     
     <!-- 对话框组 -->
@@ -71,6 +72,12 @@
       @toggle-fullscreen="toggleFullscreen"
       @reset-view="resetView"
     />
+
+    <!-- KML样式设置对话框 -->
+    <KmlStyleDialog
+      v-model="showKmlSettings"
+      @styles-updated="handleKmlStylesUpdated"
+    />
   </div>
 </template>
 
@@ -86,6 +93,7 @@ import MapControls from '@/components/map/MapControls.vue'
 import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
+import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
 
 // 使用组合式函数
 const {
@@ -114,6 +122,7 @@ const {
   panoramaViewerLoading,
   autoRotating,
   kmlLayersVisible,
+  showKmlSettings,
   
   // 方法
   initializePage,
@@ -191,6 +200,23 @@ const handleFolderVisibilityChanged = async () => {
       }
     }
   }, 600)
+}
+
+// 处理KML样式更新
+const handleKmlStylesUpdated = async () => {
+  console.log('KML样式已更新，重新加载地图数据')
+  await loadInitialData()
+  
+  // 重新加载KML图层
+  setTimeout(() => {
+    if (mapRef.value && kmlLayersVisible.value) {
+      console.log('样式更新后重新加载KML图层')
+      mapRef.value.clearKmlLayers()
+      if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+        mapRef.value.addKmlLayers(window.allKmlFiles)
+      }
+    }
+  }, 500)
 }
 
 // 清理事件监听器
