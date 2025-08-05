@@ -49,10 +49,10 @@ router.post('/validate', handleKmlUpload, KmlFileController.validateKmlFile)
 router.delete('/', validateBatchIds, KmlFileController.batchDeleteKmlFiles)
 
 // 批量更新KML文件可见性
-router.patch('/batch/visibility', validateBatchIds, KmlFileController.batchUpdateKmlFileVisibility)
+router.put('/batch/visibility', validateBatchIds, KmlFileController.batchUpdateKmlFileVisibility)
 
 // 批量移动KML文件到文件夹
-router.patch('/batch/move', KmlFileController.batchMoveKmlFilesToFolder)
+router.put('/batch/move', KmlFileController.batchMoveKmlFilesToFolder)
 
 // 根据ID获取KML文件详情
 router.get('/:id', validateId, KmlFileController.getKmlFileById)

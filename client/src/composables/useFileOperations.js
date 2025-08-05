@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { deletePanorama } from '@/api/panorama.js'
+import { deletePanorama, batchMovePanoramasToFolder } from '@/api/panorama.js'
 import { videoApi } from '@/api/video.js'
 import { kmlApi } from '@/api/kml.js'
 
@@ -93,17 +93,54 @@ export function useFileOperations() {
 
   // 移动确认
   const handleMoveConfirm = async (onSuccess) => {
+    if (!movingFiles.value || movingFiles.value.length === 0) {
+      ElMessage.warning('没有选择要移动的文件')
+      return
+    }
+    
     try {
       moving.value = true
       
-      // 根据文件类型分组处理移动
-      // 这里需要根据实际的API实现
+      // 按文件类型分组
+      const panoramas = movingFiles.value.filter(row => row.fileType === 'panorama').map(row => row.id)
+      const videos = movingFiles.value.filter(row => row.fileType === 'video').map(row => row.id)
+      const kmls = movingFiles.value.filter(row => row.fileType === 'kml').map(row => row.id)
       
-      ElMessage.success('移动成功')
+      // 如果moveToFolderId是0，则表示根目录，应设为null
+      const targetFolderId = moveToFolderId.value === 0 ? null : moveToFolderId.value
+      
+      const movePromises = []
+      
+      if (panoramas.length > 0) {
+        movePromises.push(batchMovePanoramasToFolder(panoramas, targetFolderId))
+      }
+      if (videos.length > 0) {
+        movePromises.push(videoApi.batchMoveVideoPointsToFolder(videos, targetFolderId))
+      }
+      if (kmls.length > 0) {
+        movePromises.push(kmlApi.batchMoveKmlFilesToFolder(kmls, targetFolderId))
+      }
+      
+      if (movePromises.length === 0) {
+        ElMessage.info('没有需要移动的文件')
+        return
+      }
+      
+      const results = await Promise.allSettled(movePromises)
+      const failedMoves = results.filter(result => result.status === 'rejected')
+      
+      if (failedMoves.length > 0) {
+        ElMessage.error('部分文件移动失败')
+        console.error('移动失败详情:', failedMoves)
+      } else {
+        ElMessage.success('移动成功')
+      }
+      
       dialogStates.showMoveDialog = false
       moveToFolderId.value = null
       movingFiles.value = []
       onSuccess?.()
+      
     } catch (error) {
       ElMessage.error('移动失败: ' + error.message)
     } finally {
