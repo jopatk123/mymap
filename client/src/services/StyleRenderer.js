@@ -1,3 +1,5 @@
+import { defaultStyles } from '@/constants/map.js';
+
 /**
  * 样式渲染引擎
  * 用于将样式配置应用到地图元素上
@@ -21,9 +23,9 @@ class StyleRenderer {
     }
 
     const style = {
-      color: styleConfig.line_color || '#ff7800',
-      weight: styleConfig.line_width || 2,
-      opacity: styleConfig.line_opacity || 0.8,
+      color: styleConfig.line_color || defaultStyles.line_color,
+      weight: styleConfig.line_width || defaultStyles.line_width,
+      opacity: styleConfig.line_opacity || defaultStyles.line_opacity,
       lineCap: 'round',
       lineJoin: 'round'
     }
@@ -63,10 +65,10 @@ class StyleRenderer {
     }
 
     const style = {
-      fillColor: styleConfig.polygon_fill_color || '#ff7800',
-      fillOpacity: styleConfig.polygon_fill_opacity || 0.3,
-      color: styleConfig.polygon_stroke_color || '#ff7800',
-      weight: styleConfig.polygon_stroke_width || 2,
+      fillColor: styleConfig.polygon_fill_color || defaultStyles.polygon_fill_color,
+      fillOpacity: styleConfig.polygon_fill_opacity || defaultStyles.polygon_fill_opacity,
+      color: styleConfig.polygon_stroke_color || defaultStyles.polygon_stroke_color,
+      weight: styleConfig.polygon_stroke_width || defaultStyles.polygon_stroke_width,
       opacity: 1
     }
 
