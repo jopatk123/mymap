@@ -145,9 +145,10 @@ const loadKmlFiles = async () => {
     // 使用与地图页面相同的API，确保考虑文件夹可见性
     const response = await kmlApi.getKmlFiles({ 
       includeHidden: false,
-      respectFolderVisibility: true 
+      respectFolderVisibility: true,
+      _t: new Date().getTime() // 添加时间戳以防止缓存
     })
-    kmlFiles.value = response.data.data || []
+    kmlFiles.value = response.data || []
     
     // 为每个KML文件加载样式配置
     for (const kmlFile of kmlFiles.value) {

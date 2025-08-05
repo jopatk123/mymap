@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 import { pointsApi } from '@/api/points.js'
+import { kmlApi } from '@/api/kml.js'
 
 export function useMapPage() {
   // Stores
@@ -95,13 +96,19 @@ export function useMapPage() {
           pageSize: 1000,
           respectFolderVisibility: true // 考虑文件夹可见性
         }),
-        pointsApi.getVisibleKmlFiles({
-          respectFolderVisibility: true // 考虑文件夹可见性
+        kmlApi.getKmlFiles({
+          respectFolderVisibility: true, // 考虑文件夹可见性
+          _t: new Date().getTime() // 添加时间戳以防止缓存
         })
       ])
-
+      
+      // 注意：这里的响应结构是不同的
+      // pointsApi.getAllPoints -> response.data 直接是点位数组
+      // kmlApi.getKmlFiles -> response.data 是一个包含 data 和 pagination 的对象
+      
       // 只保留有坐标的点位（全景图和视频点位）
-      const filteredPoints = pointsResponse.data.filter(point =>
+      const allPoints = pointsResponse.data || []
+      const filteredPoints = allPoints.filter(point =>
         point.type !== 'kml' && point.lat != null && point.lng != null
       )
 
