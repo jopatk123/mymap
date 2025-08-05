@@ -69,10 +69,15 @@ export function useMapPage() {
         panoramaStore.fetchPanoramas(),
         loadAllPoints()
       ])
-      // 数据加载完成后自动适应所有标记点
+      // 数据加载完成后自动适应所有标记点并初始化KML图层
       setTimeout(() => {
         if (mapRef.value) {
           mapRef.value.fitBounds()
+          // 如果KML图层应该显示，则主动加载KML图层
+          if (kmlLayersVisible.value && window.allKmlFiles && window.allKmlFiles.length > 0) {
+            console.log('初始化时加载KML图层，文件数量:', window.allKmlFiles.length)
+            mapRef.value.addKmlLayers(window.allKmlFiles)
+          }
         }
       }, 500)
     } catch (error) {
@@ -128,17 +133,25 @@ export function useMapPage() {
     // 同步到全局变量
     window.kmlLayersVisible = kmlLayersVisible.value
 
+    console.log('切换KML图层显示状态:', kmlLayersVisible.value)
+
     // 通知地图组件更新KML图层显示状态
     if (mapRef.value) {
       if (kmlLayersVisible.value) {
         // 显示KML图层
+        console.log('准备显示KML图层，文件数量:', window.allKmlFiles?.length || 0)
         if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+          // 先清除现有图层，避免重复
+          mapRef.value.clearKmlLayers()
           mapRef.value.addKmlLayers(window.allKmlFiles)
         }
       } else {
         // 隐藏KML图层
+        console.log('隐藏KML图层')
         mapRef.value.clearKmlLayers()
       }
+    } else {
+      console.warn('地图组件引用不存在，无法切换KML图层')
     }
   }
 

@@ -180,6 +180,17 @@ onMounted(async () => {
 const handleFolderVisibilityChanged = async () => {
   console.log('文件夹可见性发生变化，重新加载地图数据')
   await loadInitialData()
+  
+  // 重新加载数据后，如果KML图层应该显示，则重新加载KML图层
+  setTimeout(() => {
+    if (mapRef.value && kmlLayersVisible.value) {
+      console.log('文件夹可见性变化后重新加载KML图层')
+      mapRef.value.clearKmlLayers()
+      if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+        mapRef.value.addKmlLayers(window.allKmlFiles)
+      }
+    }
+  }, 600)
 }
 
 // 清理事件监听器

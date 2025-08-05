@@ -117,10 +117,8 @@ watch(() => props.panoramas, (newPanoramas) => {
     addPointMarkers(window.allPoints)
   }
   
-  // 显示KML文件图层（只有在kmlLayersVisible为true时才显示）
-  if (window.allKmlFiles && window.allKmlFiles.length > 0 && window.kmlLayersVisible !== false) {
-    addKmlLayers(window.allKmlFiles)
-  }
+  // 注意：KML图层的初始化现在由useMapPage.js中的loadInitialData处理
+  // 这里不再自动加载KML图层，避免重复加载
 }, { immediate: true })
 
 // 监听来自 store 的地图类型变化
