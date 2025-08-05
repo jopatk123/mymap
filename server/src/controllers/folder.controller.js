@@ -298,7 +298,8 @@ class FolderController {
           const panoramasWithType = panoramaResult.data.map(item => ({
             ...item,
             fileType: 'panorama',
-            displayType: '全景图'
+            displayType: '全景图',
+            type: 'panorama' // 添加type字段以保持一致性
           }))
           results = results.concat(panoramasWithType)
           totalCount += panoramaResult.total || 0
@@ -317,7 +318,8 @@ class FolderController {
           const videosWithType = videoResult.data.map(item => ({
             ...item,
             fileType: 'video',
-            displayType: '视频点位'
+            displayType: '视频点位',
+            type: 'video' // 添加type字段以保持一致性
           }))
           results = results.concat(videosWithType)
           totalCount += videoResult.total || 0
@@ -335,7 +337,15 @@ class FolderController {
           const kmlsWithType = kmlResult.data.map(item => ({
             ...item,
             fileType: 'kml',
-            displayType: 'KML文件'
+            displayType: 'KML文件',
+            type: 'kml', // 添加type字段以保持一致性
+            // 为KML文件添加一些兼容字段
+            latitude: null,
+            longitude: null,
+            lat: null,
+            lng: null,
+            image_url: item.file_url,
+            url: item.file_url
           }))
           results = results.concat(kmlsWithType)
           totalCount += kmlResult.total || 0

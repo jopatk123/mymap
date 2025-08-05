@@ -139,77 +139,190 @@ export function useMap(containerId) {
   
   // 添加KML图层
   const addKmlLayer = async (kmlFile) => {
-    if (!map.value || !kmlFile.file_url) return null
+    if (!map.value || !kmlFile.file_url) {
+      console.warn('无法添加KML图层：地图未初始化或文件URL为空', { map: !!map.value, fileUrl: kmlFile.file_url })
+      return null
+    }
     
     try {
+      console.log('开始加载KML文件:', kmlFile.title, kmlFile.file_url)
+      
       // 使用fetch获取KML文件内容
       const response = await fetch(kmlFile.file_url)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       const kmlText = await response.text()
+      console.log('KML文件内容长度:', kmlText.length)
       
       // 解析KML并添加到地图
       const parser = new DOMParser()
       const kmlDoc = parser.parseFromString(kmlText, 'text/xml')
       
+      // 检查解析错误
+      const parseError = kmlDoc.getElementsByTagName('parsererror')
+      if (parseError.length > 0) {
+        throw new Error('KML文件解析失败: ' + parseError[0].textContent)
+      }
+      
       // 创建KML图层
       const kmlLayer = L.geoJSON(null, {
-        style: {
-          color: '#ff7800',
-          weight: 2,
-          opacity: 0.8,
-          fillOpacity: 0.3
+        style: (feature) => ({
+          color: feature.properties.stroke || '#ff7800',
+          weight: feature.properties['stroke-width'] || 2,
+          opacity: feature.properties['stroke-opacity'] || 0.8,
+          fillColor: feature.properties.fill || '#ff7800',
+          fillOpacity: feature.properties['fill-opacity'] || 0.3
+        }),
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, {
+            radius: 6,
+            fillColor: feature.properties.fill || '#ff7800',
+            color: feature.properties.stroke || '#ff7800',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+          })
         },
         onEachFeature: (feature, layer) => {
-          if (feature.properties && feature.properties.name) {
-            layer.bindPopup(`
-              <div>
-                <h4>${feature.properties.name}</h4>
-                <p>来源: ${kmlFile.title}</p>
-                ${feature.properties.description ? `<p>${feature.properties.description}</p>` : ''}
+          if (feature.properties && (feature.properties.name || feature.properties.description)) {
+            const popupContent = `
+              <div style="max-width: 200px;">
+                ${feature.properties.name ? `<h4 style="margin: 0 0 8px 0;">${feature.properties.name}</h4>` : ''}
+                <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">来源: ${kmlFile.title}</p>
+                ${feature.properties.description ? `<div style="font-size: 12px;">${feature.properties.description}</div>` : ''}
               </div>
-            `)
+            `
+            layer.bindPopup(popupContent)
           }
         }
       })
       
+      let featureCount = 0
+      
       // 解析KML中的几何要素
       const placemarks = kmlDoc.getElementsByTagName('Placemark')
+      console.log('找到Placemark数量:', placemarks.length)
+      
       for (let i = 0; i < placemarks.length; i++) {
         const placemark = placemarks[i]
-        const name = placemark.getElementsByTagName('name')[0]?.textContent || ''
+        // 尝试获取name标签，如果没有则尝试n标签（某些KML文件使用n标签）
+        let name = placemark.getElementsByTagName('name')[0]?.textContent
+        if (!name) {
+          name = placemark.getElementsByTagName('n')[0]?.textContent
+        }
+        name = name || `地标${i + 1}`
+        
         const description = placemark.getElementsByTagName('description')[0]?.textContent || ''
         
-        // 解析坐标
-        const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent
-        if (coordinates) {
-          const coords = coordinates.trim().split(/\s+/)
-          const geoJsonFeatures = []
-          
-          coords.forEach(coord => {
-            const [lng, lat, alt] = coord.split(',').map(Number)
+        // 解析点要素
+        const points = placemark.getElementsByTagName('Point')
+        for (let j = 0; j < points.length; j++) {
+          const coordinates = points[j].getElementsByTagName('coordinates')[0]?.textContent
+          if (coordinates) {
+            const coords = coordinates.trim().split(',')
+            const lng = parseFloat(coords[0])
+            const lat = parseFloat(coords[1])
+            
             if (!isNaN(lat) && !isNaN(lng)) {
-              geoJsonFeatures.push({
+              const feature = {
                 type: 'Feature',
                 properties: { name, description },
                 geometry: {
                   type: 'Point',
                   coordinates: [lng, lat]
                 }
-              })
+              }
+              kmlLayer.addData(feature)
+              featureCount++
             }
-          })
-          
-          geoJsonFeatures.forEach(feature => {
-            kmlLayer.addData(feature)
-          })
+          }
+        }
+        
+        // 解析线要素
+        const lineStrings = placemark.getElementsByTagName('LineString')
+        for (let j = 0; j < lineStrings.length; j++) {
+          const coordinates = lineStrings[j].getElementsByTagName('coordinates')[0]?.textContent
+          if (coordinates) {
+            const coordPairs = coordinates.trim().split(/\s+/)
+            const lineCoords = []
+            
+            coordPairs.forEach(pair => {
+              const coords = pair.split(',')
+              const lng = parseFloat(coords[0])
+              const lat = parseFloat(coords[1])
+              if (!isNaN(lat) && !isNaN(lng)) {
+                lineCoords.push([lng, lat])
+              }
+            })
+            
+            if (lineCoords.length > 1) {
+              const feature = {
+                type: 'Feature',
+                properties: { name, description },
+                geometry: {
+                  type: 'LineString',
+                  coordinates: lineCoords
+                }
+              }
+              kmlLayer.addData(feature)
+              featureCount++
+            }
+          }
+        }
+        
+        // 解析面要素
+        const polygons = placemark.getElementsByTagName('Polygon')
+        for (let j = 0; j < polygons.length; j++) {
+          const outerBoundary = polygons[j].getElementsByTagName('outerBoundaryIs')[0]
+          if (outerBoundary) {
+            const coordinates = outerBoundary.getElementsByTagName('coordinates')[0]?.textContent
+            if (coordinates) {
+              const coordPairs = coordinates.trim().split(/\s+/)
+              const polygonCoords = []
+              
+              coordPairs.forEach(pair => {
+                const coords = pair.split(',')
+                const lng = parseFloat(coords[0])
+                const lat = parseFloat(coords[1])
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  polygonCoords.push([lng, lat])
+                }
+              })
+              
+              if (polygonCoords.length > 2) {
+                const feature = {
+                  type: 'Feature',
+                  properties: { name, description },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: [polygonCoords]
+                  }
+                }
+                kmlLayer.addData(feature)
+                featureCount++
+              }
+            }
+          }
         }
       }
       
-      kmlLayer.addTo(map.value)
-      kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
+      console.log(`KML文件 "${kmlFile.title}" 解析完成，添加了 ${featureCount} 个要素`)
       
-      return kmlLayer
+      if (featureCount > 0) {
+        kmlLayer.addTo(map.value)
+        kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
+        console.log('KML图层已添加到地图')
+        return kmlLayer
+      } else {
+        console.warn('KML文件中没有找到有效的几何要素')
+        return null
+      }
+      
     } catch (error) {
       console.error('加载KML文件失败:', error)
+      console.error('KML文件信息:', { title: kmlFile.title, url: kmlFile.file_url })
       return null
     }
   }

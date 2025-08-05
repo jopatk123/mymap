@@ -26,7 +26,7 @@ export function useFileManagement() {
     try {
       console.log('开始加载文件列表...')
       loading.value = true
-      const folderId = selectedFolder.value?.id || null
+      const folderId = selectedFolder.value?.id || 0
       
       console.log('请求参数:', {
         folderId,
@@ -35,16 +35,16 @@ export function useFileManagement() {
         pageSize: pagination.pageSize
       })
       
-      // 使用统一的点位API获取所有类型的点位
-      console.log('🔥 调用统一点位API: /api/points')
-      const response = await pointsApi.getAllPoints({
-        folderId: folderId === 0 ? null : folderId,
+      // 使用文件夹API获取所有类型的文件（包括KML文件）
+      console.log('🔥 调用文件夹内容API: /api/folders/{id}/contents')
+      const response = await folderApi.getFolderContents(folderId, {
         keyword: searchForm.keyword,
         includeHidden: searchForm.includeHidden,
+        fileType: searchForm.fileType,
         page: pagination.page,
         pageSize: pagination.pageSize
       })
-      console.log('🔥 统一点位API响应:', response)
+      console.log('🔥 文件夹内容API响应:', response)
       
       console.log('API响应:', response)
       console.log('文件列表数据:', response.data)
@@ -52,11 +52,11 @@ export function useFileManagement() {
       // 转换数据格式以适配现有组件
       fileList.value = response.data.map(item => ({
         ...item,
-        fileType: item.type, // 'panorama', 'video', or 'kml'
-        imageUrl: item.url,
-        thumbnailUrl: item.thumbnailUrl,
-        latitude: item.lat,
-        longitude: item.lng,
+        fileType: item.fileType || item.type, // 'panorama', 'video', or 'kml'
+        imageUrl: item.image_url || item.url,
+        thumbnailUrl: item.thumbnail_url,
+        latitude: item.latitude || item.lat,
+        longitude: item.longitude || item.lng,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
         folderId: item.folder_id,
