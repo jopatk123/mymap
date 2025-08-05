@@ -1,9 +1,10 @@
 const PanoramaModel = require('../models/panorama.model')
 const VideoPointModel = require('../models/videoPoint.model')
+const KmlFileModel = require('../models/kmlFile.model')
 const Logger = require('../utils/logger')
 
 class PointsController {
-  // 获取所有点位（全景图 + 视频点位）
+  // 获取所有点位（全景图 + 视频点位 + KML文件）
   static async getAllPoints(req, res) {
     try {
       const {
@@ -14,8 +15,8 @@ class PointsController {
         includeHidden = false
       } = req.query
 
-      // 并行获取全景图和视频点位
-      const [panoramaResult, videoResult] = await Promise.all([
+      // 并行获取全景图、视频点位和KML文件
+      const [panoramaResult, videoResult, kmlResult] = await Promise.all([
         PanoramaModel.findAll({
           page: 1,
           pageSize: 1000, // 获取所有数据，后续统一分页
@@ -24,6 +25,13 @@ class PointsController {
           includeHidden: includeHidden === 'true'
         }),
         VideoPointModel.findAll({
+          page: 1,
+          pageSize: 1000, // 获取所有数据，后续统一分页
+          keyword,
+          folderId: folderId ? parseInt(folderId) : null,
+          includeHidden: includeHidden === 'true'
+        }),
+        KmlFileModel.findAll({
           page: 1,
           pageSize: 1000, // 获取所有数据，后续统一分页
           keyword,
@@ -55,9 +63,18 @@ class PointsController {
         videoUrl: item.video_url, // 添加 videoUrl 字段供前端识别
         thumbnailUrl: item.thumbnail_url
       }))
+      
+      const kmls = kmlResult.data.map(item => ({
+        ...item,
+        type: 'kml',
+        // KML文件本身没有坐标，但为了列表统一性可以设为null
+        lat: null,
+        lng: null,
+        url: item.file_path,
+      }))
 
       // 合并并排序
-      const allPoints = [...panoramas, ...videos].sort((a, b) => 
+      const allPoints = [...panoramas, ...videos, ...kmls].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       )
 
