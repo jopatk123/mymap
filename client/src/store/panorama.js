@@ -222,7 +222,9 @@ export const usePanoramaStore = defineStore('panorama', {
           ...params
         })
         
-        this.setPanoramas(response.data, params.append)
+        // 过滤掉KML文件，只保留有坐标的点位
+        const filteredData = response.data.filter(point => point.type !== 'kml')
+        this.setPanoramas(filteredData, params.append)
         this.setPagination(response.pagination)
         
         return response
