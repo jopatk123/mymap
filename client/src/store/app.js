@@ -12,26 +12,7 @@ export const useAppStore = defineStore('app', {
     panoramaListVisible: false, // 默认隐藏
     // 地图设置
     mapSettings: {
-      defaultCenter: [39.9042, 116.4074], // 北京天安门
-      defaultZoom: 13,
-      mapType: 'normal', // normal, satellite
-      showControls: true,
-      enableGeolocation: true
-    },
-    // 全景图设置
-    panoramaSettings: {
-      autoRotate: true,
-      autoRotateSpeed: -2,
-      showCompass: true,
-      showZoomControls: true,
-      showFullscreenControl: true,
-      defaultHfov: 75
-    },
-    // 用户偏好设置
-    userPreferences: {
-      language: 'zh-CN',
-      coordinateFormat: 'decimal', // decimal, dms
-      distanceUnit: 'metric' // metric, imperial
+      mapType: 'normal' // normal, satellite
     },
     // 应用状态
     isOnline: navigator.onLine,
@@ -55,14 +36,6 @@ export const useAppStore = defineStore('app', {
     mapConfig: (state) => {
       return {
         ...state.mapSettings,
-        isMobile: state.isMobile
-      }
-    },
-    
-    // 获取完整的全景图配置
-    panoramaConfig: (state) => {
-      return {
-        ...state.panoramaSettings,
         isMobile: state.isMobile
       }
     }
@@ -108,18 +81,6 @@ export const useAppStore = defineStore('app', {
     // 更新地图设置
     updateMapSettings(settings) {
       this.mapSettings = { ...this.mapSettings, ...settings }
-      this.saveToLocalStorage()
-    },
-    
-    // 更新全景图设置
-    updatePanoramaSettings(settings) {
-      this.panoramaSettings = { ...this.panoramaSettings, ...settings }
-      this.saveToLocalStorage()
-    },
-    
-    // 更新用户偏好
-    updateUserPreferences(preferences) {
-      this.userPreferences = { ...this.userPreferences, ...preferences }
       this.saveToLocalStorage()
     },
     
@@ -191,9 +152,7 @@ export const useAppStore = defineStore('app', {
         theme: this.theme,
         sidebarCollapsed: this.sidebarCollapsed,
         panoramaListVisible: this.panoramaListVisible,
-        mapSettings: this.mapSettings,
-        panoramaSettings: this.panoramaSettings,
-        userPreferences: this.userPreferences
+        mapSettings: this.mapSettings
       }
       
       try {
@@ -214,41 +173,10 @@ export const useAppStore = defineStore('app', {
           this.sidebarCollapsed = parsed.sidebarCollapsed ?? this.sidebarCollapsed
           this.panoramaListVisible = parsed.panoramaListVisible ?? this.panoramaListVisible
           this.mapSettings = { ...this.mapSettings, ...parsed.mapSettings }
-          this.panoramaSettings = { ...this.panoramaSettings, ...parsed.panoramaSettings }
-          this.userPreferences = { ...this.userPreferences, ...parsed.userPreferences }
         }
       } catch (error) {
         console.warn('无法从本地存储加载设置:', error)
       }
-    },
-    
-    // 重置所有设置
-    resetSettings() {
-      this.theme = 'light'
-      this.sidebarCollapsed = false
-      this.panoramaListVisible = false
-      this.mapSettings = {
-        defaultCenter: [39.9042, 116.4074],
-        defaultZoom: 13,
-        mapType: 'normal',
-        showControls: true,
-        enableGeolocation: true
-      }
-      this.panoramaSettings = {
-        autoRotate: true,
-        autoRotateSpeed: -2,
-        showCompass: true,
-        showZoomControls: true,
-        showFullscreenControl: true,
-        defaultHfov: 75
-      }
-      this.userPreferences = {
-        language: 'zh-CN',
-        coordinateFormat: 'decimal',
-        distanceUnit: 'metric'
-      }
-      
-      this.saveToLocalStorage()
     }
   }
 })
