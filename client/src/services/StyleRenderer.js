@@ -14,46 +14,62 @@ class StyleRenderer {
    * @returns {Object} Leaflet样式对象
    */
   renderPointStyle(point, styleConfig) {
-    const cacheKey = `point_${JSON.stringify(styleConfig)}`
-    
+    const cacheKey = `point_${point.properties.name}_${JSON.stringify(styleConfig)}`;
     if (this.styleCache.has(cacheKey)) {
-      return this.styleCache.get(cacheKey)
+      return this.styleCache.get(cacheKey);
     }
 
-    const style = {
-      color: styleConfig.point_color || '#ff7800',
-      fillColor: styleConfig.point_color || '#ff7800',
-      fillOpacity: styleConfig.point_opacity || 1.0,
-      weight: 2,
-      opacity: styleConfig.point_opacity || 1.0,
-      radius: styleConfig.point_size || 8
+    const showLabel = styleConfig.point_label_size && styleConfig.point_label_size > 0;
+
+    // 如果不显示标签，使用简单的圆形标记以提高性能
+    if (!showLabel) {
+      const simpleStyle = {
+        renderer: L.canvas(), // 强制使用Canvas渲染器
+        color: styleConfig.point_color || '#ff7800',
+        fillColor: styleConfig.point_color || '#ff7800',
+        fillOpacity: styleConfig.point_opacity || 1.0,
+        weight: 1,
+        radius: styleConfig.point_size || 8,
+      };
+      this.styleCache.set(cacheKey, simpleStyle);
+      return simpleStyle;
     }
 
-    // 根据图标类型调整样式
-    switch (styleConfig.point_icon_type) {
-      case 'circle':
-        style.radius = styleConfig.point_size || 8
-        break
-      case 'square':
-        style.radius = styleConfig.point_size || 8
-        style.className = 'square-marker'
-        break
-      case 'triangle':
-        style.radius = styleConfig.point_size || 8
-        style.className = 'triangle-marker'
-        break
-      case 'diamond':
-        style.radius = styleConfig.point_size || 8
-        style.className = 'diamond-marker'
-        break
-      case 'marker':
-        style.radius = styleConfig.point_size || 8
-        style.className = 'marker-style'
-        break
-    }
+    // 如果显示标签，则创建自定义的DivIcon
+    const pointSize = styleConfig.point_size || 8;
+    const labelSize = styleConfig.point_label_size || 12;
+    const pointColor = styleConfig.point_color || '#ff7800';
+    const labelColor = styleConfig.point_label_color || '#000000';
+    const pointOpacity = styleConfig.point_opacity || 1.0;
 
-    this.styleCache.set(cacheKey, style)
-    return style
+    const iconHtml = `
+      <div class="kml-point-marker-container">
+        <div class="kml-point-marker" style="
+          width: ${pointSize * 2}px;
+          height: ${pointSize * 2}px;
+          background-color: ${pointColor};
+          opacity: ${pointOpacity};
+          border-radius: 50%;
+        "></div>
+        <div class="kml-point-label" style="
+          font-size: ${labelSize}px;
+          color: ${labelColor};
+          transform: translate(-50%, ${pointSize}px);
+        ">
+          ${point.name}
+        </div>
+      </div>
+    `;
+
+    const icon = L.divIcon({
+      html: iconHtml,
+      className: 'kml-point-icon',
+      iconSize: [pointSize * 2, pointSize * 2 + labelSize + 5],
+      iconAnchor: [pointSize, pointSize],
+    });
+    
+    this.styleCache.set(cacheKey, { icon });
+    return { icon };
   }
 
   /**
@@ -204,43 +220,43 @@ class StyleRenderer {
    * @returns {string} CSS样式字符串
    */
   generateCustomCSS(styleConfig) {
+    // Base styles for custom point markers with labels
     return `
-      .square-marker {
-        border-radius: 0 !important;
+      .kml-point-icon {
+        background: transparent !important;
+        border: none !important;
       }
-      
-      .triangle-marker {
-        clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        border-radius: 0 !important;
+      .kml-point-marker-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
       }
-      
-      .diamond-marker {
-        transform: rotate(45deg);
-        border-radius: 0 !important;
+      .kml-point-marker {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
       }
-      
-      .marker-style {
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
+      .kml-point-label {
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+        margin-top: 2px;
+        padding: 2px 5px;
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        white-space: nowrap;
+        font-weight: 500;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
       }
-      
       .cluster-marker-container {
         background: transparent !important;
         border: none !important;
       }
-      
-      .kml-point-label {
-        font-size: ${styleConfig.point_label_size || 12}px;
-        color: ${styleConfig.point_label_color || '#000000'};
-        font-weight: 500;
-        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
-        padding: 2px 4px;
-        border-radius: 3px;
-        background-color: rgba(255,255,255,0.8);
-        border: 1px solid rgba(0,0,0,0.1);
-        white-space: nowrap;
-      }
-    `
+    `;
   }
 
   /**

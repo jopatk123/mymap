@@ -1,6 +1,10 @@
 import { ref, onUnmounted } from 'vue'
 import L from 'leaflet'
 import { createAMapTileLayer, createPointMarker } from '@/utils/map-utils.js'
+import StyleRenderer from '@/services/StyleRenderer.js'
+
+// 创建一个样式渲染器实例
+const styleRenderer = new StyleRenderer()
 
 // 默认样式
 const defaultStyles = {
@@ -202,87 +206,19 @@ export function useMap(containerId) {
 
       // 创建KML图层
       const kmlLayer = L.geoJSON(null, {
-                style: (feature) => {
-          // 对于线和面，应用样式
-          const isLine = feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString'
-          const isPolygon = feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
-          
-          if (isLine) {
-            return {
-              color: effectiveStyle.line_color,
-              weight: effectiveStyle.line_width,
-              opacity: effectiveStyle.line_opacity,
-              dashArray: getDashArray(effectiveStyle.line_style)
-            }
-          }
-          
-          if (isPolygon) {
-            return {
-              color: effectiveStyle.polygon_stroke_color,
-              weight: effectiveStyle.polygon_stroke_width,
-              opacity: 1, // 边框通常不透明
-              fillColor: effectiveStyle.polygon_fill_color,
-              fillOpacity: effectiveStyle.polygon_fill_opacity,
-              dashArray: getDashArray(effectiveStyle.polygon_stroke_style)
-            }
-          }
-          
-          // 默认样式
-          return {
-            color: '#ff7800',
-            weight: 2,
-            opacity: 0.8
-          }
+        style: (feature) => {
+          return styleRenderer.renderPolygonStyle(feature, effectiveStyle);
         },
-                pointToLayer: (feature, latlng) => {
-          const pointSize = effectiveStyle.point_size || 8;
-          const pointColor = effectiveStyle.point_color || '#ff7800';
-          const pointOpacity = effectiveStyle.point_opacity ?? 1.0;
+        pointToLayer: (feature, latlng) => {
+          const style = styleRenderer.renderPointStyle(feature, effectiveStyle);
           
-          let svgHtml = '';
-          const svgSize = effectiveStyle.point_icon_type === 'marker' ? `width="${pointSize}" height="${pointSize * 1.2}"` : `width="${pointSize}" height="${pointSize}"`;
-          const svgAttrs = `${svgSize} style="opacity: ${pointOpacity};"`;
-
-          switch (effectiveStyle.point_icon_type) {
-            case 'square':
-              svgHtml = `<svg ${svgAttrs}><rect x="0" y="0" width="${pointSize}" height="${pointSize}" fill="${pointColor}" /></svg>`;
-              break;
-            case 'triangle':
-              svgHtml = `<svg ${svgAttrs}><polygon points="${pointSize/2},0 ${pointSize},${pointSize} 0,${pointSize}" fill="${pointColor}" /></svg>`;
-              break;
-            case 'diamond':
-              svgHtml = `<svg ${svgAttrs}><rect x="${pointSize * 0.15}" y="${pointSize * 0.15}" width="${pointSize * 0.7}" height="${pointSize * 0.7}" fill="${pointColor}" transform="rotate(45 ${pointSize/2} ${pointSize/2})"/></svg>`;
-              break;
-            case 'marker':
-               svgHtml = `<svg ${svgAttrs} viewBox="0 0 24 29"><path fill="${pointColor}" d="M12 0C7.2 0 3.5 3.7 3.5 8.5C3.5 14.2 12 29 12 29S20.5 14.2 20.5 8.5C20.5 3.7 16.8 0 12 0Z"/></svg>`;
-              break;
-            case 'circle':
-            default:
-              svgHtml = `<svg ${svgAttrs}><circle cx="${pointSize/2}" cy="${pointSize/2}" r="${pointSize/2}" fill="${pointColor}" /></svg>`;
-              break;
+          // 如果返回的是icon，说明是带标签的自定义图标
+          if (style.icon) {
+            return L.marker(latlng, { icon: style.icon });
           }
-
-          const marker = L.marker(latlng, {
-            icon: L.divIcon({
-              className: 'custom-kml-marker-container',
-              html: svgHtml,
-              iconSize: [pointSize, effectiveStyle.point_icon_type === 'marker' ? pointSize * 1.2 : pointSize],
-              iconAnchor: [pointSize / 2, effectiveStyle.point_icon_type === 'marker' ? pointSize * 1.2 : pointSize / 2],
-            }),
-          });
           
-          // 为标签创建唯一的类名，并通过动态style标签应用样式
-          if (feature.properties.name && effectiveStyle.point_label_size > 0) {
-            const uniqueLabelClass = `kml-label-${kmlFile.id}`;
-            marker.bindTooltip(feature.properties.name, {
-              permanent: true,
-              direction: 'bottom',
-              offset: [0, pointSize / 2],
-              className: `kml-label ${uniqueLabelClass}`,
-            });
-          }
-
-          return marker
+          // 否则，是简单的圆形标记
+          return L.circleMarker(latlng, style);
         },
         onEachFeature: (feature, layer) => {
           if (feature.properties && (feature.properties.name || feature.properties.description)) {
@@ -412,30 +348,6 @@ export function useMap(containerId) {
             if (featureCount > 0) {
         kmlLayer.addTo(map.value)
         kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
-
-                // 动态创建并注入标签样式
-        const styleId = `kml-style-${kmlFile.id}`
-        let styleElement = document.getElementById(styleId)
-        if (!styleElement) {
-          styleElement = document.createElement('style')
-          styleElement.id = styleId
-          document.head.appendChild(styleElement)
-        }
-        
-        const uniqueLabelClass = `kml-label-${kmlFile.id}`
-        const css = `
-          .${uniqueLabelClass} .leaflet-tooltip-content {
-            font-size: ${effectiveStyle.point_label_size}px !important;
-            color: ${effectiveStyle.point_label_color} !important;
-            background-color: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 0;
-            margin: 0;
-            white-space: nowrap;
-          }
-        `
-        styleElement.innerHTML = css
         
         console.log('KML图层已添加到地图')
         return kmlLayer

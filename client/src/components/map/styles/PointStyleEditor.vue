@@ -57,7 +57,7 @@
         <el-form-item label="字体大小">
           <el-slider
             v-model="localStyles.labelSize"
-            :min="8"
+            :min="0"
             :max="24"
             :step="1"
             show-input
