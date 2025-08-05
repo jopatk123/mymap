@@ -6,7 +6,7 @@
     title-placeholder="请输入视频标题"
     description-placeholder="请输入视频描述"
     :needs-coordinates="true"
-    :show-location-btn="true"
+    :show-location-btn="false"
     :additional-rules="videoRules"
     :submit-handler="handleVideoUpload"
     @success="$emit('success')"

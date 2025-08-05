@@ -6,7 +6,7 @@
     title-placeholder="请输入全景图标题"
     description-placeholder="请输入全景图描述"
     :needs-coordinates="true"
-    :show-location-btn="true"
+    :show-location-btn="false"
     :additional-rules="panoramaRules"
     :submit-handler="handlePanoramaUpload"
     @success="$emit('success')"
