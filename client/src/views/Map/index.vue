@@ -31,11 +31,12 @@
     <!-- 地图控件 -->
     <MapControls
       :panorama-list-visible="panoramaListVisible"
+      :kml-layers-visible="kmlLayersVisible"
       :loading="loading"
       :total-count="totalCount"
       :is-online="isOnline"
       @toggle-panorama-list="togglePanoramaList"
-
+      @toggle-kml-layers="toggleKmlLayers"
       @show-settings="showSettings = true"
     />
     
@@ -112,10 +113,13 @@ const {
   showPanoramaViewer,
   panoramaViewerLoading,
   autoRotating,
+  kmlLayersVisible,
   
   // 方法
   initializePage,
-  loadMore
+  loadInitialData,
+  loadMore,
+  toggleKmlLayers
 } = useMapPage()
 
 // 全景图查看器相关方法

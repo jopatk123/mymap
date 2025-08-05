@@ -11,20 +11,20 @@ export function useMapPage() {
   const appStore = useAppStore()
 
   // Store数据
-  const { 
-    panoramas, 
-    currentPanorama, 
+  const {
+    panoramas,
+    currentPanorama,
     pagination,
     visiblePanoramas,
     hasMore,
     loading
   } = storeToRefs(panoramaStore)
 
-  const { 
-    sidebarCollapsed, 
+  const {
+    sidebarCollapsed,
     panoramaListVisible,
-    mapConfig, 
-    isOnline 
+    mapConfig,
+    isOnline
   } = storeToRefs(appStore)
 
   // 组件引用
@@ -44,6 +44,7 @@ export function useMapPage() {
   const showPanoramaViewer = ref(false)
   const panoramaViewerLoading = ref(false)
   const autoRotating = ref(false)
+  const kmlLayersVisible = ref(true)
 
   // 计算属性
   const totalCount = computed(() => pagination.value.total)
@@ -52,7 +53,10 @@ export function useMapPage() {
   const initializePage = async () => {
     // 初始化应用
     appStore.initApp()
-    
+
+    // 初始化全局KML图层显示状态
+    window.kmlLayersVisible = kmlLayersVisible.value
+
     // 加载全景图数据
     await loadInitialData()
   }
@@ -81,7 +85,7 @@ export function useMapPage() {
     try {
       // 并行加载点位数据和KML文件数据
       const [pointsResponse, kmlResponse] = await Promise.all([
-        pointsApi.getAllPoints({ 
+        pointsApi.getAllPoints({
           pageSize: 1000,
           respectFolderVisibility: true // 考虑文件夹可见性
         }),
@@ -89,18 +93,18 @@ export function useMapPage() {
           respectFolderVisibility: true // 考虑文件夹可见性
         })
       ])
-      
+
       // 只保留有坐标的点位（全景图和视频点位）
-      const filteredPoints = pointsResponse.data.filter(point => 
+      const filteredPoints = pointsResponse.data.filter(point =>
         point.type !== 'kml' && point.lat != null && point.lng != null
       )
-      
+
       // 将点位数据存储到全局状态中，供地图组件使用
       window.allPoints = filteredPoints || []
-      
+
       // 将KML文件数据存储到全局状态中，供地图组件使用
       window.allKmlFiles = kmlResponse.data || []
-      
+
       console.log('加载数据完成:', {
         points: window.allPoints.length,
         kmlFiles: window.allKmlFiles.length
@@ -117,6 +121,27 @@ export function useMapPage() {
     await panoramaStore.loadMore()
   }
 
+  // 切换KML图层显示
+  const toggleKmlLayers = () => {
+    kmlLayersVisible.value = !kmlLayersVisible.value
+
+    // 同步到全局变量
+    window.kmlLayersVisible = kmlLayersVisible.value
+
+    // 通知地图组件更新KML图层显示状态
+    if (mapRef.value) {
+      if (kmlLayersVisible.value) {
+        // 显示KML图层
+        if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+          mapRef.value.addKmlLayers(window.allKmlFiles)
+        }
+      } else {
+        // 隐藏KML图层
+        mapRef.value.clearKmlLayers()
+      }
+    }
+  }
+
   return {
     // Store数据
     panoramas,
@@ -129,7 +154,7 @@ export function useMapPage() {
     mapConfig,
     isOnline,
     totalCount,
-    
+
     // 组件状态
     mapRef,
     searchParams,
@@ -142,10 +167,12 @@ export function useMapPage() {
     showPanoramaViewer,
     panoramaViewerLoading,
     autoRotating,
-    
+    kmlLayersVisible,
+
     // 方法
     initializePage,
     loadInitialData,
-    loadMore
+    loadMore,
+    toggleKmlLayers
   }
 }

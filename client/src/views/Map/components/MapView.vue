@@ -35,7 +35,9 @@ defineExpose({
   fitBounds: () => mapRef.value?.fitBounds(),
   setCenter: (lat, lng, zoom) => mapRef.value?.setCenter(lat, lng, zoom),
   clearMarkers: () => mapRef.value?.clearMarkers(),
-  addPanoramaMarkers: (panoramas) => mapRef.value?.addPanoramaMarkers(panoramas)
+  addPanoramaMarkers: (panoramas) => mapRef.value?.addPanoramaMarkers(panoramas),
+  addKmlLayers: (kmlFiles) => mapRef.value?.addKmlLayers(kmlFiles),
+  clearKmlLayers: () => mapRef.value?.clearKmlLayers()
 })
 </script>
 

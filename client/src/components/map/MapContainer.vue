@@ -68,6 +68,7 @@ const {
   addPointMarkers,
   addKmlLayers,
   clearMarkers,
+  clearKmlLayers,
   setCenter,
   fitBounds,
   onMarkerClick
@@ -116,8 +117,8 @@ watch(() => props.panoramas, (newPanoramas) => {
     addPointMarkers(window.allPoints)
   }
   
-  // 显示KML文件图层
-  if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+  // 显示KML文件图层（只有在kmlLayersVisible为true时才显示）
+  if (window.allKmlFiles && window.allKmlFiles.length > 0 && window.kmlLayersVisible !== false) {
     addKmlLayers(window.allKmlFiles)
   }
 }, { immediate: true })
@@ -174,7 +175,8 @@ defineExpose({
   addPanoramaMarkers,
   addPointMarkers,
   addKmlLayers,
-  clearMarkers
+  clearMarkers,
+  clearKmlLayers
 })
 </script>
 

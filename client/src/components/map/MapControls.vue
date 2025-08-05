@@ -12,6 +12,15 @@
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
 
+        <el-button 
+          @click="toggleKmlLayers" 
+          type="warning"
+          :icon="kmlLayersVisible ? Hide : View"
+          :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
+        >
+          {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
+        </el-button>
+
         <el-button @click="showSettings" type="info">
           <el-icon><Setting /></el-icon>
           设置
@@ -38,6 +47,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  kmlLayersVisible: {
+    type: Boolean,
+    default: true
+  },
   loading: {
     type: Boolean,
     default: false
@@ -54,11 +67,16 @@ const props = defineProps({
 
 const emit = defineEmits([
   'toggle-panorama-list',
+  'toggle-kml-layers',
   'show-settings'
 ])
 
 const togglePanoramaList = () => {
   emit('toggle-panorama-list')
+}
+
+const toggleKmlLayers = () => {
+  emit('toggle-kml-layers')
 }
 
 const showSettings = () => {
