@@ -61,8 +61,8 @@ const props = defineProps({
 // 点样式
 const pointStyle = computed(() => ({
   backgroundColor: props.styleConfig.point_color || '#ff7800',
-  width: `${Math.min((props.styleConfig.point_size || 8), 12)}px`,
-  height: `${Math.min((props.styleConfig.point_size || 8), 12)}px`,
+  width: `${props.styleConfig.point_size || 8}px`,
+  height: `${props.styleConfig.point_size || 8}px`,
   opacity: props.styleConfig.point_opacity || 1.0
 }))
 

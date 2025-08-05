@@ -205,7 +205,7 @@ export function useMap(containerId) {
           return {};
         },
         pointToLayer: (feature, latlng) => {
-          const showLabel = typeof effectiveStyle.point_label_size === 'number' && effectiveStyle.point_label_size > 0;
+          const showLabel = Number(effectiveStyle.point_label_size) > 0;
 
           if (!showLabel) {
             // 不显示标签，返回一个简单的圆形标记
@@ -516,5 +516,3 @@ export function useMap(containerId) {
     onMarkerClick
   }
 }
-
-
