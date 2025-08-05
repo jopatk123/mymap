@@ -11,6 +11,8 @@ const defaultStyles = {
   point_color: '#ff7800',
   point_size: 8,
   point_opacity: 1.0,
+  point_label_size: 12,
+  point_label_color: '#000000',
   line_color: '#ff7800',
   line_width: 2,
   line_opacity: 0.8,
@@ -21,20 +23,6 @@ const defaultStyles = {
   polygon_stroke_width: 2,
   polygon_stroke_style: 'solid',
   cluster_enabled: true,
-}
-
-// 根据线样式返回dasshArray
-const getDashArray = (style) => {
-  switch (style) {
-    case 'dashed':
-      return '5, 5'
-    case 'dotted':
-      return '1, 5'
-    case 'dash-dot':
-      return '5, 5, 1, 5'
-    default:
-      return null
-  }
 }
 
 export function useMap(containerId) {
@@ -201,24 +189,89 @@ export function useMap(containerId) {
         throw new Error('KML文件解析失败: ' + parseError[0].textContent)
       }
       
-            // 合并默认样式和传入的样式
+      // 合并默认样式和传入的样式
       const effectiveStyle = { ...defaultStyles, ...(styleConfig || {}) }
 
       // 创建KML图层
       const kmlLayer = L.geoJSON(null, {
         style: (feature) => {
-          return styleRenderer.renderPolygonStyle(feature, effectiveStyle);
+          const geometryType = feature.geometry.type.toLowerCase();
+          if (geometryType.includes('line')) {
+            return styleRenderer.renderLineStyle(feature, effectiveStyle);
+          }
+          if (geometryType.includes('polygon')) {
+            return styleRenderer.renderPolygonStyle(feature, effectiveStyle);
+          }
+          return {};
         },
         pointToLayer: (feature, latlng) => {
-          const style = styleRenderer.renderPointStyle(feature, effectiveStyle);
-          
-          // 如果返回的是icon，说明是带标签的自定义图标
-          if (style.icon) {
-            return L.marker(latlng, { icon: style.icon });
+          const showLabel = typeof effectiveStyle.point_label_size === 'number' && effectiveStyle.point_label_size > 0;
+
+          if (!showLabel) {
+            // 不显示标签，返回一个简单的圆形标记
+            return L.circleMarker(latlng, {
+                renderer: L.canvas(),
+                color: effectiveStyle.point_color,
+                fillColor: effectiveStyle.point_color,
+                fillOpacity: effectiveStyle.point_opacity,
+                weight: 1,
+                radius: effectiveStyle.point_size,
+            });
           }
-          
-          // 否则，是简单的圆形标记
-          return L.circleMarker(latlng, style);
+
+          // 显示标签，创建自定义的DivIcon
+          const pointSize = effectiveStyle.point_size;
+          const labelSize = effectiveStyle.point_label_size;
+          const pointColor = effectiveStyle.point_color;
+          const labelColor = effectiveStyle.point_label_color;
+          const pointOpacity = effectiveStyle.point_opacity;
+
+          const iconHtml = `
+            <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
+              <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: ${pointSize * 2}px;
+                height: ${pointSize * 2}px;
+                background-color: ${pointColor};
+                opacity: ${pointOpacity};
+                border-radius: 50%;
+              "></div>
+              <div style="
+                position: absolute;
+                left: 50%;
+                top: 100%;
+                transform: translateX(-50%);
+                margin-top: 2px;
+                padding: 2px 5px;
+                background-color: rgba(255, 255, 255, 0.75);
+                border-radius: 3px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                white-space: nowrap;
+                font-weight: 500;
+                text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+                font-size: ${labelSize}px;
+                color: ${labelColor};
+                /* 强制水平显示 */
+                writing-mode: horizontal-tb !important;
+                text-orientation: mixed !important;
+                display: inline-block !important;
+                font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+              ">
+                ${feature.properties.name}
+              </div>
+            </div>
+          `;
+
+          const icon = L.divIcon({
+              html: iconHtml,
+              className: '', // className置空，因为所有样式都是内联的
+              iconSize: [pointSize * 2, pointSize * 2 + labelSize + 5],
+              iconAnchor: [pointSize, pointSize],
+          });
+
+          return L.marker(latlng, { icon: icon });
         },
         onEachFeature: (feature, layer) => {
           if (feature.properties && (feature.properties.name || feature.properties.description)) {
@@ -463,3 +516,5 @@ export function useMap(containerId) {
     onMarkerClick
   }
 }
+
+
