@@ -17,14 +17,6 @@
           卫星
         </el-button>
       </el-button-group>
-      
-      <el-button @click="locateUser" :loading="locating" type="info" circle>
-        <el-icon><Location /></el-icon>
-      </el-button>
-      
-      <el-button @click="fitAllMarkers" type="success" circle>
-        <el-icon><FullScreen /></el-icon>
-      </el-button>
     </div>
   </div>
 </template>
@@ -32,7 +24,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location, FullScreen } from '@element-plus/icons-vue'
 import { useMap } from '@/composables/useMap.js'
 import { useAppStore } from '@/store/app.js'
 
