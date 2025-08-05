@@ -90,38 +90,48 @@ export function useMapPage() {
   // 加载所有点位数据
   const loadAllPoints = async () => {
     try {
-      // 并行加载点位数据和KML文件数据
-      const [pointsResponse, kmlResponse] = await Promise.all([
+            // 1. 并行加载点位数据和KML文件基础数据
+      const [pointsResponse, kmlFilesResponse] = await Promise.all([
         pointsApi.getAllPoints({
           pageSize: 1000,
-          respectFolderVisibility: true // 考虑文件夹可见性
+          respectFolderVisibility: true
         }),
         kmlApi.getKmlFiles({
-          respectFolderVisibility: true, // 考虑文件夹可见性
-          _t: new Date().getTime() // 添加时间戳以防止缓存
+          respectFolderVisibility: true,
+          _t: new Date().getTime()
         })
-      ])
-      
-      // 注意：这里的响应结构是不同的
-      // pointsApi.getAllPoints -> response.data 直接是点位数组
-      // kmlApi.getKmlFiles -> response.data 是一个包含 data 和 pagination 的对象
-      
-      // 只保留有坐标的点位（全景图和视频点位）
-      const allPoints = pointsResponse.data || []
+      ]);
+
+      // 2. 处理点位数据
+      const allPoints = pointsResponse.data || [];
       const filteredPoints = allPoints.filter(point =>
         point.type !== 'kml' && point.lat != null && point.lng != null
-      )
+      );
+      window.allPoints = filteredPoints || [];
 
-      // 将点位数据存储到全局状态中，供地图组件使用
-      window.allPoints = filteredPoints || []
+      // 3. 为每个KML文件加载其详细样式
+      const kmlFiles = kmlFilesResponse.data || [];
+      const kmlFilesWithStyles = await Promise.all(
+        kmlFiles.map(async (file) => {
+          try {
+            const styleResponse = await kmlApi.getKmlFileStyles(file.id);
+            // 将样式配置合并到文件对象中
+            return { ...file, styleConfig: styleResponse.data };
+          } catch (error) {
+            console.warn(`加载KML文件 ${file.id} 的样式失败:`, error);
+            // 如果样式加载失败，则返回原始文件信息并附带空样式配置
+            return { ...file, styleConfig: null };
+          }
+        })
+      );
 
-      // 将KML文件数据存储到全局状态中，供地图组件使用
-      window.allKmlFiles = kmlResponse.data || []
+      // 4. 将包含完整样式信息的KML文件列表存入全局变量
+      window.allKmlFiles = kmlFilesWithStyles;
 
-      console.log('加载数据完成:', {
+      console.log('KML数据加载完成:', {
         points: window.allPoints.length,
         kmlFiles: window.allKmlFiles.length
-      })
+      });
     } catch (error) {
       console.error('加载点位数据失败:', error)
       window.allPoints = []
