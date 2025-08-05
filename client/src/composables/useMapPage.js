@@ -80,8 +80,10 @@ export function useMapPage() {
   const loadAllPoints = async () => {
     try {
       const response = await pointsApi.getAllPoints({ pageSize: 1000 })
+      // 过滤掉KML文件，只保留有坐标的点位
+      const filteredPoints = response.data.filter(point => point.type !== 'kml')
       // 将点位数据存储到全局状态中，供地图组件使用
-      window.allPoints = response.data || []
+      window.allPoints = filteredPoints || []
     } catch (error) {
       console.error('加载点位数据失败:', error)
       window.allPoints = []

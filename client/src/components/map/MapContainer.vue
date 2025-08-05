@@ -102,7 +102,12 @@ onMounted(() => {
 watch(() => props.panoramas, (newPanoramas) => {
   clearMarkers()
   if (newPanoramas && newPanoramas.length > 0) {
-    addPanoramaMarkers(newPanoramas)
+    // 过滤掉没有有效坐标的点位
+    const validPanoramas = newPanoramas.filter(p => 
+      p.lat != null && p.lng != null &&
+      !isNaN(parseFloat(p.lat)) && !isNaN(parseFloat(p.lng))
+    )
+    addPanoramaMarkers(validPanoramas)
   }
   
   // 同时显示所有点位（包括视频点位）
