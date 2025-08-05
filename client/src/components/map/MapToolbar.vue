@@ -9,10 +9,6 @@
       >
         {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
       </el-button>
-      <el-button @click="$emit('refresh-data')" :loading="loading" type="primary">
-        <el-icon><Refresh /></el-icon>
-        刷新
-      </el-button>
       <el-button @click="$emit('show-upload')" type="success">
         <el-icon><Plus /></el-icon>
         添加
@@ -26,7 +22,7 @@
 </template>
 
 <script setup>
-import { Refresh, Plus, Setting, View, Hide } from '@element-plus/icons-vue'
+import { Plus, Setting, View, Hide } from '@element-plus/icons-vue'
 
 defineProps({
   panoramaListVisible: {
@@ -41,7 +37,6 @@ defineProps({
 
 defineEmits([
   'toggle-panorama-list',
-  'refresh-data',
   'show-upload',
   'show-settings'
 ])

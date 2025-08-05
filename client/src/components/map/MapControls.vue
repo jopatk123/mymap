@@ -11,10 +11,6 @@
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
-        <el-button @click="refreshData" :loading="loading" type="primary">
-          <el-icon><Refresh /></el-icon>
-          刷新
-        </el-button>
 
         <el-button @click="showSettings" type="info">
           <el-icon><Setting /></el-icon>
@@ -33,7 +29,7 @@
 
 <script setup>
 import { 
-  Refresh, Setting, 
+  Setting, 
   View, Hide 
 } from '@element-plus/icons-vue'
 
@@ -58,19 +54,12 @@ const props = defineProps({
 
 const emit = defineEmits([
   'toggle-panorama-list',
-  'refresh-data',
   'show-settings'
 ])
 
 const togglePanoramaList = () => {
   emit('toggle-panorama-list')
 }
-
-const refreshData = () => {
-  emit('refresh-data')
-}
-
-
 
 const showSettings = () => {
   emit('show-settings')

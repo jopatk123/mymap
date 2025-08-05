@@ -35,7 +35,6 @@
       :total-count="totalCount"
       :is-online="isOnline"
       @toggle-panorama-list="togglePanoramaList"
-      @refresh-data="refreshData"
 
       @show-settings="showSettings = true"
     />
@@ -89,7 +88,6 @@ const {
   
   // 方法
   initializePage,
-  refreshData,
   loadMore
 } = useMapPage()
 

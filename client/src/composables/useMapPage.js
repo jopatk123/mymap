@@ -83,14 +83,6 @@ export function useMapPage() {
     }
   }
 
-  // 刷新数据
-  const refreshData = async () => {
-    await Promise.all([
-      panoramaStore.refresh(),
-      loadAllPoints()
-    ])
-  }
-
   // 加载更多
   const loadMore = async () => {
     await panoramaStore.loadMore()
@@ -120,7 +112,6 @@ export function useMapPage() {
     // 方法
     initializePage,
     loadInitialData,
-    refreshData,
     loadMore
   }
 }
