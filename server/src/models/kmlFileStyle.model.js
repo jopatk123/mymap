@@ -168,7 +168,8 @@ class KmlFileStyleModel {
     ]
     
     for (const field of colorFields) {
-      if (config[field] && /^#[0-9A-Fa-f]{6}$/.test(config[field])) {
+      // 支持6位（RGB）和8位（RGBA）的十六进制颜色值
+      if (config[field] && /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/i.test(config[field])) {
         validated[field] = config[field]
       }
     }

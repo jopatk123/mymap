@@ -6,7 +6,7 @@
       <el-form label-width="100px" size="small">
         <el-form-item label="线条颜色">
           <el-color-picker 
-            v-model="localStyles.color"
+            v-model="pickerColor"
             @change="handleChange"
             show-alpha
           />
@@ -71,7 +71,8 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
+import { hexToRgba, rgbaToHex } from '@/utils/color-utils.js'
 
 const props = defineProps({
   modelValue: {
@@ -95,9 +96,21 @@ const localStyles = reactive({
   style: 'solid'
 })
 
+// 用于颜色选择器的计算属性
+const pickerColor = computed({
+  get() {
+    return localStyles.color.startsWith('rgba') ? localStyles.color : hexToRgba(localStyles.color)
+  },
+  set(newValue) {
+    localStyles.color = rgbaToHex(newValue)
+  }
+})
+
 // 监听props变化
 watch(() => props.modelValue, (newValue) => {
-  Object.assign(localStyles, newValue)
+  if (newValue) {
+    Object.assign(localStyles, newValue)
+  }
 }, { immediate: true, deep: true })
 
 // 处理样式变化

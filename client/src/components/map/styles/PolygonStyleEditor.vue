@@ -6,7 +6,7 @@
       <el-form label-width="100px" size="small">
         <el-form-item label="填充颜色">
           <el-color-picker 
-            v-model="localStyles.fillColor"
+            v-model="fillColorPicker"
             @change="handleChange"
             show-alpha
           />
@@ -31,7 +31,7 @@
       <el-form label-width="100px" size="small">
         <el-form-item label="边框颜色">
           <el-color-picker 
-            v-model="localStyles.strokeColor"
+            v-model="strokeColorPicker"
             @change="handleChange"
             show-alpha
           />
@@ -82,7 +82,8 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
+import { hexToRgba, rgbaToHex } from '@/utils/color-utils.js'
 
 const props = defineProps({
   modelValue: {
@@ -108,9 +109,31 @@ const localStyles = reactive({
   strokeStyle: 'solid'
 })
 
+// 填充颜色的计算属性
+const fillColorPicker = computed({
+  get() {
+    return localStyles.fillColor.startsWith('rgba') ? localStyles.fillColor : hexToRgba(localStyles.fillColor)
+  },
+  set(newValue) {
+    localStyles.fillColor = rgbaToHex(newValue)
+  }
+})
+
+// 边框颜色的计算属性
+const strokeColorPicker = computed({
+  get() {
+    return localStyles.strokeColor.startsWith('rgba') ? localStyles.strokeColor : hexToRgba(localStyles.strokeColor)
+  },
+  set(newValue) {
+    localStyles.strokeColor = rgbaToHex(newValue)
+  }
+})
+
 // 监听props变化
 watch(() => props.modelValue, (newValue) => {
-  Object.assign(localStyles, newValue)
+  if (newValue) {
+    Object.assign(localStyles, newValue)
+  }
 }, { immediate: true, deep: true })
 
 // 处理样式变化
