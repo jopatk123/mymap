@@ -5,7 +5,6 @@
     :loading="isLoading"
     @play="handlePlay"
     @copy-coordinate="copyCoordinate"
-    @open-new-tab="openInNewTab"
     @close="handleClose"
   />
   
@@ -45,8 +44,7 @@ const isLoading = computed(() => props.loading)
 const {
   visible,
   handleClose: modalHandleClose,
-  copyCoordinate,
-  openInNewTab
+  copyCoordinate
 } = useVideoModal()
 
 // 计算属性：同步外部 v-model

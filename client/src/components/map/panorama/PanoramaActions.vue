@@ -1,23 +1,23 @@
 <template>
   <div class="panorama-actions">
-    <el-button @click="$emit('view')" type="primary" :loading="loading">
+    <el-button 
+      @click="$emit('play')" 
+      type="primary" 
+      :loading="loading"
+      :disabled="!panorama?.imageUrl"
+    >
       <el-icon><View /></el-icon>
-      查看全景图
+      全屏播放
     </el-button>
     <el-button @click="$emit('copy-coordinate')" type="info">
       <el-icon><CopyDocument /></el-icon>
       复制坐标
     </el-button>
-    <el-button @click="$emit('open-new-tab')" type="success">
-      <el-icon><Link /></el-icon>
-      新窗口打开
-    </el-button>
-
   </div>
 </template>
 
 <script setup>
-import { View, CopyDocument, Link } from '@element-plus/icons-vue'
+import { View, CopyDocument } from '@element-plus/icons-vue'
 
 defineProps({
   panorama: {
@@ -30,7 +30,7 @@ defineProps({
   }
 })
 
-defineEmits(['view', 'copy-coordinate', 'open-new-tab'])
+defineEmits(['play', 'copy-coordinate'])
 </script>
 
 <style lang="scss" scoped>

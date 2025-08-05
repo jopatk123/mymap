@@ -13,10 +13,8 @@
       <PanoramaActions
         :panorama="panorama"
         :loading="loading"
-        @view="$emit('view')"
+        @play="$emit('play')"
         @copy-coordinate="$emit('copy-coordinate')"
-        @open-new-tab="$emit('open-new-tab')"
-
       />
     </div>
   </el-dialog>
@@ -44,9 +42,8 @@ defineProps({
 defineEmits([
   'update:visible',
   'close',
-  'view',
-  'copy-coordinate',
-  'open-new-tab'
+  'play',
+  'copy-coordinate'
 ])
 </script>
 

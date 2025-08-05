@@ -49,7 +49,7 @@ export function usePanoramaModal() {
       return
     }
     
-    if (!panorama?.image_url) {
+    if (!panorama?.imageUrl) {
       ElMessage.error('全景图地址不存在，无法打开')
       return
     }

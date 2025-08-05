@@ -59,6 +59,17 @@
       :loading="loading"
       @close="handleVideoModalClose"
     />
+    
+    <!-- 全景图查看器 -->
+    <PanoramaViewer
+      v-model:visible="showPanoramaViewer"
+      :loading="panoramaViewerLoading"
+      :auto-rotating="autoRotating"
+      @close="closePanoramaViewer"
+      @toggle-auto-rotate="toggleAutoRotate"
+      @toggle-fullscreen="toggleFullscreen"
+      @reset-view="resetView"
+    />
   </div>
 </template>
 
@@ -66,12 +77,14 @@
 import { onMounted } from 'vue'
 import { useMapPage } from '@/composables/useMapPage'
 import { useMapInteractions } from '@/composables/useMapInteractions'
+import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
 
 import MapView from './components/MapView.vue'
 import MapSidebar from './components/MapSidebar.vue'
 import MapControls from '@/components/map/MapControls.vue'
 import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'
+import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
 
 // 使用组合式函数
 const {
@@ -96,11 +109,23 @@ const {
   showVideoModal,
   showUploadDialog,
   showSettings,
+  showPanoramaViewer,
+  panoramaViewerLoading,
+  autoRotating,
   
   // 方法
   initializePage,
   loadMore
 } = useMapPage()
+
+// 全景图查看器相关方法
+const {
+  openViewer,
+  closeViewer,
+  toggleAutoRotate,
+  toggleFullscreen,
+  resetView
+} = usePanoramaViewer()
 
 const {
   handlePanoramaClick,
@@ -121,13 +146,22 @@ const {
   visiblePanoramas,
   currentPanorama,
   selectedVideo,
-  showVideoModal
+  showVideoModal,
+  showPanoramaViewer,
+  openViewer
 )
 
 // 视频模态框关闭处理
 const handleVideoModalClose = () => {
   selectedVideo.value = null
   showVideoModal.value = false
+}
+
+// 关闭全景图查看器
+const closePanoramaViewer = () => {
+  closeViewer()
+  showPanoramaViewer.value = false
+  autoRotating.value = false
 }
 
 // 初始化

@@ -223,11 +223,7 @@ export function usePanorama() {
   const toggleFullscreen = () => {
     if (!viewer.value) return
     
-    if (viewer.value.isFullscreen()) {
-      viewer.value.exitFullscreen()
-    } else {
-      viewer.value.requestFullscreen()
-    }
+    viewer.value.toggleFullscreen()
   }
   
   // 添加热点

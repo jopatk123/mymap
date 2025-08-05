@@ -18,14 +18,6 @@
         <el-icon><CopyDocument /></el-icon>
         复制坐标
       </el-button>
-      
-      <el-button
-        @click="$emit('open-new-tab')"
-        :disabled="!video?.videoUrl"
-      >
-        <el-icon><Link /></el-icon>
-        新窗口打开
-      </el-button>
     </div>
     
     <div class="video-stats" v-if="video">
@@ -61,7 +53,7 @@ defineProps({
   }
 })
 
-defineEmits(['play', 'copy-coordinate', 'open-new-tab'])
+defineEmits(['play', 'copy-coordinate'])
 
 // 格式化码率
 const formatBitrate = (bitrate) => {

@@ -41,6 +41,9 @@ export function useMapPage() {
   const showVideoModal = ref(false)
   const showUploadDialog = ref(false)
   const showSettings = ref(false)
+  const showPanoramaViewer = ref(false)
+  const panoramaViewerLoading = ref(false)
+  const autoRotating = ref(false)
 
   // 计算属性
   const totalCount = computed(() => pagination.value.total)
@@ -112,6 +115,9 @@ export function useMapPage() {
     showVideoModal,
     showUploadDialog,
     showSettings,
+    showPanoramaViewer,
+    panoramaViewerLoading,
+    autoRotating,
     
     // 方法
     initializePage,

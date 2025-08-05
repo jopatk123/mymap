@@ -56,26 +56,10 @@ export function useVideoModal() {
     }
   }
 
-  // 在新标签页打开视频
-  const openInNewTab = (video) => {
-    if (!video?.videoUrl) {
-      ElMessage.warning('视频链接不可用')
-      return
-    }
-
-    try {
-      window.open(video.videoUrl, '_blank')
-    } catch (error) {
-      console.error('打开新标签页失败:', error)
-      ElMessage.error('无法打开新标签页')
-    }
-  }
-
   return {
     visible,
     show,
     handleClose,
-    copyCoordinate,
-    openInNewTab
+    copyCoordinate
   }
 }

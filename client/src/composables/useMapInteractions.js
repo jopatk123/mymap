@@ -2,7 +2,7 @@ import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 
-export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, visiblePanoramas, currentPanorama, selectedVideo, showVideoModal) {
+export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, visiblePanoramas, currentPanorama, selectedVideo, showVideoModal, showPanoramaViewer, openPanoramaViewer) {
   const panoramaStore = usePanoramaStore()
   const appStore = useAppStore()
 
@@ -10,14 +10,15 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
   const handlePanoramaClick = (point) => {
     // 根据点位类型判断是全景图还是视频点位
     if (point.type === 'video' || point.videoUrl) {
-      // 视频点位
+      // 视频点位 - 直接打开视频播放器
       selectedVideo.value = point
       showVideoModal.value = true
     } else {
-      // 全景图点位
+      // 全景图点位 - 直接打开全景图查看器
       selectedPanorama.value = point
       panoramaStore.setCurrentPanorama(point)
-      showPanoramaModal.value = true
+      // 直接打开全景图查看器，不显示信息模态框
+      viewPanorama(point)
     }
   }
 
@@ -39,10 +40,12 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     }
   }
 
-  // 查看全景图
+  // 查看全景图 - 直接打开全景图查看器
   const viewPanorama = (panorama) => {
     selectedPanorama.value = panorama
-    showPanoramaModal.value = true
+    panoramaStore.setCurrentPanorama(panorama)
+    showPanoramaViewer.value = true
+    openPanoramaViewer(panorama)
   }
 
   // 定位到全景图

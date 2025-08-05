@@ -15,7 +15,6 @@
         :loading="loading"
         @play="$emit('play')"
         @copy-coordinate="$emit('copy-coordinate')"
-        @open-new-tab="$emit('open-new-tab')"
       />
     </div>
   </el-dialog>
@@ -44,8 +43,7 @@ defineEmits([
   'update:visible',
   'close',
   'play',
-  'copy-coordinate',
-  'open-new-tab'
+  'copy-coordinate'
 ])
 </script>
 

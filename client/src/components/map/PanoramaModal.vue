@@ -4,10 +4,8 @@
     :panorama="panorama"
     :loading="isLoading"
     @close="handleClose"
-    @view="handleOpenViewer"
+    @play="handlePlay"
     @copy-coordinate="handleCopyCoordinate"
-    @open-new-tab="handleOpenInNewTab"
-
   />
   
   <PanoramaViewer
@@ -46,7 +44,6 @@ const {
   visible,
   handleClose: modalHandleClose,
   copyCoordinate,
-  openInNewTab,
   deletePanorama
 } = usePanoramaModal()
 
@@ -73,16 +70,12 @@ const handleClose = () => {
   modalHandleClose()
 }
 
-const handleOpenViewer = () => {
+const handlePlay = () => {
   openViewer(props.panorama)
 }
 
 const handleCopyCoordinate = () => {
   copyCoordinate(props.panorama)
-}
-
-const handleOpenInNewTab = () => {
-  openInNewTab(props.panorama)
 }
 
 
