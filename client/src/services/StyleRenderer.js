@@ -56,7 +56,7 @@ class StyleRenderer {
           color: ${labelColor};
           transform: translate(-50%, ${pointSize}px);
         ">
-          ${point.name}
+          ${point.properties.name}
         </div>
       </div>
     `;
