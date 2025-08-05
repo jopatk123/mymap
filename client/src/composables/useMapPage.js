@@ -36,7 +36,9 @@ export function useMapPage() {
     sortBy: 'createdAt'
   })
   const selectedPanorama = ref(null)
+  const selectedVideo = ref(null)
   const showPanoramaModal = ref(false)
+  const showVideoModal = ref(false)
   const showUploadDialog = ref(false)
   const showSettings = ref(false)
 
@@ -105,7 +107,9 @@ export function useMapPage() {
     mapRef,
     searchParams,
     selectedPanorama,
+    selectedVideo,
     showPanoramaModal,
+    showVideoModal,
     showUploadDialog,
     showSettings,
     

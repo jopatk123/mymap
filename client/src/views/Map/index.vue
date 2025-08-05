@@ -51,6 +51,14 @@
       @panorama-deleted="handlePanoramaDeleted"
       @upload-success="handleUploadSuccess"
     />
+    
+    <!-- 视频模态框 -->
+    <VideoModal
+      v-model="showVideoModal"
+      :video="selectedVideo"
+      :loading="loading"
+      @close="handleVideoModalClose"
+    />
   </div>
 </template>
 
@@ -63,6 +71,7 @@ import MapView from './components/MapView.vue'
 import MapSidebar from './components/MapSidebar.vue'
 import MapControls from '@/components/map/MapControls.vue'
 import MapDialogs from './components/MapDialogs.vue'
+import VideoModal from '@/components/map/VideoModal.vue'
 
 // 使用组合式函数
 const {
@@ -82,7 +91,9 @@ const {
   mapRef,
   searchParams,
   selectedPanorama,
+  selectedVideo,
   showPanoramaModal,
+  showVideoModal,
   showUploadDialog,
   showSettings,
   
@@ -108,8 +119,16 @@ const {
   selectedPanorama,
   showPanoramaModal,
   visiblePanoramas,
-  currentPanorama
+  currentPanorama,
+  selectedVideo,
+  showVideoModal
 )
+
+// 视频模态框关闭处理
+const handleVideoModalClose = () => {
+  selectedVideo.value = null
+  showVideoModal.value = false
+}
 
 // 初始化
 onMounted(async () => {

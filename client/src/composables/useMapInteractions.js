@@ -2,15 +2,23 @@ import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 
-export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, visiblePanoramas, currentPanorama) {
+export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, visiblePanoramas, currentPanorama, selectedVideo, showVideoModal) {
   const panoramaStore = usePanoramaStore()
   const appStore = useAppStore()
 
-  // 处理全景图标记点击
-  const handlePanoramaClick = (panorama) => {
-    selectedPanorama.value = panorama
-    panoramaStore.setCurrentPanorama(panorama)
-    showPanoramaModal.value = true
+  // 处理点位标记点击（区分全景图和视频点位）
+  const handlePanoramaClick = (point) => {
+    // 根据点位类型判断是全景图还是视频点位
+    if (point.type === 'video' || point.videoUrl) {
+      // 视频点位
+      selectedVideo.value = point
+      showVideoModal.value = true
+    } else {
+      // 全景图点位
+      selectedPanorama.value = point
+      panoramaStore.setCurrentPanorama(point)
+      showPanoramaModal.value = true
+    }
   }
 
   // 处理地图点击
