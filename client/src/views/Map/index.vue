@@ -83,9 +83,11 @@
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useMapPage } from '@/composables/useMapPage'
 import { useMapInteractions } from '@/composables/useMapInteractions'
 import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
+import { kmlApi } from '@/api/kml.js'
 
 import MapView from './components/MapView.vue'
 import MapSidebar from './components/MapSidebar.vue'
@@ -204,19 +206,42 @@ const handleFolderVisibilityChanged = async () => {
 
 // 处理KML样式更新
 const handleKmlStylesUpdated = async () => {
-  console.log('KML样式已更新，重新加载地图数据')
-  await loadInitialData()
+  console.log('KML样式已更新，准备重新加载图层')
   
-  // 重新加载KML图层
-  setTimeout(() => {
-    if (mapRef.value && kmlLayersVisible.value) {
+  if (mapRef.value && kmlLayersVisible.value) {
+    try {
+      // 重新获取所有KML文件及其样式
+      const kmlResponse = await kmlApi.getKmlFiles({
+        respectFolderVisibility: true,
+        _t: new Date().getTime()
+      })
+      
+      const kmlFilesWithStyles = await Promise.all(
+        (kmlResponse.data || []).map(async (file) => {
+          try {
+            const styleResponse = await kmlApi.getKmlFileStyles(file.id)
+            file.styleConfig = styleResponse.data
+          } catch (error) {
+            console.warn(`加载KML文件 ${file.id} 样式失败:`, error)
+            // 使用默认样式或保持为空
+            file.styleConfig = null 
+          }
+          return file
+        })
+      )
+      
+      // 更新全局变量
+      window.allKmlFiles = kmlFilesWithStyles
+      
       console.log('样式更新后重新加载KML图层')
       mapRef.value.clearKmlLayers()
-      if (window.allKmlFiles && window.allKmlFiles.length > 0) {
-        mapRef.value.addKmlLayers(window.allKmlFiles)
-      }
+      mapRef.value.addKmlLayers(kmlFilesWithStyles)
+      
+    } catch (error) {
+      console.error('重新加载KML图层失败:', error)
+      ElMessage.error('重新加载KML图层失败')
     }
-  }, 500)
+  }
 }
 
 // 清理事件监听器

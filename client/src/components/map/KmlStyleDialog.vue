@@ -186,27 +186,27 @@ const selectKmlFile = async (kmlFile) => {
     const styles = response.data
     
     // 分组样式配置
-    currentStyles.point = {
+        currentStyles.point = {
       color: styles.point_color,
-      size: styles.point_size,
-      opacity: styles.point_opacity,
+      size: Number(styles.point_size),
+      opacity: parseFloat(styles.point_opacity),
       iconType: styles.point_icon_type,
-      labelSize: styles.point_label_size,
+      labelSize: Number(styles.point_label_size),
       labelColor: styles.point_label_color
     }
     
     currentStyles.line = {
       color: styles.line_color,
-      width: styles.line_width,
-      opacity: styles.line_opacity,
+      width: Number(styles.line_width),
+      opacity: parseFloat(styles.line_opacity),
       style: styles.line_style
     }
     
     currentStyles.polygon = {
       fillColor: styles.polygon_fill_color,
-      fillOpacity: styles.polygon_fill_opacity,
+      fillOpacity: parseFloat(styles.polygon_fill_opacity),
       strokeColor: styles.polygon_stroke_color,
-      strokeWidth: styles.polygon_stroke_width,
+      strokeWidth: Number(styles.polygon_stroke_width),
       strokeStyle: styles.polygon_stroke_style
     }
     

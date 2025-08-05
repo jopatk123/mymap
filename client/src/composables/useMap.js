@@ -2,6 +2,37 @@ import { ref, onUnmounted } from 'vue'
 import L from 'leaflet'
 import { createAMapTileLayer, createPointMarker } from '@/utils/map-utils.js'
 
+// 默认样式
+const defaultStyles = {
+  point_color: '#ff7800',
+  point_size: 8,
+  point_opacity: 1.0,
+  line_color: '#ff7800',
+  line_width: 2,
+  line_opacity: 0.8,
+  line_style: 'solid',
+  polygon_fill_color: '#ff7800',
+  polygon_fill_opacity: 0.3,
+  polygon_stroke_color: '#ff7800',
+  polygon_stroke_width: 2,
+  polygon_stroke_style: 'solid',
+  cluster_enabled: true,
+}
+
+// 根据线样式返回dasshArray
+const getDashArray = (style) => {
+  switch (style) {
+    case 'dashed':
+      return '5, 5'
+    case 'dotted':
+      return '1, 5'
+    case 'dash-dot':
+      return '5, 5, 1, 5'
+    default:
+      return null
+  }
+}
+
 export function useMap(containerId) {
   const map = ref(null)
   const markers = ref([])
@@ -138,7 +169,7 @@ export function useMap(containerId) {
   }
   
   // 添加KML图层
-  const addKmlLayer = async (kmlFile) => {
+  const addKmlLayer = async (kmlFile, styleConfig = null) => {
     if (!map.value || !kmlFile.file_url) {
       console.warn('无法添加KML图层：地图未初始化或文件URL为空', { map: !!map.value, fileUrl: kmlFile.file_url })
       return null
@@ -166,23 +197,52 @@ export function useMap(containerId) {
         throw new Error('KML文件解析失败: ' + parseError[0].textContent)
       }
       
+            // 合并默认样式和传入的样式
+      const effectiveStyle = { ...defaultStyles, ...(styleConfig || {}) }
+
       // 创建KML图层
       const kmlLayer = L.geoJSON(null, {
-        style: (feature) => ({
-          color: feature.properties.stroke || '#ff7800',
-          weight: feature.properties['stroke-width'] || 2,
-          opacity: feature.properties['stroke-opacity'] || 0.8,
-          fillColor: feature.properties.fill || '#ff7800',
-          fillOpacity: feature.properties['fill-opacity'] || 0.3
-        }),
-        pointToLayer: (feature, latlng) => {
-          return L.circleMarker(latlng, {
-            radius: 6,
-            fillColor: feature.properties.fill || '#ff7800',
-            color: feature.properties.stroke || '#ff7800',
+        style: (feature) => {
+          // 对于线和面，应用样式
+          const isLine = feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString'
+          const isPolygon = feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'
+          
+          if (isLine) {
+            return {
+              color: effectiveStyle.line_color,
+              weight: effectiveStyle.line_width,
+              opacity: effectiveStyle.line_opacity,
+              dashArray: getDashArray(effectiveStyle.line_style)
+            }
+          }
+          
+          if (isPolygon) {
+            return {
+              color: effectiveStyle.polygon_stroke_color,
+              weight: effectiveStyle.polygon_stroke_width,
+              opacity: 1, // 边框通常不透明
+              fillColor: effectiveStyle.polygon_fill_color,
+              fillOpacity: effectiveStyle.polygon_fill_opacity,
+              dashArray: getDashArray(effectiveStyle.polygon_stroke_style)
+            }
+          }
+          
+          // 默认样式
+          return {
+            color: '#ff7800',
             weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
+            opacity: 0.8
+          }
+        },
+        pointToLayer: (feature, latlng) => {
+          // 对于点，应用点样式
+          return L.circleMarker(latlng, {
+            radius: effectiveStyle.point_size / 2, // circleMarker的radius是像素半径
+            fillColor: effectiveStyle.point_color,
+            color: effectiveStyle.point_color, // 边框颜色与填充色相同
+            weight: 1,
+            opacity: effectiveStyle.point_opacity,
+            fillOpacity: effectiveStyle.point_opacity * 0.8 // 填充透明度稍低
           })
         },
         onEachFeature: (feature, layer) => {
@@ -330,7 +390,8 @@ export function useMap(containerId) {
   // 批量添加KML图层
   const addKmlLayers = (kmlFiles) => {
     kmlFiles.forEach(kmlFile => {
-      addKmlLayer(kmlFile)
+      // 确保传递了styleConfig
+      addKmlLayer(kmlFile, kmlFile.styleConfig)
     })
   }
   
