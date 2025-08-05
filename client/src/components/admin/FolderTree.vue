@@ -67,6 +67,11 @@ const handleToggleVisibility = async (folder) => {
     await toggleFolderVisibility(folder)
     await loadFolders()
     emit('folder-updated')
+    
+    // 通知地图刷新数据
+    window.dispatchEvent(new CustomEvent('folder-visibility-changed', {
+      detail: { folderId: folder.id, isVisible: !folder.is_visible }
+    }))
   } catch (error) {
     // 错误已在composable中处理
   }

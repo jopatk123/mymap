@@ -76,7 +76,8 @@ class VideoPointModel {
     pageSize = 20,
     keyword = '',
     folderId = null,
-    includeHidden = false
+    includeHidden = false,
+    visibleFolderIds = null
   } = {}) {
     try {
       let whereConditions = []
@@ -92,6 +93,19 @@ class VideoPointModel {
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'vp')
       whereConditions = whereConditions.concat(folderCondition.conditions)
       params = params.concat(folderCondition.params)
+
+      // 文件夹可见性筛选
+      if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
+        if (visibleFolderIds.length === 0) {
+          // 如果没有可见文件夹，只返回根目录下的项目
+          whereConditions.push('vp.folder_id IS NULL')
+        } else {
+          // 包含可见文件夹和根目录
+          const placeholders = visibleFolderIds.map(() => '?').join(',')
+          whereConditions.push(`(vp.folder_id IS NULL OR vp.folder_id IN (${placeholders}))`)
+          params.push(...visibleFolderIds)
+        }
+      }
 
       if (!includeHidden) {
         whereConditions.push('vp.is_visible = 1')
@@ -158,14 +172,29 @@ class VideoPointModel {
   }
 
   // 根据地图边界获取视频点位
-  static async findByBounds({ north, south, east, west, includeHidden = false } = {}) {
+  static async findByBounds({ north, south, east, west, includeHidden = false, visibleFolderIds = null } = {}) {
     try {
-      let whereClause = 'WHERE vp.gcj02_lat BETWEEN ? AND ? AND vp.gcj02_lng BETWEEN ? AND ?'
+      let whereConditions = ['vp.gcj02_lat BETWEEN ? AND ?', 'vp.gcj02_lng BETWEEN ? AND ?']
       let params = [south, north, west, east]
 
       if (!includeHidden) {
-        whereClause += ' AND vp.is_visible = TRUE'
+        whereConditions.push('vp.is_visible = TRUE')
       }
+
+      // 文件夹可见性筛选
+      if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
+        if (visibleFolderIds.length === 0) {
+          // 如果没有可见文件夹，只返回根目录下的项目
+          whereConditions.push('vp.folder_id IS NULL')
+        } else {
+          // 包含可见文件夹和根目录
+          const placeholders = visibleFolderIds.map(() => '?').join(',')
+          whereConditions.push(`(vp.folder_id IS NULL OR vp.folder_id IN (${placeholders}))`)
+          params.push(...visibleFolderIds)
+        }
+      }
+
+      const whereClause = 'WHERE ' + whereConditions.join(' AND ')
 
       const [rows] = await pool.execute(
         `SELECT vp.*, f.name as folder_name 

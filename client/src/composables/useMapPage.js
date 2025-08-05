@@ -79,14 +79,36 @@ export function useMapPage() {
   // 加载所有点位数据
   const loadAllPoints = async () => {
     try {
-      const response = await pointsApi.getAllPoints({ pageSize: 1000 })
-      // 过滤掉KML文件，只保留有坐标的点位
-      const filteredPoints = response.data.filter(point => point.type !== 'kml')
+      // 并行加载点位数据和KML文件数据
+      const [pointsResponse, kmlResponse] = await Promise.all([
+        pointsApi.getAllPoints({ 
+          pageSize: 1000,
+          respectFolderVisibility: true // 考虑文件夹可见性
+        }),
+        pointsApi.getVisibleKmlFiles({
+          respectFolderVisibility: true // 考虑文件夹可见性
+        })
+      ])
+      
+      // 只保留有坐标的点位（全景图和视频点位）
+      const filteredPoints = pointsResponse.data.filter(point => 
+        point.type !== 'kml' && point.lat != null && point.lng != null
+      )
+      
       // 将点位数据存储到全局状态中，供地图组件使用
       window.allPoints = filteredPoints || []
+      
+      // 将KML文件数据存储到全局状态中，供地图组件使用
+      window.allKmlFiles = kmlResponse.data || []
+      
+      console.log('加载数据完成:', {
+        points: window.allPoints.length,
+        kmlFiles: window.allKmlFiles.length
+      })
     } catch (error) {
       console.error('加载点位数据失败:', error)
       window.allPoints = []
+      window.allKmlFiles = []
     }
   }
 

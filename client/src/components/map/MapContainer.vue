@@ -66,6 +66,7 @@ const {
   changeMapType,
   addPanoramaMarkers,
   addPointMarkers,
+  addKmlLayers,
   clearMarkers,
   setCenter,
   fitBounds,
@@ -113,6 +114,11 @@ watch(() => props.panoramas, (newPanoramas) => {
   // 同时显示所有点位（包括视频点位）
   if (window.allPoints && window.allPoints.length > 0) {
     addPointMarkers(window.allPoints)
+  }
+  
+  // 显示KML文件图层
+  if (window.allKmlFiles && window.allKmlFiles.length > 0) {
+    addKmlLayers(window.allKmlFiles)
   }
 }, { immediate: true })
 
@@ -167,6 +173,7 @@ defineExpose({
   fitBounds,
   addPanoramaMarkers,
   addPointMarkers,
+  addKmlLayers,
   clearMarkers
 })
 </script>

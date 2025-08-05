@@ -35,6 +35,19 @@ class QueryBuilder {
       params = params.concat(folderConditions.params)
     }
 
+    // 文件夹可见性筛选
+    if (options.visibleFolderIds && Array.isArray(options.visibleFolderIds)) {
+      if (options.visibleFolderIds.length === 0) {
+        // 如果没有可见文件夹，只返回根目录下的项目
+        conditions.push('p.folder_id IS NULL')
+      } else {
+        // 包含可见文件夹和根目录
+        const placeholders = options.visibleFolderIds.map(() => '?').join(',')
+        conditions.push(`(p.folder_id IS NULL OR p.folder_id IN (${placeholders}))`)
+        params.push(...options.visibleFolderIds)
+      }
+    }
+
     // 关键词搜索
     if (options.keyword) {
       conditions.push('(p.title LIKE ? OR p.description LIKE ?)')

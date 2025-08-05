@@ -5,6 +5,7 @@ import { createAMapTileLayer, createPointMarker } from '@/utils/map-utils.js'
 export function useMap(containerId) {
   const map = ref(null)
   const markers = ref([])
+  const kmlLayers = ref([])
   const isLoading = ref(false)
   const tileLayer = ref(null)
   
@@ -131,6 +132,111 @@ export function useMap(containerId) {
       map.value.removeLayer(marker)
     })
     markers.value = []
+    
+    // 同时清除KML图层
+    clearKmlLayers()
+  }
+  
+  // 添加KML图层
+  const addKmlLayer = async (kmlFile) => {
+    if (!map.value || !kmlFile.file_url) return null
+    
+    try {
+      // 使用fetch获取KML文件内容
+      const response = await fetch(kmlFile.file_url)
+      const kmlText = await response.text()
+      
+      // 解析KML并添加到地图
+      const parser = new DOMParser()
+      const kmlDoc = parser.parseFromString(kmlText, 'text/xml')
+      
+      // 创建KML图层
+      const kmlLayer = L.geoJSON(null, {
+        style: {
+          color: '#ff7800',
+          weight: 2,
+          opacity: 0.8,
+          fillOpacity: 0.3
+        },
+        onEachFeature: (feature, layer) => {
+          if (feature.properties && feature.properties.name) {
+            layer.bindPopup(`
+              <div>
+                <h4>${feature.properties.name}</h4>
+                <p>来源: ${kmlFile.title}</p>
+                ${feature.properties.description ? `<p>${feature.properties.description}</p>` : ''}
+              </div>
+            `)
+          }
+        }
+      })
+      
+      // 解析KML中的几何要素
+      const placemarks = kmlDoc.getElementsByTagName('Placemark')
+      for (let i = 0; i < placemarks.length; i++) {
+        const placemark = placemarks[i]
+        const name = placemark.getElementsByTagName('name')[0]?.textContent || ''
+        const description = placemark.getElementsByTagName('description')[0]?.textContent || ''
+        
+        // 解析坐标
+        const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent
+        if (coordinates) {
+          const coords = coordinates.trim().split(/\s+/)
+          const geoJsonFeatures = []
+          
+          coords.forEach(coord => {
+            const [lng, lat, alt] = coord.split(',').map(Number)
+            if (!isNaN(lat) && !isNaN(lng)) {
+              geoJsonFeatures.push({
+                type: 'Feature',
+                properties: { name, description },
+                geometry: {
+                  type: 'Point',
+                  coordinates: [lng, lat]
+                }
+              })
+            }
+          })
+          
+          geoJsonFeatures.forEach(feature => {
+            kmlLayer.addData(feature)
+          })
+        }
+      }
+      
+      kmlLayer.addTo(map.value)
+      kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
+      
+      return kmlLayer
+    } catch (error) {
+      console.error('加载KML文件失败:', error)
+      return null
+    }
+  }
+  
+  // 批量添加KML图层
+  const addKmlLayers = (kmlFiles) => {
+    kmlFiles.forEach(kmlFile => {
+      addKmlLayer(kmlFile)
+    })
+  }
+  
+  // 移除KML图层
+  const removeKmlLayer = (id) => {
+    const layerIndex = kmlLayers.value.findIndex(l => l.id === id)
+    if (layerIndex > -1) {
+      const { layer } = kmlLayers.value[layerIndex]
+      map.value.removeLayer(layer)
+      kmlLayers.value.splice(layerIndex, 1)
+    }
+  }
+  
+  // 清除所有KML图层
+  const clearKmlLayers = () => {
+    kmlLayers.value.forEach(({ layer }) => {
+      map.value.removeLayer(layer)
+    })
+    kmlLayers.value = []
   }
   
   // 标记点击事件处理
@@ -184,6 +290,7 @@ export function useMap(containerId) {
   return {
     map,
     markers,
+    kmlLayers,
     isLoading,
     initMap,
     changeMapType,
@@ -191,8 +298,12 @@ export function useMap(containerId) {
     addPanoramaMarker,
     addPanoramaMarkers,
     addPointMarkers,
+    addKmlLayer,
+    addKmlLayers,
     removeMarker,
+    removeKmlLayer,
     clearMarkers,
+    clearKmlLayers,
     setCenter,
     fitBounds,
     getBounds,

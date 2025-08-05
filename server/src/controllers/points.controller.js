@@ -1,10 +1,11 @@
 const PanoramaModel = require('../models/panorama.model')
 const VideoPointModel = require('../models/videoPoint.model')
 const KmlFileModel = require('../models/kmlFile.model')
+const FolderModel = require('../models/folder.model')
 const Logger = require('../utils/logger')
 
 class PointsController {
-  // 获取所有点位（全景图 + 视频点位 + KML文件）
+  // 获取所有点位（全景图 + 视频点位，不包括KML文件）
   static async getAllPoints(req, res) {
     try {
       const {
@@ -12,32 +13,28 @@ class PointsController {
         pageSize = 20,
         keyword = '',
         folderId = null,
-        includeHidden = false
+        includeHidden = false,
+        respectFolderVisibility = true // 新增参数，控制是否考虑文件夹可见性
       } = req.query
 
-      // 并行获取全景图、视频点位和KML文件
-      const [panoramaResult, videoResult, kmlResult] = await Promise.all([
-        PanoramaModel.findAll({
-          page: 1,
-          pageSize: 1000, // 获取所有数据，后续统一分页
-          keyword,
-          folderId: folderId ? parseInt(folderId) : null,
-          includeHidden: includeHidden === 'true'
-        }),
-        VideoPointModel.findAll({
-          page: 1,
-          pageSize: 1000, // 获取所有数据，后续统一分页
-          keyword,
-          folderId: folderId ? parseInt(folderId) : null,
-          includeHidden: includeHidden === 'true'
-        }),
-        KmlFileModel.findAll({
-          page: 1,
-          pageSize: 1000, // 获取所有数据，后续统一分页
-          keyword,
-          folderId: folderId ? parseInt(folderId) : null,
-          includeHidden: includeHidden === 'true'
-        })
+      let searchParams = {
+        page: 1,
+        pageSize: 1000, // 获取所有数据，后续统一分页
+        keyword,
+        folderId: folderId ? parseInt(folderId) : null,
+        includeHidden: includeHidden === 'true'
+      }
+
+      // 如果需要考虑文件夹可见性，获取可见文件夹列表
+      if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds()
+        searchParams.visibleFolderIds = visibleFolderIds
+      }
+
+      // 并行获取全景图和视频点位（不包括KML文件）
+      const [panoramaResult, videoResult] = await Promise.all([
+        PanoramaModel.findAll(searchParams),
+        VideoPointModel.findAll(searchParams)
       ])
 
       // 合并数据并添加类型标识
@@ -63,18 +60,9 @@ class PointsController {
         videoUrl: item.video_url, // 添加 videoUrl 字段供前端识别
         thumbnailUrl: item.thumbnail_url
       }))
-      
-      const kmls = kmlResult.data.map(item => ({
-        ...item,
-        type: 'kml',
-        // KML文件本身没有坐标，但为了列表统一性可以设为null
-        lat: null,
-        lng: null,
-        url: item.file_path,
-      }))
 
-      // 合并并排序
-      const allPoints = [...panoramas, ...videos, ...kmls].sort((a, b) => 
+      // 合并并排序（不包括KML文件）
+      const allPoints = [...panoramas, ...videos].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       )
 
@@ -107,7 +95,14 @@ class PointsController {
   // 根据地图边界获取所有点位
   static async getPointsByBounds(req, res) {
     try {
-      const { north, south, east, west, includeHidden = false } = req.query
+      const { 
+        north, 
+        south, 
+        east, 
+        west, 
+        includeHidden = false,
+        respectFolderVisibility = true
+      } = req.query
 
       const bounds = {
         north: parseFloat(north),
@@ -115,6 +110,12 @@ class PointsController {
         east: parseFloat(east),
         west: parseFloat(west),
         includeHidden: includeHidden === 'true'
+      }
+
+      // 如果需要考虑文件夹可见性，获取可见文件夹列表
+      if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds()
+        bounds.visibleFolderIds = visibleFolderIds
       }
 
       // 并行获取全景图和视频点位
@@ -158,6 +159,46 @@ class PointsController {
       res.status(500).json({
         success: false,
         message: '获取点位失败',
+        error: error.message
+      })
+    }
+  }
+
+  // 获取可见的KML文件（用于地图显示）
+  static async getVisibleKmlFiles(req, res) {
+    try {
+      const { respectFolderVisibility = true } = req.query
+
+      let searchParams = {
+        page: 1,
+        pageSize: 1000,
+        includeHidden: false // KML文件本身必须是可见的
+      }
+
+      // 如果需要考虑文件夹可见性，获取可见文件夹列表
+      if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds()
+        searchParams.visibleFolderIds = visibleFolderIds
+      }
+
+      const kmlResult = await KmlFileModel.findAll(searchParams)
+      
+      const kmls = kmlResult.data.map(item => ({
+        ...item,
+        type: 'kml',
+        url: item.file_url,
+        filePath: item.file_url
+      }))
+
+      res.json({
+        success: true,
+        data: kmls
+      })
+    } catch (error) {
+      Logger.error('获取可见KML文件失败:', error)
+      res.status(500).json({
+        success: false,
+        message: '获取可见KML文件失败',
         error: error.message
       })
     }

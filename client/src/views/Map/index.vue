@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useMapPage } from '@/composables/useMapPage'
 import { useMapInteractions } from '@/composables/useMapInteractions'
 import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
@@ -167,6 +167,20 @@ const closePanoramaViewer = () => {
 // 初始化
 onMounted(async () => {
   await initializePage()
+  
+  // 监听文件夹可见性变化事件
+  window.addEventListener('folder-visibility-changed', handleFolderVisibilityChanged)
+})
+
+// 处理文件夹可见性变化
+const handleFolderVisibilityChanged = async () => {
+  console.log('文件夹可见性发生变化，重新加载地图数据')
+  await loadInitialData()
+}
+
+// 清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('folder-visibility-changed', handleFolderVisibilityChanged)
 })
 </script>
 

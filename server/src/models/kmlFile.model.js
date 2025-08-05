@@ -60,7 +60,8 @@ class KmlFileModel {
     pageSize = 20,
     keyword = '',
     folderId = null,
-    includeHidden = false
+    includeHidden = false,
+    visibleFolderIds = null
   } = {}) {
     try {
       let whereConditions = []
@@ -77,6 +78,19 @@ class KmlFileModel {
       console.log('KML Debug - Folder condition:', folderCondition)
       whereConditions = whereConditions.concat(folderCondition.conditions)
       params = params.concat(folderCondition.params)
+
+      // 文件夹可见性筛选
+      if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
+        if (visibleFolderIds.length === 0) {
+          // 如果没有可见文件夹，只返回根目录下的项目
+          whereConditions.push('kf.folder_id IS NULL')
+        } else {
+          // 包含可见文件夹和根目录
+          const placeholders = visibleFolderIds.map(() => '?').join(',')
+          whereConditions.push(`(kf.folder_id IS NULL OR kf.folder_id IN (${placeholders}))`)
+          params.push(...visibleFolderIds)
+        }
+      }
 
       if (!includeHidden) {
         whereConditions.push('kf.is_visible = TRUE')

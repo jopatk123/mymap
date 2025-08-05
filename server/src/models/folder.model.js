@@ -209,6 +209,55 @@ class FolderModel {
 
     return path
   }
+
+  // 获取所有可见的文件夹ID（递归检查父文件夹）
+  static async getVisibleFolderIds() {
+    const allFolders = await this.findAllFlat()
+    const visibleFolderIds = new Set()
+    
+    // 检查文件夹是否可见（包括其所有父文件夹）
+    const isFolderVisible = (folderId, folderMap) => {
+      if (!folderId) return true // 根目录始终可见
+      
+      const folder = folderMap.get(folderId)
+      if (!folder) return false
+      
+      // 如果当前文件夹不可见，则不可见
+      if (!folder.is_visible) return false
+      
+      // 递归检查父文件夹
+      return isFolderVisible(folder.parent_id, folderMap)
+    }
+    
+    // 创建文件夹映射
+    const folderMap = new Map()
+    allFolders.forEach(folder => {
+      folderMap.set(folder.id, folder)
+    })
+    
+    // 检查每个文件夹的可见性
+    allFolders.forEach(folder => {
+      if (isFolderVisible(folder.id, folderMap)) {
+        visibleFolderIds.add(folder.id)
+      }
+    })
+    
+    return Array.from(visibleFolderIds)
+  }
+
+  // 检查文件夹是否可见（包括其所有父文件夹）
+  static async isFolderVisible(folderId) {
+    if (!folderId) return true // 根目录始终可见
+    
+    const folder = await this.findById(folderId)
+    if (!folder) return false
+    
+    // 如果当前文件夹不可见，则不可见
+    if (!folder.is_visible) return false
+    
+    // 递归检查父文件夹
+    return await this.isFolderVisible(folder.parent_id)
+  }
 }
 
 module.exports = FolderModel

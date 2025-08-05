@@ -12,7 +12,8 @@ class PanoramaModel {
       keyword = '',
       bounds = null,
       folderId = null,
-      includeHidden = false
+      includeHidden = false,
+      visibleFolderIds = null
     } = options
     
     try {
@@ -21,7 +22,8 @@ class PanoramaModel {
         includeHidden,
         folderId,
         keyword,
-        bounds
+        bounds,
+        visibleFolderIds
       })
       
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -66,14 +68,39 @@ class PanoramaModel {
   
   // 根据边界获取全景图
   static async findByBounds(bounds) {
-    const { north, south, east, west } = bounds
+    const { north, south, east, west, includeHidden = false, visibleFolderIds = null } = bounds
+    
+    let conditions = [
+      'latitude BETWEEN ? AND ?',
+      'longitude BETWEEN ? AND ?'
+    ]
+    let params = [south, north, west, east]
+    
+    // 添加可见性条件
+    if (!includeHidden) {
+      conditions.push('is_visible = TRUE')
+    }
+    
+    // 添加文件夹可见性条件
+    if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
+      if (visibleFolderIds.length === 0) {
+        // 如果没有可见文件夹，只返回根目录下的项目
+        conditions.push('folder_id IS NULL')
+      } else {
+        // 包含可见文件夹和根目录
+        const placeholders = visibleFolderIds.map(() => '?').join(',')
+        conditions.push(`(folder_id IS NULL OR folder_id IN (${placeholders}))`)
+        params.push(...visibleFolderIds)
+      }
+    }
+    
     const sql = `
       SELECT * FROM panoramas 
-      WHERE latitude BETWEEN ? AND ? 
-      AND longitude BETWEEN ? AND ?
+      WHERE ${conditions.join(' AND ')}
       ORDER BY created_at DESC
     `
-    const [rows] = await pool.execute(sql, [south, north, west, east])
+    
+    const [rows] = await pool.execute(sql, params)
     return rows
   }
   
