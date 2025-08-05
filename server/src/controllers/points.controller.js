@@ -52,6 +52,7 @@ class PointsController {
         gcj02Lat: item.gcj02_lat,
         gcj02Lng: item.gcj02_lng,
         url: item.video_url,
+        videoUrl: item.video_url, // 添加 videoUrl 字段供前端识别
         thumbnailUrl: item.thumbnail_url
       }))
 
@@ -125,6 +126,7 @@ class PointsController {
         gcj02Lat: item.gcj02_lat,
         gcj02Lng: item.gcj02_lng,
         url: item.video_url,
+        videoUrl: item.video_url, // 添加 videoUrl 字段供前端识别
         thumbnailUrl: item.thumbnail_url
       }))
 
