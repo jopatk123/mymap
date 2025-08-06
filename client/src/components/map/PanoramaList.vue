@@ -93,7 +93,8 @@ const props = defineProps({
 
 const emit = defineEmits([
   'select-panorama',
-  'view-panorama', 
+  'view-panorama',
+  'view-video',
   'locate-panorama',
   'load-more'
 ])
@@ -103,7 +104,14 @@ const selectPanorama = (panorama) => {
 }
 
 const viewPanorama = (panorama) => {
-  emit('view-panorama', panorama)
+  // 根据点位类型发出不同的事件
+  if (panorama.type === 'video' || panorama.video_url) {
+    // 视频点位 - 发出视频查看事件
+    emit('view-video', panorama)
+  } else {
+    // 全景图点位 - 发出全景图查看事件
+    emit('view-panorama', panorama)
+  }
 }
 
 const locatePanorama = (panorama) => {

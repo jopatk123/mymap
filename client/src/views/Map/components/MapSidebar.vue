@@ -29,6 +29,7 @@
         :has-more="hasMore"
         @select-panorama="$emit('select-panorama', $event)"
         @view-panorama="$emit('view-panorama', $event)"
+        @view-video="$emit('view-video', $event)"
         @locate-panorama="$emit('locate-panorama', $event)"
         @load-more="$emit('load-more')"
       />
@@ -78,6 +79,7 @@ defineEmits([
   'search',
   'select-panorama',
   'view-panorama',
+  'view-video',
   'locate-panorama',
   'load-more'
 ])

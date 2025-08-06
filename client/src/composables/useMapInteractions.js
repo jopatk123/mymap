@@ -48,6 +48,12 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     openPanoramaViewer(panorama)
   }
 
+  // 查看视频 - 打开视频播放器
+  const viewVideo = (video) => {
+    selectedVideo.value = video
+    showVideoModal.value = true
+  }
+
   // 定位到全景图
   const locatePanorama = (panorama) => {
     if (mapRef.value) {
@@ -118,6 +124,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     handleMapClick,
     selectPanorama,
     viewPanorama,
+    viewVideo,
     locatePanorama,
     handleSearch,
 

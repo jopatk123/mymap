@@ -24,6 +24,7 @@
 
       @select-panorama="selectPanorama"
       @view-panorama="viewPanorama"
+      @view-video="viewVideo"
       @locate-panorama="locatePanorama"
       @load-more="loadMore"
     />
@@ -164,6 +165,7 @@ const {
   handleMapClick,
   selectPanorama,
   viewPanorama,
+  viewVideo,
   locatePanorama,
   handleSearch,
 
