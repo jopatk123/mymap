@@ -178,7 +178,7 @@ class KmlFileStyleModel {
     const numericFields = {
       point_size: { min: 1, max: 50 },
       point_opacity: { min: 0, max: 1 },
-      point_label_size: { min: 8, max: 24 },
+      point_label_size: { min: 0, max: 24 },
       line_width: { min: 1, max: 20 },
       line_opacity: { min: 0, max: 1 },
       polygon_fill_opacity: { min: 0, max: 1 },

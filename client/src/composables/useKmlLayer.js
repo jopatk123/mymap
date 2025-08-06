@@ -39,25 +39,25 @@ export function useKmlLayer(map, kmlLayers) {
           return {};
         },
         pointToLayer: (feature, latlng) => {
-          const showLabel = Number(effectiveStyle.point_label_size) > 0;
-
-          if (!showLabel) {
-            return L.circleMarker(latlng, {
-                renderer: L.canvas(),
-                color: effectiveStyle.point_color,
-                fillColor: effectiveStyle.point_color,
-                fillOpacity: effectiveStyle.point_opacity,
-                weight: 1,
-                radius: effectiveStyle.point_size,
-            });
-          }
-
           const pointSize = effectiveStyle.point_size;
-          const labelSize = effectiveStyle.point_label_size;
+          const labelSize = Number(effectiveStyle.point_label_size);
           const pointColor = effectiveStyle.point_color;
           const labelColor = effectiveStyle.point_label_color;
           const pointOpacity = effectiveStyle.point_opacity;
 
+          // 当字体大小为0时，不显示标签，只显示点
+          if (labelSize === 0) {
+            return L.circleMarker(latlng, {
+                renderer: L.canvas(),
+                color: pointColor,
+                fillColor: pointColor,
+                fillOpacity: pointOpacity,
+                weight: 1,
+                radius: pointSize,
+            });
+          }
+
+          // 字体大小大于0时，显示点和标签
           const iconHtml = `
             <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
               <div style="
