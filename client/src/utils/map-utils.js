@@ -98,15 +98,20 @@ function getIconShapeHtml(type, size, color, opacity) {
  * @returns {L.Marker}
  */
 export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
-  // 使用全局样式配置或默认样式
-  const styles = styleConfig || window.panoramaPointStyles || {
-    point_color: '#2ed573',
-    point_size: 8,
-    point_opacity: 1.0,
-    point_icon_type: 'circle',
-    point_label_size: 12,
-    point_label_color: '#000000'
+  // 确保全局样式变量存在
+  if (!window.panoramaPointStyles) {
+    window.panoramaPointStyles = {
+      point_color: '#2ed573',
+      point_size: 8,
+      point_opacity: 1.0,
+      point_icon_type: 'circle',
+      point_label_size: 12,
+      point_label_color: '#000000'
+    }
   }
+  
+  // 使用全局样式配置或默认样式
+  const styles = styleConfig || window.panoramaPointStyles
   
 
 
@@ -219,15 +224,20 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
  * @returns {L.Marker}
  */
 export function createVideoMarker(latlng, options = {}, styleConfig = null) {
-  // 使用全局样式配置或默认样式
-  const styles = styleConfig || window.videoPointStyles || {
-    point_color: '#ff4757',
-    point_size: 10,
-    point_opacity: 1.0,
-    point_icon_type: 'marker',
-    point_label_size: 14,
-    point_label_color: '#000000'
+  // 确保全局样式变量存在
+  if (!window.videoPointStyles) {
+    window.videoPointStyles = {
+      point_color: '#ff4757',
+      point_size: 10,
+      point_opacity: 1.0,
+      point_icon_type: 'marker',
+      point_label_size: 14,
+      point_label_color: '#000000'
+    }
   }
+  
+  // 使用全局样式配置或默认样式
+  const styles = styleConfig || window.videoPointStyles
   
 
 

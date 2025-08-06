@@ -23,15 +23,32 @@ export function usePointStyles() {
     point_label_color: '#000000'
   })
 
+  // 初始化全局变量
+  const initGlobalStyles = () => {
+    if (!window.videoPointStyles) {
+      window.videoPointStyles = videoPointStyles.value
+    }
+    if (!window.panoramaPointStyles) {
+      window.panoramaPointStyles = panoramaPointStyles.value
+    }
+  }
+
+  // 立即初始化全局变量
+  initGlobalStyles()
+
   // 加载视频点位样式
   const loadVideoPointStyles = async () => {
     try {
       loading.value = true
       const response = await videoPointStyleApi.getStyles()
       videoPointStyles.value = response.data
+      // 更新全局变量
+      window.videoPointStyles = videoPointStyles.value
       return response.data
     } catch (error) {
       console.error('加载视频点位样式失败:', error)
+      // 确保全局变量仍然有默认值
+      window.videoPointStyles = videoPointStyles.value
       return videoPointStyles.value // 返回默认样式
     } finally {
       loading.value = false
@@ -44,9 +61,13 @@ export function usePointStyles() {
       loading.value = true
       const response = await panoramaPointStyleApi.getStyles()
       panoramaPointStyles.value = response.data
+      // 更新全局变量
+      window.panoramaPointStyles = panoramaPointStyles.value
       return response.data
     } catch (error) {
       console.error('加载全景图点位样式失败:', error)
+      // 确保全局变量仍然有默认值
+      window.panoramaPointStyles = panoramaPointStyles.value
       return panoramaPointStyles.value // 返回默认样式
     } finally {
       loading.value = false

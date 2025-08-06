@@ -24,19 +24,8 @@ export function useFileManagement() {
   // 加载文件列表
   const loadFileList = async () => {
     try {
-      console.log('开始加载文件列表...')
       loading.value = true
       const folderId = selectedFolder.value?.id || 0
-      
-      console.log('请求参数:', {
-        folderId,
-        searchForm,
-        page: pagination.page,
-        pageSize: pagination.pageSize
-      })
-      
-      // 使用文件夹API获取所有类型的文件（包括KML文件）
-      console.log('🔥 调用文件夹内容API: /api/folders/{id}/contents')
       const response = await folderApi.getFolderContents(folderId, {
         keyword: searchForm.keyword,
         includeHidden: searchForm.includeHidden,
@@ -44,10 +33,6 @@ export function useFileManagement() {
         page: pagination.page,
         pageSize: pagination.pageSize
       })
-      console.log('🔥 文件夹内容API响应:', response)
-      
-      console.log('API响应:', response)
-      console.log('文件列表数据:', response.data)
       
       // 转换数据格式以适配现有组件
       fileList.value = response.data.map(item => ({
@@ -64,8 +49,6 @@ export function useFileManagement() {
       }))
       
       pagination.total = response.pagination?.total || response.data.length
-      
-      console.log('文件列表更新完成，当前文件数量:', fileList.value.length)
     } catch (error) {
       console.error('请求详细错误:', error)
       ElMessage.error('加载文件列表失败: ' + error.message)

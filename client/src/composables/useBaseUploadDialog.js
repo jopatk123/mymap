@@ -39,7 +39,6 @@ export function useBaseUploadDialog(props, emit) {
         message: '请选择文件', 
         trigger: 'change',
         validator: (rule, value, callback) => {
-          console.log('File validation - value:', value)
           if (!value) {
             callback(new Error('请选择文件'))
           } else {
@@ -69,7 +68,6 @@ export function useBaseUploadDialog(props, emit) {
   const canSubmit = computed(() => {
     const hasFile = form.file && form.file instanceof File
     const notUploading = !uploading.value && !processing.value
-    console.log('canSubmit check - hasFile:', hasFile, 'notUploading:', notUploading, 'form.file:', form.file)
     return hasFile && notUploading
   })
 

@@ -72,21 +72,16 @@ const previewUrl = computed({
 })
 
 const handleFileChange = (file) => {
-  console.log('VideoUploadArea handleFileChange called with:', file)
-  
   // 检查文件对象是否有效
   if (!file || !file.raw) {
-    console.error('VideoUploadArea: 文件对象无效!', file)
     ElMessage.error('文件对象无效!')
     return false
   }
   
   const rawFile = file.raw
-  console.log('VideoUploadArea: Raw file object:', rawFile)
   
   // 检查原始文件对象
   if (!rawFile || !rawFile.type || !rawFile.size) {
-    console.error('VideoUploadArea: 文件信息不完整!', rawFile)
     ElMessage.error('文件信息不完整!')
     return false
   }
@@ -94,8 +89,6 @@ const handleFileChange = (file) => {
   // 验证文件
   const isVideo = rawFile.type.startsWith('video/')
   const isLt500M = rawFile.size / 1024 / 1024 < 500
-  
-  console.log('VideoUploadArea: File validation - isVideo:', isVideo, 'isLt500M:', isLt500M)
   
   if (!isVideo) {
     ElMessage.error('只能上传视频文件!')
@@ -110,11 +103,9 @@ const handleFileChange = (file) => {
   // 创建预览URL
   if (rawFile) {
     previewUrl.value = URL.createObjectURL(rawFile)
-    console.log('VideoUploadArea: Preview URL created:', previewUrl.value)
   }
   
   file.value = rawFile
-  console.log('VideoUploadArea: Emitting file-change event with file:', file)
   emit('file-change', file)
   
   return true

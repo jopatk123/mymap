@@ -202,8 +202,23 @@ onMounted(async () => {
   await loadAllPointStyles()
   
   // 将样式配置存储到全局变量，供地图标记使用
-  window.videoPointStyles = videoPointStyles.value
-  window.panoramaPointStyles = panoramaPointStyles.value
+  // 确保即使 API 调用失败，也有默认值
+  window.videoPointStyles = videoPointStyles.value || {
+    point_color: '#ff4757',
+    point_size: 10,
+    point_opacity: 1.0,
+    point_icon_type: 'marker',
+    point_label_size: 14,
+    point_label_color: '#000000'
+  }
+  window.panoramaPointStyles = panoramaPointStyles.value || {
+    point_color: '#2ed573',
+    point_size: 8,
+    point_opacity: 1.0,
+    point_icon_type: 'circle',
+    point_label_size: 12,
+    point_label_color: '#000000'
+  }
   
   console.log('点位样式配置已加载:', {
     video: window.videoPointStyles,
@@ -282,8 +297,23 @@ const handlePointStylesUpdated = async () => {
     await loadAllPointStyles()
     
     // 更新全局变量
-    window.videoPointStyles = videoPointStyles.value
-    window.panoramaPointStyles = panoramaPointStyles.value
+    // 确保即使 API 调用失败，也有默认值
+    window.videoPointStyles = videoPointStyles.value || {
+      point_color: '#ff4757',
+      point_size: 10,
+      point_opacity: 1.0,
+      point_icon_type: 'marker',
+      point_label_size: 14,
+      point_label_color: '#000000'
+    }
+    window.panoramaPointStyles = panoramaPointStyles.value || {
+      point_color: '#2ed573',
+      point_size: 8,
+      point_opacity: 1.0,
+      point_icon_type: 'circle',
+      point_label_size: 12,
+      point_label_color: '#000000'
+    }
     
     console.log('更新后的点位样式配置:', {
       video: window.videoPointStyles,

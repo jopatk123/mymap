@@ -5,23 +5,18 @@ export function useVideoProcessor() {
   const previewUrl = ref('')
   
   const processFile = async (file, form) => {
-    console.log('useVideoProcessor processFile called with:', file, 'form:', form)
-    
     // 设置文件到表单
     form.file = file
-    console.log('Form file set to:', form.file)
     
     // 自动提取文件名作为标题
     if (!form.title && file.name) {
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       form.title = nameWithoutExt
-      console.log('Form title set to:', form.title)
     }
     
     // 创建预览URL
     if (file) {
       previewUrl.value = URL.createObjectURL(file)
-      console.log('Preview URL created:', previewUrl.value)
     }
     
     return { previewUrl: previewUrl.value }
@@ -84,7 +79,6 @@ export function useKmlProcessor() {
   
   const validateKmlFile = async (file) => {
     try {
-      console.log('开始前端KML文件验证:', file.name)
       
       // 前端基本验证：读取文件内容并检查XML格式
       const fileContent = await readFileAsText(file)
@@ -209,13 +203,11 @@ export function usePanoramaProcessor() {
   const previewUrl = ref('')
   
   const processFile = async (file, form) => {
-    console.log('usePanoramaProcessor processFile called with:', file, 'form:', form)
     
     const { imageProcessor } = await import('@/services/ImageProcessor.js')
     
     try {
       const result = await imageProcessor.processFile(file)
-      console.log('ImageProcessor result:', result)
       
       // 设置文件到表单
       if (form) {
@@ -247,25 +239,19 @@ export function usePanoramaProcessor() {
   }
   
   const validateFile = (file) => {
-    console.log('usePanoramaProcessor validateFile called with:', file)
-    
     // 检查文件对象是否有效
     if (!file || typeof file !== 'object') {
-      console.error('usePanoramaProcessor: 文件对象无效!', file)
       ElMessage.error('文件对象无效!')
       return false
     }
     
     if (!file.type || !file.size) {
-      console.error('usePanoramaProcessor: 文件信息不完整!', { type: file.type, size: file.size })
       ElMessage.error('文件信息不完整!')
       return false
     }
     
     const isImage = file.type.startsWith('image/')
     const isLt50M = file.size / 1024 / 1024 < 50
-    
-    console.log('usePanoramaProcessor: File validation - isImage:', isImage, 'isLt50M:', isLt50M, 'type:', file.type, 'size:', file.size)
     
     if (!isImage) {
       ElMessage.error('只能上传图片文件!')
@@ -276,7 +262,6 @@ export function usePanoramaProcessor() {
       return false
     }
     
-    console.log('usePanoramaProcessor: File validation passed')
     return true
   }
   
