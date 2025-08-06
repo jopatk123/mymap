@@ -181,9 +181,11 @@ const handleSave = async () => {
     if (selectedPointType.value === 'video') {
       await videoPointStyleApi.updateStyles(apiConfig)
       videoStyles.value = { ...currentStyles }
+      window.videoPointStyles = apiConfig // 更新全局变量
     } else {
       await panoramaPointStyleApi.updateStyles(apiConfig)
       panoramaStyles.value = { ...currentStyles }
+      window.panoramaPointStyles = apiConfig // 更新全局变量
     }
     
     ElMessage.success('点位样式配置保存成功')
@@ -212,9 +214,11 @@ const handleReset = async () => {
     if (selectedPointType.value === 'video') {
       const response = await videoPointStyleApi.resetStyles()
       videoStyles.value = convertFromApiFormat(response.data)
+      window.videoPointStyles = response.data // 更新全局变量
     } else {
       const response = await panoramaPointStyleApi.resetStyles()
       panoramaStyles.value = convertFromApiFormat(response.data)
+      window.panoramaPointStyles = response.data // 更新全局变量
     }
     
     // 重新选择当前类型以更新编辑器

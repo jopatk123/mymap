@@ -160,7 +160,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
   const iconAnchor = [styles.point_size, anchorY];
 
   const icon = L.divIcon({
-    className: 'panorama-marker custom-div-icon',
+    className: 'panorama-marker',
     html: iconHtml,
     iconSize: iconSize,
     iconAnchor: iconAnchor
