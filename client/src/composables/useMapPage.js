@@ -94,7 +94,6 @@ export function useMapPage() {
             // 1. 并行加载点位数据和KML文件基础数据
       const [pointsResponse, kmlFilesResponse] = await Promise.all([
         pointsApi.getAllPoints({
-          pageSize: 1000,
           respectFolderVisibility: true
         }),
         kmlApi.getKmlFiles({
@@ -105,9 +104,7 @@ export function useMapPage() {
 
       // 2. 处理点位数据
       const allPoints = pointsResponse.data || [];
-      const filteredPoints = allPoints.filter(point =>
-        point.type !== 'kml' && point.lat != null && point.lng != null
-      );
+      const filteredPoints = allPoints.filter(point => point.type !== 'kml');
       window.allPoints = filteredPoints || [];
 
       // 3. 为每个KML文件加载其详细样式

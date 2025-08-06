@@ -95,10 +95,10 @@ onMounted(() => {
 watch(() => props.panoramas, (newPanoramas) => {
   clearMarkers()
   
-  // 只显示所有点位（包括全景图和视频点位）
-  // 不再单独处理props.panoramas，避免重复显示
-  if (window.allPoints && window.allPoints.length > 0) {
-    addPointMarkers(window.allPoints)
+  // 优先使用全局点位数据，如果不存在则使用props数据
+  const pointsToShow = window.allPoints && window.allPoints.length > 0 ? window.allPoints : newPanoramas
+  if (pointsToShow && pointsToShow.length > 0) {
+    addPointMarkers(pointsToShow)
   }
   
   // 注意：KML图层的初始化现在由useMapPage.js中的loadInitialData处理
@@ -109,6 +109,14 @@ watch(() => props.panoramas, (newPanoramas) => {
 watch(mapType, (newType) => {
   changeMapType(newType)
 })
+
+// 监听全局点位数据变化
+watch(() => window.allPoints, (newPoints) => {
+  if (newPoints && newPoints.length > 0) {
+    clearMarkers()
+    addPointMarkers(newPoints)
+  }
+}, { deep: true })
 
 // 切换地图类型 (更新全局状态)
 const handleMapTypeChange = (type) => {

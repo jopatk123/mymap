@@ -5,15 +5,23 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   const addPointMarker = (point) => {
     if (!map.value) return null;
 
+    // 获取坐标信息，支持多种字段名
     let displayLat = point.lat || point.latitude;
     let displayLng = point.lng || point.longitude;
 
+    // 优先使用GCJ02坐标
     if (point.gcj02Lat && point.gcj02Lng) {
       displayLat = point.gcj02Lat;
       displayLng = point.gcj02Lng;
     } else if (point.gcj02_lat && point.gcj02_lng) {
       displayLat = point.gcj02_lat;
       displayLng = point.gcj02_lng;
+    }
+
+    // 检查坐标是否有效
+    if (displayLat == null || displayLng == null || isNaN(displayLat) || isNaN(displayLng)) {
+      console.warn('点位坐标无效:', point);
+      return null;
     }
 
     const pointType = point.type || 'panorama';
