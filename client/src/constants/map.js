@@ -2,6 +2,7 @@ export const defaultStyles = {
   point_color: '#ff7800',
   point_size: 8,
   point_opacity: 1.0,
+  point_icon_type: 'marker',
   point_label_size: 12,
   point_label_color: '#000000',
   line_color: '#ff7800',

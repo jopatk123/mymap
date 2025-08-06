@@ -91,6 +91,35 @@ class StyleRenderer {
   }
 
   /**
+   * 渲染点样式
+   * @param {Object} point 点数据
+   * @param {Object} styleConfig 样式配置
+   * @returns {Object} 点样式配置
+   */
+  renderPointStyle(point, styleConfig) {
+    const cacheKey = `point_${JSON.stringify(styleConfig)}`
+    
+    if (this.styleCache.has(cacheKey)) {
+      return this.styleCache.get(cacheKey)
+    }
+
+    const pointSize = styleConfig.point_size || defaultStyles.point_size
+    const pointColor = styleConfig.point_color || defaultStyles.point_color
+    const pointOpacity = styleConfig.point_opacity || defaultStyles.point_opacity
+    const iconType = styleConfig.point_icon_type || 'circle'
+
+    const style = {
+      size: pointSize,
+      color: pointColor,
+      opacity: pointOpacity,
+      iconType: iconType
+    }
+
+    this.styleCache.set(cacheKey, style)
+    return style
+  }
+
+  /**
    * 渲染聚合图标样式
    * @param {Object} cluster 聚合数据
    * @param {Object} styleConfig 样式配置

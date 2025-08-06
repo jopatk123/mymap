@@ -8,7 +8,7 @@ class KmlFileStyleModel {
       point_color: '#ff7800',
       point_size: 8,
       point_opacity: 1.0,
-      point_icon_type: 'circle',
+      point_icon_type: 'marker',
       point_label_size: 12,
       point_label_color: '#000000',
       
@@ -199,7 +199,7 @@ class KmlFileStyleModel {
     
     // 验证枚举字段
     const enumFields = {
-      point_icon_type: ['circle', 'square', 'triangle', 'diamond'],
+      point_icon_type: ['circle', 'square', 'triangle', 'diamond', 'marker'],
       line_style: ['solid', 'dashed', 'dotted', 'dash-dot'],
       polygon_stroke_style: ['solid', 'dashed', 'dotted']
     }

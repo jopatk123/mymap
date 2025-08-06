@@ -34,7 +34,7 @@
           />
         </el-form-item>
         
-        <el-form-item label="图标类型">
+        <el-form-item label="标记形状">
           <el-select 
             v-model="localStyles.iconType"
             @change="handleChange"
@@ -44,7 +44,7 @@
             <el-option label="方形" value="square" />
             <el-option label="三角形" value="triangle" />
             <el-option label="菱形" value="diamond" />
-            <el-option label="水滴形" value="marker" />
+            <el-option label="地图标记" value="marker" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -104,7 +104,7 @@ const props = defineProps({
       color: '#ff7800',
       size: 8,
       opacity: 1.0,
-      iconType: 'circle',
+      iconType: 'marker',
       labelSize: 12,
       labelColor: '#000000'
     })
@@ -118,7 +118,7 @@ const localStyles = reactive({
   color: '#ff7800',
   size: 8,
   opacity: 1.0,
-  iconType: 'circle',
+  iconType: 'marker',
   labelSize: 12,
   labelColor: '#000000'
 })
@@ -150,20 +150,57 @@ const handleChange = () => {
 
 // 预览样式
 const previewStyle = computed(() => {
-  const iconShapes = {
-    circle: 'border-radius: 50%',
-    square: 'border-radius: 0',
-    triangle: 'clip-path: polygon(50% 0%, 0% 100%, 100% 100%)',
-    diamond: 'transform: rotate(45deg)',
-    marker: 'border-radius: 50% 50% 50% 0; transform: rotate(-45deg)'
-  }
-  
-  return {
+  const baseStyle = {
     backgroundColor: localStyles.color,
     width: `${localStyles.size * 2}px`,
     height: `${localStyles.size * 2}px`,
     opacity: localStyles.opacity,
-    ...iconShapes[localStyles.iconType] && { [iconShapes[localStyles.iconType].split(':')[0]]: iconShapes[localStyles.iconType].split(':')[1] }
+    position: 'relative',
+    display: 'inline-block'
+  }
+
+  switch (localStyles.iconType) {
+    case 'circle':
+      return { ...baseStyle, borderRadius: '50%' }
+    case 'square':
+      return { ...baseStyle, borderRadius: '0' }
+    case 'triangle':
+      return {
+        ...baseStyle,
+        backgroundColor: 'transparent',
+        width: '0',
+        height: '0',
+        borderLeft: `${localStyles.size}px solid transparent`,
+        borderRight: `${localStyles.size}px solid transparent`,
+        borderBottom: `${localStyles.size * 1.8}px solid ${localStyles.color}`,
+        opacity: localStyles.opacity
+      }
+    case 'diamond':
+      return { 
+        ...baseStyle, 
+        transform: 'rotate(45deg)',
+        borderRadius: '0'
+      }
+    case 'marker':
+      // 地图标记使用SVG，这里显示一个简化的预览
+      return {
+        ...baseStyle,
+        backgroundColor: 'transparent',
+        backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="${localStyles.size * 2}" height="${localStyles.size * 3.2}" viewBox="0 0 25 41">
+            <path fill="${localStyles.color}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z"/>
+            <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+            <circle fill="${localStyles.color}" cx="12.5" cy="12.5" r="3"/>
+          </svg>
+        `)}")`,
+        backgroundSize: 'contain',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        width: `${localStyles.size * 2}px`,
+        height: `${localStyles.size * 3.2}px`
+      }
+    default:
+      return { ...baseStyle, borderRadius: '50%' }
   }
 })
 
@@ -197,10 +234,11 @@ const labelStyle = computed(() => ({
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 80px;
+      height: 100px;
       background-color: #f5f7fa;
       border-radius: 6px;
       position: relative;
+      padding-top: 20px;
       
       .preview-point {
         position: relative;
@@ -212,12 +250,17 @@ const labelStyle = computed(() => ({
       
       .preview-label {
         position: absolute;
-        top: 100%;
+        bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        margin-top: 4px;
+        margin-bottom: 4px;
         white-space: nowrap;
         font-weight: 500;
+        padding: 2px 5px;
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
       }
     }
   }

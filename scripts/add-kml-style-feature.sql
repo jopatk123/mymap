@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS kml_file_styles (
     point_color VARCHAR(32) DEFAULT '#ff7800' COMMENT '点颜色',
     point_size INT DEFAULT 8 COMMENT '点大小',
     point_opacity DECIMAL(3,2) DEFAULT 1.0 COMMENT '点透明度',
-    point_icon_type VARCHAR(50) DEFAULT 'circle' COMMENT '点图标类型',
+    point_icon_type VARCHAR(50) DEFAULT 'marker' COMMENT '点图标类型',
     point_label_size INT DEFAULT 12 COMMENT '标签字体大小',
     point_label_color VARCHAR(32) DEFAULT '#000000' COMMENT '标签颜色',
     
