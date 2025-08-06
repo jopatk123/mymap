@@ -23,7 +23,7 @@ import { computed } from 'vue'
 const props = defineProps({
   modelValue: {
     type: [Number, String],
-    default: 0
+    default: null  // 默认为null，由父组件设置具体的默认文件夹ID
   },
   folders: {
     type: Array,
