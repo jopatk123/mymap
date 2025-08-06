@@ -28,15 +28,7 @@ CREATE TABLE IF NOT EXISTS kml_file_styles (
     polygon_stroke_width INT DEFAULT 2 COMMENT '面边框宽度',
     polygon_stroke_style ENUM('solid', 'dashed', 'dotted') DEFAULT 'solid' COMMENT '面边框样式',
     
-    -- 聚合配置
-    cluster_enabled BOOLEAN DEFAULT TRUE COMMENT '是否启用聚合',
-    cluster_radius INT DEFAULT 50 COMMENT '聚合半径(像素)',
-    cluster_min_points INT DEFAULT 2 COMMENT '最小聚合点数',
-    cluster_max_zoom INT DEFAULT 16 COMMENT '最大聚合缩放级别',
-    cluster_icon_color VARCHAR(32) DEFAULT '#409EFF' COMMENT '聚合图标颜色',
-    cluster_text_color VARCHAR(32) DEFAULT '#FFFFFF' COMMENT '聚合文字颜色',
-  
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   
   -- 外键约束
@@ -49,22 +41,5 @@ CREATE TABLE IF NOT EXISTS kml_file_styles (
   INDEX idx_kml_file_id (kml_file_id),
   INDEX idx_cluster_enabled (cluster_enabled)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='KML文件样式配置表';
-
--- 创建全景图聚合全局配置表
-CREATE TABLE IF NOT EXISTS panorama_cluster_config (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  cluster_enabled BOOLEAN DEFAULT TRUE COMMENT '是否启用全景图聚合',
-  cluster_radius INT DEFAULT 50 COMMENT '聚合半径',
-  cluster_min_points INT DEFAULT 2 COMMENT '最小聚合点数',
-  cluster_max_zoom INT DEFAULT 16 COMMENT '最大聚合缩放级别',
-  cluster_icon_color VARCHAR(7) DEFAULT '#67C23A' COMMENT '聚合图标颜色',
-  cluster_text_color VARCHAR(7) DEFAULT '#FFFFFF' COMMENT '聚合文字颜色',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='全景图聚合配置表';
-
--- 插入默认全景图聚合配置
-INSERT INTO panorama_cluster_config (id) VALUES (1) 
-ON DUPLICATE KEY UPDATE id = id;
 
 COMMIT;

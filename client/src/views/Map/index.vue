@@ -215,9 +215,9 @@ onMounted(async () => {
   }
   window.panoramaPointStyles = panoramaPointStyles.value || {
     point_color: '#2ed573',
-    point_size: 8,
+    point_size: 10,
     point_opacity: 1.0,
-    point_icon_type: 'circle',
+    point_icon_type: 'marker',
     point_label_size: 12,
     point_label_color: '#000000'
   }
@@ -308,14 +308,14 @@ const handlePointStylesUpdated = async () => {
       point_label_size: 14,
       point_label_color: '#000000'
     }
-    window.panoramaPointStyles = panoramaPointStyles.value || {
-      point_color: '#2ed573',
-      point_size: 8,
-      point_opacity: 1.0,
-      point_icon_type: 'circle',
-      point_label_size: 12,
-      point_label_color: '#000000'
-    }
+      window.panoramaPointStyles = panoramaPointStyles.value || {
+    point_color: '#2ed573',
+    point_size: 10,
+    point_opacity: 1.0,
+    point_icon_type: 'marker',
+    point_label_size: 12,
+    point_label_color: '#000000'
+  }
     
     console.log('更新后的点位样式配置:', {
       video: window.videoPointStyles,

@@ -38,6 +38,11 @@ html, body {
   }
 }
 
+.custom-div-icon {
+  background-color: transparent !important;
+  border: none !important;
+}
+
 // 模态框样式
 .panorama-modal {
   .el-dialog__body {

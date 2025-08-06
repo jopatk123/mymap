@@ -30,26 +30,6 @@ export function createAMapTileLayer(type = 'normal') {
  */
 function getIconShapeHtml(type, size, color, opacity) {
   switch (type) {
-    case 'circle':
-      return `<div style="
-        width: ${size * 2}px;
-        height: ${size * 2}px;
-        background-color: ${color};
-        opacity: ${opacity};
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      "></div>`
-    case 'square':
-      return `<div style="
-        width: ${size * 2}px;
-        height: ${size * 2}px;
-        background-color: ${color};
-        opacity: ${opacity};
-        border-radius: 0;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      "></div>`
     case 'triangle':
       return `<div style="
         width: 0;
@@ -98,76 +78,52 @@ function getIconShapeHtml(type, size, color, opacity) {
  * @returns {L.Marker}
  */
 export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
-  // 确保全局样式变量存在
   if (!window.panoramaPointStyles) {
     window.panoramaPointStyles = {
       point_color: '#2ed573',
-      point_size: 8,
+      point_size: 10,
       point_opacity: 1.0,
-      point_icon_type: 'circle',
+      point_icon_type: 'marker',
       point_label_size: 12,
       point_label_color: '#000000'
     }
   }
   
-  // 使用全局样式配置或默认样式
-  const styles = styleConfig || window.panoramaPointStyles
-  
-
-
+  const styles = styleConfig ?? window.panoramaPointStyles
   const labelText = options.title || '全景图'
   const labelSize = styles.point_label_size || 12
 
-  // 如果标签大小为0，只显示图标
+  // 强制使用 'marker' 图标
+  const point_icon_type = 'marker';
+
   if (labelSize === 0) {
     const iconHtml = getIconShapeHtml(
-      styles.point_icon_type,
+      point_icon_type,
       styles.point_size,
       styles.point_color,
       styles.point_opacity
     )
-
-    const iconSize = styles.point_icon_type === 'marker' ? 
-      [styles.point_size * 2, styles.point_size * 3.2] : 
-      [styles.point_size * 2, styles.point_size * 2]
-    
-    const iconAnchor = styles.point_icon_type === 'marker' ? 
-      [styles.point_size, styles.point_size * 3.2] : 
-      [styles.point_size, styles.point_size]
-
+    const iconSize = [styles.point_size * 2, styles.point_size * 3.2];
+    const iconAnchor = [styles.point_size, styles.point_size * 3.2];
     const icon = L.divIcon({
       className: 'panorama-marker',
       html: iconHtml,
       iconSize: iconSize,
       iconAnchor: iconAnchor
     })
-
     return L.marker(latlng, { icon, ...options })
   }
 
-  // 显示图标和标签
   const getLabelPosition = (type, size, labelSize) => {
     switch (type) {
       case 'marker':
-        return {
-          top: `-${size * 1.2 + labelSize + 4}px`,
-          marginBottom: '2px'
-        }
-      case 'triangle':
-        return {
-          top: `-${labelSize + 4}px`,
-          marginBottom: '2px'
-        }
+        return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' }
       default:
-        return {
-          top: `-${labelSize + 4}px`,
-          marginBottom: '2px'
-        }
+        return { top: `-${labelSize + 4}px`, marginBottom: '2px' }
     }
   }
 
-  const labelPosition = getLabelPosition(styles.point_icon_type, styles.point_size, labelSize)
-
+  const labelPosition = getLabelPosition(point_icon_type, styles.point_size, labelSize)
   const iconHtml = `
     <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
       <div style="
@@ -193,21 +149,18 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
       ">
         ${labelText}
       </div>
-      ${getIconShapeHtml(styles.point_icon_type, styles.point_size, styles.point_color, styles.point_opacity)}
+      ${getIconShapeHtml(point_icon_type, styles.point_size, styles.point_color, styles.point_opacity)}
     </div>
   `
 
-  const iconHeight = styles.point_icon_type === 'marker' ? styles.point_size * 3.2 : styles.point_size * 2
-  const totalHeight = iconHeight + labelSize + 8
-  const iconSize = [styles.point_size * 2, totalHeight]
-  
-  const anchorY = styles.point_icon_type === 'marker' ? 
-    iconHeight + labelSize + 4 : 
-    styles.point_size + labelSize + 4
-  const iconAnchor = [styles.point_size, anchorY]
+  const iconHeight = styles.point_size * 3.2;
+  const totalHeight = iconHeight + labelSize + 8;
+  const iconSize = [styles.point_size * 2, totalHeight];
+  const anchorY = iconHeight + labelSize + 4;
+  const iconAnchor = [styles.point_size, anchorY];
 
   const icon = L.divIcon({
-    className: 'panorama-marker',
+    className: 'panorama-marker custom-div-icon',
     html: iconHtml,
     iconSize: iconSize,
     iconAnchor: iconAnchor
@@ -224,7 +177,6 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
  * @returns {L.Marker}
  */
 export function createVideoMarker(latlng, options = {}, styleConfig = null) {
-  // 确保全局样式变量存在
   if (!window.videoPointStyles) {
     window.videoPointStyles = {
       point_color: '#ff4757',
@@ -236,15 +188,10 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
     }
   }
   
-  // 使用全局样式配置或默认样式
-  const styles = styleConfig || window.videoPointStyles
-  
-
-
+  const styles = styleConfig ?? window.videoPointStyles
   const labelText = options.title || '视频点位'
   const labelSize = styles.point_label_size || 14
 
-  // 如果标签大小为0，只显示图标
   if (labelSize === 0) {
     const iconHtml = getIconShapeHtml(
       styles.point_icon_type,
@@ -252,48 +199,33 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
       styles.point_color,
       styles.point_opacity
     )
-
     const iconSize = styles.point_icon_type === 'marker' ? 
       [styles.point_size * 2, styles.point_size * 3.2] : 
       [styles.point_size * 2, styles.point_size * 2]
-    
     const iconAnchor = styles.point_icon_type === 'marker' ? 
       [styles.point_size, styles.point_size * 3.2] : 
       [styles.point_size, styles.point_size]
-
     const icon = L.divIcon({
       className: 'video-marker',
       html: iconHtml,
       iconSize: iconSize,
       iconAnchor: iconAnchor
     })
-
     return L.marker(latlng, { icon, ...options })
   }
 
-  // 显示图标和标签
   const getLabelPosition = (type, size, labelSize) => {
     switch (type) {
       case 'marker':
-        return {
-          top: `-${size * 1.2 + labelSize + 4}px`,
-          marginBottom: '2px'
-        }
+        return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' }
       case 'triangle':
-        return {
-          top: `-${labelSize + 4}px`,
-          marginBottom: '2px'
-        }
+        return { top: `-${labelSize + 4}px`, marginBottom: '2px' }
       default:
-        return {
-          top: `-${labelSize + 4}px`,
-          marginBottom: '2px'
-        }
+        return { top: `-${labelSize + 4}px`, marginBottom: '2px' }
     }
   }
 
   const labelPosition = getLabelPosition(styles.point_icon_type, styles.point_size, labelSize)
-
   const iconHtml = `
     <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
       <div style="

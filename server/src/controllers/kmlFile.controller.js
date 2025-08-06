@@ -1,7 +1,6 @@
 const KmlFileModel = require('../models/kmlFile.model')
 const KmlPointModel = require('../models/kmlPoint.model')
 const KmlFileStyleModel = require('../models/kmlFileStyle.model')
-const PanoramaClusterConfigModel = require('../models/panoramaClusterConfig.model')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
 const fs = require('fs').promises
@@ -653,47 +652,6 @@ class KmlFileController {
       res.status(500).json({
         success: false,
         message: '批量更新样式配置失败',
-        error: error.message
-      })
-    }
-  }
-
-  // 获取全景图聚合配置
-  static async getPanoramaClusterConfig(req, res) {
-    try {
-      const config = await PanoramaClusterConfigModel.getConfig()
-      
-      res.json({
-        success: true,
-        data: config
-      })
-    } catch (error) {
-      Logger.error('获取全景图聚合配置失败:', error)
-      res.status(500).json({
-        success: false,
-        message: '获取聚合配置失败',
-        error: error.message
-      })
-    }
-  }
-
-  // 更新全景图聚合配置
-  static async updatePanoramaClusterConfig(req, res) {
-    try {
-      const config = req.body
-      
-      const updatedConfig = await PanoramaClusterConfigModel.updateConfig(config)
-      
-      res.json({
-        success: true,
-        message: '聚合配置更新成功',
-        data: updatedConfig
-      })
-    } catch (error) {
-      Logger.error('更新全景图聚合配置失败:', error)
-      res.status(500).json({
-        success: false,
-        message: '更新聚合配置失败',
         error: error.message
       })
     }

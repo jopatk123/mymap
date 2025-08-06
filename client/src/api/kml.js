@@ -101,13 +101,4 @@ export const kmlApi = {
     return api.put('/kml-files/styles/batch', { styleConfigs })
   },
 
-  // 获取全景图聚合配置
-  getPanoramaClusterConfig() {
-    return api.get('/panorama-cluster-config')
-  },
-
-  // 更新全景图聚合配置
-  updatePanoramaClusterConfig(config) {
-    return api.put('/panorama-cluster-config', config)
-  }
 }

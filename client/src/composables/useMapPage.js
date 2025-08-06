@@ -104,8 +104,8 @@ export function useMapPage() {
 
       // 2. 处理点位数据
       const allPoints = pointsResponse.data || [];
-      const filteredPoints = allPoints.filter(point => point.type !== 'kml');
-      window.allPoints = filteredPoints || [];
+      window.allPoints = allPoints.filter(point => point.type !== 'kml') || [];
+
 
       // 3. 为每个KML文件加载其详细样式
       const kmlFiles = kmlFilesResponse.data || [];

@@ -18,16 +18,21 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       displayLng = point.gcj02_lng;
     }
 
-    // 检查坐标是否有效
+        // 检查坐标是否有效
     if (displayLat == null || displayLng == null || isNaN(displayLat) || isNaN(displayLng)) {
       console.warn('点位坐标无效:', point);
       return null;
     }
 
+    // 调试：打印点位信息
+    console.log('Adding point to map:', JSON.parse(JSON.stringify(point)));
+
     const pointType = point.type || 'panorama';
+    
     const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
     }, null); // 传递null作为styleConfig，让函数使用全局样式
+
 
     marker.on('click', () => {
       onMarkerClick.value(point);
