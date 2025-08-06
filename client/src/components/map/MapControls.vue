@@ -30,6 +30,11 @@
           <el-icon><Tools /></el-icon>
           KML设置
         </el-button>
+
+        <el-button @click="showPointSettings" type="primary">
+          <el-icon><Location /></el-icon>
+          点位图标
+        </el-button>
       </el-button-group>
     </div>
     
@@ -44,7 +49,7 @@
 <script setup>
 import { 
   Setting, 
-  View, Hide, Tools 
+  View, Hide, Tools, Location 
 } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -74,7 +79,8 @@ const emit = defineEmits([
   'toggle-panorama-list',
   'toggle-kml-layers',
   'show-settings',
-  'show-kml-settings'
+  'show-kml-settings',
+  'show-point-settings'
 ])
 
 const togglePanoramaList = () => {
@@ -91,6 +97,10 @@ const showSettings = () => {
 
 const showKmlSettings = () => {
   emit('show-kml-settings')
+}
+
+const showPointSettings = () => {
+  emit('show-point-settings')
 }
 </script>
 

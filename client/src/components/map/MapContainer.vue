@@ -94,16 +94,9 @@ onMounted(() => {
 // 监听全景图数据变化
 watch(() => props.panoramas, (newPanoramas) => {
   clearMarkers()
-  if (newPanoramas && newPanoramas.length > 0) {
-    // 过滤掉没有有效坐标的点位
-    const validPanoramas = newPanoramas.filter(p => 
-      p.lat != null && p.lng != null &&
-      !isNaN(parseFloat(p.lat)) && !isNaN(parseFloat(p.lng))
-    )
-    addPanoramaMarkers(validPanoramas)
-  }
   
-  // 同时显示所有点位（包括视频点位）
+  // 只显示所有点位（包括全景图和视频点位）
+  // 不再单独处理props.panoramas，避免重复显示
   if (window.allPoints && window.allPoints.length > 0) {
     addPointMarkers(window.allPoints)
   }

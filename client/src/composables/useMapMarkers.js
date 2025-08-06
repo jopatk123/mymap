@@ -19,7 +19,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const pointType = point.type || 'panorama';
     const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
-    });
+    }, null); // 传递null作为styleConfig，让函数使用全局样式
 
     marker.on('click', () => {
       onMarkerClick.value(point);

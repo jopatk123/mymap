@@ -3,7 +3,7 @@
     <div class="style-section">
       <h4>点标记样式</h4>
       
-      <el-form label-width="100px" size="small">
+      <el-form label-width="100px" size="small" class="compact-form">
         <el-form-item label="标记颜色">
           <el-color-picker 
             v-model="pickerColor"
@@ -53,7 +53,7 @@
     <div class="style-section">
       <h4>标签样式</h4>
       
-      <el-form label-width="100px" size="small">
+      <el-form label-width="100px" size="small" class="compact-form">
         <el-form-item label="字体大小">
           <el-slider
             v-model="localStyles.labelSize"
@@ -213,16 +213,17 @@ const labelStyle = computed(() => ({
 <style lang="scss" scoped>
 .point-style-editor {
   .style-section {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #e4e7ed;
     
     &:last-child {
       border-bottom: none;
+      margin-bottom: 0;
     }
     
     h4 {
-      margin: 0 0 16px 0;
+      margin: 0 0 12px 0;
       font-size: 14px;
       font-weight: 600;
       color: #303133;
@@ -234,11 +235,11 @@ const labelStyle = computed(() => ({
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100px;
+      height: 60px;
       background-color: #f5f7fa;
       border-radius: 6px;
       position: relative;
-      padding-top: 20px;
+      padding-top: 15px;
       
       .preview-point {
         position: relative;
@@ -268,5 +269,15 @@ const labelStyle = computed(() => ({
 
 :deep(.el-slider__input) {
   width: 80px;
+}
+
+:deep(.compact-form) {
+  .el-form-item {
+    margin-bottom: 16px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 </style>

@@ -47,6 +47,7 @@ export function useMapPage() {
   const autoRotating = ref(false)
   const kmlLayersVisible = ref(true)
   const showKmlSettings = ref(false)
+  const showPointSettings = ref(false)
 
   // 计算属性
   const totalCount = computed(() => pagination.value.total)
@@ -200,6 +201,7 @@ export function useMapPage() {
     autoRotating,
     kmlLayersVisible,
     showKmlSettings,
+    showPointSettings,
 
     // 方法
     initializePage,

@@ -58,4 +58,8 @@ router.use('/points', pointsRoutes)
 const panoramaClusterRoutes = require('./panoramaCluster.routes')
 router.use('/panorama-cluster-config', panoramaClusterRoutes)
 
+// 点位样式配置路由
+const pointStyleRoutes = require('./pointStyle.routes')
+router.use('/point-styles', pointStyleRoutes)
+
 module.exports = router

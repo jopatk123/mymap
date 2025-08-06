@@ -5,11 +5,11 @@
       <div 
         class="preview-point"
         :style="pointStyle"
-        :title="`点: ${styleConfig.point_color || '#ff7800'}`"
+        :title="`点: ${getPointColor()}`"
       ></div>
       
-      <!-- 线样式预览 -->
-      <svg width="30" height="20" class="preview-line">
+      <!-- 线样式预览（仅在KML样式中显示） -->
+      <svg v-if="showFullPreview" width="30" height="20" class="preview-line">
         <line
           x1="2"
           y1="10"
@@ -22,8 +22,8 @@
         />
       </svg>
       
-      <!-- 面样式预览 -->
-      <svg width="20" height="20" class="preview-polygon">
+      <!-- 面样式预览（仅在KML样式中显示） -->
+      <svg v-if="showFullPreview" width="20" height="20" class="preview-polygon">
         <rect
           x="2"
           y="2"
@@ -36,8 +36,9 @@
         />
       </svg>
       
-      <!-- 聚合状态指示 -->
+      <!-- 聚合状态指示（仅在KML样式中显示） -->
       <div 
+        v-if="showFullPreview"
         class="cluster-indicator"
         :class="{ enabled: styleConfig.cluster_enabled !== false }"
         :title="styleConfig.cluster_enabled !== false ? '已启用聚合' : '未启用聚合'"
@@ -55,16 +56,33 @@ const props = defineProps({
   styleConfig: {
     type: Object,
     default: () => ({})
+  },
+  // 是否显示完整预览（包括线、面、聚合），false时只显示点预览
+  showFullPreview: {
+    type: Boolean,
+    default: true
   }
 })
 
+// 获取点颜色（兼容不同的数据格式）
+const getPointColor = () => {
+  return props.styleConfig.point_color || props.styleConfig.color || '#ff7800'
+}
+
 // 点样式
-const pointStyle = computed(() => ({
-  backgroundColor: props.styleConfig.point_color || '#ff7800',
-  width: `${props.styleConfig.point_size || 8}px`,
-  height: `${props.styleConfig.point_size || 8}px`,
-  opacity: props.styleConfig.point_opacity || 1.0
-}))
+const pointStyle = computed(() => {
+  const color = getPointColor()
+  const size = props.styleConfig.point_size || props.styleConfig.size || 8
+  const opacity = props.styleConfig.point_opacity || props.styleConfig.opacity || 1.0
+  
+  return {
+    backgroundColor: color,
+    width: `${size}px`,
+    height: `${size}px`,
+    opacity: opacity,
+    borderRadius: '50%'
+  }
+})
 
 // 获取线条虚线样式
 const getLineDashArray = (style) => {

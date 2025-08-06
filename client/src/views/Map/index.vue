@@ -39,6 +39,7 @@
       @toggle-kml-layers="toggleKmlLayers"
       @show-settings="showSettings = true"
       @show-kml-settings="showKmlSettings = true"
+      @show-point-settings="showPointSettings = true"
     />
     
     <!-- 对话框组 -->
@@ -78,6 +79,12 @@
       v-model="showKmlSettings"
       @styles-updated="handleKmlStylesUpdated"
     />
+
+    <!-- 点位样式设置对话框 -->
+    <PointStyleDialog
+      v-model="showPointSettings"
+      @styles-updated="handlePointStylesUpdated"
+    />
   </div>
 </template>
 
@@ -87,6 +94,7 @@ import { ElMessage } from 'element-plus'
 import { useMapPage } from '@/composables/useMapPage'
 import { useMapInteractions } from '@/composables/useMapInteractions'
 import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
+import { usePointStyles } from '@/composables/usePointStyles'
 import { kmlApi } from '@/api/kml.js'
 
 import MapView from './components/MapView.vue'
@@ -96,6 +104,7 @@ import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
 import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
+import PointStyleDialog from '@/components/map/PointStyleDialog.vue'
 
 // 使用组合式函数
 const {
@@ -125,6 +134,7 @@ const {
   autoRotating,
   kmlLayersVisible,
   showKmlSettings,
+  showPointSettings,
   
   // 方法
   initializePage,
@@ -132,6 +142,13 @@ const {
   loadMore,
   toggleKmlLayers
 } = useMapPage()
+
+// 点位样式管理
+const {
+  loadAllPointStyles,
+  videoPointStyles,
+  panoramaPointStyles
+} = usePointStyles()
 
 // 全景图查看器相关方法
 const {
@@ -181,6 +198,18 @@ const closePanoramaViewer = () => {
 
 // 初始化
 onMounted(async () => {
+  // 加载点位样式配置
+  await loadAllPointStyles()
+  
+  // 将样式配置存储到全局变量，供地图标记使用
+  window.videoPointStyles = videoPointStyles.value
+  window.panoramaPointStyles = panoramaPointStyles.value
+  
+  console.log('点位样式配置已加载:', {
+    video: window.videoPointStyles,
+    panorama: window.panoramaPointStyles
+  })
+  
   await initializePage()
   
   // 监听文件夹可见性变化事件
@@ -241,6 +270,33 @@ const handleKmlStylesUpdated = async () => {
       console.error('重新加载KML图层失败:', error)
       ElMessage.error('重新加载KML图层失败')
     }
+  }
+}
+
+// 处理点位样式更新
+const handlePointStylesUpdated = async () => {
+  console.log('点位样式已更新，准备重新加载地图数据')
+  
+  try {
+    // 重新加载点位样式配置
+    await loadAllPointStyles()
+    
+    // 更新全局变量
+    window.videoPointStyles = videoPointStyles.value
+    window.panoramaPointStyles = panoramaPointStyles.value
+    
+    console.log('更新后的点位样式配置:', {
+      video: window.videoPointStyles,
+      panorama: window.panoramaPointStyles
+    })
+    
+    // 重新加载地图数据以应用新的样式
+    await loadInitialData()
+    
+    ElMessage.success('点位样式已更新')
+  } catch (error) {
+    console.error('重新加载地图数据失败:', error)
+    ElMessage.error('应用点位样式失败')
   }
 }
 
