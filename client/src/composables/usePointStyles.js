@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/pointStyle.js'
 
 export function usePointStyles() {
@@ -23,32 +23,61 @@ export function usePointStyles() {
     point_label_color: '#000000'
   })
 
-  // 初始化全局变量
-  const initGlobalStyles = () => {
-    if (!window.videoPointStyles) {
-      window.videoPointStyles = videoPointStyles.value
-    }
-    if (!window.panoramaPointStyles) {
-      window.panoramaPointStyles = panoramaPointStyles.value
+  // 初始化本地存储缓存
+  const initLocalCache = () => {
+    try {
+      const cached = localStorage.getItem('pointStyles')
+      if (cached) {
+        const styles = JSON.parse(cached)
+        if (styles.video) videoPointStyles.value = styles.video
+        if (styles.panorama) panoramaPointStyles.value = styles.panorama
+      }
+    } catch (error) {
+      console.warn('读取本地样式缓存失败:', error)
     }
   }
 
-  // 立即初始化全局变量
-  initGlobalStyles()
+  // 保存到本地存储
+  const saveToLocalCache = () => {
+    try {
+      const styles = {
+        video: videoPointStyles.value,
+        panorama: panoramaPointStyles.value,
+        lastUpdated: Date.now()
+      }
+      localStorage.setItem('pointStyles', JSON.stringify(styles))
+    } catch (error) {
+      console.warn('保存本地样式缓存失败:', error)
+    }
+  }
+
+  // 初始化本地存储缓存
+  initLocalCache()
 
   // 加载视频点位样式
-  const loadVideoPointStyles = async () => {
+  const loadVideoPointStyles = async (useCache = true) => {
     try {
+      // 检查本地缓存
+      if (useCache) {
+        const cached = localStorage.getItem('pointStyles')
+        if (cached) {
+          const styles = JSON.parse(cached)
+          const cacheAge = Date.now() - (styles.lastUpdated || 0)
+          // 缓存有效期为1小时
+          if (cacheAge < 3600000 && styles.video) {
+            videoPointStyles.value = styles.video
+            return styles.video
+          }
+        }
+      }
+
       loading.value = true
       const response = await videoPointStyleApi.getStyles()
       videoPointStyles.value = response.data
-      // 更新全局变量
-      window.videoPointStyles = videoPointStyles.value
+      saveToLocalCache()
       return response.data
     } catch (error) {
       console.error('加载视频点位样式失败:', error)
-      // 确保全局变量仍然有默认值
-      window.videoPointStyles = videoPointStyles.value
       return videoPointStyles.value // 返回默认样式
     } finally {
       loading.value = false
@@ -56,31 +85,41 @@ export function usePointStyles() {
   }
 
   // 加载全景图点位样式
-  const loadPanoramaPointStyles = async () => {
+  const loadPanoramaPointStyles = async (useCache = true) => {
     try {
+      // 检查本地缓存
+      if (useCache) {
+        const cached = localStorage.getItem('pointStyles')
+        if (cached) {
+          const styles = JSON.parse(cached)
+          const cacheAge = Date.now() - (styles.lastUpdated || 0)
+          if (cacheAge < 3600000 && styles.panorama) {
+            panoramaPointStyles.value = styles.panorama
+            return styles.panorama
+          }
+        }
+      }
+
       loading.value = true
       const response = await panoramaPointStyleApi.getStyles()
       panoramaPointStyles.value = response.data
-      // 更新全局变量
-      window.panoramaPointStyles = panoramaPointStyles.value
+      saveToLocalCache()
       return response.data
     } catch (error) {
       console.error('加载全景图点位样式失败:', error)
-      // 确保全局变量仍然有默认值
-      window.panoramaPointStyles = panoramaPointStyles.value
-      return panoramaPointStyles.value // 返回默认样式
+      return panoramaPointStyles.value
     } finally {
       loading.value = false
     }
   }
 
   // 加载所有点位样式
-  const loadAllPointStyles = async () => {
+  const loadAllPointStyles = async (useCache = true) => {
     try {
       loading.value = true
       await Promise.all([
-        loadVideoPointStyles(),
-        loadPanoramaPointStyles()
+        loadVideoPointStyles(useCache),
+        loadPanoramaPointStyles(useCache)
       ])
     } catch (error) {
       console.error('加载点位样式失败:', error)
@@ -105,6 +144,7 @@ export function usePointStyles() {
     try {
       const response = await videoPointStyleApi.updateStyles(styleConfig)
       videoPointStyles.value = response.data
+      saveToLocalCache()
       return response.data
     } catch (error) {
       console.error('更新视频点位样式失败:', error)
@@ -117,6 +157,7 @@ export function usePointStyles() {
     try {
       const response = await panoramaPointStyleApi.updateStyles(styleConfig)
       panoramaPointStyles.value = response.data
+      saveToLocalCache()
       return response.data
     } catch (error) {
       console.error('更新全景图点位样式失败:', error)
@@ -133,6 +174,9 @@ export function usePointStyles() {
     loadAllPointStyles,
     getPointStyles,
     updateVideoPointStyles,
-    updatePanoramaPointStyles
+    updatePanoramaPointStyles,
+    clearCache: () => {
+      localStorage.removeItem('pointStyles')
+    }
   }
 }

@@ -1,12 +1,10 @@
-const VideoPointStyleModel = require('../models/videoPointStyle.model')
-const PanoramaPointStyleModel = require('../models/panoramaPointStyle.model')
+const ConfigService = require('../services/ConfigService')
 
 class PointStyleController {
   // 获取视频点位样式配置
   static async getVideoPointStyles(req, res) {
     try {
-      const styles = await VideoPointStyleModel.getStyles()
-      
+      const styles = await ConfigService.getPointStyles('video')
       res.json({
         success: true,
         data: styles,
@@ -25,14 +23,17 @@ class PointStyleController {
   // 更新视频点位样式配置
   static async updateVideoPointStyles(req, res) {
     try {
-      const styleConfig = req.body
-      const updatedStyles = await VideoPointStyleModel.updateStyles(styleConfig)
-      
-      res.json({
-        success: true,
-        data: updatedStyles,
-        message: '更新视频点位样式配置成功'
-      })
+      const success = await ConfigService.updatePointStyles('video', req.body)
+      if (success) {
+        const updatedStyles = await ConfigService.getPointStyles('video')
+        res.json({
+          success: true,
+          data: updatedStyles,
+          message: '更新视频点位样式配置成功'
+        })
+      } else {
+        throw new Error('保存配置失败')
+      }
     } catch (error) {
       console.error('更新视频点位样式配置失败:', error)
       res.status(500).json({
@@ -46,13 +47,18 @@ class PointStyleController {
   // 重置视频点位样式为默认
   static async resetVideoPointStyles(req, res) {
     try {
-      const defaultStyles = await VideoPointStyleModel.resetStyles()
-      
-      res.json({
-        success: true,
-        data: defaultStyles,
-        message: '重置视频点位样式配置成功'
-      })
+      const defaultConfig = ConfigService.getDefaultConfig()
+      const success = await ConfigService.updatePointStyles('video', defaultConfig.pointStyles.video)
+      if (success) {
+        const styles = await ConfigService.getPointStyles('video')
+        res.json({
+          success: true,
+          data: styles,
+          message: '重置视频点位样式配置成功'
+        })
+      } else {
+        throw new Error('重置配置失败')
+      }
     } catch (error) {
       console.error('重置视频点位样式配置失败:', error)
       res.status(500).json({
@@ -66,7 +72,7 @@ class PointStyleController {
   // 获取全景图点位样式配置
   static async getPanoramaPointStyles(req, res) {
     try {
-      const styles = await PanoramaPointStyleModel.getStyles()
+      const styles = await ConfigService.getPointStyles('panorama')
       
       res.json({
         success: true,
@@ -86,14 +92,17 @@ class PointStyleController {
   // 更新全景图点位样式配置
   static async updatePanoramaPointStyles(req, res) {
     try {
-      const styleConfig = req.body
-      const updatedStyles = await PanoramaPointStyleModel.updateStyles(styleConfig)
-      
-      res.json({
-        success: true,
-        data: updatedStyles,
-        message: '更新全景图点位样式配置成功'
-      })
+      const success = await ConfigService.updatePointStyles('panorama', req.body)
+      if (success) {
+        const updatedStyles = await ConfigService.getPointStyles('panorama')
+        res.json({
+          success: true,
+          data: updatedStyles,
+          message: '更新全景图点位样式配置成功'
+        })
+      } else {
+        throw new Error('保存配置失败')
+      }
     } catch (error) {
       console.error('更新全景图点位样式配置失败:', error)
       res.status(500).json({
@@ -107,13 +116,18 @@ class PointStyleController {
   // 重置全景图点位样式为默认
   static async resetPanoramaPointStyles(req, res) {
     try {
-      const defaultStyles = await PanoramaPointStyleModel.resetStyles()
-      
-      res.json({
-        success: true,
-        data: defaultStyles,
-        message: '重置全景图点位样式配置成功'
-      })
+      const defaultConfig = ConfigService.getDefaultConfig()
+      const success = await ConfigService.updatePointStyles('panorama', defaultConfig.pointStyles.panorama)
+      if (success) {
+        const styles = await ConfigService.getPointStyles('panorama')
+        res.json({
+          success: true,
+          data: styles,
+          message: '重置全景图点位样式配置成功'
+        })
+      } else {
+        throw new Error('重置配置失败')
+      }
     } catch (error) {
       console.error('重置全景图点位样式配置失败:', error)
       res.status(500).json({

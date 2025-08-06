@@ -1,6 +1,6 @@
 const KmlFileModel = require('../models/kmlFile.model')
 const KmlPointModel = require('../models/kmlPoint.model')
-const KmlFileStyleModel = require('../models/kmlFileStyle.model')
+const ConfigService = require('../services/ConfigService')
 const kmlParserService = require('../services/kmlParser.service')
 const path = require('path')
 const fs = require('fs').promises
@@ -539,16 +539,12 @@ class KmlFileController {
   static async getKmlFileStyles(req, res) {
     try {
       const { id } = req.params
-      let styles = await KmlFileStyleModel.findByKmlFileId(parseInt(id))
-      
-      // 如果没有自定义样式，返回默认样式
-      if (!styles) {
-        styles = KmlFileStyleModel.getDefaultStyles()
-      }
+      const styles = await ConfigService.getKmlStyles(id)
       
       res.json({
         success: true,
-        data: styles
+        data: styles,
+        message: '获取KML文件样式配置成功'
       })
     } catch (error) {
       Logger.error('获取KML文件样式配置失败:', error)
@@ -575,14 +571,18 @@ class KmlFileController {
         })
       }
       
-      // 更新或创建样式配置
-      const styles = await KmlFileStyleModel.upsert(parseInt(id), styleConfig)
-      
-      res.json({
-        success: true,
-        message: '样式配置更新成功',
-        data: styles
-      })
+      // 更新样式配置
+      const success = await ConfigService.updateKmlStyles(id, styleConfig)
+      if (success) {
+        const styles = await ConfigService.getKmlStyles(id)
+        res.json({
+          success: true,
+          message: '样式配置更新成功',
+          data: styles
+        })
+      } else {
+        throw new Error('保存配置失败')
+      }
     } catch (error) {
       Logger.error('更新KML文件样式配置失败:', error)
       res.status(500).json({
@@ -607,17 +607,20 @@ class KmlFileController {
         })
       }
       
-      // 删除自定义样式配置
-      await KmlFileStyleModel.delete(parseInt(id))
+      // 重置为默认样式（删除自定义配置）
+      const defaultConfig = ConfigService.getDefaultConfig()
+      const success = await ConfigService.updateKmlStyles(id, defaultConfig.kmlStyles.default)
       
-      // 返回默认样式
-      const defaultStyles = KmlFileStyleModel.getDefaultStyles()
-      
-      res.json({
-        success: true,
-        message: '样式配置已重置为默认',
-        data: defaultStyles
-      })
+      if (success) {
+        const styles = await ConfigService.getKmlStyles('default')
+        res.json({
+          success: true,
+          message: '样式配置已重置为默认',
+          data: styles
+        })
+      } else {
+        throw new Error('重置配置失败')
+      }
     } catch (error) {
       Logger.error('重置KML文件样式失败:', error)
       res.status(500).json({
@@ -640,7 +643,16 @@ class KmlFileController {
         })
       }
       
-      const results = await KmlFileStyleModel.batchUpsert(styleConfigs)
+      const results = []
+      for (const config of styleConfigs) {
+        if (config.kmlFileId) {
+          const success = await ConfigService.updateKmlStyles(config.kmlFileId, config.styles)
+          if (success) {
+            const styles = await ConfigService.getKmlStyles(config.kmlFileId)
+            results.push({ kmlFileId: config.kmlFileId, styles })
+          }
+        }
+      }
       
       res.json({
         success: true,

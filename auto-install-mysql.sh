@@ -213,9 +213,9 @@ create_mysql_container() {
 init_database() {
     log_info "初始化数据库..."
     
-    # 检查setup-mysql.sql文件是否存在
-    if [[ ! -f "setup-mysql.sql" ]]; then
-        log_error "未找到 setup-mysql.sql 文件"
+    # 检查unified-database.sql文件是否存在
+    if [[ ! -f "scripts/unified-database.sql" ]]; then
+        log_error "未找到 scripts/unified-database.sql 文件"
         return 1
     fi
     
@@ -223,11 +223,18 @@ init_database() {
     docker exec ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} -e "SET GLOBAL character_set_client = utf8mb4; SET GLOBAL character_set_connection = utf8mb4; SET GLOBAL character_set_results = utf8mb4;"
     
     # 导入数据库结构和数据
-    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} ${DB_NAME} --default-character-set=utf8mb4 < setup-mysql.sql; then
+    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} ${DB_NAME} --default-character-set=utf8mb4 < scripts/unified-database.sql; then
         log_success "数据库初始化完成"
     else
         log_error "数据库初始化失败"
         return 1
+    fi
+    
+    # 初始化配置文件
+    log_info "初始化配置文件..."
+    if [[ ! -f "server/config/app-config.json" ]]; then
+        node scripts/migrate-config-to-files.js --init-only
+        log_success "配置文件初始化完成"
     fi
 }
 
