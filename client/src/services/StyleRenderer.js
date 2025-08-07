@@ -106,13 +106,12 @@ class StyleRenderer {
     const pointSize = styleConfig.point_size || defaultStyles.point_size
     const pointColor = styleConfig.point_color || defaultStyles.point_color
     const pointOpacity = styleConfig.point_opacity || defaultStyles.point_opacity
-    const iconType = styleConfig.point_icon_type || 'circle'
+    // 固定使用marker形状
 
     const style = {
       size: pointSize,
       color: pointColor,
-      opacity: pointOpacity,
-      iconType: iconType
+      opacity: pointOpacity
     }
 
     this.styleCache.set(cacheKey, style)

@@ -76,7 +76,6 @@ class ConfigService {
           point_color: "#2ed573",
           point_size: 8,
           point_opacity: 1.0,
-          point_icon_type: "circle",
           point_label_size: 12,
           point_label_color: "#000000"
         },
@@ -84,7 +83,6 @@ class ConfigService {
           point_color: "#ff4757",
           point_size: 10,
           point_opacity: 1.0,
-          point_icon_type: "marker",
           point_label_size: 14,
           point_label_color: "#000000"
         }
@@ -94,7 +92,6 @@ class ConfigService {
           point_color: "#ff7800",
           point_size: 8,
           point_opacity: 1.0,
-          point_icon_type: "marker",
           point_label_size: 12,
           point_label_color: "#000000",
           line_color: "#ff7800",

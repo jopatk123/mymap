@@ -70,104 +70,26 @@ export function useKmlLayer(map, kmlLayers) {
           const pointColor = effectiveStyle.point_color;
           const labelColor = effectiveStyle.point_label_color;
           const pointOpacity = effectiveStyle.point_opacity;
-          const iconType = effectiveStyle.point_icon_type || 'circle';
-
-          // 获取图标形状HTML
-          const getIconShapeHtml = (type, size) => {
-            switch (type) {
-              case 'circle':
-                return `<div style="
-                  width: ${size * 2}px;
-                  height: ${size * 2}px;
-                  background-color: ${pointColor};
-                  opacity: ${pointOpacity};
-                  border-radius: 50%;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                "></div>`;
-              case 'square':
-                return `<div style="
-                  width: ${size * 2}px;
-                  height: ${size * 2}px;
-                  background-color: ${pointColor};
-                  opacity: ${pointOpacity};
-                  border-radius: 0;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                "></div>`;
-              case 'triangle':
-                return `<div style="
-                  width: 0;
-                  height: 0;
-                  border-left: ${size}px solid transparent;
-                  border-right: ${size}px solid transparent;
-                  border-bottom: ${size * 1.8}px solid ${pointColor};
-                  opacity: ${pointOpacity};
-                  position: absolute;
-                  left: ${size}px;
-                  top: ${size * 0.1}px;
-                "></div>`;
-              case 'diamond':
-                return `<div style="
-                  width: ${size * 2}px;
-                  height: ${size * 2}px;
-                  background-color: ${pointColor};
-                  opacity: ${pointOpacity};
-                  transform: rotate(45deg);
-                  border-radius: 0;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                "></div>`;
-              case 'marker':
-                const svgIcon = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 3.2}" viewBox="0 0 25 41" style="position: absolute; top: -${size * 1.2}px; left: 0;">
-                    <path fill="${pointColor}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${pointOpacity}"/>
-                    <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
-                    <circle fill="${pointColor}" cx="12.5" cy="12.5" r="3" opacity="${pointOpacity}"/>
-                  </svg>
-                `;
-                return svgIcon;
-              default:
-                return `<div style="
-                  width: ${size * 2}px;
-                  height: ${size * 2}px;
-                  background-color: ${pointColor};
-                  opacity: ${pointOpacity};
-                  border-radius: 50%;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                "></div>`;
-            }
+          // 获取图标形状HTML - 固定使用marker形状
+          const getIconShapeHtml = (size) => {
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+              <path fill="${pointColor}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${pointOpacity}"/>
+              <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+              <circle fill="${pointColor}" cx="12.5" cy="12.5" r="3" opacity="${pointOpacity}"/>
+            </svg>`;
           };
 
           // 当字体大小为0时，不显示标签，只显示点
           if (labelSize === 0) {
-            // 对于简单形状，使用circleMarker性能更好
-            if (iconType === 'circle') {
-              return L.circleMarker(latlng, {
-                  renderer: L.canvas(),
-                  color: pointColor,
-                  fillColor: pointColor,
-                  fillOpacity: pointOpacity,
-                  weight: 1,
-                  radius: pointSize,
-              });
-            }
-            
-            // 对于复杂形状，使用divIcon
             const iconHtml = `
               <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
-                ${getIconShapeHtml(iconType, pointSize)}
+                ${getIconShapeHtml(pointSize)}
               </div>
             `;
 
-            // 地图标记需要特殊的尺寸和锚点
-            const iconSize = iconType === 'marker' ? [pointSize * 2, pointSize * 3.2] : [pointSize * 2, pointSize * 2];
-            const iconAnchor = iconType === 'marker' ? [pointSize, pointSize * 3.2] : [pointSize, pointSize];
+            // 地图标记固定使用marker尺寸和锚点
+            const iconSize = [pointSize * 2, pointSize * 3.2];
+            const iconAnchor = [pointSize, pointSize * 3.2];
 
             const icon = L.divIcon({
                 html: iconHtml,
@@ -180,31 +102,15 @@ export function useKmlLayer(map, kmlLayers) {
           }
 
           // 字体大小大于0时，显示点和标签
-          // 计算标签位置偏移
-          const getLabelPosition = (type, size, labelSize) => {
-            switch (type) {
-              case 'marker':
-                // 地图标记：标签在图标顶部上方
-                return {
-                  top: `-${size * 1.2 + labelSize + 4}px`,
-                  marginBottom: '2px'
-                };
-              case 'triangle':
-                // 三角形：标签在三角形顶部上方
-                return {
-                  top: `-${labelSize + 4}px`,
-                  marginBottom: '2px'
-                };
-              default:
-                // 其他形状：标签在图标顶部上方
-                return {
-                  top: `-${labelSize + 4}px`,
-                  marginBottom: '2px'
-                };
-            }
+          // 计算标签位置偏移 - 固定使用marker位置
+          const getLabelPosition = (size, labelSize) => {
+            return {
+              top: `-${size * 1.2 + labelSize + 4}px`,
+              marginBottom: '2px'
+            };
           };
 
-          const labelPosition = getLabelPosition(iconType, pointSize, labelSize);
+          const labelPosition = getLabelPosition(pointSize, labelSize);
 
           const iconHtml = `
             <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
@@ -231,19 +137,17 @@ export function useKmlLayer(map, kmlLayers) {
               ">
                 ${feature.properties.name}
               </div>
-              ${getIconShapeHtml(iconType, pointSize)}
+              ${getIconShapeHtml(pointSize)}
             </div>
           `;
 
-          // 地图标记需要特殊的尺寸和锚点
-          const iconHeight = iconType === 'marker' ? pointSize * 3.2 : pointSize * 2;
+          // 地图标记固定使用marker尺寸和锚点
+          const iconHeight = pointSize * 3.2;
           const totalHeight = iconHeight + labelSize + 8; // 增加标签高度和间距
           const iconSize = [pointSize * 2, totalHeight];
           
           // 调整锚点，考虑标签在上方的情况
-          const anchorY = iconType === 'marker' ? 
-            iconHeight + labelSize + 4 : // 地图标记：锚点在底部
-            pointSize + labelSize + 4;   // 其他形状：锚点在中心偏下
+          const anchorY = iconHeight + labelSize + 4; // 地图标记：锚点在底部
           const iconAnchor = [pointSize, anchorY];
 
           const icon = L.divIcon({

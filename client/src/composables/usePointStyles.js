@@ -9,7 +9,6 @@ export function usePointStyles() {
     point_color: '#ff4757',
     point_size: 10,
     point_opacity: 1.0,
-    point_icon_type: 'marker',
     point_label_size: 14,
     point_label_color: '#000000'
   })
@@ -18,7 +17,6 @@ export function usePointStyles() {
     point_color: '#2ed573',
     point_size: 10,
     point_opacity: 1.0,
-    point_icon_type: 'marker',
     point_label_size: 12,
     point_label_color: '#000000'
   })

@@ -164,7 +164,6 @@ const selectKmlFile = async (kmlFile) => {
       color: styles.point_color,
       size: Number(styles.point_size),
       opacity: parseFloat(styles.point_opacity),
-      iconType: styles.point_icon_type,
       labelSize: Number(styles.point_label_size),
       labelColor: styles.point_label_color
     }
@@ -282,7 +281,7 @@ const convertToApiFormat = (styles) => {
     point_color: styles.point.color,
     point_size: styles.point.size,
     point_opacity: styles.point.opacity,
-    point_icon_type: styles.point.iconType,
+    point_icon_type: 'marker', // 固定使用marker形状
     point_label_size: styles.point.labelSize,
     point_label_color: styles.point.labelColor,
     

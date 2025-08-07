@@ -258,7 +258,6 @@ const convertFromApiFormat = (apiData) => {
     color: apiData.point_color,
     size: Number(apiData.point_size),
     opacity: parseFloat(apiData.point_opacity),
-    iconType: apiData.point_icon_type,
     labelSize: Number(apiData.point_label_size),
     labelColor: apiData.point_label_color
   }
@@ -270,7 +269,7 @@ const convertToApiFormat = (componentData) => {
     point_color: componentData.color,
     point_size: componentData.size,
     point_opacity: componentData.opacity,
-    point_icon_type: componentData.iconType,
+    point_icon_type: 'marker', // 固定使用marker形状
     point_label_size: componentData.labelSize,
     point_label_color: componentData.labelColor
   }
