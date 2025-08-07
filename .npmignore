@@ -159,14 +159,11 @@ debug-startup.js
 # Development specific files
 check-project.js
 test-server.js
-auto-install-mysql.sh
-manage-database.sh
-setup-mysql.sql
+init-sqlite-data.js
 scripts/
 *.md
 !README.md
-!QUICK_START.md
-!DATABASE_DEPLOYMENT.md
+!DEPLOYMENT.md
 
 # Screenshots
 *.png

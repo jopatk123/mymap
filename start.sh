@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # 地图全景系统快速启动脚本
-# 整合了数据库自动部署和项目管理功能
+# 适用于SQLite版本
 
 set -e
 
-# 颜色定义
+# 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -29,498 +29,158 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# 显示欢迎信息
-show_welcome() {
-    echo -e "${BLUE}"
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                    地图全景系统                              ║"
-    echo "║                  快速启动脚本                                ║"
-    echo "╠══════════════════════════════════════════════════════════════╣"
-    echo "║ 基于 Vue 3 + Leaflet + Pannellum 的地图全景查看系统         ║"
-    echo "║ 支持高德地图瓦片、坐标系转换和全景图管理功能                 ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-}
-
-# 检查依赖
-check_dependencies() {
-    log_info "检查系统依赖..."
-    
-    # 检查Node.js
+# 检查Node.js
+check_nodejs() {
     if ! command -v node &> /dev/null; then
-        log_error "Node.js 未安装，请先安装 Node.js (>= 16.0.0)"
-        echo "下载地址: https://nodejs.org/"
-        return 1
-    fi
-    
-    # 检查npm
-    if ! command -v npm &> /dev/null; then
-        log_error "npm 未安装"
-        return 1
-    fi
-    
-    log_success "Node.js 版本: $(node --version)"
-    log_success "npm 版本: $(npm --version)"
-    
-    # 检查项目依赖
-    if [[ ! -d "server/node_modules" ]]; then
-        log_warning "服务器依赖未安装，正在安装和更新..."
-        cd server && npm install && npm update && cd ..
-        if [[ $? -ne 0 ]]; then
-            log_error "服务器依赖安装失败"
-            return 1
-        fi
-        log_success "服务器依赖安装完成"
-    fi
-    
-    if [[ ! -d "client/node_modules" ]]; then
-        log_warning "客户端依赖未安装，正在安装和更新..."
-        cd client && npm install && npm update && cd ..
-        if [[ $? -ne 0 ]]; then
-            log_error "客户端依赖安装失败"
-            return 1
-        fi
-        log_success "客户端依赖安装完成"
-    fi
-    
-    return 0
-}
-
-# 检查数据库状态
-check_database() {
-    log_info "检查数据库状态..."
-    
-    # 运行数据库检查脚本
-    cd server
-    if node check-database.js >/dev/null 2>&1; then
-        log_success "数据库连接正常"
-        cd ..
-        return 0
-    else
-        log_warning "数据库连接失败，尝试自动部署..."
-        cd ..
-        
-        # 运行自动部署脚本
-        if ./auto-install-mysql.sh >/dev/null 2>&1; then
-            log_success "数据库部署完成"
-            return 0
-        else
-            log_error "数据库部署失败"
-            echo ""
-            echo "💡 手动解决方案:"
-            echo "1. 运行: ./auto-install-mysql.sh"
-            echo "2. 或查看: ./manage-database.sh status"
-            return 1
-        fi
-    fi
-}
-
-# 检查配置文件
-check_config() {
-    log_info "检查配置文件..."
-    
-    if [ ! -f "server/.env" ]; then
-        log_warning "创建后端配置文件..."
-        cat > server/.env << EOF
-# 服务器配置
-PORT=3001
-NODE_ENV=development
-
-# 数据库配置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=asd123123123
-DB_NAME=panorama_map
-
-# 文件上传配置
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE=10485760
-ALLOWED_FILE_TYPES=image/jpeg,image/png,image/jpg
-
-# 安全配置
-JWT_SECRET=your-secret-key-here
-CORS_ORIGIN=http://localhost:3000
-
-# 日志配置
-LOG_LEVEL=info
-EOF
-        log_success "已创建默认配置文件 server/.env"
-    else
-        log_success "配置文件已存在"
-    fi
-}
-
-# 创建必要目录
-create_directories() {
-    log_info "创建必要目录..."
-    
-    mkdir -p server/uploads/panoramas
-    mkdir -p server/uploads/thumbnails
-    mkdir -p server/logs
-    
-    log_success "目录创建完成"
-}
-
-# 检查端口是否被占用
-check_ports_occupied() {
-    log_info "检查关键端口 3000 (前端) 和 3001 (后端)..."
-    
-    local port_3000_used=false
-    local port_3001_used=false
-
-    # 使用 lsof 检查端口，更可靠
-    if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null ; then
-        port_3000_used=true
-    fi
-
-    if lsof -Pi :3001 -sTCP:LISTEN -t >/dev/null ; then
-        port_3001_used=true
-    fi
-
-    if [[ "$port_3000_used" = true || "$port_3001_used" = true ]]; then
-        log_error "服务启动失败：一个或多个关键端口已被占用。"
-        if [[ "$port_3000_used" = true ]]; then
-            log_warning "--> 前端端口 3000 已被占用。"
-        fi
-        if [[ "$port_3001_used" = true ]]; then
-            log_warning "--> 后端端口 3001 已被占用。"
-        fi
-        echo ""
-        echo "💡 请先停止现有服务。可以尝试运行:"
-        echo "   ./stop.sh"
-        echo "   或"
-        echo "   ./start.sh stop"
-        echo ""
+        log_error "Node.js 未安装，请先安装 Node.js 16+"
         exit 1
     fi
-
-    log_success "关键端口可用"
+    
+    local node_version=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+    if [ "$node_version" -lt 16 ]; then
+        log_error "Node.js 版本过低，需要 16+，当前版本: $(node -v)"
+        exit 1
+    fi
+    
+    log_success "Node.js 版本检查通过: $(node -v)"
 }
 
+# 安装依赖
+install_dependencies() {
+    log_info "安装项目依赖..."
+    
+    # 安装根目录依赖
+    npm install
+    
+    # 安装客户端依赖
+    log_info "安装客户端依赖..."
+    cd client && npm install && cd ..
+    
+    # 安装服务端依赖
+    log_info "安装服务端依赖..."
+    cd server && npm install && cd ..
+    
+    log_success "依赖安装完成"
+}
 
-# 启动服务器
-start_server() {
-    log_info "启动后端服务..."
+# 初始化数据库
+init_database() {
+    log_info "初始化SQLite数据库..."
     
     cd server
-    
-    # 启动服务器（后台运行）
-    npm run dev > ../server.log 2>&1 &
-    local server_pid=$!
-    echo $server_pid > ../server.pid
-    
-    cd ..
-    
-    # 等待服务器启动
-    log_info "等待服务器启动..."
-    sleep 5
-    
-    # 检查服务器是否启动成功
-    if curl -s http://localhost:3001/health >/dev/null 2>&1; then
-        log_success "后端服务启动成功 (PID: $server_pid)"
-        return 0
+    if node init-sqlite-data.js; then
+        log_success "数据库初始化完成"
     else
-        log_warning "后端服务可能未完全启动，请检查日志"
-        return 0
+        log_error "数据库初始化失败"
+        exit 1
+    fi
+    cd ..
+}
+
+# 检查并清理端口
+cleanup_ports() {
+    log_info "检查端口占用情况..."
+    
+    # 检查3000端口
+    if lsof -i :3000 >/dev/null 2>&1; then
+        log_warning "端口3000被占用，尝试清理..."
+        pkill -f "vite\|vue-cli" 2>/dev/null || true
+        sleep 2
+    fi
+    
+    # 检查3002端口
+    if lsof -i :3002 >/dev/null 2>&1; then
+        log_warning "端口3002被占用，尝试清理..."
+        pkill -f "nodemon\|src/server.js" 2>/dev/null || true
+        sleep 2
     fi
 }
 
-# 启动客户端
-start_client() {
-    log_info "启动前端服务..."
+# 启动服务
+start_services() {
+    log_info "启动开发服务..."
     
-    cd client
+    # 清理端口
+    cleanup_ports
     
-    # 启动客户端（后台运行）
-    npm run dev > ../client.log 2>&1 &
-    local client_pid=$!
-    echo $client_pid > ../client.pid
+    log_info "前端地址: http://localhost:3000"
+    log_info "后端地址: http://localhost:3002"
+    log_info "请确保两个服务都正常启动后再访问前端"
     
-    cd ..
-    
-    # 等待客户端启动
-    log_info "等待前端服务启动..."
-    sleep 8
-    
-    # 检查客户端是否启动成功
-    if curl -s http://localhost:3000 >/dev/null 2>&1; then
-        log_success "前端服务启动成功 (PID: $client_pid)"
-        return 0
-    else
-        log_warning "前端服务可能未完全启动，请检查日志"
-        return 0
-    fi
-}
-
-# 启动服务（前台模式）
-start_services_foreground() {
-    log_info "启动开发服务器（前台模式）..."
-    
-    echo ""
-    echo -e "${GREEN}🚀 启动开发服务器...${NC}"
-    echo -e "${BLUE}前端地址: http://localhost:3000${NC}"
-    echo -e "${BLUE}后端地址: http://localhost:3001${NC}"
-    echo -e "${BLUE}API文档: http://localhost:3001/api${NC}"
-    echo ""
-    echo -e "${YELLOW}按 Ctrl+C 停止服务${NC}"
-    echo ""
-    
-    # 使用npm script启动
+    # 启动开发服务
     npm run dev
-}
-
-# 启动服务（后台模式）
-start_services_background() {
-    log_info "启动项目服务（后台模式）..."
-    
-    # 1. 启动服务器
-    if ! start_server; then
-        log_error "服务器启动失败"
-        return 1
-    fi
-    
-    # 2. 启动客户端
-    if ! start_client; then
-        log_error "客户端启动失败"
-        return 1
-    fi
-    
-    # 3. 显示信息
-    show_project_info
-}
-
-# 显示项目信息
-show_project_info() {
-    echo ""
-    echo "=== 🎉 项目启动完成 ==="
-    echo ""
-    echo "📋 服务信息:"
-    echo "   前端地址: http://localhost:3000"
-    echo "   后端地址: http://localhost:3001"
-    echo "   数据库: mysql-panorama (端口 3306)"
-    echo ""
-    echo "📝 日志文件:"
-    echo "   前端日志: client.log"
-    echo "   后端日志: server.log"
-    echo ""
-    echo "🔧 管理命令:"
-    echo "   停止项目: ./stop.sh"
-    echo "   查看状态: ./start.sh status"
-    echo "   查看数据库: ./manage-database.sh status"
-    echo "   查看日志: tail -f server.log 或 tail -f client.log"
-    echo ""
-    echo "🌐 打开浏览器访问: http://localhost:3000"
-}
-
-# 停止项目
-stop_project() {
-    log_info "停止项目服务..."
-
-    # 1. 优先使用 PID 文件停止 (如果存在)
-    if [[ -f server.pid ]]; then
-        local server_pid=$(cat server.pid)
-        if kill -0 "$server_pid" 2>/dev/null; then
-            kill "$server_pid" 2>/dev/null
-            log_success "已发送停止信号到后端服务 (PID: $server_pid)"
-        fi
-        rm -f server.pid
-    fi
-    
-    if [[ -f client.pid ]]; then
-        local client_pid=$(cat client.pid)
-        if kill -0 "$client_pid" 2>/dev/null; then
-            kill "$client_pid" 2>/dev/null
-            log_success "已发送停止信号到前端服务 (PID: $client_pid)"
-        fi
-        rm -f client.pid
-    fi
-
-    # 2. 强制按端口停止，这是最可靠的后备措施
-    log_info "检查并停止占用端口的进程..."
-    local client_port_pid=$(lsof -t -i:3000 2>/dev/null)
-    if [[ -n "$client_port_pid" ]]; then
-        # 使用-9信号确保进程被终止
-        kill -9 "$client_port_pid" 2>/dev/null || true
-        log_success "已强制停止占用前端端口 3000 的进程 (PID: $client_port_pid)"
-    else
-        log_info "前端端口 3000 未被占用"
-    fi
-
-    local server_port_pid=$(lsof -t -i:3001 2>/dev/null)
-    if [[ -n "$server_port_pid" ]]; then
-        kill -9 "$server_port_pid" 2>/dev/null || true
-        log_success "已强制停止占用后端端口 3001 的进程 (PID: $server_port_pid)"
-    else
-        log_info "后端端口 3001 未被占用"
-    fi
-    
-    # 3. 使用 pkill 作为最终清理，捕获任何孤立进程
-    log_info "最终清理：检查并停止任何残留的开发进程..."
-    pkill -f "npm run dev" 2>/dev/null && log_info "清理了残留的 npm dev 进程"
-    pkill -f "vite" 2>/dev/null && log_info "清理了残留的 Vite 进程"
-    pkill -f "node.*server.js" 2>/dev/null && log_info "清理了残留的 Node.js 服务器进程"
-    
-    # 4. 清理日志文件
-    log_info "清理日志文件..."
-    rm -f server.log client.log
-    
-    log_success "项目已完全停止"
-}
-
-# 检查项目状态
-check_project_status() {
-    echo "=== 📊 项目状态 ==="
-    echo ""
-    
-    # 检查服务器
-    if [[ -f server.pid ]] && kill -0 $(cat server.pid) 2>/dev/null; then
-        log_success "后端服务运行中 (PID: $(cat server.pid))"
-    else
-        log_warning "后端服务未运行"
-    fi
-    
-    # 检查客户端
-    if [[ -f client.pid ]] && kill -0 $(cat client.pid) 2>/dev/null; then
-        log_success "前端服务运行中 (PID: $(cat client.pid))"
-    else
-        log_warning "前端服务未运行"
-    fi
-    
-    # 检查数据库
-    echo ""
-    ./manage-database.sh status
 }
 
 # 显示帮助信息
 show_help() {
-    echo "地图全景系统快速启动脚本"
+    echo "地图全景系统启动脚本"
     echo ""
-    echo "用法: $0 [命令]"
-    echo ""
-    echo "命令:"
-    echo "  start         启动项目（默认，前台模式）"
-    echo "  background    启动项目（后台模式）"
-    echo "  stop          停止项目"
-    echo "  restart       重启项目"
-    echo "  status        查看项目状态"
-    echo "  check         仅检查环境和依赖"
-    echo "  install       仅安装依赖"
-    echo "  help          显示帮助信息"
+    echo "用法: $0 [选项]"
     echo ""
     echo "选项:"
-    echo "  -h, --help    显示帮助信息"
+    echo "  --help, -h     显示帮助信息"
+    echo "  --init-only    仅初始化数据库，不启动服务"
+    echo "  --no-deps      跳过依赖安装"
     echo ""
     echo "示例:"
-    echo "  $0            # 启动项目（前台模式）"
-    echo "  $0 background # 启动项目（后台模式）"
-    echo "  $0 stop       # 停止项目"
-    echo "  $0 status     # 查看状态"
-    echo ""
-    echo "首次运行建议:"
-    echo "  1. 运行 ./start.sh 进行完整初始化和启动"
-    echo "  2. 数据库会自动部署（Docker MySQL容器）"
-    echo "  3. 浏览器访问 http://localhost:3000"
-    echo ""
+    echo "  $0              # 完整启动（安装依赖、初始化数据库、启动服务）"
+    echo "  $0 --init-only  # 仅初始化数据库"
+    echo "  $0 --no-deps    # 跳过依赖安装，直接启动"
 }
 
 # 主函数
 main() {
-    case "${1:-start}" in
-        "start"|"")
-            show_welcome
-            
-            # 1. 检查依赖
-            if ! check_dependencies; then
-                log_error "依赖检查失败"
+    echo "=== 🚀 地图全景系统启动脚本 ==="
+    echo ""
+    
+    # 解析参数
+    local init_only=false
+    local skip_deps=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            --init-only)
+                init_only=true
+                shift
+                ;;
+            --no-deps)
+                skip_deps=true
+                shift
+                ;;
+            *)
+                log_error "未知参数: $1"
+                show_help
                 exit 1
-            fi
-            
-            # 2. 检查配置
-            check_config
-            
-            # 3. 创建目录
-            create_directories
-            
-            # 4. 检查数据库
-            if ! check_database; then
-                log_error "数据库检查失败"
-                exit 1
-            fi
-            
-            # 5. 检查端口占用
-            check_ports_occupied
-
-            # 6. 启动服务（前台模式）
-            start_services_foreground
-            ;;
-        "background")
-            show_welcome
-            
-            # 1. 检查依赖
-            if ! check_dependencies; then
-                log_error "依赖检查失败"
-                exit 1
-            fi
-            
-            # 2. 检查配置
-            check_config
-            
-            # 3. 创建目录
-            create_directories
-            
-            # 4. 检查数据库
-            if ! check_database; then
-                log_error "数据库检查失败"
-                exit 1
-            fi
-            
-            # 5. 检查端口占用
-            check_ports_occupied
-
-            # 6. 启动服务（后台模式）
-            start_services_background
-            ;;
-        "stop")
-            stop_project
-            ;;
-        "restart")
-            stop_project
-            sleep 2
-            main background
-            ;;
-        "status")
-            check_project_status
-            ;;
-        "check")
-            show_welcome
-            if check_dependencies; then
-                log_success "环境检查完成"
-            else
-                log_error "环境检查失败"
-                exit 1
-            fi
-            ;;
-        "install")
-            show_welcome
-            if check_dependencies; then
-                log_success "依赖安装完成"
-            else
-                log_error "依赖安装失败"
-                exit 1
-            fi
-            ;;
-        "help"|"-h"|"--help")
-            show_help
-            ;;
-        *)
-            log_error "未知命令: $1"
-            echo ""
-            show_help
-            exit 1
-            ;;
-    esac
+                ;;
+        esac
+    done
+    
+    # 检查环境
+    check_nodejs
+    
+    # 安装依赖
+    if [ "$skip_deps" = false ]; then
+        install_dependencies
+    else
+        log_warning "跳过依赖安装"
+    fi
+    
+    # 初始化数据库
+    init_database
+    
+    # 如果只是初始化，则退出
+    if [ "$init_only" = true ]; then
+        log_success "数据库初始化完成，退出"
+        exit 0
+    fi
+    
+    # 启动服务
+    start_services
 }
 
-# 执行主函数
+# 运行主函数
 main "$@"

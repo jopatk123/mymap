@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+const SQLiteAdapter = require('../utils/sqlite-adapter')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
 
 class KmlPointModel {
@@ -18,7 +18,7 @@ class KmlPointModel {
       // 坐标转换
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude)
       
-      const result = await query(
+      const result = await SQLiteAdapter.all(
         `INSERT INTO kml_points (
           kml_file_id, name, description, latitude, longitude, 
           gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data
@@ -79,7 +79,7 @@ class KmlPointModel {
         gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data
       ) VALUES ${values.join(', ')}`
 
-      const result = await query(sql, params)
+      const result = await SQLiteAdapter.all(sql, params)
       
       return result.affectedRows
     } catch (error) {
@@ -91,7 +91,7 @@ class KmlPointModel {
   // 根据ID查找KML点位
   static async findById(id) {
     try {
-      const rows = await query(
+      const rows = await SQLiteAdapter.all(
         `SELECT kp.*, kf.title as kml_file_title 
          FROM kml_points kp 
          LEFT JOIN kml_files kf ON kp.kml_file_id = kf.id 
@@ -115,7 +115,7 @@ class KmlPointModel {
   // 根据KML文件ID查找所有点位
   static async findByKmlFileId(kmlFileId) {
     try {
-      const rows = await query(
+      const rows = await SQLiteAdapter.all(
         `SELECT kp.*, kf.title as kml_file_title 
          FROM kml_points kp 
          LEFT JOIN kml_files kf ON kp.kml_file_id = kf.id 
@@ -139,7 +139,7 @@ class KmlPointModel {
   // 根据地图边界获取KML点位
   static async findByBounds({ north, south, east, west } = {}) {
     try {
-      const rows = await query(
+      const rows = await SQLiteAdapter.all(
         `SELECT kp.*, kf.title as kml_file_title, kf.is_visible as kml_file_visible
          FROM kml_points kp 
          LEFT JOIN kml_files kf ON kp.kml_file_id = kf.id 
@@ -165,7 +165,7 @@ class KmlPointModel {
   // 删除KML文件的所有点位
   static async deleteByKmlFileId(kmlFileId) {
     try {
-      const result = await query(
+      const result = await SQLiteAdapter.all(
         'DELETE FROM kml_points WHERE kml_file_id = ?',
         [kmlFileId]
       )
@@ -179,7 +179,7 @@ class KmlPointModel {
   // 获取KML点位统计信息
   static async getStatsByKmlFileId(kmlFileId) {
     try {
-      const rows = await query(`
+      const rows = await SQLiteAdapter.all(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN point_type = 'Point' THEN 1 END) as points,
@@ -199,7 +199,7 @@ class KmlPointModel {
   // 获取所有KML点位统计信息
   static async getStats() {
     try {
-      const rows = await query(`
+      const rows = await SQLiteAdapter.all(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN point_type = 'Point' THEN 1 END) as points,

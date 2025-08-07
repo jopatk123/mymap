@@ -1,4 +1,4 @@
-const { query } = require('../config/database')
+const SQLiteAdapter = require('../utils/sqlite-adapter')
 
 class FolderModel {
   // 获取所有文件夹（树形结构）
@@ -8,7 +8,7 @@ class FolderModel {
       FROM folders 
       ORDER BY parent_id ASC, sort_order ASC, name ASC
     `
-    const rows = await query(sql)
+    const rows = await SQLiteAdapter.all(sql)
     return this.buildTree(rows)
   }
 
@@ -19,13 +19,13 @@ class FolderModel {
       FROM folders 
       ORDER BY parent_id ASC, sort_order ASC, name ASC
     `
-    return await query(sql)
+    return await SQLiteAdapter.all(sql)
   }
 
   // 根据ID获取文件夹
   static async findById(id) {
     const sql = 'SELECT * FROM folders WHERE id = ?'
-    const rows = await query(sql, [id])
+    const rows = await SQLiteAdapter.all(sql, [id])
     return rows[0] || null
   }
 
@@ -36,7 +36,7 @@ class FolderModel {
       WHERE parent_id = ? 
       ORDER BY sort_order ASC, name ASC
     `
-    return await query(sql, [parentId])
+    return await SQLiteAdapter.all(sql, [parentId])
   }
 
   // 创建文件夹
@@ -48,7 +48,7 @@ class FolderModel {
       VALUES (?, ?, ?, ?)
     `
     
-    const result = await query(sql, [name, parentId, isVisible, sortOrder])
+    const result = await SQLiteAdapter.all(sql, [name, parentId, isVisible, sortOrder])
     return await this.findById(result.insertId)
   }
 
@@ -66,7 +66,7 @@ class FolderModel {
       WHERE id = ?
     `
     
-    await query(sql, [name, parentId, isVisible, sortOrder, id])
+    await SQLiteAdapter.all(sql, [name, parentId, isVisible, sortOrder, id])
     return await this.findById(id)
   }
 
@@ -97,7 +97,7 @@ class FolderModel {
     }
 
     const sql = 'DELETE FROM folders WHERE id = ?'
-    const result = await query(sql, [id])
+    const result = await SQLiteAdapter.all(sql, [id])
     return result.affectedRows > 0
   }
 
@@ -109,21 +109,21 @@ class FolderModel {
     }
 
     const sql = 'UPDATE folders SET parent_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await query(sql, [newParentId, id])
+    await SQLiteAdapter.all(sql, [newParentId, id])
     return await this.findById(id)
   }
 
   // 更新可见性
   static async updateVisibility(id, isVisible) {
     const sql = 'UPDATE folders SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await query(sql, [isVisible, id])
+    await SQLiteAdapter.all(sql, [isVisible, id])
     return await this.findById(id)
   }
 
   // 获取文件夹中的全景图数量
   static async getPanoramaCount(folderId) {
     const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?'
-    const [{ count }] = await query(sql, [folderId])
+    const [{ count }] = await SQLiteAdapter.all(sql, [folderId])
     return count
   }
 
@@ -131,11 +131,11 @@ class FolderModel {
   static async getVideoPointCount(folderId) {
     if (folderId === 0 || folderId === '0') {
       const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id IS NULL'
-      const [{ count }] = await query(sql, [])
+      const [{ count }] = await SQLiteAdapter.all(sql, [])
       return count
     } else {
       const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?'
-      const [{ count }] = await query(sql, [folderId])
+      const [{ count }] = await SQLiteAdapter.all(sql, [folderId])
       return count
     }
   }
@@ -144,11 +144,11 @@ class FolderModel {
   static async getKmlFileCount(folderId) {
     if (folderId === 0 || folderId === '0') {
       const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id IS NULL'
-      const [{ count }] = await query(sql, [])
+      const [{ count }] = await SQLiteAdapter.all(sql, [])
       return count
     } else {
       const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?'
-      const [{ count }] = await query(sql, [folderId])
+      const [{ count }] = await SQLiteAdapter.all(sql, [folderId])
       return count
     }
   }

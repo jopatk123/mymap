@@ -1,4 +1,4 @@
-const { pool } = require('../config/database')
+const SQLiteAdapter = require('../utils/sqlite-adapter')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
 const QueryBuilder = require('../utils/QueryBuilder')
 
@@ -14,7 +14,7 @@ class KmlFileModel {
     sortOrder = 0
   }) {
     try {
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `INSERT INTO kml_files (
           title, description, file_url, file_size, 
           folder_id, is_visible, sort_order
@@ -40,7 +40,7 @@ class KmlFileModel {
   // 根据ID查找KML文件
   static async findById(id) {
     try {
-      const [rows] = await pool.execute(
+      const [rows] = await SQLiteAdapter.execute(
         `SELECT kf.*, f.name as folder_name 
          FROM kml_files kf 
          LEFT JOIN folders f ON kf.folder_id = f.id 
@@ -101,7 +101,7 @@ class KmlFileModel {
         : ''
 
       // 获取总数
-      const [countResult] = await pool.execute(
+      const [countResult] = await SQLiteAdapter.execute(
         `SELECT COUNT(*) as total 
          FROM kml_files kf 
          ${whereClause}`,
@@ -121,7 +121,7 @@ class KmlFileModel {
         ORDER BY kf.sort_order ASC, kf.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `
-      const [rows] = await pool.execute(sql, params)
+      const [rows] = await SQLiteAdapter.execute(sql, params)
 
       return {
         data: rows,
@@ -147,7 +147,7 @@ class KmlFileModel {
         whereClause += ' AND kf.is_visible = TRUE'
       }
 
-      const [rows] = await pool.execute(
+      const [rows] = await SQLiteAdapter.execute(
         `SELECT kf.*, f.name as folder_name,
          (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
          FROM kml_files kf 
@@ -187,7 +187,7 @@ class KmlFileModel {
       
       params.push(id)
       
-      await pool.execute(
+      await SQLiteAdapter.execute(
         `UPDATE kml_files SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         params
       )
@@ -202,7 +202,7 @@ class KmlFileModel {
   // 删除KML文件（会级联删除相关的点位数据）
   static async delete(id) {
     try {
-      const [result] = await pool.execute('DELETE FROM kml_files WHERE id = ?', [id])
+      const [result] = await SQLiteAdapter.execute('DELETE FROM kml_files WHERE id = ?', [id])
       return result.affectedRows > 0
     } catch (error) {
       console.error('删除KML文件失败:', error)
@@ -218,7 +218,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `DELETE FROM kml_files WHERE id IN (${placeholders})`,
         ids
       )
@@ -238,7 +238,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [isVisible, ...ids]
       )
@@ -258,7 +258,7 @@ class KmlFileModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [folderId, ...ids]
       )
@@ -273,7 +273,7 @@ class KmlFileModel {
   // 获取统计信息
   static async getStats() {
     try {
-      const [rows] = await pool.execute(`
+      const [rows] = await SQLiteAdapter.execute(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,

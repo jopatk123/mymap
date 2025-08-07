@@ -1,29 +1,50 @@
-const mysql = require('mysql2/promise')
+const sqlite3 = require('sqlite3').verbose()
+const { open } = require('sqlite')
+const path = require('path')
+const fs = require('fs')
 const config = require('./index')
 
-// 创建连接池
-const pool = mysql.createPool({
-  host: config.database.host,
-  port: config.database.port,
-  user: config.database.user,
-  password: config.database.password,
-  database: config.database.database,
-  connectionLimit: config.database.connectionLimit,
-  connectTimeout: config.database.connectTimeout || 10000, // 10秒连接超时
-  acquireTimeout: config.database.acquireTimeout,
-  charset: 'utf8mb4',
-  // 防止编码问题
-  supportBigNumbers: true,
-  bigNumberStrings: true,
-  dateStrings: true,
-  typeCast: true
-})
+let db = null
+
+// 确保数据目录存在
+const ensureDataDir = () => {
+  const dbPath = config.database.path
+  const dataDir = path.dirname(dbPath)
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true })
+  }
+}
+
+// 初始化数据库连接
+const initDatabase = async () => {
+  if (db) return db
+  
+  ensureDataDir()
+  
+  db = await open({
+    filename: config.database.path,
+    driver: sqlite3.Database
+  })
+  
+  // 启用外键约束
+  await db.exec('PRAGMA foreign_keys = ON')
+  
+  return db
+}
+
+// 获取数据库实例
+const getDatabase = async () => {
+  if (!db) {
+    await initDatabase()
+  }
+  return db
+}
 
 // 测试数据库连接
 const testConnection = async () => {
   try {
-    const connection = await pool.getConnection()
-    connection.release()
+    const database = await getDatabase()
+    await database.get('SELECT 1')
     return true
   } catch (error) {
     console.error('数据库连接失败:', error.message)
@@ -34,134 +55,152 @@ const testConnection = async () => {
 // 初始化数据库表
 const initTables = async () => {
   try {
-    const connection = await pool.getConnection()
+    const database = await getDatabase()
 
     // 创建文件夹表
     const createFoldersTable = `
       CREATE TABLE IF NOT EXISTS folders (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        name VARCHAR(255) NOT NULL,
-        parent_id INT DEFAULT NULL,
-        is_visible BOOLEAN DEFAULT TRUE,
-        sort_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE RESTRICT,
-        INDEX idx_parent (parent_id),
-        INDEX idx_sort_order (sort_order),
-        INDEX idx_name (name)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        parent_id INTEGER DEFAULT NULL,
+        is_visible INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE RESTRICT
+      )
     `
 
-    await connection.execute(createFoldersTable)
+    await database.exec(createFoldersTable)
+
+    // 创建文件夹表索引
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders(parent_id)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_folders_sort_order ON folders(sort_order)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_folders_name ON folders(name)')
 
     // 创建全景图表
     const createPanoramasTable = `
       CREATE TABLE IF NOT EXISTS panoramas (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        title VARCHAR(255) NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
         description TEXT,
-        image_url VARCHAR(500) NOT NULL,
-        thumbnail_url VARCHAR(500),
-        latitude DECIMAL(10, 8) NOT NULL,
-        longitude DECIMAL(11, 8) NOT NULL,
-        gcj02_lat DECIMAL(10, 8),
-        gcj02_lng DECIMAL(11, 8),
-        file_size INT,
-        file_type VARCHAR(50),
-        folder_id INT DEFAULT NULL,
-        is_visible BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-        INDEX idx_location (latitude, longitude),
-        INDEX idx_created_at (created_at),
-        INDEX idx_folder_id (folder_id),
-        INDEX idx_is_visible (is_visible)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        image_url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        gcj02_lat REAL,
+        gcj02_lng REAL,
+        file_size INTEGER,
+        file_type TEXT,
+        folder_id INTEGER DEFAULT NULL,
+        is_visible INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+      )
     `
 
-    await connection.execute(createPanoramasTable)
+    await database.exec(createPanoramasTable)
+
+    // 创建全景图表索引
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_location ON panoramas(latitude, longitude)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_gcj02_location ON panoramas(gcj02_lat, gcj02_lng)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_folder_id ON panoramas(folder_id)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_is_visible ON panoramas(is_visible)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_created_at ON panoramas(created_at)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_title ON panoramas(title)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_panoramas_sort_order ON panoramas(sort_order)')
 
     // 创建KML文件表
     const createKmlFilesTable = `
       CREATE TABLE IF NOT EXISTS kml_files (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        title VARCHAR(255) NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
         description TEXT,
-        file_url VARCHAR(500) NOT NULL,
-        file_size INT,
-        folder_id INT DEFAULT NULL,
-        is_visible BOOLEAN DEFAULT TRUE,
-        sort_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-        INDEX idx_folder_id (folder_id),
-        INDEX idx_is_visible (is_visible),
-        INDEX idx_created_at (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        file_url TEXT NOT NULL,
+        file_size INTEGER,
+        folder_id INTEGER DEFAULT NULL,
+        is_visible INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+      )
     `
 
-    await connection.execute(createKmlFilesTable)
+    await database.exec(createKmlFilesTable)
+
+    // 创建KML文件表索引
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_files_folder_id ON kml_files(folder_id)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_files_is_visible ON kml_files(is_visible)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_files_created_at ON kml_files(created_at)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_files_title ON kml_files(title)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_files_sort_order ON kml_files(sort_order)')
 
     // 创建KML点位表
     const createKmlPointsTable = `
       CREATE TABLE IF NOT EXISTS kml_points (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        kml_file_id INT NOT NULL,
-        name VARCHAR(255) NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kml_file_id INTEGER NOT NULL,
+        name TEXT,
         description TEXT,
-        latitude DECIMAL(10, 8) NOT NULL,
-        longitude DECIMAL(11, 8) NOT NULL,
-        gcj02_lat DECIMAL(10, 8),
-        gcj02_lng DECIMAL(11, 8),
-        altitude DECIMAL(8, 2) DEFAULT 0,
-        point_type VARCHAR(20) DEFAULT 'Point',
-        coordinates JSON,
-        style_data JSON,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (kml_file_id) REFERENCES kml_files(id) ON DELETE CASCADE,
-        INDEX idx_kml_file_id (kml_file_id),
-        INDEX idx_location (latitude, longitude),
-        INDEX idx_gcj02_location (gcj02_lat, gcj02_lng),
-        INDEX idx_point_type (point_type)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        gcj02_lat REAL,
+        gcj02_lng REAL,
+        altitude REAL DEFAULT 0,
+        point_type TEXT DEFAULT 'Point',
+        coordinates TEXT,
+        style_data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (kml_file_id) REFERENCES kml_files(id) ON DELETE CASCADE
+      )
     `
 
-    await connection.execute(createKmlPointsTable)
+    await database.exec(createKmlPointsTable)
+
+    // 创建KML点位表索引
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_points_kml_file_id ON kml_points(kml_file_id)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_points_location ON kml_points(latitude, longitude)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_points_gcj02_location ON kml_points(gcj02_lat, gcj02_lng)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_kml_points_point_type ON kml_points(point_type)')
 
     // 创建视频点位表
     const createVideoPointsTable = `
       CREATE TABLE IF NOT EXISTS video_points (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        title VARCHAR(255) NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
         description TEXT,
-        video_url VARCHAR(500) NOT NULL,
-        thumbnail_url VARCHAR(500),
-        latitude DECIMAL(10, 8) NOT NULL,
-        longitude DECIMAL(11, 8) NOT NULL,
-        gcj02_lat DECIMAL(10, 8),
-        gcj02_lng DECIMAL(11, 8),
-        file_size INT,
-        file_type VARCHAR(50),
-        duration INT,
-        folder_id INT DEFAULT NULL,
-        is_visible BOOLEAN DEFAULT TRUE,
-        sort_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,
-        INDEX idx_location (latitude, longitude),
-        INDEX idx_gcj02_location (gcj02_lat, gcj02_lng),
-        INDEX idx_folder_id (folder_id),
-        INDEX idx_is_visible (is_visible),
-        INDEX idx_created_at (created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        video_url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        gcj02_lat REAL,
+        gcj02_lng REAL,
+        file_size INTEGER,
+        file_type TEXT,
+        duration INTEGER,
+        folder_id INTEGER DEFAULT NULL,
+        is_visible INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+      )
     `
 
-    await connection.execute(createVideoPointsTable)
+    await database.exec(createVideoPointsTable)
+
+    // 创建视频点位表索引
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_location ON video_points(latitude, longitude)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_gcj02_location ON video_points(gcj02_lat, gcj02_lng)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_folder_id ON video_points(folder_id)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_is_visible ON video_points(is_visible)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_created_at ON video_points(created_at)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_title ON video_points(title)')
+    await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_sort_order ON video_points(sort_order)')
 
     // 初始化默认文件夹
     try {
@@ -171,7 +210,6 @@ const initTables = async () => {
       console.warn('初始化默认文件夹失败:', error.message)
     }
 
-    connection.release()
   } catch (error) {
     console.error('数据库表初始化失败:', error.message)
     throw error
@@ -181,8 +219,15 @@ const initTables = async () => {
 // 执行查询
 const query = async (sql, params = []) => {
   try {
-    const [rows] = await pool.execute(sql, params)
-    return rows
+    const database = await getDatabase()
+    
+    // 判断是否为SELECT查询
+    if (sql.trim().toUpperCase().startsWith('SELECT')) {
+      return await database.all(sql, params)
+    } else {
+      const result = await database.run(sql, params)
+      return result
+    }
   } catch (error) {
     console.error('数据库查询错误:', error.message)
     throw error
@@ -191,35 +236,36 @@ const query = async (sql, params = []) => {
 
 // 执行事务
 const transaction = async (callback) => {
-  const connection = await pool.getConnection()
+  const database = await getDatabase()
 
   try {
-    await connection.beginTransaction()
-    const result = await callback(connection)
-    await connection.commit()
+    await database.exec('BEGIN TRANSACTION')
+    const result = await callback(database)
+    await database.exec('COMMIT')
     return result
   } catch (error) {
-    await connection.rollback()
+    await database.exec('ROLLBACK')
     throw error
-  } finally {
-    connection.release()
   }
 }
 
-// 关闭连接池
-const closePool = async () => {
+// 关闭数据库连接
+const closeDatabase = async () => {
   try {
-    await pool.end()
+    if (db) {
+      await db.close()
+      db = null
+    }
   } catch (error) {
-    console.error('关闭数据库连接池失败:', error.message)
+    console.error('关闭数据库连接失败:', error.message)
   }
 }
 
 module.exports = {
-  pool,
+  getDatabase,
   query,
   transaction,
   testConnection,
   initTables,
-  closePool
+  closeDatabase
 }

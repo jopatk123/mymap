@@ -1,4 +1,4 @@
-const { pool } = require('../config/database')
+const SQLiteAdapter = require('../utils/sqlite-adapter')
 const QueryBuilder = require('../utils/QueryBuilder')
 
 class PanoramaModel {
@@ -30,7 +30,7 @@ class PanoramaModel {
       
       // 获取总数
       const countSql = `SELECT COUNT(*) as total FROM panoramas p ${whereClause}`
-      const [countResult] = await pool.execute(countSql, params)
+      const [countResult] = await SQLiteAdapter.execute(countSql, params)
       const total = countResult[0].total
       
       // 获取数据
@@ -44,7 +44,7 @@ class PanoramaModel {
         LIMIT ${parseInt(pageSize)} OFFSET ${offset}
       `
       
-      const [rows] = await pool.execute(dataSql, params)
+      const [rows] = await SQLiteAdapter.execute(dataSql, params)
       
       return {
         data: rows,
@@ -62,7 +62,7 @@ class PanoramaModel {
   // 根据ID获取全景图
   static async findById(id) {
     const sql = 'SELECT * FROM panoramas WHERE id = ?'
-    const [rows] = await pool.execute(sql, [id])
+    const [rows] = await SQLiteAdapter.execute(sql, [id])
     return rows[0] || null
   }
   
@@ -100,7 +100,7 @@ class PanoramaModel {
       ORDER BY created_at DESC
     `
     
-    const [rows] = await pool.execute(sql, params)
+    const [rows] = await SQLiteAdapter.execute(sql, params)
     return rows
   }
   
@@ -115,7 +115,7 @@ class PanoramaModel {
       ORDER BY distance ASC
     `
     
-    const [rows] = await pool.execute(sql, [...nearbyQuery.params, radius])
+    const [rows] = await SQLiteAdapter.execute(sql, [...nearbyQuery.params, radius])
     return rows
   }
   
@@ -161,7 +161,7 @@ class PanoramaModel {
       sortOrder
     ]
     
-    const [result] = await pool.execute(sql, params)
+    const [result] = await SQLiteAdapter.execute(sql, params)
     return await this.findById(result.insertId)
   }
   
@@ -213,14 +213,14 @@ class PanoramaModel {
       id
     ]
     
-    await pool.execute(sql, params)
+    await SQLiteAdapter.execute(sql, params)
     return await this.findById(id)
   }
   
   // 删除全景图
   static async delete(id) {
     const sql = 'DELETE FROM panoramas WHERE id = ?'
-    const [result] = await pool.execute(sql, [id])
+    const [result] = await SQLiteAdapter.execute(sql, [id])
     return result.affectedRows > 0
   }
   
@@ -230,7 +230,7 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `DELETE FROM panoramas WHERE id ${clause}`
-    const [result] = await pool.execute(sql, params)
+    const [result] = await SQLiteAdapter.execute(sql, params)
     return result.affectedRows
   }
   
@@ -281,7 +281,7 @@ class PanoramaModel {
     
     sql += ` ${QueryBuilder.buildLimitClause(page, pageSize)}`
     
-    const [rows] = await pool.execute(sql, finalParams)
+    const [rows] = await SQLiteAdapter.execute(sql, finalParams)
     
     // 构建计数查询
     let countSql = 'SELECT COUNT(*) as total FROM panoramas'
@@ -299,7 +299,7 @@ class PanoramaModel {
       countSql += ` WHERE ${conditions.join(' AND ')}`
     }
     
-    const [countResult] = await pool.execute(countSql, countParams)
+    const [countResult] = await SQLiteAdapter.execute(countSql, countParams)
     const total = countResult[0].total
     
     return {
@@ -316,8 +316,8 @@ class PanoramaModel {
     const totalSql = 'SELECT COUNT(*) as total FROM panoramas'
     const recentSql = 'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
     
-    const [totalResult] = await pool.execute(totalSql)
-    const [recentResult] = await pool.execute(recentSql)
+    const [totalResult] = await SQLiteAdapter.execute(totalSql)
+    const [recentResult] = await SQLiteAdapter.execute(recentSql)
     
     return {
       total: totalResult[0].total,
@@ -328,7 +328,7 @@ class PanoramaModel {
   // 移动全景图到文件夹
   static async moveToFolder(id, folderId) {
     const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await pool.execute(sql, [folderId, id])
+    await SQLiteAdapter.execute(sql, [folderId, id])
     return await this.findById(id)
   }
 
@@ -338,14 +338,14 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const [result] = await pool.execute(sql, [folderId, ...params])
+    const [result] = await SQLiteAdapter.execute(sql, [folderId, ...params])
     return result.affectedRows
   }
 
   // 更新可见性
   static async updateVisibility(id, isVisible) {
     const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await pool.execute(sql, [isVisible, id])
+    await SQLiteAdapter.execute(sql, [isVisible, id])
     return await this.findById(id)
   }
 
@@ -355,7 +355,7 @@ class PanoramaModel {
     
     const { clause, params } = QueryBuilder.buildInClause(ids)
     const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const [result] = await pool.execute(sql, [isVisible, ...params])
+    const [result] = await SQLiteAdapter.execute(sql, [isVisible, ...params])
     return result.affectedRows
   }
 
@@ -380,7 +380,7 @@ class PanoramaModel {
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
     sql += ` ORDER BY ${sortField} ${order}`
     
-    const [rows] = await pool.execute(sql, params)
+    const [rows] = await SQLiteAdapter.execute(sql, params)
     return rows
   }
 }

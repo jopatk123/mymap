@@ -17,21 +17,39 @@
 ## 🚀 快速开始
 
 ```bash
-# 一键启动 - 自动安装依赖、部署数据库、启动服务
+# 克隆项目
 git clone <repository-url>
 cd mymap
+
+# 一键启动（推荐）
 ./start.sh
+
+# 或者手动启动
+npm run install:all
+cd server && node init-sqlite-data.js && cd ..
+npm run dev
 ```
 
 启动完成后访问：http://localhost:3000
 
-> 📋 更多部署选项请查看 [快速启动指南](QUICK_START.md)
+### 🔧 故障排除
+
+如果遇到端口冲突错误：
+```bash
+# 验证项目设置
+node verify-setup.js
+
+# 清理端口并重新启动
+pkill -f "vite\|nodemon" && ./start.sh --no-deps
+```
+
+> 📋 更多部署选项请查看 [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## 🛠️ 技术架构
 
 **前端**: Vue 3 + Vite + Pinia + Element Plus + Leaflet + Pannellum  
-**后端**: Node.js + Express + MySQL + Sharp  
-**特色**: Docker化部署、一键启动、坐标系转换、图片处理
+**后端**: Node.js + Express + SQLite + Sharp  
+**特色**: 零依赖部署、一键启动、坐标系转换、图片处理
 
 ## 📸 功能预览
 

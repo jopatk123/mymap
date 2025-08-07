@@ -18,11 +18,11 @@
   },
   "kmlStyles": {
     "1": {
-      "point_color": "#9cbf0eff",
+      "point_color": "#1b2ba4ff",
       "point_size": 8,
-      "point_opacity": 0.7,
-      "point_label_size": 15,
-      "point_label_color": "#000000",
+      "point_opacity": 1,
+      "point_label_size": 19,
+      "point_label_color": "#d01e1e",
       "line_color": "#ff7800",
       "line_width": 2,
       "line_opacity": 0.8,

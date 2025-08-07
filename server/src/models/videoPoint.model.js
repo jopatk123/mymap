@@ -1,4 +1,4 @@
-const { pool } = require('../config/database')
+const SQLiteAdapter = require('../utils/sqlite-adapter')
 const { wgs84ToGcj02 } = require('../utils/coordinate')
 const QueryBuilder = require('../utils/QueryBuilder')
 
@@ -22,7 +22,7 @@ class VideoPointModel {
       // 坐标转换
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude)
       
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `INSERT INTO video_points (
           title, description, video_url, thumbnail_url,
           latitude, longitude, gcj02_lat, gcj02_lng,
@@ -56,7 +56,7 @@ class VideoPointModel {
   // 根据ID查找视频点位
   static async findById(id) {
     try {
-      const [rows] = await pool.execute(
+      const [rows] = await SQLiteAdapter.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -117,7 +117,7 @@ class VideoPointModel {
 
       // 获取总数
       const countSql = `SELECT COUNT(*) as total FROM video_points vp ${whereClause}`
-      const [countResult] = await pool.execute(countSql, params)
+      const [countResult] = await SQLiteAdapter.execute(countSql, params)
       const total = countResult[0].total
 
       // 获取数据
@@ -129,7 +129,7 @@ class VideoPointModel {
                        ORDER BY vp.sort_order ASC, vp.created_at DESC 
                        LIMIT ${parseInt(pageSize)} OFFSET ${offset}`
       
-      const [rows] = await pool.execute(dataSql, params)
+      const [rows] = await SQLiteAdapter.execute(dataSql, params)
 
       return {
         data: rows,
@@ -155,7 +155,7 @@ class VideoPointModel {
         whereClause += ' AND vp.is_visible = TRUE'
       }
 
-      const [rows] = await pool.execute(
+      const [rows] = await SQLiteAdapter.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -196,7 +196,7 @@ class VideoPointModel {
 
       const whereClause = 'WHERE ' + whereConditions.join(' AND ')
 
-      const [rows] = await pool.execute(
+      const [rows] = await SQLiteAdapter.execute(
         `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
@@ -249,7 +249,7 @@ class VideoPointModel {
       
       params.push(id)
       
-      await pool.execute(
+      await SQLiteAdapter.execute(
         `UPDATE video_points SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         params
       )
@@ -264,7 +264,7 @@ class VideoPointModel {
   // 删除视频点位
   static async delete(id) {
     try {
-      const [result] = await pool.execute('DELETE FROM video_points WHERE id = ?', [id])
+      const [result] = await SQLiteAdapter.execute('DELETE FROM video_points WHERE id = ?', [id])
       return result.affectedRows > 0
     } catch (error) {
       console.error('删除视频点位失败:', error)
@@ -280,7 +280,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `DELETE FROM video_points WHERE id IN (${placeholders})`,
         ids
       )
@@ -300,7 +300,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `UPDATE video_points SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [isVisible, ...ids]
       )
@@ -320,7 +320,7 @@ class VideoPointModel {
       }
       
       const placeholders = ids.map(() => '?').join(',')
-      const [result] = await pool.execute(
+      const [result] = await SQLiteAdapter.execute(
         `UPDATE video_points SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [folderId, ...ids]
       )
@@ -335,7 +335,7 @@ class VideoPointModel {
   // 获取统计信息
   static async getStats() {
     try {
-      const [rows] = await pool.execute(`
+      const [rows] = await SQLiteAdapter.execute(`
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,

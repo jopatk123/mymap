@@ -1,6 +1,6 @@
 const app = require('./app')
 const config = require('./config')
-const { testConnection, initTables, closePool } = require('./config/database')
+const { testConnection, initTables, closeDatabase } = require('./config/database')
 const { initDefaultFolder } = require('./init/init-default-folder')
 const Logger = require('./utils/logger')
 
@@ -28,7 +28,7 @@ const startServer = async () => {
 ╠══════════════════════════════════════════════════════════════╣
 ║ 环境: ${config.server.env.padEnd(20)} ║
 ║ 端口: ${config.server.port.toString().padEnd(20)} ║
-║ 数据库: ${config.database.host}:${config.database.port.toString().padEnd(15)} ║
+║ 数据库: SQLite (${config.database.path.padEnd(15)}) ║
 ║ 上传目录: ${config.upload.dir.padEnd(18)} ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ API文档: http://localhost:${config.server.port}/api                    ║
@@ -42,8 +42,8 @@ const startServer = async () => {
       
       server.close(async () => {
         
-        // 关闭数据库连接池
-        await closePool()
+        // 关闭数据库连接
+        await closeDatabase()
         
         process.exit(0)
       })
