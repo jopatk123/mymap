@@ -4,7 +4,7 @@
     "panorama": {
       "point_color": "#2ed573",
       "point_size": 8,
-      "point_opacity": 1.0,
+      "point_opacity": 1,
       "point_icon_type": "circle",
       "point_label_size": 12,
       "point_label_color": "#000000"
@@ -12,17 +12,37 @@
     "video": {
       "point_color": "#ff4757",
       "point_size": 10,
-      "point_opacity": 1.0,
+      "point_opacity": 1,
       "point_icon_type": "marker",
       "point_label_size": 14,
       "point_label_color": "#000000"
     }
   },
   "kmlStyles": {
+    "1": {
+      "point_color": "#14da11ff",
+      "point_size": 8,
+      "point_opacity": 1,
+      "point_icon_type": "marker",
+      "point_label_size": 8,
+      "point_label_color": "#000000",
+      "line_color": "#ff7800",
+      "line_width": 2,
+      "line_opacity": 0.8,
+      "line_style": "solid",
+      "polygon_fill_color": "#ff7800",
+      "polygon_fill_opacity": 0.3,
+      "polygon_stroke_color": "#ff7800",
+      "polygon_stroke_width": 2,
+      "polygon_stroke_style": "solid",
+      "cluster_enabled": true,
+      "cluster_icon_color": "#ffffff",
+      "cluster_text_color": "#000000"
+    },
     "default": {
       "point_color": "#ff7800",
       "point_size": 8,
-      "point_opacity": 1.0,
+      "point_opacity": 1,
       "point_icon_type": "marker",
       "point_label_size": 12,
       "point_label_color": "#000000",
@@ -41,7 +61,10 @@
     }
   },
   "mapSettings": {
-    "defaultCenter": [116.4074, 39.9042],
+    "defaultCenter": [
+      116.4074,
+      39.9042
+    ],
     "defaultZoom": 12,
     "minZoom": 3,
     "maxZoom": 18,
@@ -49,9 +72,20 @@
   },
   "uploadSettings": {
     "maxFileSize": 104857600,
-    "allowedImageTypes": ["jpg", "jpeg", "png"],
-    "allowedVideoTypes": ["mp4", "avi", "mov"],
-    "allowedKmlTypes": ["kml", "kmz"],
+    "allowedImageTypes": [
+      "jpg",
+      "jpeg",
+      "png"
+    ],
+    "allowedVideoTypes": [
+      "mp4",
+      "avi",
+      "mov"
+    ],
+    "allowedKmlTypes": [
+      "kml",
+      "kmz"
+    ],
     "thumbnailSize": {
       "width": 300,
       "height": 200

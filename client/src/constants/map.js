@@ -14,5 +14,4 @@ export const defaultStyles = {
   polygon_stroke_color: '#ff7800',
   polygon_stroke_width: 2,
   polygon_stroke_style: 'solid',
-  cluster_enabled: true,
 };

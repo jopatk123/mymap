@@ -11,13 +11,6 @@
       <div class="kml-file-list">
         <div class="list-header">
           <h3>KML文件列表</h3>
-          <div class="global-cluster-control">
-            <el-switch 
-              v-model="globalClusterEnabled" 
-              active-text="启用全景图聚合"
-              @change="handleGlobalClusterChange"
-            />
-          </div>
         </div>
         
         <el-scrollbar height="500px">
@@ -63,12 +56,6 @@
             />
           </el-tab-pane>
           
-          <el-tab-pane label="聚合设置" name="cluster">
-            <ClusterStyleEditor 
-              v-model="currentStyles.cluster"
-              @change="handleStyleChange"
-            />
-          </el-tab-pane>
         </el-tabs>
         
         <div v-else class="no-selection">
@@ -96,7 +83,6 @@ import { kmlApi } from '@/api/kml.js'
 import PointStyleEditor from './styles/PointStyleEditor.vue'
 import LineStyleEditor from './styles/LineStyleEditor.vue'
 import PolygonStyleEditor from './styles/PolygonStyleEditor.vue'
-import ClusterStyleEditor from './styles/ClusterStyleEditor.vue'
 import StylePreview from './styles/StylePreview.vue'
 
 const props = defineProps({
@@ -118,14 +104,12 @@ const kmlFiles = ref([])
 const selectedKmlFile = ref(null)
 const activeTab = ref('point')
 const saving = ref(false)
-const globalClusterEnabled = ref(true)
 
 // 当前样式配置
 const currentStyles = reactive({
   point: {},
   line: {},
-  polygon: {},
-  cluster: {}
+  polygon: {}
 })
 
 // 原始样式配置（用于取消时恢复）
@@ -135,7 +119,6 @@ const originalStyles = ref({})
 watch(visible, async (newVisible) => {
   if (newVisible) {
     await loadKmlFiles()
-    await loadGlobalClusterConfig()
   }
 })
 
@@ -166,15 +149,6 @@ const loadKmlFiles = async () => {
   }
 }
 
-// 加载全景图聚合配置
-const loadGlobalClusterConfig = async () => {
-  try {
-    const response = await kmlApi.getPanoramaClusterConfig()
-    globalClusterEnabled.value = response.data.cluster_enabled
-  } catch (error) {
-    console.error('加载全景图聚合配置失败:', error)
-  }
-}
 
 // 选择KML文件
 const selectKmlFile = async (kmlFile) => {
@@ -210,14 +184,6 @@ const selectKmlFile = async (kmlFile) => {
       strokeStyle: styles.polygon_stroke_style
     }
     
-    currentStyles.cluster = {
-      enabled: styles.cluster_enabled,
-      radius: styles.cluster_radius,
-      minPoints: styles.cluster_min_points,
-      maxZoom: styles.cluster_max_zoom,
-      iconColor: styles.cluster_icon_color,
-      textColor: styles.cluster_text_color
-    }
     
     // 保存原始配置
     originalStyles.value = JSON.parse(JSON.stringify(currentStyles))
@@ -237,18 +203,6 @@ const handleStyleChange = () => {
   }
 }
 
-// 处理全局聚合开关变化
-const handleGlobalClusterChange = async (enabled) => {
-  try {
-    await kmlApi.updatePanoramaClusterConfig({ cluster_enabled: enabled })
-    ElMessage.success('全景图聚合设置已更新')
-  } catch (error) {
-    console.error('更新全景图聚合设置失败:', error)
-    ElMessage.error('更新聚合设置失败')
-    // 恢复原状态
-    globalClusterEnabled.value = !enabled
-  }
-}
 
 // 保存配置
 const handleSave = async () => {
@@ -264,13 +218,17 @@ const handleSave = async () => {
     await kmlApi.updateKmlFileStyles(selectedKmlFile.value.id, styleConfig)
     
     ElMessage.success('样式配置保存成功')
-    emit('styles-updated')
     
     // 更新文件列表中的样式配置
     const fileIndex = kmlFiles.value.findIndex(f => f.id === selectedKmlFile.value.id)
     if (fileIndex !== -1) {
       kmlFiles.value[fileIndex].styleConfig = styleConfig
     }
+    
+    // 延迟触发事件，确保服务器配置已保存完成
+    setTimeout(() => {
+      emit('styles-updated')
+    }, 300)
     
   } catch (error) {
     console.error('保存样式配置失败:', error)
@@ -337,14 +295,7 @@ const convertToApiFormat = (styles) => {
     polygon_fill_opacity: styles.polygon.fillOpacity,
     polygon_stroke_color: styles.polygon.strokeColor,
     polygon_stroke_width: styles.polygon.strokeWidth,
-    polygon_stroke_style: styles.polygon.strokeStyle,
-    
-    cluster_enabled: styles.cluster.enabled,
-    cluster_radius: styles.cluster.radius,
-    cluster_min_points: styles.cluster.minPoints,
-    cluster_max_zoom: styles.cluster.maxZoom,
-    cluster_icon_color: styles.cluster.iconColor,
-    cluster_text_color: styles.cluster.textColor
+    polygon_stroke_style: styles.polygon.strokeStyle
   }
 }
 
@@ -369,12 +320,6 @@ const getDefaultStyles = () => {
     polygon_stroke_width: 2,
     polygon_stroke_style: 'solid',
     
-    cluster_enabled: true,
-    cluster_radius: 50,
-    cluster_min_points: 2,
-    cluster_max_zoom: 16,
-    cluster_icon_color: '#409EFF',
-    cluster_text_color: '#FFFFFF'
   }
 }
 </script>
@@ -401,10 +346,6 @@ const getDefaultStyles = () => {
         font-weight: 600;
       }
       
-      .global-cluster-control {
-        padding: 8px 0;
-        border-bottom: 1px solid #e4e7ed;
-      }
     }
     
     .kml-file-item {

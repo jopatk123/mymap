@@ -36,15 +36,6 @@
         />
       </svg>
       
-      <!-- 聚合状态指示（仅在KML样式中显示） -->
-      <div 
-        v-if="showFullPreview"
-        class="cluster-indicator"
-        :class="{ enabled: styleConfig.cluster_enabled !== false }"
-        :title="styleConfig.cluster_enabled !== false ? '已启用聚合' : '未启用聚合'"
-      >
-        <i class="el-icon-connection"></i>
-      </div>
     </div>
   </div>
 </template>
@@ -116,26 +107,6 @@ const getLineDashArray = (style) => {
       flex-shrink: 0;
     }
     
-    .cluster-indicator {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      flex-shrink: 0;
-      
-      &.enabled {
-        background-color: #67c23a;
-        color: white;
-      }
-      
-      &:not(.enabled) {
-        background-color: #dcdfe6;
-        color: #909399;
-      }
-    }
   }
 }
 </style>

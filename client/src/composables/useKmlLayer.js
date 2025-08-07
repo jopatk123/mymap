@@ -1,9 +1,8 @@
 import L from 'leaflet';
 import StyleRenderer from '@/services/StyleRenderer.js';
+import { defaultStyles } from '@/constants/map.js';
 
 const styleRenderer = new StyleRenderer();
-
-import { defaultStyles } from '@/constants/map.js';
 
 export function useKmlLayer(map, kmlLayers) {
   const addKmlLayer = async (kmlFile, styleConfig = null) => {
@@ -13,11 +12,38 @@ export function useKmlLayer(map, kmlLayers) {
     }
 
     try {
-      const response = await fetch(kmlFile.file_url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // 重试机制，最多重试3次
+      let retryCount = 0;
+      const maxRetries = 3;
+      let lastError = null;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const response = await fetch(kmlFile.file_url);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          const kmlText = await response.text();
+          return await processKmlText(kmlText, kmlFile, styleConfig);
+        } catch (error) {
+          lastError = error;
+          retryCount++;
+          if (retryCount < maxRetries) {
+            console.log(`KML文件加载失败，${retryCount}秒后重试...`, kmlFile.file_url);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        }
       }
-      const kmlText = await response.text();
+      
+      throw lastError;
+    } catch (error) {
+      console.error('加载KML文件失败:', error);
+      return null;
+    }
+  };
+  
+  const processKmlText = async (kmlText, kmlFile, styleConfig) => {
+    try {
       const parser = new DOMParser();
       const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
       const parseError = kmlDoc.getElementsByTagName('parsererror');

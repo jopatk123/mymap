@@ -256,6 +256,9 @@ const handleKmlStylesUpdated = async () => {
   
   if (mapRef.value && kmlLayersVisible.value) {
     try {
+      // 添加短暂延迟，确保服务器配置已保存完成
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       // 重新获取所有KML文件及其样式
       const kmlResponse = await kmlApi.getKmlFiles({
         respectFolderVisibility: true,
@@ -265,12 +268,47 @@ const handleKmlStylesUpdated = async () => {
       const kmlFilesWithStyles = await Promise.all(
         (kmlResponse.data || []).map(async (file) => {
           try {
-            const styleResponse = await kmlApi.getKmlFileStyles(file.id)
-            file.styleConfig = styleResponse.data
+            // 重试机制，最多重试3次
+            let retryCount = 0
+            const maxRetries = 3
+            let lastError = null
+            
+            while (retryCount < maxRetries) {
+              try {
+                const styleResponse = await kmlApi.getKmlFileStyles(file.id)
+                file.styleConfig = styleResponse.data
+                return file
+              } catch (error) {
+                lastError = error
+                retryCount++
+                if (retryCount < maxRetries) {
+                  await new Promise(resolve => setTimeout(resolve, 200 * retryCount))
+                }
+              }
+            }
+            
+            console.warn(`加载KML文件 ${file.id} 样式失败:`, lastError)
+            // 使用默认样式
+            file.styleConfig = {
+              point_color: "#ff7800",
+              point_size: 8,
+              point_opacity: 1,
+              point_icon_type: "marker",
+              point_label_size: 12,
+              point_label_color: "#000000",
+              line_color: "#ff7800",
+              line_width: 2,
+              line_opacity: 0.8,
+              line_style: "solid",
+              polygon_fill_color: "#ff7800",
+              polygon_fill_opacity: 0.3,
+              polygon_stroke_color: "#ff7800",
+              polygon_stroke_width: 2,
+              polygon_stroke_style: "solid"
+            }
           } catch (error) {
             console.warn(`加载KML文件 ${file.id} 样式失败:`, error)
-            // 使用默认样式或保持为空
-            file.styleConfig = null 
+            file.styleConfig = null
           }
           return file
         })
@@ -281,7 +319,11 @@ const handleKmlStylesUpdated = async () => {
       
       console.log('样式更新后重新加载KML图层')
       mapRef.value.clearKmlLayers()
-      mapRef.value.addKmlLayers(kmlFilesWithStyles)
+      
+      // 使用setTimeout确保DOM更新完成
+      setTimeout(() => {
+        mapRef.value.addKmlLayers(kmlFilesWithStyles)
+      }, 100)
       
     } catch (error) {
       console.error('重新加载KML图层失败:', error)

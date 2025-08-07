@@ -41,6 +41,16 @@ api.interceptors.response.use(
       }
     }
     
+    // 处理新的响应格式 {success, data, ...}
+    if (data.success !== undefined) {
+      if (data.success) {
+        return data
+      } else {
+        ElMessage.error(data.message || '请求失败')
+        return Promise.reject(new Error(data.message || '请求失败'))
+      }
+    }
+    
     return data
   },
   (error) => {

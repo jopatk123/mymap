@@ -119,48 +119,6 @@ class StyleRenderer {
     return style
   }
 
-  /**
-   * 渲染聚合图标样式
-   * @param {Object} cluster 聚合数据
-   * @param {Object} styleConfig 样式配置
-   * @returns {Object} 聚合图标HTML和样式
-   */
-  renderClusterStyle(cluster, styleConfig) {
-    const count = cluster.clusterSize || cluster.points?.length || 1
-    const iconColor = styleConfig.cluster_icon_color || '#409EFF'
-    const textColor = styleConfig.cluster_text_color || '#FFFFFF'
-    
-    // 根据聚合数量确定图标大小
-    let size = 30
-    if (count >= 10) size = 40
-    if (count >= 25) size = 50
-    if (count >= 50) size = 60
-
-    const html = `
-      <div class="cluster-marker" style="
-        background-color: ${iconColor};
-        color: ${textColor};
-        width: ${size}px;
-        height: ${size}px;
-        line-height: ${size}px;
-        border-radius: 50%;
-        text-align: center;
-        font-weight: bold;
-        font-size: ${Math.min(size / 3, 16)}px;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      ">
-        ${count}
-      </div>
-    `
-
-    return {
-      html,
-      className: 'cluster-marker-container',
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2]
-    }
-  }
 
   /**
    * 清除样式缓存

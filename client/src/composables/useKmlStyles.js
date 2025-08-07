@@ -143,16 +143,6 @@ export function useKmlStyles() {
     return styleRenderer.renderPolygonStyle(polygon, styleConfig)
   }
 
-  /**
-   * 渲染聚合图标样式
-   * @param {Object} cluster 聚合数据
-   * @param {number} kmlFileId KML文件ID
-   * @returns {Object} 聚合图标样式
-   */
-  const renderClusterStyle = (cluster, kmlFileId) => {
-    const styleConfig = getKmlFileStyles(kmlFileId)
-    return styleRenderer.renderClusterStyle(cluster, styleConfig)
-  }
 
   /**
    * 生成自定义CSS样式
@@ -191,13 +181,6 @@ export function useKmlStyles() {
       polygon_stroke_width: 2,
       polygon_stroke_style: 'solid',
       
-      // 聚合配置
-      cluster_enabled: true,
-      cluster_radius: 50,
-      cluster_min_points: 2,
-      cluster_max_zoom: 16,
-      cluster_icon_color: '#409EFF',
-      cluster_text_color: '#FFFFFF'
     }
   }
 
@@ -239,7 +222,6 @@ export function useKmlStyles() {
     renderPointStyle,
     renderLineStyle,
     renderPolygonStyle,
-    renderClusterStyle,
     generateCustomCSS,
     
     // 工具方法
