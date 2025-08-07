@@ -1,150 +1,62 @@
 <template>
   <div class="coordinate-input">
-    <el-row :gutter="12">
-      <el-col :span="12">
-        <el-form-item label="纬度" prop="lat">
-          <el-input
-            v-model="lat"
-            placeholder="纬度 (-90 ~ 90)"
-            :disabled="disabled"
-            @blur="validateCoordinate('lat')"
-          >
-            <template #suffix>
-              <span class="coordinate-unit">°</span>
-            </template>
-          </el-input>
-        </el-form-item>
-      </el-col>
-      <el-col :span="12">
-        <el-form-item label="经度" prop="lng">
-          <el-input
-            v-model="lng"
-            placeholder="经度 (-180 ~ 180)"
-            :disabled="disabled"
-            @blur="validateCoordinate('lng')"
-          >
-            <template #suffix>
-              <span class="coordinate-unit">°</span>
-            </template>
-          </el-input>
-        </el-form-item>
-      </el-col>
-    </el-row>
-    
-    <div v-if="showLocationBtn" class="coordinate-actions">
-      <el-button
-        type="primary"
-        :icon="Location"
-        size="small"
-        :disabled="disabled"
-        @click="getCurrentLocation"
-      >
-        获取当前位置
-      </el-button>
-    </div>
+    <el-input-number
+      v-model="localLat"
+      :precision="6"
+      :step="0.000001"
+      :min="-90"
+      :max="90"
+      placeholder="纬度"
+      @change="handleChange"
+      style="width: 120px; margin-right: 8px;"
+    />
+    <el-input-number
+      v-model="localLng"
+      :precision="6"
+      :step="0.000001"
+      :min="-180"
+      :max="180"
+      placeholder="经度"
+      @change="handleChange"
+      style="width: 120px;"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Location } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
-    type: Object,
-    required: true,
-    default: () => ({ lat: '', lng: '' })
-  },
-  showLocationBtn: {
-    type: Boolean,
-    default: false
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
-  validationRules: {
-    type: Object,
-    default: () => ({})
+    type: Array,
+    default: () => [116.4074, 39.9042]
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
-// 创建双向绑定的计算属性
-const lat = computed({
-  get: () => props.modelValue.lat,
-  set: (value) => emit('update:modelValue', { ...props.modelValue, lat: value })
-})
+const localLat = ref(props.modelValue[1] || 39.9042)
+const localLng = ref(props.modelValue[0] || 116.4074)
 
-const lng = computed({
-  get: () => props.modelValue.lng,
-  set: (value) => emit('update:modelValue', { ...props.modelValue, lng: value })
-})
-
-// 验证坐标
-const validateCoordinate = (type) => {
-  const value = parseFloat(props.modelValue[type])
-  let isValid = true
-  let message = ''
-
-  if (isNaN(value)) {
-    isValid = false
-    message = '请输入有效的数字'
-  } else if (type === 'lat' && (value < -90 || value > 90)) {
-    isValid = false
-    message = '纬度必须在 -90 到 90 之间'
-  } else if (type === 'lng' && (value < -180 || value > 180)) {
-    isValid = false
-    message = '经度必须在 -180 到 180 之间'
+// 监听props变化
+watch(() => props.modelValue, (newValue) => {
+  if (newValue && Array.isArray(newValue) && newValue.length >= 2) {
+    localLng.value = newValue[0]
+    localLat.value = newValue[1]
   }
+}, { immediate: true })
 
-  if (!isValid) {
-    ElMessage.warning(message)
-  }
-}
-
-// 获取当前位置
-const getCurrentLocation = () => {
-  if (!navigator.geolocation) {
-    ElMessage.error('您的浏览器不支持地理定位')
-    return
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords
-      emit('update:modelValue', {
-        lat: latitude.toFixed(6),
-        lng: longitude.toFixed(6)
-      })
-      ElMessage.success('已获取当前位置')
-    },
-    (error) => {
-      ElMessage.error('获取位置失败: ' + error.message)
-    }
-  )
+// 处理变化
+const handleChange = () => {
+  const newValue = [localLng.value, localLat.value]
+  emit('update:modelValue', newValue)
+  emit('change', newValue)
 }
 </script>
 
 <style scoped>
 .coordinate-input {
-  margin-bottom: 16px;
-}
-
-.coordinate-unit {
-  color: #909399;
-  font-size: 12px;
-}
-
-.coordinate-actions {
   display: flex;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.coordinate-actions .el-button {
-  font-size: 12px;
+  align-items: center;
 }
 </style>

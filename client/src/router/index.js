@@ -28,6 +28,14 @@ const routes = [
         meta: {
           title: '文件管理'
         }
+      },
+      {
+        path: 'config',
+        name: 'ConfigManage',
+        component: () => import('@/views/Admin/ConfigManage.vue'),
+        meta: {
+          title: '系统配置'
+        }
       }
     ]
   },

@@ -14,7 +14,7 @@
     "polygon_fill_opacity": 0.3,
     "polygon_stroke_color": "#ff7800",
     "polygon_stroke_width": 2,
-    "polygon_stroke_style": "solid",
+    "polygon_stroke_style": "solid"
   },
   "panoramaPoint": {
     "point_color": "#2ed573",

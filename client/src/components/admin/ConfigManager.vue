@@ -131,6 +131,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { configApi } from '@/api/config.js'
+import PointStyleEditor from './styles/PointStyleEditor.vue'
+import KmlStyleEditor from './styles/KmlStyleEditor.vue'
+import BaseCoordinateInput from '@/components/common/BaseCoordinateInput.vue'
 
 const activeTab = ref('pointStyles')
 const saving = ref(false)

@@ -59,4 +59,8 @@ router.use('/points', pointsRoutes)
 const pointStyleRoutes = require('./pointStyle.routes')
 router.use('/point-styles', pointStyleRoutes)
 
+// 统一配置管理路由
+const configRoutes = require('./config.routes')
+router.use('/config', configRoutes)
+
 module.exports = router
