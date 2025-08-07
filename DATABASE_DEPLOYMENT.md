@@ -1,67 +1,83 @@
-# 数据库部署指南
+# 数据库部署和管理指南
 
-## 🚀 快速开始
+## 概述
 
-### 一键部署
+本项目已经整合了所有数据库文件，使用统一的MySQL数据库方案。旧的SQLite数据库文件（`data.db`, `mymap.db`）已被删除，现在使用 `scripts/unified-database.sql` 作为统一的数据库脚本。
+
+## 数据库结构
+
+统一数据库包含以下表：
+
+- **folders**: 文件夹管理表
+- **panoramas**: 全景图数据表
+- **video_points**: 视频点位表
+- **kml_files**: KML文件表
+- **kml_points**: KML点位数据表
+
+## 快速开始
+
+### 1. 自动部署数据库
+
 ```bash
-# 智能检测并部署MySQL数据库
+# 首次部署或使用现有容器
 ./auto-install-mysql.sh
+
+# 重建数据库（删除所有数据重新创建）
+./auto-install-mysql.sh --rebuild
 ```
 
-这个脚本会：
-- ✅ 自动检测现有的Docker MySQL容器
-- ✅ 如果容器存在但停止，自动启动
-- ✅ 如果容器不存在，自动创建新容器
-- ✅ 自动初始化数据库结构和示例数据
-- ✅ 自动更新项目环境配置
-- ✅ 如果Docker未安装，提供安装指导
+### 2. 数据库管理
 
-## 📋 管理脚本
-
-### 数据库状态管理
 ```bash
-# 检查数据库状态
-./manage-database.sh status
-
-# 启动数据库
-./manage-database.sh start
-
-# 停止数据库
-./manage-database.sh stop
-
-# 重启数据库
-./manage-database.sh restart
-
-# 查看数据库日志
-./manage-database.sh logs
-
-# 连接数据库
-./manage-database.sh connect
+# 查看数据库状态
+./database-manager.sh status
 
 # 备份数据库
-./manage-database.sh backup
+./database-manager.sh backup
 
-# 重置数据库（危险操作）
-./manage-database.sh reset
+# 恢复数据库
+./database-manager.sh restore backups/panorama_map_20240101_120000.sql
+
+# 清理数据库（保留结构，删除数据）
+./database-manager.sh clean
+
+# 连接数据库
+./database-manager.sh connect
 ```
 
-### Node.js 数据库检查
-```bash
-# 详细的数据库连接和数据检查
-cd server && node check-database.js
-```
+## 部署脚本功能
 
-## 🔧 配置信息
+### auto-install-mysql.sh
 
-### 默认配置
-- **容器名称**: mysql-panorama
-- **数据库名**: panorama_map
-- **用户名**: root
-- **密码**: asd123123123
-- **端口**: 3306
+**主要功能：**
+- 自动检测和安装Docker
+- 创建MySQL容器
+- 初始化数据库结构和示例数据
+- 支持重建数据库功能
+- 自动更新环境配置
 
-### 环境文件
-配置会自动更新到 `server/.env` 文件中：
+**参数：**
+- `--rebuild` 或 `-r`: 重建数据库
+
+**配置信息：**
+- 容器名称: `mysql-panorama`
+- 数据库名: `panorama_map`
+- 用户名: `root`
+- 密码: `asd123123123`
+- 端口: `3306`
+
+### database-manager.sh
+
+**主要功能：**
+- 查看数据库状态和统计信息
+- 备份和恢复数据库
+- 清理数据库数据
+- 连接数据库进行手动操作
+
+## 数据库配置
+
+数据库连接配置在 `server/.env` 文件中：
+
 ```env
 DB_HOST=localhost
 DB_PORT=3306
@@ -70,179 +86,77 @@ DB_PASSWORD=asd123123123
 DB_NAME=panorama_map
 ```
 
-## 📊 数据库结构
+## 常用Docker命令
 
-### 主要数据表
-1. **panoramas** - 全景图数据表
-   - id: 主键
-   - title: 标题
-   - description: 描述
-   - image_url: 图片URL
-   - latitude/longitude: GPS坐标
-   - created_at/updated_at: 时间戳
-
-2. **users** - 用户表（预留扩展）
-   - id: 主键
-   - username: 用户名
-   - email: 邮箱
-   - password_hash: 密码哈希
-
-### 示例数据
-系统会自动导入5个北京地标的全景图数据：
-- 天安门广场
-- 故宫太和殿
-- 颐和园昆明湖
-- 长城八达岭
-- 鸟巢体育场
-
-## 🛠️ 故障排除
-
-### 常见问题
-
-#### 1. Docker未安装
 ```bash
-# 脚本会自动提示安装Docker
-# Ubuntu/Debian:
-sudo apt update && sudo apt install docker.io
+# 查看容器状态
+docker ps
 
-# 启动Docker服务
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-#### 2. 端口被占用
-```bash
-# 查看端口占用
-sudo netstat -tlnp | grep 3306
-
-# 停止占用进程或更改端口配置
-```
-
-#### 3. 容器启动失败
-```bash
 # 查看容器日志
 docker logs mysql-panorama
-
-# 删除问题容器重新创建
-docker rm mysql-panorama
-./auto-install-mysql.sh
-```
-
-#### 4. 数据库连接失败
-```bash
-# 检查容器状态
-docker ps
 
 # 重启容器
 docker restart mysql-panorama
 
-# 等待MySQL完全启动（约10-15秒）
-```
-
-#### 5. 数据丢失或损坏
-```bash
-# 重置数据库（会删除所有数据）
-./manage-database.sh reset
-
-# 或者重新部署
-docker rm mysql-panorama
-./auto-install-mysql.sh
-```
-
-## 🔍 验证部署
-
-### 检查容器状态
-```bash
-docker ps
-# 应该看到 mysql-panorama 容器在运行
-```
-
-### 检查数据库连接
-```bash
-cd server && node check-database.js
-# 应该显示连接成功和数据统计
-```
-
-### 手动连接数据库
-```bash
-docker exec -it mysql-panorama mysql -u root -pasd123123123 panorama_map
-```
-
-### 查看数据
-```sql
--- 查看所有表
-SHOW TABLES;
-
--- 查看全景图数据
-SELECT title, latitude, longitude FROM panoramas;
-
--- 查看数据统计
-SELECT COUNT(*) as total FROM panoramas;
-```
-
-## 🚀 启动项目
-
-数据库部署完成后，可以启动项目：
-
-```bash
-# 一键启动项目（前台模式）
-./start.sh
-
-# 或者后台模式启动
-./start.sh background
-
-# 查看项目状态
-./start.sh status
-
-# 停止项目
-./start.sh stop
-```
-
-## 📝 备份和恢复
-
-### 备份数据库
-```bash
-# 使用管理脚本备份
-./manage-database.sh backup
-
-# 手动备份
-docker exec mysql-panorama mysqldump -u root -pasd123123123 panorama_map > backup.sql
-```
-
-### 恢复数据库
-```bash
-# 从备份文件恢复
-docker exec -i mysql-panorama mysql -u root -pasd123123123 panorama_map < backup.sql
-```
-
-## 🔄 更新和维护
-
-### 更新数据库结构
-1. 修改 `setup-mysql.sql` 文件
-2. 运行 `./manage-database.sh reset` 重置数据库
-3. 或者手动执行SQL更新语句
-
-### 容器维护
-```bash
-# 查看容器资源使用
-docker stats mysql-panorama
-
-# 清理容器日志
-docker logs mysql-panorama --tail=0 -f > /dev/null &
-
-# 更新MySQL镜像
-docker pull mysql:8.0
+# 停止容器
 docker stop mysql-panorama
+
+# 删除容器（注意：会丢失数据）
+docker rm mysql-panorama
+```
+
+## 故障排除
+
+### 1. 端口占用问题
+
+如果3306端口被占用：
+
+```bash
+# 查看端口占用
+netstat -tlnp | grep :3306
+
+# 停止占用进程
+sudo kill -9 <PID>
+```
+
+### 2. 容器启动失败
+
+```bash
+# 查看容器日志
+docker logs mysql-panorama
+
+# 删除容器重新创建
 docker rm mysql-panorama
 ./auto-install-mysql.sh
 ```
+
+### 3. 数据库连接失败
+
+1. 检查容器是否运行：`docker ps`
+2. 检查密码是否正确
+3. 等待容器完全启动（约30秒）
+
+## 数据迁移
+
+如果需要从旧的SQLite数据库迁移数据，请：
+
+1. 先备份旧数据
+2. 运行新的MySQL部署脚本
+3. 手动导入需要的数据
+
+## 开发建议
+
+1. **定期备份**：使用 `./database-manager.sh backup` 定期备份数据
+2. **测试环境**：使用 `--rebuild` 参数快速重置测试数据
+3. **监控日志**：定期检查容器日志确保数据库正常运行
+
+## 安全注意事项
+
+1. 生产环境请修改默认密码
+2. 考虑使用环境变量管理敏感信息
+3. 定期更新MySQL镜像版本
+4. 配置防火墙限制数据库访问
 
 ---
 
-## 📞 技术支持
-
-如果遇到问题，请：
-1. 查看容器日志：`docker logs mysql-panorama`
-2. 运行状态检查：`./manage-database.sh status`
-3. 检查详细连接：`cd server && node check-database.js`
-4. 查看本文档的故障排除部分
+**注意**：本脚本适用于开发和测试环境。生产环境部署请根据实际需求调整配置。

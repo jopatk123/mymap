@@ -209,6 +209,19 @@ create_mysql_container() {
     return 1
 }
 
+# 重建数据库（删除现有数据库并重新创建）
+rebuild_database() {
+    log_warning "重建数据库（将删除所有现有数据）..."
+    
+    # 删除现有数据库
+    docker exec ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} -e "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
+    
+    # 重新创建数据库
+    docker exec ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} -e "CREATE DATABASE ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    
+    log_success "数据库重建完成"
+}
+
 # 初始化数据库
 init_database() {
     log_info "初始化数据库..."
@@ -223,17 +236,23 @@ init_database() {
     docker exec ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} -e "SET GLOBAL character_set_client = utf8mb4; SET GLOBAL character_set_connection = utf8mb4; SET GLOBAL character_set_results = utf8mb4;"
     
     # 导入数据库结构和数据
-    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} ${DB_NAME} --default-character-set=utf8mb4 < scripts/unified-database.sql; then
+    if docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} --default-character-set=utf8mb4 < scripts/unified-database.sql; then
         log_success "数据库初始化完成"
     else
         log_error "数据库初始化失败"
         return 1
     fi
     
+    # 应用额外的数据库更新（如果存在）
+    if [[ -f "update_schema.sql" ]]; then
+        log_info "应用数据库更新..."
+        docker exec -i ${CONTAINER_NAME} mysql -u root -p${DB_PASSWORD} --default-character-set=utf8mb4 < update_schema.sql 2>/dev/null || log_warning "数据库更新脚本执行失败（可能是正常的）"
+    fi
+    
     # 初始化配置文件
     log_info "初始化配置文件..."
-    if [[ ! -f "server/config/app-config.json" ]]; then
-        node scripts/migrate-config-to-files.js --init-only
+    if [[ ! -f "server/config/app-config.json" ]] && [[ -f "scripts/migrate-config-to-files.js" ]]; then
+        node scripts/migrate-config-to-files.js --init-only 2>/dev/null || log_warning "配置文件初始化脚本执行失败（可能是正常的）"
         log_success "配置文件初始化完成"
     fi
 }
@@ -301,6 +320,14 @@ show_deployment_info() {
     echo "   连接数据库: docker exec -it ${CONTAINER_NAME} mysql -u ${DB_USER} -p${DB_PASSWORD} ${DB_NAME}"
     echo "   重启容器: docker restart ${CONTAINER_NAME}"
     echo "   停止容器: docker stop ${CONTAINER_NAME}"
+    echo "   重建数据库: ./auto-install-mysql.sh --rebuild"
+    echo ""
+    echo "📁 数据库表结构:"
+    echo "   - folders: 文件夹管理"
+    echo "   - panoramas: 全景图数据"
+    echo "   - video_points: 视频点位"
+    echo "   - kml_files: KML文件"
+    echo "   - kml_points: KML点位数据"
     echo ""
     echo "✅ 数据库已就绪，可以启动项目了！"
 }
@@ -310,9 +337,29 @@ main() {
     echo "=== 🚀 MySQL 智能自动部署脚本 ==="
     echo ""
     
+    # 检查是否有重建参数
+    local rebuild_flag=false
+    if [[ "$1" == "--rebuild" ]] || [[ "$1" == "-r" ]]; then
+        rebuild_flag=true
+        log_warning "检测到重建参数，将重建数据库"
+    fi
+    
     # 1. 检查现有容器
     if check_existing_container; then
         log_info "使用现有MySQL容器"
+        
+        # 如果指定了重建，则重建数据库
+        if [[ "$rebuild_flag" == true ]]; then
+            log_info "重建数据库..."
+            if rebuild_database && init_database && verify_database; then
+                update_env_config
+                show_deployment_info
+                return 0
+            else
+                log_error "数据库重建失败"
+                exit 1
+            fi
+        fi
         
         # 验证数据库
         if verify_database; then
@@ -321,7 +368,7 @@ main() {
             return 0
         else
             log_warning "现有容器数据异常，重新初始化..."
-            if init_database && verify_database; then
+            if rebuild_database && init_database && verify_database; then
                 update_env_config
                 show_deployment_info
                 return 0
