@@ -24,8 +24,6 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       return null;
     }
 
-    // 调试：打印点位信息
-    console.log('Adding point to map:', JSON.parse(JSON.stringify(point)));
 
     const pointType = point.type || 'panorama';
     
@@ -74,8 +72,20 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
   const fitBounds = () => {
     if (!map.value || markers.value.length === 0) return;
-    const group = new L.featureGroup(markers.value.map((m) => m.marker));
-    map.value.fitBounds(group.getBounds(), { padding: [20, 20] });
+    
+    try {
+      const validMarkers = markers.value.filter(m => m.marker && m.marker._map);
+      if (validMarkers.length === 0) return;
+      
+      const group = new L.featureGroup(validMarkers.map((m) => m.marker));
+      const bounds = group.getBounds();
+      
+      if (bounds.isValid()) {
+        map.value.fitBounds(bounds, { padding: [20, 20] });
+      }
+    } catch (error) {
+      console.warn('fitBounds failed:', error);
+    }
   };
 
   return {

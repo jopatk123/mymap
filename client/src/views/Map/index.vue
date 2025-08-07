@@ -222,10 +222,6 @@ onMounted(async () => {
     point_label_color: '#000000'
   }
   
-  console.log('点位样式配置已加载:', {
-    video: window.videoPointStyles,
-    panorama: window.panoramaPointStyles
-  })
   
   await initializePage()
   
@@ -334,7 +330,6 @@ const handleKmlStylesUpdated = async () => {
 
 // 处理点位样式更新
 const handlePointStylesUpdated = async () => {
-  console.log('点位样式已更新，准备重新加载地图数据')
   
   try {
     // 重新加载点位样式配置
@@ -350,26 +345,34 @@ const handlePointStylesUpdated = async () => {
       point_label_size: 14,
       point_label_color: '#000000'
     }
-      window.panoramaPointStyles = panoramaPointStyles.value || {
-    point_color: '#2ed573',
-    point_size: 10,
-    point_opacity: 1.0,
-    point_icon_type: 'marker',
-    point_label_size: 12,
-    point_label_color: '#000000'
-  }
+    window.panoramaPointStyles = panoramaPointStyles.value || {
+      point_color: '#2ed573',
+      point_size: 10,
+      point_opacity: 1.0,
+      point_icon_type: 'marker',
+      point_label_size: 12,
+      point_label_color: '#000000'
+    }
     
-    console.log('更新后的点位样式配置:', {
-      video: window.videoPointStyles,
-      panorama: window.panoramaPointStyles
-    })
     
-    // 重新加载地图数据以应用新的样式
-    await loadInitialData()
+    // 清除现有标记
+    if (mapRef.value) {
+      mapRef.value.clearMarkers()
+    }
     
-    ElMessage.success('点位样式已更新')
+    // 延迟重新加载数据，避免并发请求
+    setTimeout(async () => {
+      try {
+        await loadInitialData()
+        ElMessage.success('点位样式已更新')
+      } catch (error) {
+        console.error('重新加载地图数据失败:', error)
+        ElMessage.warning('点位样式已保存，但重新加载数据时出现问题')
+      }
+    }, 500)
+    
   } catch (error) {
-    console.error('重新加载地图数据失败:', error)
+    console.error('更新点位样式失败:', error)
     ElMessage.error('应用点位样式失败')
   }
 }

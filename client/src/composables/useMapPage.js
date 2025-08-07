@@ -78,7 +78,6 @@ export function useMapPage() {
           mapRef.value.fitBounds()
           // 如果KML图层应该显示，则主动加载KML图层
           if (kmlLayersVisible.value && window.allKmlFiles && window.allKmlFiles.length > 0) {
-            console.log('初始化时加载KML图层，文件数量:', window.allKmlFiles.length)
             mapRef.value.addKmlLayers(window.allKmlFiles)
           }
         }
@@ -126,10 +125,6 @@ export function useMapPage() {
       // 4. 将包含完整样式信息的KML文件列表存入全局变量
       window.allKmlFiles = kmlFilesWithStyles;
 
-      console.log('KML数据加载完成:', {
-        points: window.allPoints.length,
-        kmlFiles: window.allKmlFiles.length
-      });
     } catch (error) {
       console.error('加载点位数据失败:', error)
       window.allPoints = []

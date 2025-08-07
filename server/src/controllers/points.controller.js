@@ -27,8 +27,13 @@ class PointsController {
 
       // 如果需要考虑文件夹可见性，获取可见文件夹列表
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
-        const visibleFolderIds = await FolderModel.getVisibleFolderIds()
-        searchParams.visibleFolderIds = visibleFolderIds
+        try {
+          const visibleFolderIds = await FolderModel.getVisibleFolderIds()
+          searchParams.visibleFolderIds = visibleFolderIds
+        } catch (folderError) {
+          Logger.warn('获取可见文件夹ID失败，使用默认设置:', folderError)
+          // 如果获取可见文件夹失败，不设置visibleFolderIds，这样会返回所有数据
+        }
       }
 
       // 并行获取全景图和视频点位（不包括KML文件）

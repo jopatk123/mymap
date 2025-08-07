@@ -7,6 +7,15 @@ class KmlFileStyleController {
   static async getKmlFileStyles(req, res) {
     try {
       const { id } = req.params
+      
+      // 验证ID参数
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          message: '无效的KML文件ID'
+        })
+      }
+      
       const styles = await ConfigService.getKmlStyles(id)
       
       res.json({
@@ -19,7 +28,7 @@ class KmlFileStyleController {
       res.status(500).json({
         success: false,
         message: '获取样式配置失败',
-        error: error.message
+        error: process.env.NODE_ENV === 'development' ? error.message : '内部服务器错误'
       })
     }
   }

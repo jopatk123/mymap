@@ -18,13 +18,29 @@ class ConfigService {
       }
       return this.config
     } catch (error) {
-      console.error('加载配置文件失败:', error)
-      return this.getDefaultConfig()
+      if (error.code === 'ENOENT') {
+        // 配置文件不存在，创建默认配置
+        console.log('配置文件不存在，创建默认配置')
+        const defaultConfig = this.getDefaultConfig()
+        await this.saveConfig(defaultConfig)
+        return defaultConfig
+      } else {
+        console.error('加载配置文件失败:', error)
+        return this.getDefaultConfig()
+      }
     }
   }
 
   async saveConfig(newConfig) {
     try {
+      // 确保配置目录存在
+      const configDir = path.dirname(this.configPath)
+      try {
+        await fs.access(configDir)
+      } catch {
+        await fs.mkdir(configDir, { recursive: true })
+      }
+      
       await fs.writeFile(this.configPath, JSON.stringify(newConfig, null, 2))
       this.config = newConfig
       this.lastModified = new Date()
