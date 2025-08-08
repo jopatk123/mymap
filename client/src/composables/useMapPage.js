@@ -6,6 +6,10 @@ import { useAppStore } from '@/store/app.js'
 import { pointsApi } from '@/api/points.js'
 import { kmlApi } from '@/api/kml.js'
 
+/**
+ * 地图页面组合函数
+ * 管理地图页面的状态和数据，包括点位数据加载、KML图层管理等
+ */
 export function useMapPage() {
   // Stores
   const panoramaStore = usePanoramaStore()
@@ -72,7 +76,11 @@ export function useMapPage() {
       
       // 将所有点位数据同步到panoramaStore（包括全景图和视频点位）
       if (window.allPoints && window.allPoints.length > 0) {
-        panoramaStore.setPanoramas(window.allPoints)
+        try {
+          panoramaStore.setPanoramas(window.allPoints)
+        } catch (error) {
+          console.error('同步点位数据到store失败:', error)
+        }
       }
       // 数据加载完成后自动适应所有标记点并初始化KML图层
       setTimeout(() => {
@@ -103,31 +111,19 @@ export function useMapPage() {
         })
       ]);
 
-      // 2. 处理点位数据，过滤掉KML文件和无效坐标的点位
+      // 2. 处理点位数据，过滤有效的点位
       const allPoints = pointsResponse.data || [];
-      console.log('🔍 原始点位数据:', allPoints.length, allPoints)
-      
       const filteredPoints = allPoints.filter(point => {
         // 排除KML文件
-        if (point.type === 'kml') {
-          console.log('❌ 过滤掉KML文件:', point)
-          return false
-        }
+        if (point.type === 'kml') return false
         
         // 确保有有效的坐标
         const lat = point.lat || point.latitude
         const lng = point.lng || point.longitude
-        const isValid = lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
-        
-        if (!isValid) {
-          console.log('❌ 过滤掉无效坐标的点位:', { point, lat, lng })
-        }
-        
-        return isValid
+        return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
       })
       
       window.allPoints = filteredPoints
-      console.log('✅ 过滤后的点位数据:', filteredPoints.length, filteredPoints)
 
 
       // 3. 为每个KML文件加载其详细样式

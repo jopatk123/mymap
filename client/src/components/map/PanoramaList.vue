@@ -100,24 +100,9 @@ const emit = defineEmits([
 ])
 
 const selectPanorama = (panorama) => {
-  console.log('🔍 PanoramaList点击的数据:', panorama)
-  console.log('🔍 数据结构检查:', {
-    id: panorama.id,
-    title: panorama.title,
-    type: panorama.type,
-    lat: panorama.lat,
-    lng: panorama.lng,
-    hasMarker: !!panorama.marker,
-    hasData: !!panorama.data
-  })
-  
-  // 临时修复：如果数据结构不正确，尝试从data字段中提取正确的数据
-  let cleanPanorama = panorama
-  if (panorama.marker && panorama.data) {
-    console.log('⚠️ 检测到错误的数据结构，尝试修复...')
-    cleanPanorama = panorama.data
-  }
-  
+  // 清理数据结构，确保格式正确
+  // 如果是标记对象结构，提取实际的点位数据
+  const cleanPanorama = panorama.marker && panorama.data ? panorama.data : panorama
   emit('select-panorama', cleanPanorama)
 }
 

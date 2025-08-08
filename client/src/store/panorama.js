@@ -67,18 +67,6 @@ export const usePanoramaStore = defineStore('panorama', {
   actions: {
     // 数据操作方法
     setPanoramas(panoramas, append = false) {
-      console.log('🔍 setPanoramas被调用:', { append, count: panoramas?.length })
-      if (panoramas && panoramas.length > 0) {
-        console.log('🔍 第一个点位数据结构:', panoramas[0])
-        console.log('🔍 数据结构检查:', {
-          hasLat: 'lat' in panoramas[0],
-          hasLng: 'lng' in panoramas[0],
-          hasMarker: 'marker' in panoramas[0],
-          hasData: 'data' in panoramas[0],
-          keys: Object.keys(panoramas[0])
-        })
-      }
-      
       if (append) {
         this.panoramas.push(...panoramas)
       } else {
@@ -234,29 +222,17 @@ export const usePanoramaStore = defineStore('panorama', {
           ...params
         })
         
-        // 过滤掉KML文件，只保留有有效坐标的点位
-        console.log('🔍 Store原始数据:', response.data.length, response.data)
-        
+        // 过滤有效的点位数据
         const filteredData = response.data.filter(point => {
           // 排除KML文件
-          if (point.type === 'kml') {
-            console.log('❌ Store过滤掉KML文件:', point)
-            return false
-          }
+          if (point.type === 'kml') return false
           
           // 确保有有效的坐标
           const lat = point.lat || point.latitude
           const lng = point.lng || point.longitude
-          const isValid = lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
-          
-          if (!isValid) {
-            console.log('❌ Store过滤掉无效坐标的点位:', { point, lat, lng })
-          }
-          
-          return isValid
+          return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
         })
         
-        console.log('✅ Store过滤后的数据:', filteredData.length, filteredData)
         this.setPanoramas(filteredData, params.append)
         this.setPagination(response.pagination)
         

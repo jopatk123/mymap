@@ -20,21 +20,18 @@ export function setMapInstance(data) {
  * @param {Array} markers 标记数据数组
  */
 export function setMarkersData(markers) {
-  // 不要直接覆盖 window.currentMarkers，因为它包含实际的标记对象
-  // 这里只是用于调试和日志记录
-  console.log('标记数据已设置:', markers?.length || 0)
-  
-  // 详细检查每个标记的数据
+  // 验证标记数据的有效性
   if (markers && markers.length > 0) {
-    markers.forEach((marker, index) => {
+    // 简单的坐标验证，避免动态导入
+    const invalidMarkers = markers.filter(marker => {
       const lat = marker.lat || marker.latitude
       const lng = marker.lng || marker.longitude
-      if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
-        console.error(`❌ 标记 ${index} 坐标无效:`, { marker, lat, lng })
-      } else {
-        console.log(`✅ 标记 ${index} 坐标有效:`, { title: marker.title, lat, lng })
-      }
+      return lat == null || lng == null || isNaN(lat) || isNaN(lng) || marker.type === 'kml'
     })
+    
+    if (invalidMarkers.length > 0) {
+      console.warn(`发现 ${invalidMarkers.length} 个无效的标记数据`, invalidMarkers)
+    }
   }
 }
 

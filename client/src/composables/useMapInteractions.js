@@ -2,6 +2,10 @@ import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 
+/**
+ * 地图交互组合函数
+ * 处理地图上的各种交互操作，包括点位选择、上传成功处理等
+ */
 export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, visiblePanoramas, currentPanorama, selectedVideo, showVideoModal, showPanoramaViewer, openPanoramaViewer) {
   const panoramaStore = usePanoramaStore()
   const appStore = useAppStore()
@@ -34,14 +38,14 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     
     // 地图定位到该全景图（优先使用GCJ02坐标）
     if (mapRef.value) {
+      // 验证坐标有效性
       const lat = panorama.gcj02Lat || panorama.lat
       const lng = panorama.gcj02Lng || panorama.lng
       
-      // 验证坐标是否有效
       if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
         mapRef.value.setCenter(lat, lng, 16)
       } else {
-        console.warn('无效的坐标数据:', { panorama, lat, lng })
+        console.warn('无效的坐标数据:', panorama)
       }
     }
   }
@@ -63,15 +67,14 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
   // 定位到全景图
   const locatePanorama = (panorama) => {
     if (mapRef.value) {
-      // 优先使用GCJ02坐标
+      // 验证坐标有效性
       const lat = panorama.gcj02Lat || panorama.lat
       const lng = panorama.gcj02Lng || panorama.lng
       
-      // 验证坐标是否有效
       if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
         mapRef.value.setCenter(lat, lng, 18)
       } else {
-        console.warn('无效的坐标数据:', { panorama, lat, lng })
+        console.warn('无效的坐标数据:', panorama)
       }
     }
   }
@@ -107,19 +110,31 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
         respectFolderVisibility: true
       })
       
-      const allPoints = response.data || []
-      const filteredPoints = allPoints.filter(point => {
+      if (!response || !response.data) {
+        throw new Error('获取点位数据失败')
+      }
+      
+      // 过滤有效的点位数据
+      const filteredPoints = response.data.filter(point => {
+        // 排除KML文件
         if (point.type === 'kml') return false
+        
+        // 确保有有效的坐标
         const lat = point.lat || point.latitude
         const lng = point.lng || point.longitude
         return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
       })
       
-      // 同时更新两个数据源
+      // 同时更新两个数据源，确保数据一致性
       window.allPoints = filteredPoints
-      panoramaStore.setPanoramas(filteredPoints)
+      try {
+        panoramaStore.setPanoramas(filteredPoints)
+      } catch (error) {
+        console.error('更新panoramaStore失败:', error)
+        throw error
+      }
       
-      console.log('🔄 上传成功后更新数据:', filteredPoints.length, '个点位')
+
       ElMessage.success('上传成功')
     } catch (error) {
       console.error('更新数据失败:', error)
