@@ -21,8 +21,8 @@ export function useBaseUploadDialog(props, emit) {
   const form = reactive({
     title: '',
     description: '',
-    lat: '',
-    lng: '',
+    lat: null,
+    lng: null,
     file: null,
     folderId: null  // 初始为null，加载文件夹后设置为默认文件夹ID
   })
@@ -51,10 +51,18 @@ export function useBaseUploadDialog(props, emit) {
 
   // 坐标计算属性
   const coordinates = computed({
-    get: () => ({ lat: form.lat, lng: form.lng }),
+    get: () => [form.lng, form.lat],
     set: (value) => {
-      form.lat = value.lat
-      form.lng = value.lng
+      if (Array.isArray(value) && value.length >= 2) {
+        // 确保值是数字类型或null
+        const lng = value[0]
+        const lat = value[1]
+        form.lng = (lng !== null && lng !== undefined) ? parseFloat(lng) : null
+        form.lat = (lat !== null && lat !== undefined) ? parseFloat(lat) : null
+      } else {
+        form.lng = null
+        form.lat = null
+      }
     }
   })
 
@@ -157,8 +165,8 @@ export function useBaseUploadDialog(props, emit) {
     Object.assign(form, {
       title: '',
       description: '',
-      lat: '',
-      lng: '',
+      lat: null,
+      lng: null,
       file: null,
       folderId: defaultFolderId
     })

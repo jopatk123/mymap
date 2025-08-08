@@ -220,8 +220,8 @@ export function usePanoramaProcessor() {
         
         // 设置GPS坐标（如果有的话）
         if (result.gpsData) {
-          form.lat = result.gpsData.lat.toString()
-          form.lng = result.gpsData.lng.toString()
+          form.lat = parseFloat(result.gpsData.lat)
+          form.lng = parseFloat(result.gpsData.lng)
           ElMessage.success('已自动提取图片中的GPS坐标')
         }
       }

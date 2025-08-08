@@ -42,8 +42,8 @@ router.post('/upload', handleSingleUpload, (req, res) => {
   const panoramaData = {
     title: title || '未命名全景图',
     description: description || '',
-    lat: parseFloat(lat),
-    lng: parseFloat(lng),
+    lat: lat && !isNaN(parseFloat(lat)) ? parseFloat(lat) : null,
+    lng: lng && !isNaN(parseFloat(lng)) ? parseFloat(lng) : null,
     imageUrl: uploadedFile.imageUrl,
     thumbnailUrl: uploadedFile.thumbnailUrl,
     fileSize: uploadedFile.size,

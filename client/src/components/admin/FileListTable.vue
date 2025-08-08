@@ -48,6 +48,7 @@
             <span class="kml-icon">📍</span>
             <span class="kml-text">KML</span>
           </div>
+
           <div v-else class="default-placeholder">
             <span>文件</span>
           </div>

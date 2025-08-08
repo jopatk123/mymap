@@ -36,7 +36,13 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     if (mapRef.value) {
       const lat = panorama.gcj02Lat || panorama.lat
       const lng = panorama.gcj02Lng || panorama.lng
-      mapRef.value.setCenter(lat, lng, 16)
+      
+      // 验证坐标是否有效
+      if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+        mapRef.value.setCenter(lat, lng, 16)
+      } else {
+        console.warn('无效的坐标数据:', { panorama, lat, lng })
+      }
     }
   }
 
@@ -60,7 +66,13 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       // 优先使用GCJ02坐标
       const lat = panorama.gcj02Lat || panorama.lat
       const lng = panorama.gcj02Lng || panorama.lng
-      mapRef.value.setCenter(lat, lng, 18)
+      
+      // 验证坐标是否有效
+      if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+        mapRef.value.setCenter(lat, lng, 18)
+      } else {
+        console.warn('无效的坐标数据:', { panorama, lat, lng })
+      }
     }
   }
 
@@ -88,7 +100,33 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
 
   // 上传成功处理
   const handleUploadSuccess = async () => {
-    await panoramaStore.refresh()
+    // 同时刷新store数据和全局点位数据
+    await Promise.all([
+      panoramaStore.refresh(),
+      // 重新加载全局点位数据
+      (async () => {
+        try {
+          const { pointsApi } = await import('@/api/points.js')
+          const response = await pointsApi.getAllPoints({
+            respectFolderVisibility: true
+          })
+          
+          const allPoints = response.data || []
+          const filteredPoints = allPoints.filter(point => {
+            if (point.type === 'kml') return false
+            const lat = point.lat || point.latitude
+            const lng = point.lng || point.longitude
+            return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
+          })
+          
+          window.allPoints = filteredPoints
+          console.log('🔄 上传成功后更新全局点位数据:', filteredPoints.length)
+        } catch (error) {
+          console.error('更新全局点位数据失败:', error)
+        }
+      })()
+    ])
+    
     ElMessage.success('上传成功')
   }
 

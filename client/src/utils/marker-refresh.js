@@ -22,6 +22,19 @@ export function setMapInstance(data) {
 export function setMarkersData(markers) {
   window.currentMarkers = markers || []
   console.log('标记数据已设置:', markers?.length || 0)
+  
+  // 详细检查每个标记的数据
+  if (markers && markers.length > 0) {
+    markers.forEach((marker, index) => {
+      const lat = marker.lat || marker.latitude
+      const lng = marker.lng || marker.longitude
+      if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+        console.error(`❌ 标记 ${index} 坐标无效:`, { marker, lat, lng })
+      } else {
+        console.log(`✅ 标记 ${index} 坐标有效:`, { title: marker.title, lat, lng })
+      }
+    })
+  }
 }
 
 /**

@@ -67,11 +67,13 @@ export function useMapPage() {
   // 加载初始数据
   const loadInitialData = async () => {
     try {
-      // 同时加载全景图和所有点位数据
-      await Promise.all([
-        panoramaStore.fetchPanoramas(),
-        loadAllPoints()
-      ])
+      // 只加载一次点位数据，避免重复调用
+      await loadAllPoints()
+      
+      // 将点位数据同步到panoramaStore
+      if (window.allPoints && window.allPoints.length > 0) {
+        panoramaStore.setPanoramas(window.allPoints.filter(point => point.type === 'panorama'))
+      }
       // 数据加载完成后自动适应所有标记点并初始化KML图层
       setTimeout(() => {
         if (mapRef.value) {
@@ -101,9 +103,31 @@ export function useMapPage() {
         })
       ]);
 
-      // 2. 处理点位数据
+      // 2. 处理点位数据，过滤掉KML文件和无效坐标的点位
       const allPoints = pointsResponse.data || [];
-      window.allPoints = allPoints.filter(point => point.type !== 'kml') || [];
+      console.log('🔍 原始点位数据:', allPoints.length, allPoints)
+      
+      const filteredPoints = allPoints.filter(point => {
+        // 排除KML文件
+        if (point.type === 'kml') {
+          console.log('❌ 过滤掉KML文件:', point)
+          return false
+        }
+        
+        // 确保有有效的坐标
+        const lat = point.lat || point.latitude
+        const lng = point.lng || point.longitude
+        const isValid = lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
+        
+        if (!isValid) {
+          console.log('❌ 过滤掉无效坐标的点位:', { point, lat, lng })
+        }
+        
+        return isValid
+      })
+      
+      window.allPoints = filteredPoints
+      console.log('✅ 过滤后的点位数据:', filteredPoints.length, filteredPoints)
 
 
       // 3. 为每个KML文件加载其详细样式

@@ -130,8 +130,8 @@ const handlePanoramaUpload = async (form, { setProgress, setProcessing }) => {
     setProgress(progress)
   })
   
-  // 将返回的新全景图添加到 store
-  panoramaStore.addPanorama(newPanorama)
+  // 不在这里添加到store，让页面自己决定如何刷新数据
+  // panoramaStore.addPanorama(newPanorama)
   
   // 重新加载文件夹数据以更新点位数量
   try {

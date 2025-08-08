@@ -222,8 +222,29 @@ export const usePanoramaStore = defineStore('panorama', {
           ...params
         })
         
-        // 过滤掉KML文件，只保留有坐标的点位
-        const filteredData = response.data.filter(point => point.type !== 'kml')
+        // 过滤掉KML文件，只保留有有效坐标的点位
+        console.log('🔍 Store原始数据:', response.data.length, response.data)
+        
+        const filteredData = response.data.filter(point => {
+          // 排除KML文件
+          if (point.type === 'kml') {
+            console.log('❌ Store过滤掉KML文件:', point)
+            return false
+          }
+          
+          // 确保有有效的坐标
+          const lat = point.lat || point.latitude
+          const lng = point.lng || point.longitude
+          const isValid = lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
+          
+          if (!isValid) {
+            console.log('❌ Store过滤掉无效坐标的点位:', { point, lat, lng })
+          }
+          
+          return isValid
+        })
+        
+        console.log('✅ Store过滤后的数据:', filteredData.length, filteredData)
         this.setPanoramas(filteredData, params.append)
         this.setPagination(response.pagination)
         
