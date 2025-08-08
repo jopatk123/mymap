@@ -67,6 +67,18 @@ export const usePanoramaStore = defineStore('panorama', {
   actions: {
     // 数据操作方法
     setPanoramas(panoramas, append = false) {
+      console.log('🔍 setPanoramas被调用:', { append, count: panoramas?.length })
+      if (panoramas && panoramas.length > 0) {
+        console.log('🔍 第一个点位数据结构:', panoramas[0])
+        console.log('🔍 数据结构检查:', {
+          hasLat: 'lat' in panoramas[0],
+          hasLng: 'lng' in panoramas[0],
+          hasMarker: 'marker' in panoramas[0],
+          hasData: 'data' in panoramas[0],
+          keys: Object.keys(panoramas[0])
+        })
+      }
+      
       if (append) {
         this.panoramas.push(...panoramas)
       } else {

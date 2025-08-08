@@ -70,9 +70,9 @@ export function useMapPage() {
       // 只加载一次点位数据，避免重复调用
       await loadAllPoints()
       
-      // 将点位数据同步到panoramaStore
+      // 将所有点位数据同步到panoramaStore（包括全景图和视频点位）
       if (window.allPoints && window.allPoints.length > 0) {
-        panoramaStore.setPanoramas(window.allPoints.filter(point => point.type === 'panorama'))
+        panoramaStore.setPanoramas(window.allPoints)
       }
       // 数据加载完成后自动适应所有标记点并初始化KML图层
       setTimeout(() => {

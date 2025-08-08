@@ -100,34 +100,31 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
 
   // 上传成功处理
   const handleUploadSuccess = async () => {
-    // 同时刷新store数据和全局点位数据
-    await Promise.all([
-      panoramaStore.refresh(),
-      // 重新加载全局点位数据
-      (async () => {
-        try {
-          const { pointsApi } = await import('@/api/points.js')
-          const response = await pointsApi.getAllPoints({
-            respectFolderVisibility: true
-          })
-          
-          const allPoints = response.data || []
-          const filteredPoints = allPoints.filter(point => {
-            if (point.type === 'kml') return false
-            const lat = point.lat || point.latitude
-            const lng = point.lng || point.longitude
-            return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
-          })
-          
-          window.allPoints = filteredPoints
-          console.log('🔄 上传成功后更新全局点位数据:', filteredPoints.length)
-        } catch (error) {
-          console.error('更新全局点位数据失败:', error)
-        }
-      })()
-    ])
-    
-    ElMessage.success('上传成功')
+    try {
+      // 重新加载所有点位数据
+      const { pointsApi } = await import('@/api/points.js')
+      const response = await pointsApi.getAllPoints({
+        respectFolderVisibility: true
+      })
+      
+      const allPoints = response.data || []
+      const filteredPoints = allPoints.filter(point => {
+        if (point.type === 'kml') return false
+        const lat = point.lat || point.latitude
+        const lng = point.lng || point.longitude
+        return lat != null && lng != null && !isNaN(lat) && !isNaN(lng)
+      })
+      
+      // 同时更新两个数据源
+      window.allPoints = filteredPoints
+      panoramaStore.setPanoramas(filteredPoints)
+      
+      console.log('🔄 上传成功后更新数据:', filteredPoints.length, '个点位')
+      ElMessage.success('上传成功')
+    } catch (error) {
+      console.error('更新数据失败:', error)
+      ElMessage.error('刷新数据失败')
+    }
   }
 
   // 处理全景图删除

@@ -20,7 +20,8 @@ export function setMapInstance(data) {
  * @param {Array} markers 标记数据数组
  */
 export function setMarkersData(markers) {
-  window.currentMarkers = markers || []
+  // 不要直接覆盖 window.currentMarkers，因为它包含实际的标记对象
+  // 这里只是用于调试和日志记录
   console.log('标记数据已设置:', markers?.length || 0)
   
   // 详细检查每个标记的数据

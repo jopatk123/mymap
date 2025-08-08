@@ -3,9 +3,9 @@
   "pointStyles": {
     "panorama": {
       "point_color": "#186bd0ff",
-      "point_size": 14,
-      "point_opacity": 1,
-      "point_label_size": 18,
+      "point_size": 7,
+      "point_opacity": 0.6,
+      "point_label_size": 5,
       "point_label_color": "#e80c0c",
       "point_icon_type": "marker"
     },
