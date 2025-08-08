@@ -267,6 +267,9 @@ const handleSave = async () => {
       window.videoPointStyles = response.data // 使用服务器返回的数据
       console.log('✅ 视频点位样式已保存并同步到全局变量:', window.videoPointStyles)
       
+      // 更新本地缓存
+      updateLocalCache('video', response.data)
+      
       // 通知样式更新
       notifyPointStyleUpdate('video', response.data)
     } else {
@@ -274,6 +277,9 @@ const handleSave = async () => {
       panoramaStyles.value = { ...currentStyles }
       window.panoramaPointStyles = response.data // 使用服务器返回的数据
       console.log('✅ 全景图点位样式已保存并同步到全局变量:', window.panoramaPointStyles)
+      
+      // 更新本地缓存
+      updateLocalCache('panorama', response.data)
       
       // 通知样式更新
       notifyPointStyleUpdate('panorama', response.data)
@@ -311,10 +317,14 @@ const handleReset = async () => {
       const response = await videoPointStyleApi.resetStyles()
       videoStyles.value = convertFromApiFormat(response.data)
       window.videoPointStyles = response.data // 更新全局变量
+      // 更新本地缓存
+      updateLocalCache('video', response.data)
     } else {
       const response = await panoramaPointStyleApi.resetStyles()
       panoramaStyles.value = convertFromApiFormat(response.data)
       window.panoramaPointStyles = response.data // 更新全局变量
+      // 更新本地缓存
+      updateLocalCache('panorama', response.data)
     }
     
     // 重新选择当前类型以更新编辑器
@@ -397,6 +407,27 @@ const convertToApiFormat = (componentData) => {
   }
   console.log('🔄 组件格式转API格式:', { 输入: componentData, 输出: converted })
   return converted
+}
+
+// 更新本地缓存
+const updateLocalCache = (type, newStyles) => {
+  try {
+    const cached = localStorage.getItem('pointStyles')
+    let styles = {}
+    
+    if (cached) {
+      styles = JSON.parse(cached)
+    }
+    
+    // 更新指定类型的样式
+    styles[type] = newStyles
+    styles.lastUpdated = Date.now()
+    
+    localStorage.setItem('pointStyles', JSON.stringify(styles))
+    console.log(`🔄 已更新${type}样式的本地缓存:`, newStyles)
+  } catch (error) {
+    console.warn('更新本地样式缓存失败:', error)
+  }
 }
 </script>
 
