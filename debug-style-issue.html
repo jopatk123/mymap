@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>样式问题调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .style-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .style-item:last-child {
+            border-bottom: none;
+        }
+        .color-preview {
+            width: 30px;
+            height: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 点位样式问题调试工具</h1>
+        
+        <div class="section">
+            <h3>📊 当前样式状态</h3>
+            <div id="current-styles">
+                <div class="style-item">
+                    <span>视频点位颜色:</span>
+                    <span id="video-color">#ff4757 <div class="color-preview" style="background-color: #ff4757;"></div></span>
+                </div>
+                <div class="style-item">
+                    <span>视频点位大小:</span>
+                    <span id="video-size">10px</span>
+                </div>
+                <div class="style-item">
+                    <span>全景图点位颜色:</span>
+                    <span id="panorama-color">#2ed573 <div class="color-preview" style="background-color: #2ed573;"></div></span>
+                </div>
+                <div class="style-item">
+                    <span>全景图点位大小:</span>
+                    <span id="panorama-size">8px</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>🧪 测试操作</h3>
+            <button onclick="testVideoStyleUpdate()">测试视频点位样式更新</button>
+            <button onclick="testPanoramaStyleUpdate()">测试全景图点位样式更新</button>
+            <button onclick="checkGlobalVariables()">检查全局变量</button>
+            <button onclick="simulateMarkerCreation()">模拟标记创建</button>
+        </div>
+        
+        <div class="section">
+            <h3>📝 操作日志</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟全局样式变量
+        window.videoPointStyles = {
+            point_color: '#ff4757',
+            point_size: 10,
+            point_opacity: 1.0,
+            point_label_size: 14,
+            point_label_color: '#000000'
+        };
+        
+        window.panoramaPointStyles = {
+            point_color: '#2ed573',
+            point_size: 8,
+            point_opacity: 1.0,
+            point_label_size: 12,
+            point_label_color: '#000000'
+        };
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateDisplay() {
+            document.getElementById('video-color').innerHTML = 
+                `${window.videoPointStyles.point_color} <div class="color-preview" style="background-color: ${window.videoPointStyles.point_color};"></div>`;
+            document.getElementById('video-size').textContent = `${window.videoPointStyles.point_size}px`;
+            document.getElementById('panorama-color').innerHTML = 
+                `${window.panoramaPointStyles.point_color} <div class="color-preview" style="background-color: ${window.panoramaPointStyles.point_color};"></div>`;
+            document.getElementById('panorama-size').textContent = `${window.panoramaPointStyles.point_size}px`;
+        }
+
+        function testVideoStyleUpdate() {
+            log('🎥 开始测试视频点位样式更新...');
+            
+            // 模拟用户修改样式
+            const newColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            const newSize = Math.floor(Math.random() * 20) + 8;
+            
+            log(`   修改颜色: ${window.videoPointStyles.point_color} -> ${newColor}`);
+            log(`   修改大小: ${window.videoPointStyles.point_size} -> ${newSize}`);
+            
+            // 更新全局变量
+            window.videoPointStyles.point_color = newColor;
+            window.videoPointStyles.point_size = newSize;
+            
+            log('✅ 视频点位样式已更新');
+            updateDisplay();
+            
+            // 模拟标记重新创建
+            setTimeout(() => {
+                log('🔄 模拟标记重新创建...');
+                simulateMarkerCreation();
+            }, 500);
+        }
+
+        function testPanoramaStyleUpdate() {
+            log('🌐 开始测试全景图点位样式更新...');
+            
+            // 模拟用户修改样式
+            const newColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            const newSize = Math.floor(Math.random() * 20) + 8;
+            
+            log(`   修改颜色: ${window.panoramaPointStyles.point_color} -> ${newColor}`);
+            log(`   修改大小: ${window.panoramaPointStyles.point_size} -> ${newSize}`);
+            
+            // 更新全局变量
+            window.panoramaPointStyles.point_color = newColor;
+            window.panoramaPointStyles.point_size = newSize;
+            
+            log('✅ 全景图点位样式已更新');
+            updateDisplay();
+            
+            // 模拟标记重新创建
+            setTimeout(() => {
+                log('🔄 模拟标记重新创建...');
+                simulateMarkerCreation();
+            }, 500);
+        }
+
+        function checkGlobalVariables() {
+            log('🔍 检查全局变量状态:');
+            log(`   window.videoPointStyles: ${JSON.stringify(window.videoPointStyles, null, 2)}`);
+            log(`   window.panoramaPointStyles: ${JSON.stringify(window.panoramaPointStyles, null, 2)}`);
+        }
+
+        function simulateMarkerCreation() {
+            log('📍 模拟创建标记:');
+            
+            // 模拟视频点位标记创建
+            const videoStyles = window.videoPointStyles;
+            log(`   创建视频标记 - 颜色: ${videoStyles.point_color}, 大小: ${videoStyles.point_size}`);
+            
+            // 模拟全景图点位标记创建
+            const panoramaStyles = window.panoramaPointStyles;
+            log(`   创建全景图标记 - 颜色: ${panoramaStyles.point_color}, 大小: ${panoramaStyles.point_size}`);
+            
+            log('✅ 标记创建完成');
+        }
+
+        // 初始化显示
+        updateDisplay();
+        log('🚀 调试工具已初始化');
+    </script>
+</body>
+</html>

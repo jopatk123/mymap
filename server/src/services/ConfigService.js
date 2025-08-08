@@ -53,13 +53,30 @@ class ConfigService {
 
   async getPointStyles(type) {
     const config = await this.loadConfig()
-    return config.pointStyles[type] || config.pointStyles.panorama
+    const styles = config.pointStyles[type] || config.pointStyles.panorama
+    
+    console.log(`📖 获取${type}点位样式:`, {
+      请求类型: type,
+      返回样式: styles,
+      配置文件路径: this.configPath
+    })
+    
+    return styles
   }
 
   async updatePointStyles(type, styles) {
+    console.log(`🔧 更新${type}点位样式:`, {
+      原始配置: this.config?.pointStyles?.[type],
+      新样式: styles,
+      合并后: { ...this.config?.pointStyles?.[type], ...styles }
+    })
+    
     const config = await this.loadConfig()
     config.pointStyles[type] = { ...config.pointStyles[type], ...styles }
-    return await this.saveConfig(config)
+    const success = await this.saveConfig(config)
+    
+    console.log(`💾 保存${type}点位样式结果:`, success ? '成功' : '失败')
+    return success
   }
 
   async getKmlStyles(fileId = 'default') {

@@ -48,6 +48,14 @@ const routes = [
     }
   },
   {
+    path: '/debug/styles',
+    name: 'StyleDebug',
+    component: () => import('@/views/StyleDebugView.vue'),
+    meta: {
+      title: '样式调试'
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),

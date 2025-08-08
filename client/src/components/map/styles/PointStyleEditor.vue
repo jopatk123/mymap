@@ -121,13 +121,22 @@ const pickerColor = computed({
 
 // 监听props变化
 watch(() => props.modelValue, (newValue) => {
+  console.log('📥 PointStyleEditor接收到新的modelValue:', {
+    旧值: { ...localStyles },
+    新值: newValue
+  })
   if (newValue) {
     Object.assign(localStyles, newValue)
+    console.log('✅ localStyles已更新:', localStyles)
   }
 }, { immediate: true, deep: true })
 
 // 处理样式变化
 const handleChange = () => {
+  console.log('🎨 PointStyleEditor样式变化:', {
+    localStyles: localStyles,
+    即将发送的值: { ...localStyles }
+  })
   emit('update:modelValue', { ...localStyles })
   emit('change')
 }

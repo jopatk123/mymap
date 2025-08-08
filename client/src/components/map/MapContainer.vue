@@ -22,10 +22,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useMap } from '@/composables/useMap.js'
 import { useAppStore } from '@/store/app.js'
+import { setMapInstance, setMarkersData } from '@/utils/marker-refresh.js'
+import { addStyleListener, removeStyleListener } from '@/utils/style-events.js'
 
 const props = defineProps({
   panoramas: {
@@ -65,6 +67,29 @@ const {
   onMarkerClick
 } = useMap('map')
 
+// 样式更新处理函数
+const handleStyleUpdate = (data) => {
+  console.log('🎨 收到样式更新事件:', data)
+  // 样式已经在全局变量中更新，这里不需要额外处理
+}
+
+// 标记刷新处理函数
+const handleMarkersRefresh = (data) => {
+  console.log('🔄 收到标记刷新事件:', data)
+  
+  // 强制刷新所有标记
+  setTimeout(() => {
+    clearMarkers()
+    
+    // 获取当前应该显示的点位数据
+    const currentPoints = window.allPoints || props.panoramas
+    if (currentPoints && currentPoints.length > 0) {
+      console.log('🔄 重新创建标记:', currentPoints.length, '个')
+      addPointMarkers(currentPoints)
+    }
+  }, 50)
+}
+
 // 初始化地图
 onMounted(() => {
   const mapInstance = initMap(
@@ -74,6 +99,14 @@ onMounted(() => {
     },
     mapType.value // 使用 store 中的地图类型进行初始化
   )
+  
+  // 设置地图实例到刷新工具
+  if (mapInstance) {
+    setMapInstance({
+      clearMarkers,
+      addPointMarkers
+    })
+  }
   
   // 设置标记点击事件处理函数
   const handleMarkerClick = (panorama) => {
@@ -89,6 +122,16 @@ onMounted(() => {
       emit('map-click', e.latlng)
     })
   }
+  
+  // 添加样式更新事件监听器
+  addStyleListener('point-style-updated', handleStyleUpdate)
+  addStyleListener('markers-refresh', handleMarkersRefresh)
+})
+
+// 清理事件监听器
+onUnmounted(() => {
+  removeStyleListener('point-style-updated', handleStyleUpdate)
+  removeStyleListener('markers-refresh', handleMarkersRefresh)
 })
 
 // 监听全景图数据变化
@@ -98,6 +141,8 @@ watch(() => props.panoramas, (newPanoramas) => {
   // 优先使用全局点位数据，如果不存在则使用props数据
   const pointsToShow = window.allPoints && window.allPoints.length > 0 ? window.allPoints : newPanoramas
   if (pointsToShow && pointsToShow.length > 0) {
+    // 存储标记数据到刷新工具
+    setMarkersData(pointsToShow)
     addPointMarkers(pointsToShow)
   }
   
@@ -114,6 +159,8 @@ watch(mapType, (newType) => {
 watch(() => window.allPoints, (newPoints) => {
   if (newPoints && newPoints.length > 0) {
     clearMarkers()
+    // 存储标记数据到刷新工具
+    setMarkersData(newPoints)
     addPointMarkers(newPoints)
   }
 }, { deep: true })

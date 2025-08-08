@@ -37,7 +37,14 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     });
 
     marker.addTo(map.value);
-    markers.value.push({ id: point.id, marker, type: pointType });
+    const markerInfo = { id: point.id, marker, type: pointType, data: point };
+    markers.value.push(markerInfo);
+    
+    // 同步到全局标记数组
+    if (!window.currentMarkers) {
+      window.currentMarkers = [];
+    }
+    window.currentMarkers.push(markerInfo);
 
     return marker;
   };
@@ -68,6 +75,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       map.value.removeLayer(marker);
     });
     markers.value = [];
+    
+    // 清除全局标记数组
+    window.currentMarkers = [];
   };
 
   const fitBounds = () => {

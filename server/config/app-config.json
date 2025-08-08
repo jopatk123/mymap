@@ -2,19 +2,19 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_color": "#2ed573",
-      "point_size": 8,
+      "point_color": "#186bd0ff",
+      "point_size": 14,
       "point_opacity": 1,
-      "point_label_size": 12,
-      "point_label_color": "#000000",
+      "point_label_size": 9,
+      "point_label_color": "#e80c0c",
       "point_icon_type": "marker"
     },
     "video": {
-      "point_color": "#ff4757",
-      "point_size": 10,
+      "point_color": "#c21313ff",
+      "point_size": 12,
       "point_opacity": 1,
-      "point_label_size": 14,
-      "point_label_color": "#000000",
+      "point_label_size": 20,
+      "point_label_color": "#d71e1e",
       "point_icon_type": "marker"
     }
   },

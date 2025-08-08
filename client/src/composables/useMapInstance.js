@@ -20,6 +20,9 @@ export function useMapInstance(containerId) {
     tileLayer.value = createAMapTileLayer(initialMapType);
     tileLayer.value.addTo(map.value);
 
+    // 设置全局地图实例
+    window.mapInstance = map.value;
+
     return map.value;
   };
 
@@ -39,6 +42,10 @@ export function useMapInstance(containerId) {
       map.value.remove();
       map.value = null;
     }
+    
+    // 清除全局地图实例
+    window.mapInstance = null;
+    window.currentMarkers = [];
   };
 
   onUnmounted(destroyMap);

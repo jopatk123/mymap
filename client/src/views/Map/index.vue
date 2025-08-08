@@ -90,12 +90,13 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useMapPage } from '@/composables/useMapPage'
 import { useMapInteractions } from '@/composables/useMapInteractions'
 import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
 import { usePointStyles } from '@/composables/usePointStyles'
+import { useMapStyleUpdater } from '@/composables/useMapStyleUpdater'
 import { kmlApi } from '@/api/kml.js'
 
 import MapView from './components/MapView.vue'
@@ -144,6 +145,12 @@ const {
   toggleKmlLayers
 } = useMapPage()
 
+// 样式更新器
+const { updateAllMarkerStyles, isUpdating } = useMapStyleUpdater(
+  computed(() => mapRef.value?.map),
+  computed(() => mapRef.value?.markers || [])
+)
+
 // 点位样式管理
 const {
   loadAllPointStyles,
@@ -184,6 +191,9 @@ const {
   showPanoramaViewer,
   openViewer
 )
+
+// 设置全局标记点击处理器
+window.mapMarkerClickHandler = handlePanoramaClick
 
 // 视频模态框关闭处理
 const handleVideoModalClose = () => {
@@ -330,13 +340,13 @@ const handleKmlStylesUpdated = async () => {
 
 // 处理点位样式更新
 const handlePointStylesUpdated = async () => {
+  console.log('点位样式已更新，准备刷新地图标记')
   
   try {
     // 重新加载点位样式配置
     await loadAllPointStyles()
     
     // 更新全局变量
-    // 确保即使 API 调用失败，也有默认值
     window.videoPointStyles = videoPointStyles.value || {
       point_color: '#ff4757',
       point_size: 10,
@@ -354,22 +364,39 @@ const handlePointStylesUpdated = async () => {
       point_label_color: '#000000'
     }
     
+    console.log('更新后的点位样式配置:', {
+      video: window.videoPointStyles,
+      panorama: window.panoramaPointStyles
+    })
     
-    // 清除现有标记
-    if (mapRef.value) {
-      mapRef.value.clearMarkers()
+    // 使用标记刷新工具
+    try {
+      const { refreshAllMarkers } = await import('@/utils/marker-refresh.js')
+      const success = refreshAllMarkers()
+      
+      if (success) {
+        ElMessage.success('点位样式已更新')
+        return
+      }
+    } catch (refreshError) {
+      console.warn('标记刷新工具失败，使用回退方法:', refreshError)
     }
     
-    // 延迟重新加载数据，避免并发请求
-    setTimeout(async () => {
-      try {
-        await loadInitialData()
-        ElMessage.success('点位样式已更新')
-      } catch (error) {
-        console.error('重新加载地图数据失败:', error)
-        ElMessage.warning('点位样式已保存，但重新加载数据时出现问题')
-      }
-    }, 500)
+    // 回退方法：清除并重新加载标记
+    if (mapRef.value) {
+      mapRef.value.clearMarkers()
+      
+      // 延迟重新加载，确保清除完成
+      setTimeout(async () => {
+        try {
+          await loadInitialData()
+          ElMessage.success('点位样式已更新')
+        } catch (error) {
+          console.error('重新加载数据失败:', error)
+          ElMessage.warning('点位样式已保存，请手动刷新页面查看效果')
+        }
+      }, 300)
+    }
     
   } catch (error) {
     console.error('更新点位样式失败:', error)
