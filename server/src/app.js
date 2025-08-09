@@ -14,26 +14,14 @@ const app = express()
 
 // 安全中间件
 // - 关闭在非 HTTPS 环境下会产生告警/影响行为的安全头（HSTS/COOP/OAC/COEP）
-// - 放宽 CSP 以允许 http/https 连接与常用 CDN
+// - 暂时关闭 CSP，由前置 Nginx 统一控制（避免意外携带 upgrade-insecure-requests）
 app.use(helmet({
   hsts: false,
   crossOriginOpenerPolicy: false,
   originAgentCluster: false,
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
-      imgSrc: ["'self'", 'data:', 'https:', 'http:'],
-      connectSrc: ["'self'", 'https:', 'http:'],
-      fontSrc: ["'self'", 'https:', 'data:'],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'"]
-    }
-  }
+  contentSecurityPolicy: false
 }))
 
 // CORS配置
