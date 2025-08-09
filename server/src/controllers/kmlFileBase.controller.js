@@ -241,6 +241,10 @@ class KmlFileBaseController {
       if (success) {
         // 删除相关文件
         await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+        
+        // 清理配置信息
+        const ConfigService = require('../services/ConfigService')
+        await ConfigService.deleteKmlStyles(id)
 
         res.json({
           success: true,

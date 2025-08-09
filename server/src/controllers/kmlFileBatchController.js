@@ -33,6 +33,10 @@ class KmlFileBatchController {
 
       // 删除物理文件
       await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete)
+      
+      // 批量清理配置信息
+      const ConfigService = require('../services/ConfigService')
+      await ConfigService.batchDeleteKmlStyles(ids.map(id => id.toString()))
 
       res.json({
         success: true,

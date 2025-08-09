@@ -74,6 +74,32 @@ class ConfigService {
     return await this.saveConfig(config)
   }
 
+  async deleteKmlStyles(fileId) {
+    const config = await this.loadConfig()
+    if (config.kmlStyles[fileId] && fileId !== 'default') {
+      delete config.kmlStyles[fileId]
+      return await this.saveConfig(config)
+    }
+    return true
+  }
+
+  async batchDeleteKmlStyles(fileIds) {
+    const config = await this.loadConfig()
+    let hasChanges = false
+    
+    for (const fileId of fileIds) {
+      if (config.kmlStyles[fileId] && fileId !== 'default') {
+        delete config.kmlStyles[fileId]
+        hasChanges = true
+      }
+    }
+    
+    if (hasChanges) {
+      return await this.saveConfig(config)
+    }
+    return true
+  }
+
   async getMapSettings() {
     const config = await this.loadConfig()
     return config.mapSettings
