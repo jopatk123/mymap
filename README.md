@@ -1,67 +1,207 @@
-# 🗺️ 地图全景系统
+## 地图全景系统（Vue3 + Express + SQLite）
 
-> 一个现代化的地图全景查看系统，支持360°全景图管理和多坐标系精确转换
+一个支持全景图与地理要素（KML/点/线/面）管理与展示的全栈项目：前端使用 Vue3 + Vite + Leaflet + Pannellum，后端使用 Express + SQLite，内置上传、样式管理与批量处理能力。
 
-[![Demo](https://img.shields.io/badge/🚀-在线演示-blue)]() 
-[![Quick Start](https://img.shields.io/badge/⚡-快速开始-green)](#快速开始)
-[![License](https://img.shields.io/badge/📄-MIT-orange)](LICENSE)
+### 技术栈
+- **前端**: Vue 3, Vite, Element Plus, Leaflet, Pannellum, Pinia, Vue Router, Sass
+- **后端**: Node.js (Express), SQLite/SQLite3, Multer, Sharp, xml2js, Joi, Helmet, Morgan
 
-## ✨ 核心特性
+### 目录结构
+```text
+mymap/
+  client/            # 前端（Vite + Vue3）
+  server/            # 后端（Express + SQLite）
+  start.sh           # 一键安装/初始化/启动脚本（SQLite 版本）
+```
 
-🗺️ **智能地图** - 基于Leaflet的交互式地图，集成高德地图瓦片  
-📸 **全景管理** - 拖拽上传、批量处理、智能缩略图生成  
-🔄 **坐标转换** - 支持WGS84、GCJ02、BD09坐标系无缝转换  
-🌐 **沉浸体验** - 基于Pannellum的流畅360°全景查看  
-📱 **全端适配** - 响应式设计，完美支持桌面和移动设备  
+更多细分请参考仓库内实际文件（如 `client/src/**`, `server/src/**`, `server/uploads/**`, `server/data/**`）。
 
-## 🚀 快速开始
+## 环境要求
+- Node.js ≥ 16（推荐 LTS）
+- npm（或自行替换为 pnpm/yarn）
+- Linux/macOS/WSL2 环境均可（脚本与端口示例以 Linux 为基准）
+
+## 快速开始（推荐）
+使用一键脚本完成依赖安装、数据库初始化与启动。
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd mymap
-
-# 一键启动（推荐）
+chmod +x ./start.sh
 ./start.sh
-
-# 或者手动启动
-npm run install:all
-cd server && node init-sqlite-data.js && cd ..
-npm run dev
 ```
 
-启动完成后访问：http://localhost:3000
+脚本功能摘要：
+- 检查 Node.js 版本（需 ≥ 16）
+- 安装根目录、`client/`、`server/` 依赖
+- 在 `server/` 下执行 `node init-sqlite-data.js` 初始化 SQLite 数据库
+- 并行启动前后端开发服务
+  - 前端: `http://localhost:3000`
+  - 后端: `http://localhost:3002`
 
-### 🔧 故障排除
+脚本参数：
+- `--help`/`-h`: 显示帮助
+- `--init-only`: 仅初始化数据库，不启动服务
+- `--no-deps`: 跳过依赖安装
 
-如果遇到端口冲突错误：
+示例：
 ```bash
-# 验证项目设置
-node verify-setup.js
-
-# 清理端口并重新启动
-pkill -f "vite\|nodemon" && ./start.sh --no-deps
+./start.sh --init-only
+./start.sh --no-deps
 ```
 
-> 📋 更多部署选项请查看 [DEPLOYMENT.md](DEPLOYMENT.md)
+## 手动启动（可选）
+如需手动控制每一步，可按下列流程：
 
-## 🛠️ 技术架构
+1) 安装依赖
+```bash
+npm run install:all
+# 等价于：
+# npm install
+# (cd client && npm install)
+# (cd server && npm install)
+```
 
-**前端**: Vue 3 + Vite + Pinia + Element Plus + Leaflet + Pannellum  
-**后端**: Node.js + Express + SQLite + Sharp  
-**特色**: 零依赖部署、一键启动、坐标系转换、图片处理
+2) 初始化数据库（SQLite）
+```bash
+cd server
+node init-sqlite-data.js
+```
 
-## 📸 功能预览
+3) 启动开发模式
+```bash
+# 在项目根目录并行启动前后端
+npm run dev
 
-- 🗺️ [地图浏览] - 交互式地图界面，支持标记点查看
-- 📷 [全景查看] - 360°沉浸式全景图体验  
-- 🔧 [管理后台] - 全景图批量管理、文件夹组织
-- 📱 [移动端] - 响应式设计，移动设备完美适配
+# 或分别启动
+npm run dev:client   # http://localhost:3000
+npm run dev:server   # http://localhost:3002
+```
 
-## 📚 文档链接
+## 环境变量（后端 `server/.env`）
+后端配置位于 `server/src/config/index.js`，可通过 `.env` 覆盖。示例：
 
-📖 [快速启动指南](QUICK_START.md) - 详细部署和配置说明  
-🔧 [API文档](server/README.md) - 后端接口文档  
-🎨 [前端组件](client/README.md) - 组件使用说明  
-🛠️ [开发指南](docs/DEVELOPMENT.md) - 开发环境搭建
+```env
+# 服务器
+PORT=3002
+NODE_ENV=development
+
+# 数据库（SQLite 文件路径，相对 server/）
+DB_PATH=./data/panorama_map.db
+
+# 上传
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE=52428800
+
+# 安全与跨域
+JWT_SECRET=your-secret
+CORS_ORIGIN=http://localhost:3000
+
+# 日志
+LOG_LEVEL=info
+```
+
+说明：
+- 后端默认监听 `3002` 端口。
+- 默认数据库文件位于 `server/data/panorama_map.db`。
+- 上传目录默认为 `server/uploads/`，包含 `kml/`, `panoramas/`, `thumbnails/`, `videos/` 等子目录。
+- 跨域默认允许 `http://localhost:5173`，前端使用 Vite 代理到 `3002`，开发时实际前端地址为 `http://localhost:3000`，可在 `.env` 中调整 `CORS_ORIGIN`。
+
+## 前端开发说明
+- 本地开发地址：`http://localhost:3000`
+- Vite 代理：`/api -> http://localhost:3002`（见 `client/vite.config.js`）
+- `@` 别名指向 `client/src`（见 `client/vite.config.js`）
+
+常用脚本（`client/package.json`）：
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+构建产物在 `client/dist`。生产部署时可由任意静态服务（Nginx/OSS/静态容器）托管。
+
+## 后端服务说明
+- 入口：`server/src/server.js`
+- 应用：`server/src/app.js`
+- 配置：`server/src/config/index.js`
+- 日志：`server/src/utils/logger.js`
+- API 路由：`server/src/routes/**`，控制器位于 `server/src/controllers/**`
+
+常用脚本（`server/package.json`）：
+```json
+{
+  "scripts": {
+    "dev": "nodemon --exec 'node --trace-deprecation src/server.js'",
+    "start": "node src/server.js"
+  }
+}
+```
+
+后端启动后日志将打印 API 文档与健康检查地址（示例）：
+```
+API文档: http://localhost:3002/api
+健康检查: http://localhost:3002/api/health
+```
+
+## 根目录脚本
+```json
+{
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  }
+}
+```
+
+## 数据与上传目录
+- 数据库文件：`server/data/panorama_map.db`
+- 上传根目录：`server/uploads/`
+  - `kml/`：KML 文件
+  - `panoramas/`：全景原图
+  - `thumbnails/`：缩略图
+  - `videos/`：视频
+
+确保后端对这些目录具有读写权限（Linux 下可使用 `chmod -R 755 server/uploads`）。
+
+## 生产部署（示例）
+1) 构建前端并部署静态资源
+```bash
+cd client
+npm run build
+# 将 dist/ 交由 Nginx/静态服务器托管
+```
+
+2) 启动后端服务（建议使用 PM2 或系统服务）
+```bash
+cd server
+npm ci --only=production
+npm run start
+# 或：pm2 start src/server.js --name mymap-api
+```
+
+3) 反向代理（Nginx 示例）
+```nginx
+location /api/ {
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_pass http://127.0.0.1:3002/;
+}
+```
+
+## 常见问题（FAQ）
+- **端口占用（3000/3002）**：脚本会尝试清理；如仍被占用，可手动执行 `lsof -i :3000`/`:3002` 后 `kill`。
+- **Sharp 安装失败**：确保系统具备构建工具与依赖库（如 `libvips`）；可参考 Sharp 官方文档。
+- **SQLite/`sqlite3` 相关错误**：删除 `server/node_modules` 后重新安装，或确保网络可用以下载预编译二进制。
+- **跨域问题**：检查 `server/.env` 中 `CORS_ORIGIN` 是否与前端地址一致，或在开发阶段保持使用 Vite 代理。
+- **上传失败（类型/大小）**：检查 `server/src/config/index.js` 中 `allowedTypes` 与 `MAX_FILE_SIZE` 配置。
+
+## 许可协议
+本项目遵循仓库内 `LICENSE` 文件所述的开源协议。
+
 

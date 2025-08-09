@@ -48,7 +48,7 @@ class FolderModel {
       VALUES (?, ?, ?, ?)
     `
     
-    const result = await SQLiteAdapter.all(sql, [name, parentId, isVisible, sortOrder])
+    const [result] = await SQLiteAdapter.execute(sql, [name, parentId, isVisible, sortOrder])
     return await this.findById(result.insertId)
   }
 
@@ -66,7 +66,7 @@ class FolderModel {
       WHERE id = ?
     `
     
-    await SQLiteAdapter.all(sql, [name, parentId, isVisible, sortOrder, id])
+    await SQLiteAdapter.execute(sql, [name, parentId, isVisible, sortOrder, id])
     return await this.findById(id)
   }
 
@@ -97,7 +97,7 @@ class FolderModel {
     }
 
     const sql = 'DELETE FROM folders WHERE id = ?'
-    const result = await SQLiteAdapter.all(sql, [id])
+    const [result] = await SQLiteAdapter.execute(sql, [id])
     return result.affectedRows > 0
   }
 
@@ -109,14 +109,14 @@ class FolderModel {
     }
 
     const sql = 'UPDATE folders SET parent_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await SQLiteAdapter.all(sql, [newParentId, id])
+    await SQLiteAdapter.execute(sql, [newParentId, id])
     return await this.findById(id)
   }
 
   // 更新可见性
   static async updateVisibility(id, isVisible) {
     const sql = 'UPDATE folders SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await SQLiteAdapter.all(sql, [isVisible, id])
+    await SQLiteAdapter.execute(sql, [isVisible, id])
     return await this.findById(id)
   }
 
