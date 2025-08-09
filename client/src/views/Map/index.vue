@@ -101,7 +101,7 @@ import { useMapEventHandlers } from './composables/MapEventHandlers'
 import { useMapInitializer } from './composables/MapInitializer'
 
 import MapView from './components/MapView.vue'
-import MapSidebar from './components/MapSidebar.vue'
+import MapSidebar from '@/components/map/MapSidebar.vue'
 import MapControls from '@/components/map/MapControls.vue'
 import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'

@@ -2,16 +2,16 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_color": "#2f75ccff",
-      "point_size": 18,
-      "point_opacity": 0.9,
-      "point_label_size": 16,
-      "point_label_color": "#aa2929",
+      "point_color": "#1259f1ff",
+      "point_size": 10,
+      "point_opacity": 1,
+      "point_label_size": 14,
+      "point_label_color": "#d62828",
       "point_icon_type": "marker"
     },
     "video": {
-      "point_color": "#0d4c9aff",
-      "point_size": 16,
+      "point_color": "#520b32ff",
+      "point_size": 11,
       "point_opacity": 1,
       "point_label_size": 14,
       "point_label_color": "#d62828",

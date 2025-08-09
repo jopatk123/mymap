@@ -39,7 +39,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Warning } from '@element-plus/icons-vue'
 import { usePanorama } from '@/composables/usePanorama.js'
-import { PanoramaViewerService } from '@/services/panoramaViewerService.js'
+import { PanoramaViewerService } from '@/services/panorama-viewer-service.js'
 import PanoramaToolbar from '@/components/panorama/PanoramaToolbar.vue'
 import PanoramaFooter from '@/components/panorama/PanoramaFooter.vue'
 
