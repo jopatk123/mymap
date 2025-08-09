@@ -203,6 +203,56 @@ export function useKmlLayer(map, kmlLayers) {
             });
             featureCount++;
           }
+        } else if (point.point_type === 'LineString' && point.coordinates && point.coordinates.points) {
+          // 处理线条
+          const lineCoords = point.coordinates.points.map(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              const [lng, lat] = coord;
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat);
+              return [gcj02Lng, gcj02Lat];
+            }
+            return null;
+          }).filter(Boolean);
+          
+          if (lineCoords.length > 1) {
+            kmlLayer.addData({
+              type: 'Feature',
+              properties: {
+                name: point.name || '未命名线条',
+                description: point.description || ''
+              },
+              geometry: {
+                type: 'LineString',
+                coordinates: lineCoords
+              }
+            });
+            featureCount++;
+          }
+        } else if (point.point_type === 'Polygon' && point.coordinates && point.coordinates.outer) {
+          // 处理多边形
+          const polygonCoords = point.coordinates.outer.map(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              const [lng, lat] = coord;
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat);
+              return [gcj02Lng, gcj02Lat];
+            }
+            return null;
+          }).filter(Boolean);
+          
+          if (polygonCoords.length > 2) {
+            kmlLayer.addData({
+              type: 'Feature',
+              properties: {
+                name: point.name || '未命名多边形',
+                description: point.description || ''
+              },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [polygonCoords]
+              }
+            });
+            featureCount++;
+          }
         }
       }
 
@@ -212,7 +262,7 @@ export function useKmlLayer(map, kmlLayers) {
         console.log(`✅ KML图层加载成功 (${kmlFile.title}): ${featureCount} 个要素`);
         return kmlLayer;
       } else {
-        console.warn('KML文件中没有找到有效的点位要素');
+        console.warn('KML文件中没有找到有效的几何要素');
         return null;
       }
     } catch (error) {
@@ -383,7 +433,8 @@ export function useKmlLayer(map, kmlLayers) {
           if (coordinates) {
             const lineCoords = coordinates.trim().split(/\s+/).map(pair => {
               const [lng, lat] = pair.split(',').map(parseFloat);
-              return [lng, lat];
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat);
+              return [gcj02Lng, gcj02Lat];
             }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
             
             if (lineCoords.length > 1) {
@@ -402,7 +453,8 @@ export function useKmlLayer(map, kmlLayers) {
             if (coordinates) {
               const polygonCoords = coordinates.trim().split(/\s+/).map(pair => {
                 const [lng, lat] = pair.split(',').map(parseFloat);
-                return [lng, lat];
+                const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat);
+                return [gcj02Lng, gcj02Lat];
               }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
               
               if (polygonCoords.length > 2) {
