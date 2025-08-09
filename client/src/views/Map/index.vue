@@ -357,7 +357,22 @@ const handlePointStylesUpdated = async () => {
       point_label_color: '#000000'
     }
     
-    // 使用标记刷新工具
+    // 点位样式更新时，只重新加载现有KML图层，不重新获取样式
+    if (kmlLayersVisible.value && window.allKmlFiles && window.allKmlFiles.length > 0) {
+      try {
+        // 重新加载现有的KML图层
+        if (mapRef.value) {
+          mapRef.value.clearKmlLayers()
+          setTimeout(() => {
+            mapRef.value.addKmlLayers(window.allKmlFiles)
+          }, 200)
+        }
+      } catch (error) {
+        console.error('重新加载KML图层失败:', error)
+      }
+    }
+    
+    // 使用标记刷新工具更新点位样式
     try {
       const { refreshAllMarkers } = await import('@/utils/marker-refresh.js')
       const success = refreshAllMarkers()
@@ -380,7 +395,6 @@ const handlePointStylesUpdated = async () => {
           ElMessage.success('点位样式已更新')
         } catch (error) {
           console.error('重新加载数据失败:', error)
-          ElMessage.warning('点位样式已保存，请手动刷新页面查看效果')
         }
       }, 300)
     }
@@ -390,6 +404,67 @@ const handlePointStylesUpdated = async () => {
     ElMessage.error('应用点位样式失败')
   }
 }
+
+// 检查是否有配置更新需要处理
+const checkForConfigUpdates = async () => {
+  const configUpdated = localStorage.getItem('configUpdated')
+  if (configUpdated) {
+    console.log('检测到配置更新，重新加载所有数据...')
+    
+    try {
+      // 重新加载完整数据，包括点位和KML
+      await loadInitialData()
+      
+      // 清除标记
+      localStorage.removeItem('configUpdated')
+      ElMessage.success('配置已保存并应用到地图')
+    } catch (error) {
+      console.error('重新加载数据失败:', error)
+      localStorage.removeItem('configUpdated')
+      ElMessage.warning('配置已保存，部分更新可能需要手动刷新')
+    }
+  }
+}
+
+// 在页面激活时检查配置更新
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    checkForConfigUpdates()
+  }
+})
+
+// 页面加载时也检查一次
+onMounted(async () => {
+  // 加载点位样式配置
+  await loadAllPointStyles()
+  
+  // 将样式配置存储到全局变量，供地图标记使用
+  // 确保即使 API 调用失败，也有默认值
+  window.videoPointStyles = videoPointStyles.value || {
+    point_color: '#ff4757',
+    point_size: 10,
+    point_opacity: 1.0,
+    point_icon_type: 'marker',
+    point_label_size: 14,
+    point_label_color: '#000000'
+  }
+  window.panoramaPointStyles = panoramaPointStyles.value || {
+    point_color: '#2ed573',
+    point_size: 10,
+    point_opacity: 1.0,
+    point_icon_type: 'marker',
+    point_label_size: 12,
+    point_label_color: '#000000'
+  }
+  
+  await initializePage()
+  
+  // 监听文件夹可见性变化事件
+  window.addEventListener('folder-visibility-changed', handleFolderVisibilityChanged)
+  
+  // 检查是否有配置更新
+  checkForConfigUpdates()
+})
 
 // 清理事件监听器
 onUnmounted(() => {

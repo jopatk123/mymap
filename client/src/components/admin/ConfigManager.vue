@@ -177,9 +177,14 @@ const saveAllConfigs = async () => {
     })
 
     saving.value = true
+    // 保存需要通知的章节
+    const changedSectionsList = Array.from(changedSections.value)
     await configApi.updateConfig(config)
     changedSections.value.clear()
     ElMessage.success('配置保存成功')
+    
+    // 使用localStorage标记配置已更新，供地图页面检测
+    localStorage.setItem('configUpdated', Date.now().toString())
   } catch (error) {
     if (error !== 'cancel') {
       console.error('保存配置失败:', error)
