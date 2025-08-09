@@ -16,12 +16,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     
     const [displayLng, displayLat] = coordinates;
     
-    console.log('🗺️ 创建标记:', {
-      pointId: point.id,
-      pointTitle: point.title,
-      displayCoords: [displayLat, displayLng],
-      leafletFormat: `[${displayLat}, ${displayLng}]`
-    });
+
 
     const pointType = point.type || 'panorama';
     

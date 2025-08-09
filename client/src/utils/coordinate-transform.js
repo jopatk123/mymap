@@ -129,62 +129,24 @@ export function convertCoordinate(lng, lat, from, to) {
 }
 
 /**
- * 获取点位的显示坐标（调试版本）
+ * 获取点位的显示坐标（适配高德地图瓦片）
+ * 高德地图瓦片期望GCJ02坐标系
+ * 优先使用WGS84原始坐标，统一转换为GCJ02显示坐标
  * @param {Object} point 点位对象
  * @returns {Array} [lng, lat] 或 null
  */
 export function getDisplayCoordinates(point) {
-  if (!point) {
-    console.log('❌ getDisplayCoordinates: point is null')
-    return null
-  }
+  if (!point) return null
 
-  console.log('🔍 getDisplayCoordinates input:', {
-    id: point.id,
-    title: point.title,
-    lat: point.lat,
-    lng: point.lng,
-    latitude: point.latitude,
-    longitude: point.longitude,
-    gcj02Lat: point.gcj02Lat,
-    gcj02Lng: point.gcj02Lng,
-    gcj02_lat: point.gcj02_lat,
-    gcj02_lng: point.gcj02_lng
-  })
-
-  // 测试：优先使用原始WGS84坐标（如果存在）
-  const lat = point.lat || point.latitude
-  const lng = point.lng || point.longitude
+  // 优先使用WGS84原始坐标（避免双重转换）
+  // 服务端保存了两套坐标：latitude/longitude(WGS84) 和 gcj02Lat/gcj02Lng(GCJ02)
+  // 我们使用WGS84原始坐标，前端统一转换
+  const lat = point.latitude || point.lat
+  const lng = point.longitude || point.lng
 
   if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
-    console.log('✅ 使用原始WGS84坐标:', { lat, lng })
-    const result = [lng, lat]
-    return result
-  }
-
-  // 如果没有WGS84坐标，将GCJ02坐标转换为WGS84
-  if (point.gcj02Lat != null && point.gcj02Lng != null) {
-    console.log('🔄 将GCJ02转换为WGS84')
-    const [wgsLng, wgsLat] = gcj02ToWgs84(point.gcj02Lng, point.gcj02Lat)
-    const result = [wgsLng, wgsLat]
-    console.log('✅ 转换后的WGS84坐标:', result)
-    return result
-  }
-
-  if (point.gcj02_lat != null && point.gcj02_lng != null) {
-    console.log('🔄 将GCJ02转换为WGS84')
-    const [wgsLng, wgsLat] = gcj02ToWgs84(point.gcj02_lng, point.gcj02_lat)
-    const result = [wgsLng, wgsLat]
-    console.log('✅ 转换后的WGS84坐标:', result)
-    return result
-  }
-
-  console.log('❌ 没有找到有效坐标')
-
-  // 测试：如果是第一个点位，返回一个已知的福州坐标进行测试
-  if (point.id === 74) {
-    console.log('🧪 使用测试坐标 - 福州市中心')
-    return [119.2965, 26.0745] // 福州市中心的WGS84坐标
+    // 将WGS84原始坐标转换为GCJ02（适配高德地图瓦片）
+    return wgs84ToGcj02(lng, lat)
   }
 
   return null

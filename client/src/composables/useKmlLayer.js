@@ -180,20 +180,13 @@ export function useKmlLayer(map, kmlLayers) {
             const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(point.longitude, point.latitude);
             displayLat = gcj02Lat;
             displayLng = gcj02Lng;
-            console.log('🗺️ KML点位WGS84转GCJ02:', {
-              name: point.name,
-              original_wgs84: [point.longitude, point.latitude],
-              converted_gcj02: [displayLng, displayLat]
-            });
+
           }
           // 如果没有原始坐标，直接使用GCJ02坐标
           else if (point.gcj02_lat != null && point.gcj02_lng != null) {
             displayLat = point.gcj02_lat;
             displayLng = point.gcj02_lng;
-            console.log('🗺️ KML点位直接使用GCJ02:', {
-              name: point.name,
-              gcj02: [displayLng, displayLat]
-            });
+
           }
           
           if (displayLat != null && displayLng != null && !isNaN(displayLat) && !isNaN(displayLng)) {
@@ -376,11 +369,7 @@ export function useKmlLayer(map, kmlLayers) {
             if (!isNaN(lat) && !isNaN(lng)) {
               // 将WGS84坐标转换为GCJ02坐标（适配高德地图瓦片）
               const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(lng, lat);
-              console.log('🗺️ KML文件解析 - WGS84转GCJ02:', {
-                name: name,
-                original_wgs84: [lng, lat],
-                converted_gcj02: [gcj02Lng, gcj02Lat]
-              });
+
               kmlLayer.addData({ type: 'Feature', properties: { name, description }, geometry: { type: 'Point', coordinates: [gcj02Lng, gcj02Lat] } });
               featureCount++;
             }
