@@ -65,8 +65,9 @@ const getFileInfo = async (filePath) => {
  * @param {string} filePath 相对文件路径
  */
 const buildFileUrl = (req, filePath) => {
-  const baseUrl = `${req.protocol}://${req.get('host')}`
-  return `${baseUrl}/${filePath}`
+  // 使用相对路径，避免反向代理场景下 Host 端口缺失导致的访问失败
+  // 统一以 "/uploads/..." 的站内绝对路径返回，前端以当前来源加载
+  return `/${filePath}`
 }
 
 /**
