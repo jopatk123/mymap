@@ -1,22 +1,37 @@
 import L from 'leaflet';
+import StyleRenderer from '@/services/StyleRenderer.js';
 import { createPointIcon } from './kmlIconFactory.js';
 import { processCoordinates } from './kmlDataProcessor.js';
 
 export function createPointRenderer(kmlFile, effectiveStyle) {
+  const styleRenderer = new StyleRenderer();
+
   const kmlLayer = L.geoJSON(null, {
+    // 为非点要素提供样式（线与面）
+    style: (feature) => {
+      const geometryType = feature.geometry.type.toLowerCase();
+      if (geometryType.includes('line')) {
+        return styleRenderer.renderLineStyle(feature, effectiveStyle);
+      }
+      if (geometryType.includes('polygon')) {
+        return styleRenderer.renderPolygonStyle(feature, effectiveStyle);
+      }
+      return {};
+    },
+    // 点要素使用自定义图标
     pointToLayer: (feature, latlng) => {
       const pointSize = effectiveStyle.point_size;
       const labelSize = Number(effectiveStyle.point_label_size);
       const pointColor = effectiveStyle.point_color;
       const labelColor = effectiveStyle.point_label_color;
       const pointOpacity = effectiveStyle.point_opacity;
-      
+
       const iconOptions = createPointIcon(
-        pointSize, 
-        pointColor, 
-        pointOpacity, 
-        labelSize, 
-        labelColor, 
+        pointSize,
+        pointColor,
+        pointOpacity,
+        labelSize,
+        labelColor,
         feature.properties.name
       );
 
