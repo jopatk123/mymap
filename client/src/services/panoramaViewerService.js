@@ -1,7 +1,7 @@
 /**
  * 全景图查看器业务逻辑服务
  */
-import { getPanoramaById } from '@/api/panorama.js'
+import { getPanoramaById } from '@/api/panoramas.js'
 
 export class PanoramaViewerService {
   constructor() {

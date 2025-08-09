@@ -1,9 +1,9 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
-import { videoApi } from '@/api/video.js'
-import { kmlApi } from '@/api/kml.js'
-import * as panoramaApi from '@/api/panorama.js'
+import { videoApi } from '@/api/video-points.js'
+import { kmlApi } from '@/api/kml-files.js'
+import * as panoramaApi from '@/api/panoramas.js'
 
 export function useBatchOperations() {
   const panoramaStore = usePanoramaStore()

@@ -29,7 +29,7 @@ import { ref, defineEmits, defineProps } from 'vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import PanoramaUploadArea from './PanoramaUploadArea.vue'
 import { usePanoramaProcessor } from '@/composables/useFileProcessor'
-import { uploadPanoramaImage } from '@/api/panorama.js'
+import { uploadPanoramaImage } from '@/api/panoramas.js'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { imageProcessor } from '@/services/ImageProcessor.js'
 

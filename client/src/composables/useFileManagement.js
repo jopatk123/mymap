@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { folderApi } from '@/api/folder.js'
+import { folderApi } from '@/api/folders.js'
 import { pointsApi } from '@/api/points.js'
 
 export function useFileManagement() {

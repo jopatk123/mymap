@@ -86,7 +86,7 @@ export function useBaseUploadDialog(props, emit) {
   // 加载文件夹
   const loadFolders = async () => {
     try {
-      const { folderApi } = await import('@/api/folder.js')
+      const { folderApi } = await import('@/api/folders.js')
       const response = await folderApi.getFoldersFlat()
       folders.value = Array.isArray(response?.data) ? response.data : []
       

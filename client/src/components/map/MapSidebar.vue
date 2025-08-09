@@ -17,7 +17,7 @@
       <div class="search-section">
         <el-input
           :model-value="searchKeyword"
-          @input="$emit('update:searchKeyword', $event)"
+          @update:model-value="$emit('update:searchKeyword', $event)"
           placeholder="搜索全景图..."
           @input="$emit('search')"
           clearable

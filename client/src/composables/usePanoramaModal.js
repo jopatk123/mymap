@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { deletePanorama as deletePanoramaAPI } from '@/api/panorama.js'
+import { deletePanorama as deletePanoramaAPI } from '@/api/panoramas.js'
 
 export function usePanoramaModal() {
   const visible = ref(false)

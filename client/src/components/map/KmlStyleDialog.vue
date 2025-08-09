@@ -79,7 +79,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { kmlApi } from '@/api/kml.js'
+import { kmlApi } from '@/api/kml-files.js'
 import PointStyleEditor from './styles/PointStyleEditor.vue'
 import LineStyleEditor from './styles/LineStyleEditor.vue'
 import PolygonStyleEditor from './styles/PolygonStyleEditor.vue'

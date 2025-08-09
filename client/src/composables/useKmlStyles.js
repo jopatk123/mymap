@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue'
-import { kmlApi } from '@/api/kml.js'
+import { kmlApi } from '@/api/kml-files.js'
 import StyleRenderer from '@/services/StyleRenderer.js'
 
 export function useKmlStyles() {
