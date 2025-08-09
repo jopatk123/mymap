@@ -86,6 +86,7 @@
       v-model="showPointSettings"
       @styles-updated="handlePointStylesUpdated"
     />
+    
   </div>
 </template>
 
@@ -107,6 +108,7 @@ import VideoModal from '@/components/map/VideoModal.vue'
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
 import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
 import PointStyleDialog from '@/components/map/PointStyleDialog.vue'
+
 
 // 使用组合式函数
 const {

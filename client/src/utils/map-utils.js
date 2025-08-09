@@ -1,5 +1,11 @@
 import L from 'leaflet'
-import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate.js'
+import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate-transform.js'
+
+// 创建GCJ02坐标参考系统
+export const GCJ02CRS = L.extend({}, L.CRS.EPSG3857, {
+  code: 'GCJ02',
+  // 保持与EPSG3857相同的投影和变换，只是标识为GCJ02
+})
 
 /**
  * 创建高德地图瓦片层
@@ -7,6 +13,14 @@ import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate.js'
  * @returns {L.TileLayer}
  */
 export function createAMapTileLayer(type = 'normal') {
+  // 临时使用OSM瓦片测试坐标是否正确
+  if (type === 'test') {
+    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18
+    })
+  }
+  
   const urls = {
     normal: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
     satellite: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',

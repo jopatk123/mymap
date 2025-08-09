@@ -1,32 +1,31 @@
 import L from 'leaflet';
 import { createPointMarker } from '@/utils/map-utils.js';
+import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 
 export function useMapMarkers(map, markers, onMarkerClick) {
   const addPointMarker = (point) => {
     if (!map.value) return null;
 
-    // 获取坐标信息，支持多种字段名
-    let displayLat = point.lat || point.latitude;
-    let displayLng = point.lng || point.longitude;
-
-    // 优先使用GCJ02坐标
-    if (point.gcj02Lat && point.gcj02Lng) {
-      displayLat = point.gcj02Lat;
-      displayLng = point.gcj02Lng;
-    } else if (point.gcj02_lat && point.gcj02_lng) {
-      displayLat = point.gcj02_lat;
-      displayLng = point.gcj02_lng;
-    }
-
-        // 检查坐标是否有效
-    if (displayLat == null || displayLng == null || isNaN(displayLat) || isNaN(displayLng)) {
+    // 使用坐标转换工具获取显示坐标
+    const coordinates = getDisplayCoordinates(point);
+    
+    if (!coordinates) {
       console.warn('点位坐标无效:', point);
       return null;
     }
-
+    
+    const [displayLng, displayLat] = coordinates;
+    
+    console.log('🗺️ 创建标记:', {
+      pointId: point.id,
+      pointTitle: point.title,
+      displayCoords: [displayLat, displayLng],
+      leafletFormat: `[${displayLat}, ${displayLng}]`
+    });
 
     const pointType = point.type || 'panorama';
     
+    // Leaflet需要[lat, lng]格式
     const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
     }, null); // 传递null作为styleConfig，让函数使用全局样式

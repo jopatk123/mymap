@@ -6,12 +6,13 @@ export function useMapInstance(containerId) {
   const map = ref(null);
   const tileLayer = ref(null);
 
-  const initMap = (options = {}, initialMapType = 'satellite') => {
+  const initMap = (options = {}, initialMapType = 'normal') => {
     const defaultOptions = {
       center: [39.9042, 116.4074], // 北京天安门
       zoom: 13,
       zoomControl: true,
       attributionControl: true,
+      // 暂时不使用自定义CRS，使用标准配置
     };
 
     const mapOptions = { ...defaultOptions, ...options };
