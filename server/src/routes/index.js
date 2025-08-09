@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const panoramaRoutes = require('./panorama.routes')
+const panoramaRoutes = require('./panoramas.routes')
 
 // API版本信息
 router.get('/', (req, res) => {
@@ -39,15 +39,15 @@ router.get('/health', (req, res) => {
 router.use('/panoramas', panoramaRoutes)
 
 // 文件夹相关路由
-const folderRoutes = require('./folder.routes')
+const folderRoutes = require('./folders.routes')
 router.use('/folders', folderRoutes)
 
 // 视频点位相关路由
-const videoPointRoutes = require('./videoPoint.routes')
+const videoPointRoutes = require('./video-points.routes')
 router.use('/video-points', videoPointRoutes)
 
 // KML文件相关路由
-const kmlFileRoutes = require('./kmlFile.routes')
+const kmlFileRoutes = require('./kml-file.routes')
 router.use('/kml-files', kmlFileRoutes)
 
 // 统一点位相关路由（全景图 + 视频点位）
@@ -56,7 +56,7 @@ router.use('/points', pointsRoutes)
 
 
 // 点位样式配置路由
-const pointStyleRoutes = require('./pointStyle.routes')
+const pointStyleRoutes = require('./point-styles.routes')
 router.use('/point-styles', pointStyleRoutes)
 
 // 统一配置管理路由
