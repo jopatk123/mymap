@@ -21,8 +21,8 @@ mymap/
 - npm（或自行替换为 pnpm/yarn）
 - Linux/macOS/WSL2 环境均可（脚本与端口示例以 Linux 为基准）
 
-## 快速开始（推荐）
-使用一键脚本完成依赖安装、数据库初始化与启动。
+## 快速开始（开发环境，本机）
+使用一键脚本完成依赖安装、数据库初始化与启动（前后端分别运行，适合本地开发）。
 
 ```bash
 chmod +x ./start.sh
@@ -48,7 +48,7 @@ chmod +x ./start.sh
 ./start.sh --no-deps
 ```
 
-## 手动启动（可选）
+## 手动启动（可选，开发环境）
 如需手动控制每一步，可按下列流程：
 
 1) 安装依赖
@@ -102,7 +102,7 @@ LOG_LEVEL=info
 - 上传目录默认为 `server/uploads/`，包含 `kml/`, `panoramas/`, `thumbnails/`, `videos/` 等子目录。
  - 跨域默认允许 `http://localhost:3000`（与 Vite 默认开发端口保持一致），前端使用 Vite 代理到 `3002`。可在 `.env` 中通过 `CORS_ORIGIN` 覆盖。
 
-## 前端开发说明
+## 前端开发说明（本机）
 - 本地开发地址：`http://localhost:3000`
 - Vite 代理：`/api -> http://localhost:3002`（见 `client/vite.config.js`）
 - `@` 别名指向 `client/src`（见 `client/vite.config.js`）
@@ -163,7 +163,41 @@ API文档: http://localhost:3002/api
   - `panoramas/`：全景原图
   - `thumbnails/`：缩略图
   - `videos/`：视频
+  
 
+## 生产部署（Docker + Nginx 反向代理，50000 端口）
+
+本仓库内置一键 Docker 部署脚本，使用 Nginx 监听 50000 端口反代到 Node（3002）。
+
+### 前置要求
+- 服务器已安装 Docker 与 Docker Compose 插件
+- 已放通服务器防火墙/安全组的 50000 端口
+
+### 部署命令
+```bash
+chmod +x ./deploy.sh
+./deploy.sh
+```
+
+部署完成后访问：
+- 前端与 API：`http://<服务器IP>:50000`
+- 健康检查：`http://<服务器IP>:50000/api/health`
+
+### 目录与镜像
+- Node 应用镜像：`mymap:latest`（由 `docker/Dockerfile` 构建）
+- 编排文件：`docker/docker-compose.yml`
+- Nginx 配置：`docker/nginx/default.conf`
+
+### 常见问题
+- 502 Bad Gateway：
+  - 检查容器是否运行：`docker compose -f docker/docker-compose.yml ps`
+  - 查看 Node 日志：`docker logs mymap`
+  - 查看 Nginx 日志：`docker logs mymap-nginx`
+  - 确认 `http://127.0.0.1:50000/api/health` 在服务器本机可访问
+  - 确认安全组/防火墙已放通 50000 端口
+
+### 上线 HTTPS（可选）
+当前为纯 HTTP。若需 HTTPS，可在 Nginx 增配 443 监听与证书（Let’s Encrypt/自签名等），或前置云负载均衡。
 确保后端对这些目录具有读写权限（Linux 下可使用 `chmod -R 755 server/uploads`）。
 
 

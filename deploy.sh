@@ -62,17 +62,34 @@ main() {
   log "构建镜像: $IMAGE_NAME"
   docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
 
-  log "启动/更新服务: $APP_NAME"
+  log "启动/更新服务: $APP_NAME (Node + Nginx)"
   $DC -f "$COMPOSE_FILE" up -d --remove-orphans
 
   log "等待健康检查..."
-  sleep 2
-  if ! $DC -f "$COMPOSE_FILE" ps | grep -q "(healthy)"; then
-    warn "容器尚未通过健康检查，可稍后通过以下命令查看："
-    echo "  $DC -f $COMPOSE_FILE ps"
-  fi
+  sleep 3
+  $DC -f "$COMPOSE_FILE" ps || true
 
-  ok "部署完成。API: http://<服务器IP>:3002/api"
+  # 简单连通性探测（本机端口 50000，经 Nginx 反代）
+  if command -v curl >/dev/null 2>&1; then
+    if curl -sSf -m 8 "http://127.0.0.1:50000/api/health" >/dev/null 2>&1; then
+      ok "部署完成。入口: http://<服务器IP>:50000  | 健康检查: http://<服务器IP>:50000/api/health"
+    else
+      warn "健康检查请求未通过，可能仍在启动中或发生错误。将输出关键容器的最近日志："
+      echo
+      echo "==== docker compose ps ===="
+      $DC -f "$COMPOSE_FILE" ps || true
+      echo
+      echo "==== mymap (Node) logs (last 200) ===="
+      $DC -f "$COMPOSE_FILE" logs --no-color --tail=200 mymap || true
+      echo
+      echo "==== mymap-nginx logs (last 100) ===="
+      $DC -f "$COMPOSE_FILE" logs --no-color --tail=100 nginx || true
+      echo
+      warn "可重试访问: http://<服务器IP>:50000/api/health"
+    fi
+  else
+    ok "部署完成。入口: http://<服务器IP>:50000"
+  fi
 }
 
 main "$@"
