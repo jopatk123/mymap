@@ -12,7 +12,6 @@ let mapInstanceData = null
  */
 export function setMapInstance(data) {
   mapInstanceData = data
-  console.log('地图实例数据已设置:', data)
 }
 
 /**
@@ -43,12 +42,10 @@ export function refreshAllMarkers() {
   try {
     // 优先使用设置的地图实例数据
     if (mapInstanceData && mapInstanceData.clearMarkers && mapInstanceData.addPointMarkers) {
-      console.log('使用地图实例数据刷新标记')
       
       // 获取当前点位数据
       const currentPoints = window.allPoints || []
       if (currentPoints.length === 0) {
-        console.log('没有点位数据需要刷新')
         return true
       }
 
@@ -58,7 +55,6 @@ export function refreshAllMarkers() {
       // 重新添加标记
       setTimeout(() => {
         mapInstanceData.addPointMarkers(currentPoints)
-        console.log(`成功刷新 ${currentPoints.length} 个标记`)
       }, 100)
       
       return true
@@ -74,11 +70,8 @@ export function refreshAllMarkers() {
     // 获取当前标记数据
     const currentMarkers = window.currentMarkers || []
     if (currentMarkers.length === 0) {
-      console.log('没有标记需要刷新')
       return true
     }
-
-    console.log(`开始刷新 ${currentMarkers.length} 个标记`)
 
     // 清除现有标记
     currentMarkers.forEach(markerInfo => {
@@ -139,9 +132,6 @@ export function refreshAllMarkers() {
 
     // 更新全局标记数组
     window.currentMarkers = newMarkers
-    
-    console.log(`成功刷新 ${newMarkers.length} 个标记`)
-    return true
 
   } catch (error) {
     console.error('刷新标记失败:', error)
@@ -166,11 +156,8 @@ export function refreshMarkersByType(type) {
     const typeMarkers = currentMarkers.filter(m => m.type === type)
     
     if (typeMarkers.length === 0) {
-      console.log(`没有 ${type} 类型的标记需要刷新`)
       return true
     }
-
-    console.log(`开始刷新 ${typeMarkers.length} 个 ${type} 类型标记`)
 
     // 清除指定类型的标记
     typeMarkers.forEach(markerInfo => {
@@ -235,7 +222,6 @@ export function refreshMarkersByType(type) {
     // 将新标记添加到全局数组
     window.currentMarkers.push(...newMarkers)
     
-    console.log(`成功刷新 ${newMarkers.length} 个 ${type} 类型标记`)
     return true
 
   } catch (error) {

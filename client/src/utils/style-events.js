@@ -14,7 +14,6 @@ const refreshListeners = new Set()
 export function addStyleListener(listener) {
   if (typeof listener === 'function') {
     styleListeners.add(listener)
-    console.log('添加样式监听器，当前监听器数量:', styleListeners.size)
   }
 }
 
@@ -24,7 +23,6 @@ export function addStyleListener(listener) {
  */
 export function removeStyleListener(listener) {
   styleListeners.delete(listener)
-  console.log('移除样式监听器，当前监听器数量:', styleListeners.size)
 }
 
 /**
@@ -34,7 +32,6 @@ export function removeStyleListener(listener) {
 export function addRefreshListener(listener) {
   if (typeof listener === 'function') {
     refreshListeners.add(listener)
-    console.log('添加刷新监听器，当前监听器数量:', refreshListeners.size)
   }
 }
 
@@ -44,7 +41,6 @@ export function addRefreshListener(listener) {
  */
 export function removeRefreshListener(listener) {
   refreshListeners.delete(listener)
-  console.log('移除刷新监听器，当前监听器数量:', refreshListeners.size)
 }
 
 /**
@@ -53,8 +49,6 @@ export function removeRefreshListener(listener) {
  * @param {Object} styles 新的样式配置
  */
 export function notifyPointStyleUpdate(type, styles) {
-  console.log('通知点位样式更新:', type, styles)
-  
   styleListeners.forEach(listener => {
     try {
       listener(type, styles)
@@ -69,8 +63,6 @@ export function notifyPointStyleUpdate(type, styles) {
  * @param {Object} options 刷新选项
  */
 export function notifyMarkersRefresh(options = {}) {
-  console.log('通知标记刷新:', options)
-  
   refreshListeners.forEach(listener => {
     try {
       listener(options)
@@ -86,7 +78,6 @@ export function notifyMarkersRefresh(options = {}) {
 export function clearAllListeners() {
   styleListeners.clear()
   refreshListeners.clear()
-  console.log('已清除所有事件监听器')
 }
 
 /**
