@@ -139,12 +139,10 @@ const loadKmlFiles = async () => {
         const styleResponse = await kmlApi.getKmlFileStyles(kmlFile.id)
         kmlFile.styleConfig = styleResponse.data
       } catch (error) {
-        console.warn(`加载KML文件 ${kmlFile.id} 样式失败:`, error)
         kmlFile.styleConfig = getDefaultStyles()
       }
     }
   } catch (error) {
-    console.error('加载KML文件列表失败:', error)
     ElMessage.error('加载KML文件列表失败')
   }
 }
@@ -188,7 +186,6 @@ const selectKmlFile = async (kmlFile) => {
     originalStyles.value = JSON.parse(JSON.stringify(currentStyles))
     
   } catch (error) {
-    console.error('加载KML文件样式失败:', error)
     ElMessage.error('加载样式配置失败')
   }
 }
@@ -230,7 +227,6 @@ const handleSave = async () => {
     }, 300)
     
   } catch (error) {
-    console.error('保存样式配置失败:', error)
     ElMessage.error('保存样式配置失败')
   } finally {
     saving.value = false
@@ -259,7 +255,6 @@ const handleReset = async () => {
     
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('重置样式失败:', error)
       ElMessage.error('重置样式失败')
     }
   }

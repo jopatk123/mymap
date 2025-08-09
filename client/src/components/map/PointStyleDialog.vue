@@ -77,9 +77,7 @@
         <el-button @click="handleReset" type="warning" :disabled="!selectedPointType">
           重置为默认
         </el-button>
-        <el-button @click="testStyleChange" type="info" :disabled="!selectedPointType">
-          测试样式修改
-        </el-button>
+        
         <el-button @click="handleSave" type="primary" :loading="saving" :disabled="!selectedPointType">
           保存配置
         </el-button>
@@ -124,7 +122,7 @@ const originalStyles = ref({})
 // 监听对话框显示状态
 watch(visible, async (newVisible) => {
   if (newVisible) {
-    console.log('🔓 对话框打开，开始初始化...')
+    // console.log('🔓 对话框打开，开始初始化...')
     await loadAllStyles()
     
     // 重置选择状态
@@ -135,7 +133,7 @@ watch(visible, async (newVisible) => {
       selectPointType('video')
     }, 100)
   } else {
-    console.log('🔒 对话框关闭')
+    // console.log('🔒 对话框关闭')
     // 清理状态
     selectedPointType.value = ''
     Object.keys(currentStyles).forEach(key => delete currentStyles[key])
@@ -145,46 +143,46 @@ watch(visible, async (newVisible) => {
 // 加载所有样式配置
 const loadAllStyles = async () => {
   try {
-    console.log('📥 开始加载所有样式配置...')
+    // console.log('📥 开始加载所有样式配置...')
     
     const [videoResponse, panoramaResponse] = await Promise.all([
       videoPointStyleApi.getStyles(),
       panoramaPointStyleApi.getStyles()
     ])
     
-    console.log('📥 服务器返回的样式数据:', {
-      video: videoResponse.data,
-      panorama: panoramaResponse.data
-    })
+    // console.log('📥 服务器返回的样式数据:', {
+    //   video: videoResponse.data,
+    //   panorama: panoramaResponse.data
+    // })
     
     videoStyles.value = convertFromApiFormat(videoResponse.data)
     panoramaStyles.value = convertFromApiFormat(panoramaResponse.data)
     
-    console.log('✅ 样式配置加载完成:', {
-      video: videoStyles.value,
-      panorama: panoramaStyles.value
-    })
+    // console.log('✅ 样式配置加载完成:', {
+    //   video: videoStyles.value,
+    //   panorama: panoramaStyles.value
+    // })
     
   } catch (error) {
-    console.error('❌ 加载点位样式配置失败:', error)
+    // console.error('❌ 加载点位样式配置失败:', error)
     ElMessage.error('加载样式配置失败')
   }
 }
 
 // 选择点位类型
 const selectPointType = (type) => {
-  console.log(`🎯 选择点位类型: ${type}`)
+  // console.log(`🎯 选择点位类型: ${type}`)
   selectedPointType.value = type
   
   // 根据类型设置当前样式
   const styles = type === 'video' ? videoStyles.value : panoramaStyles.value
-  console.log(`📋 设置${type}样式:`, styles)
+  // console.log(`📋 设置${type}样式:`, styles)
   
   // 清空当前样式对象，然后重新赋值
   Object.keys(currentStyles).forEach(key => delete currentStyles[key])
   Object.assign(currentStyles, styles)
   
-  console.log(`✅ 当前样式已更新:`, currentStyles)
+  // console.log(`✅ 当前样式已更新:`, currentStyles)
   
   // 保存原始配置
   originalStyles.value = JSON.parse(JSON.stringify(currentStyles))
@@ -192,35 +190,35 @@ const selectPointType = (type) => {
 
 // 处理样式更新（v-model）
 const handleStyleUpdate = (newStyles) => {
-  console.log('📝 收到样式更新事件:', {
-    当前类型: selectedPointType.value,
-    新样式: newStyles,
-    当前currentStyles: currentStyles
-  })
+  // console.log('📝 收到样式更新事件:', {
+  //   当前类型: selectedPointType.value,
+  //   新样式: newStyles,
+  //   当前currentStyles: currentStyles
+  // })
   
   if (newStyles) {
     // 清空并重新赋值currentStyles
     Object.keys(currentStyles).forEach(key => delete currentStyles[key])
     Object.assign(currentStyles, newStyles)
-    console.log('✅ currentStyles已通过v-model更新为:', currentStyles)
+    // console.log('✅ currentStyles已通过v-model更新为:', currentStyles)
   }
 }
 
 // 处理样式变化
 const handleStyleChange = (newStyles) => {
-  console.log('🎨 样式发生变化:', {
-    当前类型: selectedPointType.value,
-    接收到的新样式: newStyles,
-    当前样式: currentStyles
-  })
+  // console.log('🎨 样式发生变化:', {
+  //   当前类型: selectedPointType.value,
+  //   接收到的新样式: newStyles,
+  //   当前样式: currentStyles
+  // })
   
   // 实时更新预览
   if (selectedPointType.value === 'video') {
     videoStyles.value = { ...currentStyles }
-    console.log('🔄 更新视频样式预览:', videoStyles.value)
+    // console.log('🔄 更新视频样式预览:', videoStyles.value)
   } else if (selectedPointType.value === 'panorama') {
     panoramaStyles.value = { ...currentStyles }
-    console.log('🔄 更新全景图样式预览:', panoramaStyles.value)
+    // console.log('🔄 更新全景图样式预览:', panoramaStyles.value)
   }
 }
 
@@ -234,38 +232,38 @@ const handleSave = async () => {
   saving.value = true
   
   try {
-    console.log(`🔍 准备保存${selectedPointType.value}点位样式:`)
-    console.log('   当前选择的类型:', selectedPointType.value)
-    console.log('   currentStyles对象:', currentStyles)
-    console.log('   currentStyles的所有属性:', Object.keys(currentStyles))
-    console.log('   currentStyles的值:', Object.values(currentStyles))
+    // console.log(`🔍 准备保存${selectedPointType.value}点位样式:`)
+    // console.log('   当前选择的类型:', selectedPointType.value)
+    // console.log('   currentStyles对象:', currentStyles)
+    // console.log('   currentStyles的所有属性:', Object.keys(currentStyles))
+    // console.log('   currentStyles的值:', Object.values(currentStyles))
     
     // 检查currentStyles是否为空或无效
     if (!currentStyles || Object.keys(currentStyles).length === 0) {
-      console.error('❌ currentStyles为空，无法保存')
+      // console.error('❌ currentStyles为空，无法保存')
       ElMessage.error('样式数据为空，请重新设置')
       return
     }
     
     const apiConfig = convertToApiFormat(currentStyles)
     
-    console.log(`🔄 保存${selectedPointType.value}点位样式:`, {
-      组件格式: currentStyles,
-      API格式: apiConfig,
-      转换前检查: {
-        color: currentStyles.color,
-        size: currentStyles.size,
-        opacity: currentStyles.opacity,
-        labelSize: currentStyles.labelSize,
-        labelColor: currentStyles.labelColor
-      }
-    })
+    // console.log(`🔄 保存${selectedPointType.value}点位样式:`, {
+    //   组件格式: currentStyles,
+    //   API格式: apiConfig,
+    //   转换前检查: {
+    //     color: currentStyles.color,
+    //     size: currentStyles.size,
+    //     opacity: currentStyles.opacity,
+    //     labelSize: currentStyles.labelSize,
+    //     labelColor: currentStyles.labelColor
+    //   }
+    // })
     
     if (selectedPointType.value === 'video') {
       const response = await videoPointStyleApi.updateStyles(apiConfig)
       videoStyles.value = { ...currentStyles }
       window.videoPointStyles = response.data // 使用服务器返回的数据
-      console.log('✅ 视频点位样式已保存并同步到全局变量:', window.videoPointStyles)
+      // console.log('✅ 视频点位样式已保存并同步到全局变量:', window.videoPointStyles)
       
       // 更新本地缓存
       updateLocalCache('video', response.data)
@@ -276,7 +274,7 @@ const handleSave = async () => {
       const response = await panoramaPointStyleApi.updateStyles(apiConfig)
       panoramaStyles.value = { ...currentStyles }
       window.panoramaPointStyles = response.data // 使用服务器返回的数据
-      console.log('✅ 全景图点位样式已保存并同步到全局变量:', window.panoramaPointStyles)
+      // console.log('✅ 全景图点位样式已保存并同步到全局变量:', window.panoramaPointStyles)
       
       // 更新本地缓存
       updateLocalCache('panorama', response.data)
@@ -294,7 +292,7 @@ const handleSave = async () => {
     emit('styles-updated')
     
   } catch (error) {
-    console.error('保存点位样式配置失败:', error)
+    // console.error('保存点位样式配置失败:', error)
     ElMessage.error('保存样式配置失败')
   } finally {
     saving.value = false
@@ -309,60 +307,61 @@ const handleReset = async () => {
   }
   
   try {
-    await ElMessageBox.confirm('确定要重置为默认样式吗？', '确认重置', {
-      type: 'warning'
-    })
+    const result = await ElMessageBox.confirm(
+      '确定要重置为默认样式吗？此操作不可撤销。',
+      '确认重置',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
     
-    if (selectedPointType.value === 'video') {
-      const response = await videoPointStyleApi.resetStyles()
-      videoStyles.value = convertFromApiFormat(response.data)
-      window.videoPointStyles = response.data // 更新全局变量
-      // 更新本地缓存
-      updateLocalCache('video', response.data)
-    } else {
-      const response = await panoramaPointStyleApi.resetStyles()
-      panoramaStyles.value = convertFromApiFormat(response.data)
-      window.panoramaPointStyles = response.data // 更新全局变量
-      // 更新本地缓存
-      updateLocalCache('panorama', response.data)
+    if (result === 'confirm') {
+      saving.value = true
+      
+      if (selectedPointType.value === 'video') {
+        const response = await videoPointStyleApi.resetStyles()
+        videoStyles.value = convertFromApiFormat(response.data)
+        Object.keys(currentStyles).forEach(key => delete currentStyles[key])
+        Object.assign(currentStyles, videoStyles.value)
+        window.videoPointStyles = response.data
+        
+        // 更新本地缓存
+        updateLocalCache('video', response.data)
+        
+        // 通知样式更新
+        notifyPointStyleUpdate('video', response.data)
+      } else {
+        const response = await panoramaPointStyleApi.resetStyles()
+        panoramaStyles.value = convertFromApiFormat(response.data)
+        Object.keys(currentStyles).forEach(key => delete currentStyles[key])
+        Object.assign(currentStyles, panoramaStyles.value)
+        window.panoramaPointStyles = response.data
+        
+        // 更新本地缓存
+        updateLocalCache('panorama', response.data)
+        
+        // 通知样式更新
+        notifyPointStyleUpdate('panorama', response.data)
+      }
+      
+      // 通知地图刷新标记
+      notifyMarkersRefresh('style-update')
+      
+      ElMessage.success('样式已重置为默认配置')
+      
+      // 触发样式更新事件
+      emit('styles-updated')
     }
-    
-    // 重新选择当前类型以更新编辑器
-    selectPointType(selectedPointType.value)
-    
-    ElMessage.success('样式已重置为默认')
-    emit('styles-updated')
-    
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('重置样式失败:', error)
-      ElMessage.error('重置样式失败')
+      console.error('重置样式配置失败:', error)
+      ElMessage.error('重置样式配置失败')
     }
+  } finally {
+    saving.value = false
   }
-}
-
-// 测试样式修改
-const testStyleChange = () => {
-  if (!selectedPointType.value) return
-  
-  console.log('🧪 开始测试样式修改...')
-  console.log('   修改前的currentStyles:', currentStyles)
-  
-  // 强制修改样式
-  const testColor = '#' + Math.floor(Math.random()*16777215).toString(16)
-  const testSize = Math.floor(Math.random() * 20) + 8
-  
-  currentStyles.color = testColor
-  currentStyles.size = testSize
-  currentStyles.opacity = 0.8
-  currentStyles.labelSize = 16
-  currentStyles.labelColor = '#ff0000'
-  
-  console.log('   修改后的currentStyles:', currentStyles)
-  console.log('   测试修改完成，请点击保存按钮')
-  
-  // 触发样式变化事件
-  handleStyleChange()
 }
 
 // 取消
@@ -391,7 +390,7 @@ const convertFromApiFormat = (apiData) => {
     labelSize: Number(apiData.point_label_size),
     labelColor: apiData.point_label_color
   }
-  console.log('🔄 API格式转组件格式:', { 输入: apiData, 输出: converted })
+  // console.log('🔄 API格式转组件格式:', { 输入: apiData, 输出: converted })
   return converted
 }
 
@@ -405,7 +404,7 @@ const convertToApiFormat = (componentData) => {
     point_label_size: componentData.labelSize,
     point_label_color: componentData.labelColor
   }
-  console.log('🔄 组件格式转API格式:', { 输入: componentData, 输出: converted })
+  // console.log('🔄 组件格式转API格式:', { 输入: componentData, 输出: converted })
   return converted
 }
 
@@ -424,9 +423,9 @@ const updateLocalCache = (type, newStyles) => {
     styles.lastUpdated = Date.now()
     
     localStorage.setItem('pointStyles', JSON.stringify(styles))
-    console.log(`🔄 已更新${type}样式的本地缓存:`, newStyles)
+    // console.log(`🔄 已更新${type}样式的本地缓存:`, newStyles)
   } catch (error) {
-    console.warn('更新本地样式缓存失败:', error)
+    // console.warn('更新本地样式缓存失败:', error)
   }
 }
 </script>

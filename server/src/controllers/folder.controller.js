@@ -286,9 +286,6 @@ class FolderController {
         includeHidden: includeHidden === 'true'
       }
 
-      console.log('=== 后端调试信息 ===')
-      console.log('请求参数:', { folderId, searchParams, fileType })
-
       let results = []
       let totalCount = 0
 
@@ -303,7 +300,6 @@ class FolderController {
           }))
           results = results.concat(panoramasWithType)
           totalCount += panoramaResult.total || 0
-          console.log('全景图查询结果:', panoramasWithType.length)
         } catch (error) {
           Logger.error('获取全景图数据失败:', error)
           // 不要直接返回错误，而是记录错误并继续处理其他类型
@@ -323,7 +319,6 @@ class FolderController {
           }))
           results = results.concat(videosWithType)
           totalCount += videoResult.total || 0
-          console.log('视频点位查询结果:', videosWithType.length)
         } catch (error) {
           Logger.error('获取视频点位数据失败:', error)
           console.error('视频点位查询失败，跳过:', error.message)
@@ -349,19 +344,11 @@ class FolderController {
           }))
           results = results.concat(kmlsWithType)
           totalCount += kmlResult.total || 0
-          console.log('KML文件查询结果:', kmlsWithType.length)
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error)
           console.error('KML文件查询失败，跳过:', error.message)
         }
       }
-
-      console.log('最终结果统计:', {
-        total: results.length,
-        panorama: results.filter(r => r.fileType === 'panorama').length,
-        video: results.filter(r => r.fileType === 'video').length,
-        kml: results.filter(r => r.fileType === 'kml').length
-      })
 
       // 按创建时间排序
       results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))

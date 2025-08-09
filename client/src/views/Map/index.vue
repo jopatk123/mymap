@@ -241,13 +241,11 @@ onMounted(async () => {
 
 // 处理文件夹可见性变化
 const handleFolderVisibilityChanged = async () => {
-  console.log('文件夹可见性发生变化，重新加载地图数据')
   await loadInitialData()
   
   // 重新加载数据后，如果KML图层应该显示，则重新加载KML图层
   setTimeout(() => {
     if (mapRef.value && kmlLayersVisible.value) {
-      console.log('文件夹可见性变化后重新加载KML图层')
       mapRef.value.clearKmlLayers()
       if (window.allKmlFiles && window.allKmlFiles.length > 0) {
         mapRef.value.addKmlLayers(window.allKmlFiles)
@@ -258,8 +256,6 @@ const handleFolderVisibilityChanged = async () => {
 
 // 处理KML样式更新
 const handleKmlStylesUpdated = async () => {
-  console.log('KML样式已更新，准备重新加载图层')
-  
   if (mapRef.value && kmlLayersVisible.value) {
     try {
       // 添加短暂延迟，确保服务器配置已保存完成
@@ -293,7 +289,6 @@ const handleKmlStylesUpdated = async () => {
               }
             }
             
-            console.warn(`加载KML文件 ${file.id} 样式失败:`, lastError)
             // 使用默认样式
             file.styleConfig = {
               point_color: "#ff7800",
@@ -313,7 +308,6 @@ const handleKmlStylesUpdated = async () => {
               polygon_stroke_style: "solid"
             }
           } catch (error) {
-            console.warn(`加载KML文件 ${file.id} 样式失败:`, error)
             file.styleConfig = null
           }
           return file
@@ -323,7 +317,6 @@ const handleKmlStylesUpdated = async () => {
       // 更新全局变量
       window.allKmlFiles = kmlFilesWithStyles
       
-      console.log('样式更新后重新加载KML图层')
       mapRef.value.clearKmlLayers()
       
       // 使用setTimeout确保DOM更新完成
@@ -340,8 +333,6 @@ const handleKmlStylesUpdated = async () => {
 
 // 处理点位样式更新
 const handlePointStylesUpdated = async () => {
-  console.log('点位样式已更新，准备刷新地图标记')
-  
   try {
     // 重新加载点位样式配置
     await loadAllPointStyles()
@@ -364,11 +355,6 @@ const handlePointStylesUpdated = async () => {
       point_label_color: '#000000'
     }
     
-    console.log('更新后的点位样式配置:', {
-      video: window.videoPointStyles,
-      panorama: window.panoramaPointStyles
-    })
-    
     // 使用标记刷新工具
     try {
       const { refreshAllMarkers } = await import('@/utils/marker-refresh.js')
@@ -379,7 +365,6 @@ const handlePointStylesUpdated = async () => {
         return
       }
     } catch (refreshError) {
-      console.warn('标记刷新工具失败，使用回退方法:', refreshError)
     }
     
     // 回退方法：清除并重新加载标记

@@ -20,12 +20,10 @@ class ConfigService {
     } catch (error) {
       if (error.code === 'ENOENT') {
         // 配置文件不存在，创建默认配置
-        console.log('配置文件不存在，创建默认配置')
         const defaultConfig = this.getDefaultConfig()
         await this.saveConfig(defaultConfig)
         return defaultConfig
       } else {
-        console.error('加载配置文件失败:', error)
         return this.getDefaultConfig()
       }
     }
@@ -46,7 +44,6 @@ class ConfigService {
       this.lastModified = new Date()
       return true
     } catch (error) {
-      console.error('保存配置文件失败:', error)
       return false
     }
   }
@@ -55,27 +52,14 @@ class ConfigService {
     const config = await this.loadConfig()
     const styles = config.pointStyles[type] || config.pointStyles.panorama
     
-    console.log(`📖 获取${type}点位样式:`, {
-      请求类型: type,
-      返回样式: styles,
-      配置文件路径: this.configPath
-    })
-    
     return styles
   }
 
   async updatePointStyles(type, styles) {
-    console.log(`🔧 更新${type}点位样式:`, {
-      原始配置: this.config?.pointStyles?.[type],
-      新样式: styles,
-      合并后: { ...this.config?.pointStyles?.[type], ...styles }
-    })
-    
     const config = await this.loadConfig()
     config.pointStyles[type] = { ...config.pointStyles[type], ...styles }
     const success = await this.saveConfig(config)
     
-    console.log(`💾 保存${type}点位样式结果:`, success ? '成功' : '失败')
     return success
   }
 

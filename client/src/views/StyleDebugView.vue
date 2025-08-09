@@ -58,8 +58,6 @@ const createTestMarkers = () => {
     marker.addTo(testMap)
     testMarkers.value.push(marker)
   })
-  
-  console.log('✅ 已创建测试标记:', testMarkers.value.length, '个')
 }
 
 // 清除测试标记
@@ -68,7 +66,6 @@ const clearTestMarkers = () => {
     testMap.removeLayer(marker)
   })
   testMarkers.value = []
-  console.log('🗑️ 已清除所有测试标记')
 }
 </script>
 

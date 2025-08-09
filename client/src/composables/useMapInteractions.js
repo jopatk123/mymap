@@ -45,7 +45,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
         mapRef.value.setCenter(lat, lng, 16)
       } else {
-        console.warn('无效的坐标数据:', panorama)
+        // console.warn('无效的坐标数据:', panorama)
       }
     }
   }
@@ -74,7 +74,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
         mapRef.value.setCenter(lat, lng, 18)
       } else {
-        console.warn('无效的坐标数据:', panorama)
+        // console.warn('无效的坐标数据:', panorama)
       }
     }
   }
@@ -130,14 +130,14 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       try {
         panoramaStore.setPanoramas(filteredPoints)
       } catch (error) {
-        console.error('更新panoramaStore失败:', error)
+        // console.error('更新panoramaStore失败:', error)
         throw error
       }
       
 
       ElMessage.success('上传成功')
     } catch (error) {
-      console.error('更新数据失败:', error)
+      // console.error('更新数据失败:', error)
       ElMessage.error('刷新数据失败')
     }
   }
@@ -164,7 +164,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       
       ElMessage.success('全景图已从地图中移除')
     } catch (error) {
-      console.error('删除全景图后更新失败:', error)
+      // console.error('删除全景图后更新失败:', error)
       ElMessage.error('更新失败，请刷新页面')
     }
   }

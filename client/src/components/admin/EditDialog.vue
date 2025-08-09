@@ -194,7 +194,6 @@ const getCurrentLocation = () => {
       ElMessage.success('定位成功')
     },
     (error) => {
-      console.error('定位失败:', error)
       locating.value = false
       ElMessage.error('定位失败，请手动输入坐标')
     },
@@ -231,7 +230,6 @@ const handleSubmit = async () => {
     handleClose()
     
   } catch (error) {
-    console.error('更新失败:', error)
     ElMessage.error('更新失败: ' + error.message)
   } finally {
     submitting.value = false

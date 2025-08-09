@@ -69,14 +69,11 @@ const {
 
 // 样式更新处理函数
 const handleStyleUpdate = (data) => {
-  console.log('🎨 收到样式更新事件:', data)
   // 样式已经在全局变量中更新，这里不需要额外处理
 }
 
 // 标记刷新处理函数
 const handleMarkersRefresh = (data) => {
-  console.log('🔄 收到标记刷新事件:', data)
-  
   // 强制刷新所有标记
   setTimeout(() => {
     clearMarkers()
@@ -84,7 +81,6 @@ const handleMarkersRefresh = (data) => {
     // 获取当前应该显示的点位数据
     const currentPoints = window.allPoints || props.panoramas
     if (currentPoints && currentPoints.length > 0) {
-      console.log('🔄 重新创建标记:', currentPoints.length, '个')
       addPointMarkers(currentPoints)
     }
   }, 50)
@@ -188,7 +184,6 @@ const locateUser = () => {
       ElMessage.success('定位成功')
     },
     (error) => {
-      console.error('定位失败:', error)
       locating.value = false
       ElMessage.error('定位失败，请检查位置权限')
     },

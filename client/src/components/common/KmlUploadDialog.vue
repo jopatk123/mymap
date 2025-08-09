@@ -79,8 +79,6 @@ const kmlCanSubmit = computed(() => {
 })
 
 const handleFileChange = async (file, form) => {
-  console.log('KML handleFileChange called with:', file, 'form:', form)
-  
   // 设置文件到表单
   if (form) {
     form.file = file
@@ -105,8 +103,6 @@ const getPlacemarkTypeText = (type) => {
 }
 
 const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
-  console.log('KML上传开始，form:', form, 'validationResult:', validationResult.value)
-  
   if (!validationResult.value?.valid) {
     throw new Error('请先上传有效的KML文件')
   }
@@ -126,20 +122,11 @@ const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
     formData.append('folderId', form.folderId)
   }
   
-  console.log('准备上传KML文件，FormData内容:', {
-    file: form.file.name,
-    title: form.title,
-    description: form.description,
-    folderId: form.folderId
-  })
-  
   const res = await kmlApi.uploadKmlFile(formData, (progressEvent) => {
     if (progressEvent.lengthComputable) {
       setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total))
     }
   })
-  
-  console.log('KML上传API响应:', res)
   
   if (!res.success) {
     throw new Error(res.message || '上传失败')
