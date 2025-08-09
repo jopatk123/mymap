@@ -60,23 +60,24 @@ app.use(express.static(distDir, {
   }
 }))
 
-// 根路径与前端回退（仅当构建产物存在时启用）
+// 根路径与 SPA 回退（容器中优先返回前端页面；若不存在则退化为 /api）
 const indexHtmlPath = path.join(distDir, 'index.html')
-if (fs.existsSync(indexHtmlPath)) {
-  // 生产：直接在根路径提供前端
-  app.get('/', (req, res) => {
-    res.sendFile(indexHtmlPath)
-  })
-  // SPA 回退：其余非 /api 路径交给前端
-  app.get('*', (req, res) => {
-    res.sendFile(indexHtmlPath)
-  })
-} else {
-  // 未构建：保留原有根路径行为
-  app.get('/', (req, res) => {
-    res.redirect('/api')
-  })
-}
+
+app.get('/', (req, res) => {
+  if (fs.existsSync(indexHtmlPath)) {
+    return res.sendFile(indexHtmlPath)
+  }
+  return res.redirect('/api')
+})
+
+// 其余非 /api 路径交给前端（若构建产物存在）
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next()
+  if (fs.existsSync(indexHtmlPath)) {
+    return res.sendFile(indexHtmlPath)
+  }
+  return next()
+})
 
 // 404处理
 app.use(notFoundHandler)
