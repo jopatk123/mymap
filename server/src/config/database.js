@@ -202,9 +202,9 @@ const initTables = async () => {
     await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_title ON video_points(title)')
     await database.exec('CREATE INDEX IF NOT EXISTS idx_video_points_sort_order ON video_points(sort_order)')
 
-    // 初始化默认文件夹
+    // 初始化默认文件夹（使用 SQLite 版实现）
     try {
-      const { initDefaultFolder } = require('../init/default-folder')
+      const { initDefaultFolder } = require('../init/init-default-folder')
       await initDefaultFolder()
     } catch (error) {
       console.warn('初始化默认文件夹失败:', error.message)

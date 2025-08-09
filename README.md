@@ -103,7 +103,7 @@ LOG_LEVEL=info
 - 后端默认监听 `3002` 端口。
 - 默认数据库文件位于 `server/data/panorama_map.db`。
 - 上传目录默认为 `server/uploads/`，包含 `kml/`, `panoramas/`, `thumbnails/`, `videos/` 等子目录。
-- 跨域默认允许 `http://localhost:5173`，前端使用 Vite 代理到 `3002`，开发时实际前端地址为 `http://localhost:3000`，可在 `.env` 中调整 `CORS_ORIGIN`。
+ - 跨域默认允许 `http://localhost:3000`（与 Vite 默认开发端口保持一致），前端使用 Vite 代理到 `3002`。可在 `.env` 中通过 `CORS_ORIGIN` 覆盖。
 
 ## 前端开发说明
 - 本地开发地址：`http://localhost:3000`

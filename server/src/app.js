@@ -3,6 +3,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const compression = require('compression')
 const path = require('path')
+const fs = require('fs')
 const config = require('./config')
 const routes = require('./routes')
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware')
@@ -52,21 +53,25 @@ app.set('trust proxy', true)
 app.use('/api', routes)
 
 // 静态文件服务（前端构建文件）
-app.use(express.static(path.join(__dirname, '../client/dist'), {
-  setHeaders: (res, path) => {
+const distDir = path.join(__dirname, '../../client/dist')
+app.use(express.static(distDir, {
+  setHeaders: (res, filePath) => {
     res.set('Access-Control-Allow-Origin', '*')
   }
 }))
 
-// 处理前端路由的回退（SPA支持）
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'))
-})
-
-// 根路径重定向到API文档
+// 根路径重定向到API文档（放在 SPA 回退之前，确保可达）
 app.get('/', (req, res) => {
   res.redirect('/api')
 })
+
+// 处理前端路由的回退（SPA支持，仅当构建产物存在时启用）
+const indexHtmlPath = path.join(distDir, 'index.html')
+if (fs.existsSync(indexHtmlPath)) {
+  app.get('*', (req, res) => {
+    res.sendFile(indexHtmlPath)
+  })
+}
 
 // 404处理
 app.use(notFoundHandler)
@@ -74,4 +79,5 @@ app.use(notFoundHandler)
 // 全局错误处理
 app.use(errorHandler)
 
+module.exports = app
 module.exports = app

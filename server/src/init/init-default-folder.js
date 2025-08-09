@@ -24,7 +24,7 @@ async function initDefaultFolder() {
       ['默认文件夹', null, true, 0]
     )
 
-    return result.insertId
+    return result.lastID || result.insertId || null
   } catch (error) {
     Logger.error('❌ 初始化默认文件夹失败:', error.message)
     throw error

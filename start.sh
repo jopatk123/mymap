@@ -84,7 +84,7 @@ cleanup_ports() {
     # 检查3000端口
     if lsof -i :3000 >/dev/null 2>&1; then
         log_warning "端口3000被占用，尝试清理..."
-        pkill -f "vite\|vue-cli" 2>/dev/null || true
+        pkill -f "vite" 2>/dev/null || true
         sleep 2
     fi
     

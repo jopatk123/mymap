@@ -40,7 +40,8 @@ const config = {
   // 安全配置
   security: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+    // 开发默认与 Vite 端口一致；生产请通过环境变量覆盖
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000'
   },
   
   // 日志配置
