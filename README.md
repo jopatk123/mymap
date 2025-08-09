@@ -54,10 +54,7 @@ chmod +x ./start.sh
 1) 安装依赖
 ```bash
 npm run install:all
-# 等价于：
-# npm install
-# (cd client && npm install)
-# (cd server && npm install)
+
 ```
 
 2) 初始化数据库（SQLite）
@@ -72,8 +69,8 @@ node init-sqlite-data.js
 npm run dev
 
 # 或分别启动
-npm run dev:client   # http://localhost:3000
-npm run dev:server   # http://localhost:3002
+npm run dev:client   
+npm run dev:server   
 ```
 
 ## 环境变量（后端 `server/.env`）
@@ -169,39 +166,6 @@ API文档: http://localhost:3002/api
 
 确保后端对这些目录具有读写权限（Linux 下可使用 `chmod -R 755 server/uploads`）。
 
-## 生产部署（示例）
-1) 构建前端并部署静态资源
-```bash
-cd client
-npm run build
-# 将 dist/ 交由 Nginx/静态服务器托管
-```
 
-2) 启动后端服务（建议使用 PM2 或系统服务）
-```bash
-cd server
-npm ci --only=production
-npm run start
-# 或：pm2 start src/server.js --name mymap-api
-```
-
-3) 反向代理（Nginx 示例）
-```nginx
-location /api/ {
-  proxy_set_header Host $host;
-  proxy_set_header X-Real-IP $remote_addr;
-  proxy_pass http://127.0.0.1:3002/;
-}
-```
-
-## 常见问题（FAQ）
-- **端口占用（3000/3002）**：脚本会尝试清理；如仍被占用，可手动执行 `lsof -i :3000`/`:3002` 后 `kill`。
-- **Sharp 安装失败**：确保系统具备构建工具与依赖库（如 `libvips`）；可参考 Sharp 官方文档。
-- **SQLite/`sqlite3` 相关错误**：删除 `server/node_modules` 后重新安装，或确保网络可用以下载预编译二进制。
-- **跨域问题**：检查 `server/.env` 中 `CORS_ORIGIN` 是否与前端地址一致，或在开发阶段保持使用 Vite 代理。
-- **上传失败（类型/大小）**：检查 `server/src/config/index.js` 中 `allowedTypes` 与 `MAX_FILE_SIZE` 配置。
-
-## 许可协议
-本项目遵循仓库内 `LICENSE` 文件所述的开源协议。
 
 

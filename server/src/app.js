@@ -60,16 +60,21 @@ app.use(express.static(distDir, {
   }
 }))
 
-// 根路径重定向到API文档（放在 SPA 回退之前，确保可达）
-app.get('/', (req, res) => {
-  res.redirect('/api')
-})
-
-// 处理前端路由的回退（SPA支持，仅当构建产物存在时启用）
+// 根路径与前端回退（仅当构建产物存在时启用）
 const indexHtmlPath = path.join(distDir, 'index.html')
 if (fs.existsSync(indexHtmlPath)) {
+  // 生产：直接在根路径提供前端
+  app.get('/', (req, res) => {
+    res.sendFile(indexHtmlPath)
+  })
+  // SPA 回退：其余非 /api 路径交给前端
   app.get('*', (req, res) => {
     res.sendFile(indexHtmlPath)
+  })
+} else {
+  // 未构建：保留原有根路径行为
+  app.get('/', (req, res) => {
+    res.redirect('/api')
   })
 }
 
@@ -79,5 +84,4 @@ app.use(notFoundHandler)
 // 全局错误处理
 app.use(errorHandler)
 
-module.exports = app
 module.exports = app

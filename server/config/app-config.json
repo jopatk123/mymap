@@ -2,15 +2,15 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_color": "#144dc8ff",
-      "point_size": 9,
+      "point_color": "#13ad2fff",
+      "point_size": 10,
       "point_opacity": 1,
-      "point_label_size": 10,
+      "point_label_size": 14,
       "point_label_color": "#000000",
       "point_icon_type": "marker"
     },
     "video": {
-      "point_color": "#ff4757",
+      "point_color": "#0d9a27ff",
       "point_size": 10,
       "point_opacity": 1,
       "point_label_size": 14,
