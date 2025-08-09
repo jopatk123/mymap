@@ -24,11 +24,6 @@
             <el-icon><Folder /></el-icon>
             <span>文件管理</span>
           </el-menu-item>
-          
-          <el-menu-item index="/admin/config">
-            <el-icon><Setting /></el-icon>
-            <span>系统配置</span>
-          </el-menu-item>
         </el-menu>
       </div>
       
@@ -42,7 +37,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Folder, Setting } from '@element-plus/icons-vue'
+import { HomeFilled, Folder } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

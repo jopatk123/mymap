@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_color": "#ef154fff",
+      "point_color": "#144dc8ff",
       "point_size": 9,
       "point_opacity": 1,
       "point_label_size": 10,
@@ -19,6 +19,26 @@
     }
   },
   "kmlStyles": {
+    "26": {
+      "point_color": "#0ed42bff",
+      "point_size": 8,
+      "point_opacity": 1,
+      "point_label_size": 12,
+      "point_label_color": "#000000",
+      "line_color": "#ff7800",
+      "line_width": 2,
+      "line_opacity": 0.8,
+      "line_style": "dashed",
+      "polygon_fill_color": "#ff7800",
+      "polygon_fill_opacity": 0.3,
+      "polygon_stroke_color": "#eb4c12ff",
+      "polygon_stroke_width": 2,
+      "polygon_stroke_style": "solid",
+      "cluster_enabled": true,
+      "cluster_icon_color": "#ffffff",
+      "cluster_text_color": "#000000",
+      "point_icon_type": "marker"
+    },
     "default": {
       "point_color": "#ff7800",
       "point_size": 8,
