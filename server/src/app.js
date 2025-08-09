@@ -12,17 +12,23 @@ const { loggerMiddleware } = require('./middleware/logger.middleware')
 // 创建Express应用
 const app = express()
 
-// 安全中间件 - 放宽CSP以允许外部CDN
+// 安全中间件
+// - 关闭在非 HTTPS 环境下会产生告警/影响行为的安全头（HSTS/COOP/OAC/COEP）
+// - 放宽 CSP 以允许 http/https 连接与常用 CDN
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" },
+  hsts: false,
+  crossOriginOpenerPolicy: false,
+  originAgentCluster: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'", "https:", "data:"],
+      imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+      connectSrc: ["'self'", 'https:', 'http:'],
+      fontSrc: ["'self'", 'https:', 'data:'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'self'"]
