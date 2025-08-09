@@ -1,7 +1,7 @@
 # Multi-stage build: build client, install server deps, then assemble runtime image
 
 # 1) Build client (Vue + Vite)
-FROM node:18-bookworm-slim AS client-builder
+FROM node:20-bookworm-slim AS client-builder
 WORKDIR /app
 
 # Install client deps using clean install for reproducibility
@@ -13,14 +13,14 @@ COPY client client
 RUN npm run build --prefix client
 
 # 2) Install server production dependencies
-FROM node:18-bookworm-slim AS server-deps
+FROM node:20-bookworm-slim AS server-deps
 WORKDIR /app
 
 COPY server/package*.json server/
 RUN npm ci --omit=dev --prefix server
 
 # 3) Runtime image
-FROM node:18-bookworm-slim AS runtime
+FROM node:20-bookworm-slim AS runtime
 WORKDIR /app/server
 
 ENV NODE_ENV=production \
