@@ -1,6 +1,6 @@
-const PanoramaQueryController = require('./panorama/panoramaQuery.controller')
-const PanoramaMutationController = require('./panorama/panoramaMutation.controller')
-const PanoramaUtilsController = require('./panorama/panoramaUtils.controller')
+const PanoramaQueryController = require('./panorama/panorama-query.controller')
+const PanoramaMutationController = require('./panorama/panorama-mutation.controller')
+const PanoramaUtilsController = require('./panorama/panorama-utils.controller')
 
 /**
  * 全景图控制器 - 统一入口
