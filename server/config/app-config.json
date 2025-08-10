@@ -19,16 +19,16 @@
     }
   },
   "kmlStyles": {
-    "36": {
-      "point_color": "#08d22dff",
+    "37": {
+      "point_color": "#ff7800",
       "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 12,
+      "point_label_size": 5,
       "point_label_color": "#000000",
       "line_color": "#ff7800",
       "line_width": 2,
       "line_opacity": 0.8,
-      "line_style": "dashed",
+      "line_style": "solid",
       "polygon_fill_color": "#ff7800",
       "polygon_fill_opacity": 0.3,
       "polygon_stroke_color": "#ff7800",
