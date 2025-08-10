@@ -33,6 +33,8 @@
           @search="handleSearch"
           @reset="resetSearch"
           @batch-delete="handleBatchActionWithMove('delete')"
+          @batch-hide="handleBatchActionWithMove('hide')"
+          @batch-move="handleBatchActionWithMove('move')"
         />
       
         <!-- 文件列表表格 -->

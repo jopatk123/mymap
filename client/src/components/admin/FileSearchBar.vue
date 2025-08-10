@@ -37,13 +37,30 @@
           <el-icon><Delete /></el-icon>
           删除{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
         </el-button>
+        <el-button 
+          @click="$emit('batch-hide')" 
+          :disabled="selectedCount === 0"
+          :loading="loading"
+        >
+          <el-icon><Hide /></el-icon>
+          隐藏{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
+        </el-button>
+        <el-button 
+          @click="$emit('batch-move')" 
+          type="primary"
+          :disabled="selectedCount === 0"
+          :loading="loading"
+        >
+          <el-icon><FolderOpened /></el-icon>
+          移动
+        </el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script setup>
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, Hide, FolderOpened } from '@element-plus/icons-vue'
 
 const props = defineProps({
   searchForm: {
@@ -60,7 +77,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['search', 'reset', 'batch-delete'])
+defineEmits(['search', 'reset', 'batch-delete', 'batch-hide', 'batch-move'])
 </script>
 
 <style lang="scss" scoped>
