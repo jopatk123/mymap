@@ -1,6 +1,7 @@
 import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
+import { getDisplayCoordinates } from '@/utils/coordinate-transform.js'
 
 /**
  * 地图交互组合函数
@@ -36,16 +37,12 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
     selectedPanorama.value = panorama
     panoramaStore.setCurrentPanorama(panorama)
     
-    // 地图定位到该全景图（优先使用GCJ02坐标）
+    // 地图定位到该点位（统一转换为适配高德瓦片的显示坐标）
     if (mapRef.value) {
-      // 验证坐标有效性
-      const lat = panorama.gcj02Lat || panorama.lat
-      const lng = panorama.gcj02Lng || panorama.lng
-      
-      if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
-        mapRef.value.setCenter(lat, lng, 16)
-      } else {
-        // console.warn('无效的坐标数据:', panorama)
+      const coords = getDisplayCoordinates(panorama)
+      if (coords) {
+        const [displayLng, displayLat] = coords
+        mapRef.value.setCenter(displayLat, displayLng, 16)
       }
     }
   }
@@ -67,14 +64,10 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
   // 定位到全景图
   const locatePanorama = (panorama) => {
     if (mapRef.value) {
-      // 验证坐标有效性
-      const lat = panorama.gcj02Lat || panorama.lat
-      const lng = panorama.gcj02Lng || panorama.lng
-      
-      if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
-        mapRef.value.setCenter(lat, lng, 18)
-      } else {
-        // console.warn('无效的坐标数据:', panorama)
+      const coords = getDisplayCoordinates(panorama)
+      if (coords) {
+        const [displayLng, displayLat] = coords
+        mapRef.value.setCenter(displayLat, displayLng, 18)
       }
     }
   }
