@@ -1,8 +1,8 @@
 // 服务层统一导出
-const PanoramaQueryService = require('./panorama/panoramaQuery.service')
-const PanoramaMutationService = require('./panorama/panoramaMutation.service')
+const PanoramaQueryService = require('./panorama/panorama-query.service')
+const PanoramaMutationService = require('./panorama/panorama-mutation.service')
 const CoordinateService = require('./coordinate.service')
-const VideoPointService = require('./videoPoint.service')
+const VideoPointService = require('./video-point.service')
 
 module.exports = {
   PanoramaQueryService,
