@@ -13,7 +13,7 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
   // 处理点位标记点击（区分全景图和视频点位）
   const handlePanoramaClick = (point) => {
     // 根据点位类型判断是全景图还是视频点位
-    if (point.type === 'video' || point.videoUrl) {
+    if (point.type === 'video' || point.videoUrl || point.video_url) {
       // 视频点位 - 直接打开视频播放器
       selectedVideo.value = point
       showVideoModal.value = true

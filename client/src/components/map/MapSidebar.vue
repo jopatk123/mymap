@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar" :class="{ collapsed: sidebarCollapsed, hidden: !panoramaListVisible }">
     <div class="sidebar-header">
-      <h3>全景图列表</h3>
+      <h3>点位列表</h3>
       <div class="header-actions">
         <el-button 
           @click="$emit('toggle-sidebar')" 
@@ -13,107 +13,24 @@
     </div>
     
     <div class="sidebar-content" v-show="!sidebarCollapsed">
-      <!-- 搜索框 -->
-      <div class="search-section">
-        <el-input
-          :model-value="searchKeyword"
-          @update:model-value="$emit('update:searchKeyword', $event)"
-          placeholder="搜索全景图..."
-          @input="$emit('search')"
-          clearable
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-      
-      <!-- 筛选选项 -->
-      <div class="filter-section">
-        <el-select
-          :model-value="sortBy"
-          @update:model-value="$emit('update:sortBy', $event)"
-          placeholder="排序方式"
-          @change="$emit('sort-change')"
-          style="width: 100%"
-        >
-          <el-option label="创建时间" value="createdAt" />
-          <el-option label="标题" value="title" />
-          <el-option label="距离" value="distance" />
-        </el-select>
-      </div>
-      
-      <!-- 全景图列表 -->
-      <div class="panorama-list">
-        <div
-          v-for="panorama in panoramas"
-          :key="panorama.id"
-          class="panorama-item"
-          :class="{ active: currentPanorama?.id === panorama.id }"
-          @click="$emit('select-panorama', panorama)"
-        >
-          <div class="panorama-thumbnail">
-            <img 
-              :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'" 
-              :alt="panorama.title"
-              @error="$emit('image-error', $event)"
-            />
-          </div>
-          <div class="panorama-info">
-            <h4>{{ panorama.title || '未命名' }}</h4>
-            <p class="description">{{ panorama.description || '暂无描述' }}</p>
-            <div class="meta">
-              <span class="coordinate">
-                {{ formatCoordinate(panorama.lat, panorama.lng) }}
-              </span>
-              <span class="date">
-                {{ formatDate(panorama.createdAt) }}
-              </span>
-            </div>
-          </div>
-          <div class="panorama-actions">
-            <el-button 
-              @click.stop="$emit('view-panorama', panorama)" 
-              type="primary" 
-              size="small"
-              circle
-            >
-              <el-icon><View /></el-icon>
-            </el-button>
-            <el-button 
-              @click.stop="$emit('locate-panorama', panorama)" 
-              type="info" 
-              size="small"
-              circle
-            >
-              <el-icon><Location /></el-icon>
-            </el-button>
-          </div>
-        </div>
-        
-        <!-- 加载更多 -->
-        <div class="load-more" v-if="hasMore">
-          <el-button 
-            @click="$emit('load-more')" 
-            :loading="loading" 
-            link
-            style="width: 100%"
-          >
-            加载更多
-          </el-button>
-        </div>
-        
-        <!-- 空状态 -->
-        <div class="empty-state" v-if="!loading && panoramas.length === 0">
-          <el-empty description="暂无全景图数据" />
-        </div>
-      </div>
+      <PanoramaList
+        :panoramas="panoramas"
+        :current-panorama="currentPanorama"
+        :loading="loading"
+        :has-more="hasMore"
+        @select-panorama="$emit('select-panorama', $event)"
+        @view-panorama="$emit('view-panorama', $event)"
+        @view-video="$emit('view-video', $event)"
+        @locate-panorama="$emit('locate-panorama', $event)"
+        @load-more="$emit('load-more')"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { Search, View, Location, Expand, Fold } from '@element-plus/icons-vue'
+import { Expand, Fold } from '@element-plus/icons-vue'
+import PanoramaList from '@/components/map/PanoramaList.vue'
 
 defineProps({
   panoramas: {
@@ -132,14 +49,6 @@ defineProps({
     type: Boolean,
     default: true
   },
-  searchKeyword: {
-    type: String,
-    default: ''
-  },
-  sortBy: {
-    type: String,
-    default: 'createdAt'
-  },
   loading: {
     type: Boolean,
     default: false
@@ -152,28 +61,13 @@ defineProps({
 
 defineEmits([
   'toggle-sidebar',
-  'update:searchKeyword',
-  'search',
-  'update:sortBy',
-  'sort-change',
   'select-panorama',
   'view-panorama',
+  'view-video',
   'locate-panorama',
   'load-more',
   'image-error'
 ])
-
-// 格式化坐标
-const formatCoordinate = (lat, lng) => {
-  if (!lat || !lng) return '未知位置'
-  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-}
-
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return '未知时间'
-  return new Date(dateString).toLocaleDateString('zh-CN')
-}
 </script>
 
 <style lang="scss" scoped>
