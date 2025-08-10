@@ -62,7 +62,7 @@ import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import KmlUploadArea from './KmlUploadArea.vue'
 import { useKmlProcessor } from '@/composables/useFileProcessor'
-import { kmlApi } from '@/api/kml-files.js'
+import { kmlApi } from '@/api/kml.js'
 
 const props = defineProps({
   modelValue: Boolean

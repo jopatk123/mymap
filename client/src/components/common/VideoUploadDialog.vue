@@ -47,7 +47,7 @@ import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import VideoUploadArea from './VideoUploadArea.vue'
 import { useVideoProcessor } from '@/composables/useFileProcessor'
-import { videoApi } from '@/api/video-points.js'
+import { videoApi } from '@/api/video.js'
 
 const props = defineProps({
   modelValue: Boolean

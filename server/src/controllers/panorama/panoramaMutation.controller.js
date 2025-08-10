@@ -34,6 +34,7 @@ class PanoramaMutationController {
       
       res.status(201).json(successResponse(panorama, '创建全景图成功'))
     } catch (error) {
+      const Logger = require('../../utils/logger')
       Logger.error('创建全景图失败:', error)
       res.status(500).json(errorResponse(error.message))
     }

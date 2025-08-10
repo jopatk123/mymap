@@ -1,5 +1,5 @@
 import { ElMessage } from 'element-plus'
-import { kmlApi } from '@/api/kml-files.js'
+import { kmlApi } from '@/api/kml.js'
 
 export function useMapEventHandlers(
   mapRef,

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { folderApi } from '@/api/folders.js'
+import { folderApi } from '@/api/folder.js'
 
 export const useFolderStore = defineStore('folder', {
   state: () => ({

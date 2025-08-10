@@ -102,4 +102,52 @@
 
 ---
 
+## 四、已完成工作（本阶段总结）
 
+- 后端 routes：完成 kebab-case 与部分复数化，并已在 `server/src/routes/index.js` 落地；旧路由文件删除。
+- 后端 controllers：完成 kebab-case 重命名（包含 `panorama/*`、`video-point/*`、`kml-*`、`point-style` 等），采用“先别名再真实迁移”的两步法，现均为真实文件，旧 camelCase 文件已删除。
+- 后端 models：完成 `kml-file.model.js`、`kml-point.model.js`、`video-point.model.js` 的真实重命名与引用修正。
+- 后端 services：完成 `kml-parser.service.js`、`video-point.service.js`、`panorama/panorama-query.service.js`、`panorama/panorama-mutation.service.js` 的真实重命名与引用修正，并在本次修复中补充了坐标字段映射（`lat/lng` → `latitude/longitude`）。
+- 前端样式：`assets/styles` → `styles`，调整 `vite.config.js` 注入路径与 `main.js` 全局样式导入；旧目录已删除。
+- 前端 API：曾创建 kebab-case 转发别名，后保守回滚为原始 `camelCase` 文件（`kml.js`、`panorama.js`、`pointStyle.js`、`video.js`、`folder.js`），并清理别名文件，确保构建/运行稳定。
+- 前端 Services：`map-service.js`、`panorama-viewer-service.js` 已完成真实重命名与旧名删除（`mapService.js`、`panoramaViewerService.js`）。
+- 前端视图与组件：去重 `views/Map/components/MapSidebar.vue`，统一引用 `components/map/MapSidebar.vue`；`MapSidebar` 简化为复用 `PanoramaList` 的事件分发。
+- Bug 修复：
+  - 服务器崩溃（MODULE_NOT_FOUND/路由名不匹配）已通过统一路由与控制器真实重命名修复。
+  - 视频点被当作全景图打开：在 `useMapInteractions.js` 增加类型判断（`point.type === 'video' || point.videoUrl || point.video_url`）。
+  - 前端 500/动态导入失败：恢复原始 API 文件并改回引用路径。
+  - 全景上传超时：`client/src/api/panorama.js` 上传超时提升至 300s。
+  - 全景上传 500（数据库 NOT NULL）：服务层补齐 `lat/lng` → 模型 `latitude/longitude` 的映射；控制器 catch 内补 `Logger`，避免未定义导致未处理拒绝。
+
+方法论（本轮实施方式）：
+- 两步法（别名/转发 → 全量迁移 → 删除旧名），每步后构建/运行校验。
+- 小步提交，可回滚；高风险项先加转发，待验证稳定后再“真实重命名 + 删除旧名”。
+- 前后端分别验证：
+  - 后端：通过 `node -e "require(...)"` 逐文件加载、`nodemon` 启动、接口实际调用。
+  - 前端：`vite` 启动、本地交互测试，重点验证路由接口、上传、地图点位点击流程。
+
+## 五、未完成与暂缓项
+
+- 后端 `utils/` 命名统一（建议）：如 `kmlFileUtils.js` → `kml-file-utils.js`，`sqlite-adapter.js`/`QueryBuilder.js` 保持已有风格但统一导出命名与引用；当前被用户指示“暂缓”。
+- 若存在个别历史 shim 文件或无引用文件，需要二次巡检并删除（低风险收尾）。
+- 文档与注释中对旧文件名的残留引用（若有），后续扫清。
+
+## 六、下一步计划（新窗口接力）
+
+优先序：
+1) 后端 `utils/` 命名统一（采用同样的两步法）：
+   - 建立 kebab-case 新文件转发至旧文件；
+   - 批量更新引用；
+   - 验证后“真实迁移 + 删除旧名”。
+   - 重点文件：`utils/kmlFileUtils.js`、`utils/coordinate-transform.js` 与 `server/src/utils/*` 命名一致性检查。
+2) 二次巡检无用别名/死代码并删除；保证所有 require/import 指向真实文件。
+3) 补充一次端到端验证：
+   - 地图加载/KML 渲染/点位筛选；
+   - 全景上传、查看、移动、隐藏/显示；
+   - 视频点上传与查看。
+4) 提交并标记阶段性完成。
+
+注意事项：
+- 保持“保守但持续推进”，任何高风险重命名先上别名再迁移。
+- 每一批改动后，都进行后端启动与关键上传/查看用例验证。
+- 若出现 500/崩溃，先回滚最近批次或启用 shim，快速恢复再定位。

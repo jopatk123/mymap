@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import { usePanoramaStore } from '@/store/panorama.js'
 import { useAppStore } from '@/store/app.js'
 import { pointsApi } from '@/api/points.js'
-import { kmlApi } from '@/api/kml-files.js'
+import { kmlApi } from '@/api/kml.js'
 
 /**
  * 地图页面组合函数

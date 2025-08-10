@@ -4,7 +4,22 @@ const Logger = require('../../utils/logger')
 class PanoramaMutationService {
   static async createPanorama(data) {
     try {
-      return await PanoramaModel.create(data)
+      const created = await PanoramaModel.create({
+        title: data.title,
+        description: data.description,
+        imageUrl: data.imageUrl,
+        thumbnailUrl: data.thumbnailUrl,
+        latitude: data.lat,
+        longitude: data.lng,
+        gcj02Lat: data.gcj02Lat,
+        gcj02Lng: data.gcj02Lng,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+        folderId: data.folderId,
+        isVisible: true,
+        sortOrder: 0
+      })
+      return created
     } catch (error) {
       Logger.error('创建全景图失败', error)
       throw error
@@ -13,7 +28,16 @@ class PanoramaMutationService {
 
   static async updatePanorama(id, updateData) {
     try {
-      const panorama = await PanoramaModel.update(id, updateData)
+      const mapped = { ...updateData }
+      if (Object.prototype.hasOwnProperty.call(mapped, 'lat')) {
+        mapped.latitude = mapped.lat
+        delete mapped.lat
+      }
+      if (Object.prototype.hasOwnProperty.call(mapped, 'lng')) {
+        mapped.longitude = mapped.lng
+        delete mapped.lng
+      }
+      const panorama = await PanoramaModel.update(id, mapped)
       if (!panorama) {
         throw new Error('全景图不存在')
       }
@@ -44,7 +68,7 @@ class PanoramaMutationService {
 
   static async movePanoramaToFolder(id, folderId) {
     try {
-      return await PanoramaModel.update(id, { folder_id: folderId })
+      return await PanoramaModel.update(id, { folderId })
     } catch (error) {
       Logger.error('移动全景图失败', error)
       throw error

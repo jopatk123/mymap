@@ -1,4 +1,4 @@
-import { getPanoramaById } from '@/api/panoramas.js'
+import { getPanoramaById } from '@/api/panorama.js'
 
 export class PanoramaViewerService {
   constructor() {

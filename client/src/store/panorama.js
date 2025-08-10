@@ -7,7 +7,7 @@ import {
   updatePanorama,
   deletePanorama,
   getNearbyPanoramas
-} from '@/api/panoramas.js'
+} from '@/api/panorama.js'
 
 export const usePanoramaStore = defineStore('panorama', {
   state: () => ({
@@ -378,7 +378,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'deleting')
         this.clearError()
         
-        const { batchDeletePanoramas } = await import('@/api/panoramas.js')
+        const { batchDeletePanoramas } = await import('@/api/panorama.js')
         await batchDeletePanoramas(ids)
         
         this.removePanoramas(ids)
@@ -398,7 +398,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'updating')
         this.clearError()
         
-        const { movePanoramaToFolder } = await import('@/api/panoramas.js')
+        const { movePanoramaToFolder } = await import('@/api/panorama.js')
         const response = await movePanoramaToFolder(id, folderId)
         
         this.updatePanorama(id, { ...this.getPanoramaById(id), folderId })
@@ -417,7 +417,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'updating')
         this.clearError()
         
-        const { batchMovePanoramasToFolder } = await import('@/api/panoramas.js')
+        const { batchMovePanoramasToFolder } = await import('@/api/panorama.js')
         const response = await batchMovePanoramasToFolder(ids, folderId)
         
         this.batchUpdatePanoramas(ids, { folderId })
@@ -437,7 +437,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'updating')
         this.clearError()
         
-        const { updatePanoramaVisibility } = await import('@/api/panoramas.js')
+        const { updatePanoramaVisibility } = await import('@/api/panorama.js')
         const response = await updatePanoramaVisibility(id, isVisible)
         
         this.updatePanorama(id, { ...this.getPanoramaById(id), isVisible })
@@ -456,7 +456,7 @@ export const usePanoramaStore = defineStore('panorama', {
         this.setLoading(true, 'updating')
         this.clearError()
         
-        const { batchUpdatePanoramaVisibility } = await import('@/api/panoramas.js')
+        const { batchUpdatePanoramaVisibility } = await import('@/api/panorama.js')
         const response = await batchUpdatePanoramaVisibility(ids, isVisible)
         
         this.batchUpdatePanoramas(ids, { isVisible })

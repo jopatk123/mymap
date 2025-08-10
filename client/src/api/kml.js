@@ -4,9 +4,7 @@ export const kmlApi = {
   // 上传KML文件
   uploadKmlFile(formData, onUploadProgress) {
     return api.post('/kml-files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress
     })
   },
@@ -14,9 +12,7 @@ export const kmlApi = {
   // 验证KML文件
   validateKmlFile(formData) {
     return api.post('/kml-files/validate', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
   },
 
@@ -81,24 +77,18 @@ export const kmlApi = {
   },
 
   // 样式配置相关API
-  // 获取KML文件样式配置
   getKmlFileStyles(id) {
     return api.get(`/kml-files/${id}/styles`)
   },
-
-  // 更新KML文件样式配置
   updateKmlFileStyles(id, styleConfig) {
     return api.put(`/kml-files/${id}/styles`, styleConfig)
   },
-
-  // 重置KML文件样式为默认
   resetKmlFileStyles(id) {
     return api.delete(`/kml-files/${id}/styles`)
   },
-
-  // 批量更新KML文件样式配置
   batchUpdateKmlFileStyles(styleConfigs) {
     return api.put('/kml-files/styles/batch', { styleConfigs })
-  },
-
+  }
 }
+
+

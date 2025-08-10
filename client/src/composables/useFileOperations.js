@@ -1,8 +1,8 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { deletePanorama, batchMovePanoramasToFolder } from '@/api/panoramas.js'
-import { videoApi } from '@/api/video-points.js'
-import { kmlApi } from '@/api/kml-files.js'
+import { deletePanorama, batchMovePanoramasToFolder } from '@/api/panorama.js'
+import { videoApi } from '@/api/video.js'
+import { kmlApi } from '@/api/kml.js'
 
 export function useFileOperations() {
   // 当前操作的文件
