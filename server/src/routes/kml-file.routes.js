@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const KmlFileController = require('../controllers/kmlFile.controller')
+const KmlFileController = require('../controllers/kml-file.controller')
 const { handleKmlUpload } = require('../middleware/upload.middleware')
 const { 
   validateId,

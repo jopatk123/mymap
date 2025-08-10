@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const PointStyleController = require('../controllers/pointStyle.controller')
+const PointStyleController = require('../controllers/point-style.controller')
 
 // 视频点位样式配置路由
 router.get('/video', PointStyleController.getVideoPointStyles)

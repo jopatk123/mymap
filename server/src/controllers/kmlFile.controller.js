@@ -1,8 +1,8 @@
 // 统一导出所有KML相关控制器，保持向后兼容
-const KmlFileBaseController = require('./kmlFileBase.controller')
-const KmlFileBatchController = require('./kmlFileBatchController')
-const KmlFileStyleController = require('./kmlFileStyleController')
-const KmlPointQueryController = require('./kmlPointQueryController')
+const KmlFileBaseController = require('./kml-file-base.controller')
+const KmlFileBatchController = require('./kml-file-batch.controller')
+const KmlFileStyleController = require('./kml-file-style.controller')
+const KmlPointQueryController = require('./kml-point-query.controller')
 
 // 为了保持向后兼容，手动合并所有控制器方法
 const KmlFileController = {

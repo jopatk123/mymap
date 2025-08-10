@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const VideoPointController = require('../controllers/videoPoint.controller')
+const VideoPointController = require('../controllers/video-point.controller')
 const { handleVideoUpload } = require('../middleware/upload.middleware')
 const { 
   validateId,
