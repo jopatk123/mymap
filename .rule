@@ -1,0 +1,120 @@
+## 项目规则（命名、结构与代码约定）
+
+### 1. 命名规则
+
+- 文件与目录
+  - 非 Vue 组件文件与所有目录：统一使用 kebab-case，例如：`kml-file.controller.js`、`use-map.js`、`image-processor.js`。
+  - Vue 组件文件：统一使用 PascalCase，例如：`MapContainer.vue`、`PanoramaViewer.vue`。
+  - 模块聚合文件：使用 `index.js`，供目录级导入（如 `require('../controllers/video-point')`）。
+- 代码符号
+  - 变量/函数：`lowerCamelCase`，如 `loadInitialData`、`processKmlPoints`。
+  - 类/构造函数：`PascalCase`，如 `StyleRenderer`、`ImageProcessor`。
+  - 常量：`UPPER_SNAKE_CASE`，如 `DEFAULT_PAGE_SIZE`。
+- 路由与 API
+  - 服务端路由前缀统一为 `/api`，资源名使用复数 kebab-case（如 `/api/kml-files`、`/api/video-points`）。
+  - 客户端路由组件按页面目录组织，使用懒加载。
+
+### 2. 目录结构与模块边界
+
+- client（前端）
+  - `src/api/` API 封装：文件名 kebab-case，导出对象/方法名 `camelCase`。
+  - `src/composables/` 组合式函数：文件名 kebab-case，以 `use-*.js` 命名，导出 `use*` 方法。
+  - `src/components/` 组件：文件名 PascalCase；内部按功能分子目录。
+  - `src/services/` 纯逻辑/类封装：文件名 kebab-case，类名 PascalCase。
+  - `src/utils/` 工具函数：文件名 kebab-case，纯函数优先。
+  - `src/views/` 页面：按路由组织；大组件允许异步加载（`defineAsyncComponent`）。
+  - 别名：使用 `@` 指向 `client/src`，导入时显式扩展名 `.js`。
+- server（后端）
+  - `server/src/controllers/` 控制器：按领域分目录，文件名 kebab-case；需要目录聚合时使用 `index.js`。
+  - `server/src/services/` 服务层：文件名 kebab-case；类与导出名 PascalCase/对象导出视场景选择。
+  - `server/src/models/` 模型：文件名 kebab-case；方法使用 `camelCase`。
+  - `server/src/routes/` 路由：文件名 kebab-case；只做路由分发与参数校验，业务放 service/controller。
+  - `server/src/utils/` 工具：文件名 kebab-case，纯函数优先。
+  - `server/src/config/` 运行时配置与静态配置；服务读取统一经 `config.service.js`。
+
+### 3. 导入导出与代码风格
+
+- 通用
+  - 使用分号；两空格缩进；单引号；合理使用尾随逗号。
+  - 避免循环依赖；跨层依赖仅向下（路由→控制器→服务→模型/工具）。
+  - 复杂逻辑拆小函数；优先早返回，减少深层嵌套。
+  - 错误处理：捕获并返回明确错误信息；后端使用统一响应结构（见下）。
+- client
+  - 组件中尽量保持 `setup` 纯净；重逻辑下沉到 `composables/` 或 `services/`。
+  - 只有在确实需要时使用动态 import 进行按需加载（见“代码拆分”）。
+  - 组合式函数：以 `use-*.js` 命名并导出 `use*` 函数；返回值是对象，键名语义化。
+- server（CommonJS）
+  - `require` 路径相对 `src`，避免跨层回溯；文件名 kebab-case。
+  - 统一响应结构（JSON）：
+    - 成功：`{ success: true, data, message? }`
+    - 失败：`{ success: false, message, error? }`（HTTP 状态码与错误语义一致）
+  - 日志：使用 `server/src/utils/logger.js`；不要在控制器内直接 `console.*`。
+
+### 4. 代码拆分与性能
+
+- 路由级懒加载：路由组件一律 `() => import('...')`。
+- 交互/大依赖按需：
+  - 仅在使用处动态导入重量模块（例如 `image-processor.js`、`marker-refresh.js`）。
+  - Pannellum 仅在全景查看页加载。
+- 分包策略（vite/rollup manualChunks）
+  - `vue`: ['vue', 'vue-router', 'pinia']
+  - `element`: ['element-plus']
+  - `leaflet`: ['leaflet']
+  - `pannellum`: ['pannellum']（如生成空 chunk 属预期且可保留）
+  - `net`: ['axios']
+- 样式与 SCSS
+  - 变量集中在 `client/src/styles/variables.scss`；逐步用 `@use` 替代 `@import`。
+
+### 5. 新文件模板
+
+- 新的前端组合式函数（`client/src/composables/use-*.js`）
+  ```js
+  // client/src/composables/use-example.js
+  import { ref } from 'vue'
+
+  export function useExample() {
+    const loading = ref(false)
+    const data = ref(null)
+
+    async function load() {
+      loading.value = true
+      try {
+        // ...fetch data
+      } finally {
+        loading.value = false
+      }
+    }
+
+    return { loading, data, load }
+  }
+  ```
+
+- 新的后端控制器（`server/src/controllers/<domain>/<name>.controller.js`）
+  ```js
+  // server/src/controllers/example/example.controller.js
+  const { successResponse, errorResponse } = require('../../utils/response')
+  const Logger = require('../../utils/logger')
+  const ExampleService = require('../../services/example.service')
+
+  class ExampleController {
+    static async getExamples(req, res) {
+      try {
+        const list = await ExampleService.findAll()
+        res.json(successResponse(list, '获取示例成功'))
+      } catch (error) {
+        Logger.error('获取示例失败:', error)
+        res.status(500).json(errorResponse('内部服务器错误'))
+      }
+    }
+  }
+
+  module.exports = ExampleController
+  ```
+
+### 6. 其它约定
+
+- 校验与上传：参数校验通过 `server/src/middleware/validator.middleware.js`；上传使用 `upload.middleware`。
+- 配置：统一经 `server/src/services/config.service.js` 读写 `server/src/config/app-config.json`。
+
+
+
