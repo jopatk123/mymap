@@ -72,6 +72,50 @@ html, body {
   border: 1px solid rgba(0,0,0,0.06);
 }
 
+/* 覆盖现有内联样式，统一弹窗内容的视觉 */
+.leaflet-popup-content {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  color: #1f2937 !important;
+}
+
+.leaflet-popup-content > div {
+  max-width: 260px !important;
+}
+
+.leaflet-popup-content h4 {
+  margin: 0 0 8px 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+}
+
+.leaflet-popup-content p {
+  margin: 0 0 6px 0 !important;
+  font-size: 12px !important;
+  color: #6b7280 !important;
+}
+
+.leaflet-popup-content > div > div {
+  font-size: 12px !important;
+  color: #374151 !important;
+  line-height: 1.5 !important;
+}
+
+/* 外链按钮统一样式（根据域名区分配色） */
+.leaflet-popup-content a {
+  display: inline-block !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  font-size: 12px !important;
+  color: #fff !important;
+  margin-right: 8px !important;
+  margin-top: 8px !important;
+}
+
+.leaflet-popup-content a[href*="amap.com"] { background: #1677ff !important; }
+.leaflet-popup-content a[href*="api.map.baidu.com"] { background: #10b981 !important; }
+
 .kml-popup {
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #1f2937;
