@@ -21,8 +21,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { usePanoramaModal } from '@/composables/usePanoramaModal'
-import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
+import { usePanoramaModal } from '@/composables/use-panorama-modal'
+import { usePanoramaViewer } from '@/composables/use-panorama-viewer'
 import PanoramaInfoModal from './panorama/PanoramaInfoModal.vue'
 import PanoramaViewer from './panorama/PanoramaViewer.vue'
 

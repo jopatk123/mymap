@@ -17,7 +17,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useVideoModal } from '@/composables/useVideoModal'
+import { useVideoModal } from '@/composables/use-video-modal'
 import VideoInfoModal from './video/VideoInfoModal.vue'
 import VideoPlayer from './video/VideoPlayer.vue'
 

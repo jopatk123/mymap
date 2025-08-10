@@ -53,7 +53,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { usePointStyles } from '@/composables/usePointStyles.js'
+import { usePointStyles } from '@/composables/use-point-styles.js'
 import styleManager from '@/utils/style-manager.js'
 
 const {

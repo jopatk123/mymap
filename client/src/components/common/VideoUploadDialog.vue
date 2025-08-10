@@ -46,7 +46,7 @@ import { defineEmits, defineProps, reactive } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import VideoUploadArea from './VideoUploadArea.vue'
-import { useVideoProcessor } from '@/composables/useFileProcessor'
+import { useVideoProcessor } from '@/composables/use-file-processor'
 import { videoApi } from '@/api/video.js'
 
 const props = defineProps({

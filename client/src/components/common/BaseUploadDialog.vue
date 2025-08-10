@@ -81,7 +81,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useBaseUploadDialog } from '@/composables/useBaseUploadDialog'
+import { useBaseUploadDialog } from '@/composables/use-base-upload-dialog'
 import BaseCoordinateInput from './BaseCoordinateInput.vue'
 import BaseFolderSelect from './BaseFolderSelect.vue'
 import BaseProcessingStatus from './BaseProcessingStatus.vue'

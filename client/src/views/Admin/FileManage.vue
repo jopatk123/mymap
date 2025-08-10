@@ -97,9 +97,9 @@
 import { reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import { useFileManagement } from '@/composables/useFileManagement'
-import { useFileOperations } from '@/composables/useFileOperations'
-import { useBatchOperations } from '@/composables/useBatchOperations'
+import { useFileManagement } from '@/composables/use-file-management'
+import { useFileOperations } from '@/composables/use-file-operations'
+import { useBatchOperations } from '@/composables/use-batch-operations'
 import { useFolderStore } from '@/store/folder.js'
 
 // 导入拆分后的组件

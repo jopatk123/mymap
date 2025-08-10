@@ -61,7 +61,7 @@ import { ref, computed, watch, defineEmits, defineProps } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import KmlUploadArea from './KmlUploadArea.vue'
-import { useKmlProcessor } from '@/composables/useFileProcessor'
+import { useKmlProcessor } from '@/composables/use-file-processor'
 import { kmlApi } from '@/api/kml.js'
 
 const props = defineProps({

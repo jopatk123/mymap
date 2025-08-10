@@ -1,7 +1,7 @@
-import { useMapInstance } from './useMapInstance';
-import { useMapState } from './useMapState';
-import { useMapMarkers } from './useMapMarkers';
-import { useKmlLayer } from './useKmlLayer';
+import { useMapInstance } from './use-map-instance';
+import { useMapState } from './use-map-state';
+import { useMapMarkers } from './use-map-markers';
+import { useKmlLayer } from './use-kml-layer';
 
 export function useMap(containerId) {
   // 核心地图实例

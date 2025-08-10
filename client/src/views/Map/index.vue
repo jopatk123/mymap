@@ -92,13 +92,13 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useMapPage } from '@/composables/useMapPage'
-import { useMapInteractions } from '@/composables/useMapInteractions'
-import { usePanoramaViewer } from '@/composables/usePanoramaViewer'
-import { usePointStyles } from '@/composables/usePointStyles'
-import { useMapStyleUpdater } from '@/composables/useMapStyleUpdater'
-import { useMapEventHandlers } from './composables/MapEventHandlers'
-import { useMapInitializer } from './composables/MapInitializer'
+import { useMapPage } from '@/composables/use-map-page'
+import { useMapInteractions } from '@/composables/use-map-interactions'
+import { usePanoramaViewer } from '@/composables/use-panorama-viewer'
+import { usePointStyles } from '@/composables/use-point-styles'
+import { useMapStyleUpdater } from '@/composables/use-map-style-updater'
+import { useMapEventHandlers } from './composables/map-event-handlers'
+import { useMapInitializer } from './composables/map-initializer'
 
 import MapView from './components/MapView.vue'
 import MapSidebar from '@/components/map/MapSidebar.vue'

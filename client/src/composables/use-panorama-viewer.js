@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { usePanorama } from '@/composables/usePanorama.js'
+import { usePanorama } from '@/composables/use-panorama.js'
 
 export function usePanoramaViewer() {
   const viewerVisible = ref(false)

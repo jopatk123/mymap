@@ -1,6 +1,6 @@
 import L from 'leaflet';
-import { processKmlPoints } from './kmlPointRenderer.js';
-import { parseKmlText } from './kmlTextParser.js';
+import { processKmlPoints } from './kml-point-renderer.js';
+import { parseKmlText } from './kml-text-parser.js';
 
 export function useKmlLayer(map, kmlLayers) {
   const addKmlLayer = async (kmlFile, styleConfig = null) => {

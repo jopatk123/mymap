@@ -24,7 +24,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useMap } from '@/composables/useMap.js'
+import { useMap } from '@/composables/use-map.js'
 import { useAppStore } from '@/store/app.js'
 import { setMapInstance, setMarkersData } from '@/utils/marker-refresh.js'
 import { addStyleListener, removeStyleListener } from '@/utils/style-events.js'

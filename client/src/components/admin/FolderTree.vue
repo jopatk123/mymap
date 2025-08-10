@@ -22,8 +22,8 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useFolderTree } from '@/composables/useFolderTree'
-import { useFolderOperations } from '@/composables/useFolderOperations'
+import { useFolderTree } from '@/composables/use-folder-tree'
+import { useFolderOperations } from '@/composables/use-folder-operations'
 import FolderTreeView from './FolderTree/FolderTreeView.vue'
 import FolderEditDialog from './FolderTree/FolderEditDialog.vue'
 

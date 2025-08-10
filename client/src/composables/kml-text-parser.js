@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import StyleRenderer from '@/services/style-renderer.js';
-import { createPointIcon } from './kmlIconFactory.js';
-import { extractCoordinatesFromText, createFeatureData } from './kmlDataProcessor.js';
+import { createPointIcon } from './kml-icon-factory.js';
+import { extractCoordinatesFromText, createFeatureData } from './kml-data-processor.js';
 
 const styleRenderer = new StyleRenderer();
 
