@@ -11,6 +11,15 @@
   <UploadDialog
     :model-value="showUploadDialog"
     @update:model-value="$emit('update:showUploadDialog', $event)"
+    @open-batch-upload="$emit('open-batch-upload')"
+    @success="$emit('upload-success')"
+  />
+
+  <!-- 批量上传对话框（由父组件控制显示） -->
+  <PanoramaBatchUploadDialog
+    v-if="showBatchUploadDialog !== undefined"
+    :model-value="showBatchUploadDialog"
+    @update:model-value="$emit('update:showBatchUploadDialog', $event)"
     @success="$emit('upload-success')"
   />
   
@@ -25,6 +34,7 @@
 import PanoramaModal from '@/components/map/PanoramaModal.vue'
 import UploadDialog from '@/components/common/UploadDialog.vue'
 import SettingsDialog from '@/components/common/SettingsDialog.vue'
+import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue'
 
 defineProps({
   showPanoramaModal: {
@@ -39,6 +49,10 @@ defineProps({
     type: Boolean,
     required: true
   },
+  showBatchUploadDialog: {
+    type: Boolean,
+    default: undefined
+  },
   showSettings: {
     type: Boolean,
     required: true
@@ -48,9 +62,11 @@ defineProps({
 defineEmits([
   'update:showPanoramaModal',
   'update:showUploadDialog', 
+  'update:showBatchUploadDialog',
   'update:showSettings',
   'panorama-deleted', 
-  'upload-success'
+  'upload-success',
+  'open-batch-upload'
 ])
 </script>
 

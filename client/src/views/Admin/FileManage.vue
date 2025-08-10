@@ -160,7 +160,8 @@ const {
 const uploadDialogs = reactive({
   showUploadDialog: false,
   showVideoUploadDialog: false,
-  showKmlUploadDialog: false
+  showKmlUploadDialog: false,
+  showPanoramaBatchUploadDialog: false
 })
 
 // 计算属性

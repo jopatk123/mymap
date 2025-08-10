@@ -46,6 +46,7 @@ export function useMapPage() {
   const showVideoModal = ref(false)
   const showUploadDialog = ref(false)
   const showSettings = ref(false)
+  const showBatchUploadDialog = ref(false)
   const showPanoramaViewer = ref(false)
   const panoramaViewerLoading = ref(false)
   const autoRotating = ref(false)
@@ -207,6 +208,7 @@ export function useMapPage() {
     showPanoramaModal,
     showVideoModal,
     showUploadDialog,
+    showBatchUploadDialog,
     showSettings,
     showPanoramaViewer,
     panoramaViewerLoading,
@@ -219,6 +221,11 @@ export function useMapPage() {
     initializePage,
     loadInitialData,
     loadMore,
-    toggleKmlLayers
+    toggleKmlLayers,
+    // helpers for dialogs
+    openBatchUploadFromSingle: () => {
+      showUploadDialog.value = false
+      showBatchUploadDialog.value = true
+    }
   }
 }

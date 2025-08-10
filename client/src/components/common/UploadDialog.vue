@@ -9,6 +9,8 @@
     :show-location-btn="false"
     :additional-rules="panoramaRules"
     :submit-handler="handlePanoramaUpload"
+    :show-batch-button="true"
+    @batch-upload="handleOpenBatchUpload"
     @success="$emit('success')"
   >
     <template #file-upload="{ form, uploadRef }">
@@ -38,7 +40,7 @@ const props = defineProps({
   modelValue: Boolean
 })
 
-defineEmits(['update:modelValue', 'success'])
+const emit = defineEmits(['update:modelValue', 'success', 'open-batch-upload'])
 
 const { previewUrl, processFile, validateFile, cleanup } = usePanoramaProcessor()
 const gpsInfo = ref(null)
@@ -102,6 +104,12 @@ const handleFileChange = async (file, form) => {
 const handleFileRemove = () => {
   cleanup()
   gpsInfo.value = null
+}
+
+// 打开批量上传：关闭当前对话框并通知父层打开批量上传
+const handleOpenBatchUpload = () => {
+  emit('update:modelValue', false)
+  emit('open-batch-upload')
 }
 
 const handlePanoramaUpload = async (form, { setProgress, setProcessing }) => {

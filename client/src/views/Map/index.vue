@@ -48,12 +48,15 @@
       :show-panorama-modal="showPanoramaModal"
       :selected-panorama="selectedPanorama"
       :show-upload-dialog="showUploadDialog"
+      :show-batch-upload-dialog="showBatchUploadDialog"
       :show-settings="showSettings"
       @update:show-panorama-modal="showPanoramaModal = $event"
       @update:show-upload-dialog="showUploadDialog = $event"
+      @update:showBatchUploadDialog="showBatchUploadDialog = $event"
       @update:show-settings="showSettings = $event"
       @panorama-deleted="handlePanoramaDeleted"
       @upload-success="handleUploadSuccess"
+      @open-batch-upload="openBatchUploadFromSingle()"
     />
     
     <!-- 视频模态框 -->
@@ -130,7 +133,8 @@ const {
   selectedVideo,
   showPanoramaModal,
   showVideoModal,
-  showUploadDialog,
+    showUploadDialog,
+    showBatchUploadDialog,
   showSettings,
   showPanoramaViewer,
   panoramaViewerLoading,
@@ -143,7 +147,8 @@ const {
   initializePage,
   loadInitialData,
   loadMore,
-  toggleKmlLayers
+  toggleKmlLayers,
+  openBatchUploadFromSingle
 } = useMapPage()
 
 // 样式更新器

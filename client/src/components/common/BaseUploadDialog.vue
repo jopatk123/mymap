@@ -65,6 +65,7 @@
     
     <template #footer>
       <div class="dialog-footer">
+        <el-button v-if="showBatchButton" @click="$emit('batch-upload')">批量上传</el-button>
         <el-button @click="handleClose">取消</el-button>
         <el-button
           @click="handleSubmit"
@@ -96,10 +97,11 @@ const props = defineProps({
   additionalRules: { type: Object, default: () => ({}) },
   fileValidator: { type: Function, default: null },
   submitHandler: { type: Function, required: true },
-  externalCanSubmit: { type: Boolean, default: true }
+  externalCanSubmit: { type: Boolean, default: true },
+  showBatchButton: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'success'])
+const emit = defineEmits(['update:modelValue', 'success', 'batch-upload'])
 
 const {
   visible,
