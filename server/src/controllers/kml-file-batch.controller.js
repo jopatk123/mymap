@@ -1,5 +1,5 @@
 const KmlFileModel = require('../models/kml-file.model')
-const KmlFileUtils = require('../utils/kmlFileUtils')
+const KmlFileUtils = require('../utils/kml-file-utils')
 const Logger = require('../utils/logger')
 
 class KmlFileBatchController {
@@ -31,7 +31,7 @@ class KmlFileBatchController {
 
       await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete)
 
-      const ConfigService = require('../services/ConfigService')
+      const ConfigService = require('../services/config.service')
       await ConfigService.batchDeleteKmlStyles(ids.map(id => id.toString()))
 
       res.json({

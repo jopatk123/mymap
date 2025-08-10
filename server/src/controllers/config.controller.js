@@ -1,4 +1,4 @@
-const ConfigService = require('../services/ConfigService')
+const ConfigService = require('../services/config.service')
 
 class ConfigController {
   // 获取完整配置

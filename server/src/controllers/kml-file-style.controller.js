@@ -1,5 +1,5 @@
 const KmlFileModel = require('../models/kml-file.model')
-const ConfigService = require('../services/ConfigService')
+const ConfigService = require('../services/config.service')
 const Logger = require('../utils/logger')
 
 class KmlFileStyleController {

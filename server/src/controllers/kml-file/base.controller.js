@@ -1,8 +1,8 @@
-const KmlFileModel = require('../models/kml-file.model')
-const KmlPointModel = require('../models/kml-point.model')
-const kmlParserService = require('../services/kml-parser.service')
-const KmlFileUtils = require('../utils/kmlFileUtils')
-const Logger = require('../utils/logger')
+const KmlFileModel = require('../../models/kml-file.model')
+const KmlPointModel = require('../../models/kml-point.model')
+const kmlParserService = require('../../services/kml-parser.service')
+const KmlFileUtils = require('../../utils/kml-file-utils')
+const Logger = require('../../utils/logger')
 
 class KmlFileBaseController {
   static async getKmlFiles(req, res) {
@@ -25,7 +25,7 @@ class KmlFileBaseController {
       }
 
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
-        const FolderModel = require('../models/folder.model')
+        const FolderModel = require('../../models/folder.model')
         const visibleFolderIds = await FolderModel.getVisibleFolderIds()
         searchParams.visibleFolderIds = visibleFolderIds
       }
@@ -219,7 +219,7 @@ class KmlFileBaseController {
       const success = await KmlFileModel.delete(parseInt(id))
       if (success) {
         await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
-        const ConfigService = require('../services/ConfigService')
+        const ConfigService = require('../../services/config.service')
         await ConfigService.deleteKmlStyles(id)
         res.json({ success: true, message: 'KML文件删除成功' })
       } else {

@@ -3,7 +3,7 @@ const path = require('path')
 
 class ConfigService {
   constructor() {
-    this.configPath = path.join(__dirname, '../../config/app-config.json')
+    this.configPath = path.join(__dirname, '../config/app-config.json')
     this.config = null
     this.lastModified = null
   }

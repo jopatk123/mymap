@@ -1,5 +1,5 @@
-const VideoPointQueryController = require('./video-point/video-point-query.controller')
-const VideoPointMutationController = require('./video-point/video-point-mutation.controller')
+const VideoPointQueryController = require('./video-point-query.controller')
+const VideoPointMutationController = require('./video-point-mutation.controller')
 
 class VideoPointController {
   static getVideoPoints = VideoPointQueryController.getVideoPoints
@@ -18,5 +18,4 @@ class VideoPointController {
 }
 
 module.exports = VideoPointController
-
 
