@@ -1,5 +1,5 @@
-const VideoPointQueryController = require('./videoPoint/videoPointQuery.controller')
-const VideoPointMutationController = require('./videoPoint/videoPointMutation.controller')
+const VideoPointQueryController = require('./video-point/video-point-query.controller')
+const VideoPointMutationController = require('./video-point/video-point-mutation.controller')
 
 class VideoPointController {
   static getVideoPoints = VideoPointQueryController.getVideoPoints
