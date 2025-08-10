@@ -26,7 +26,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useMap } from '@/composables/use-map.js'
 import { useAppStore } from '@/store/app.js'
-import { setMapInstance, setMarkersData } from '@/utils/marker-refresh.js'
+let setMapInstance, setMarkersData
 import { addStyleListener, removeStyleListener } from '@/utils/style-events.js'
 
 const props = defineProps({
@@ -87,7 +87,7 @@ const handleMarkersRefresh = (data) => {
 }
 
 // 初始化地图
-onMounted(() => {
+onMounted(async () => {
   const mapInstance = initMap(
     {
       center: props.center,
@@ -98,10 +98,10 @@ onMounted(() => {
   
   // 设置地图实例到刷新工具
   if (mapInstance) {
-    setMapInstance({
-      clearMarkers,
-      addPointMarkers
-    })
+    const mod = await import('@/utils/marker-refresh.js')
+    setMapInstance = mod.setMapInstance
+    setMarkersData = mod.setMarkersData
+    setMapInstance({ clearMarkers, addPointMarkers })
   }
   
   // 设置标记点击事件处理函数
@@ -131,14 +131,18 @@ onUnmounted(() => {
 })
 
 // 监听全景图数据变化
-watch(() => props.panoramas, (newPanoramas) => {
+watch(() => props.panoramas, async (newPanoramas) => {
   clearMarkers()
   
   // 优先使用全局点位数据，如果不存在则使用props数据
   const pointsToShow = window.allPoints && window.allPoints.length > 0 ? window.allPoints : newPanoramas
   if (pointsToShow && pointsToShow.length > 0) {
     // 存储标记数据到刷新工具
-    setMarkersData(pointsToShow)
+  if (!setMarkersData) {
+    const mod = await import('@/utils/marker-refresh.js')
+    setMarkersData = mod.setMarkersData
+  }
+  setMarkersData(pointsToShow)
     addPointMarkers(pointsToShow)
   }
   
@@ -152,10 +156,14 @@ watch(mapType, (newType) => {
 })
 
 // 监听全局点位数据变化
-watch(() => window.allPoints, (newPoints) => {
+watch(() => window.allPoints, async (newPoints) => {
   if (newPoints && newPoints.length > 0) {
     clearMarkers()
     // 存储标记数据到刷新工具
+    if (!setMarkersData) {
+      const mod = await import('@/utils/marker-refresh.js')
+      setMarkersData = mod.setMarkersData
+    }
     setMarkersData(newPoints)
     addPointMarkers(newPoints)
   }
