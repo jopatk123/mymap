@@ -204,7 +204,7 @@ export function usePanoramaProcessor() {
   
   const processFile = async (file, form) => {
     
-    const { imageProcessor } = await import('@/services/ImageProcessor.js')
+    const { imageProcessor } = await import('@/services/image-processor.js')
     
     try {
       const result = await imageProcessor.processFile(file)

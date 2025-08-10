@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/pointStyle.js'
+import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js'
 import styleManager from '@/utils/style-manager.js'
 
 export function usePointStyles() {

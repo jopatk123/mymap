@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/pointStyle.js'
+import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js'
 import { notifyPointStyleUpdate, notifyMarkersRefresh } from '@/utils/style-events.js'
 import { convertFromApiFormat, convertToApiFormat } from '@/utils/styleConverters.js'
 

@@ -31,7 +31,7 @@ import PanoramaUploadArea from './PanoramaUploadArea.vue'
 import { usePanoramaProcessor } from '@/composables/useFileProcessor'
 import { uploadPanoramaImage } from '@/api/panorama.js'
 import { usePanoramaStore } from '@/store/panorama.js'
-import { imageProcessor } from '@/services/ImageProcessor.js'
+import { imageProcessor } from '@/services/image-processor.js'
 
 const props = defineProps({
   modelValue: Boolean
