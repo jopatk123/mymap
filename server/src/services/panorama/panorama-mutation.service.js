@@ -1,5 +1,7 @@
 const PanoramaModel = require('../../models/panorama.model')
 const Logger = require('../../utils/logger')
+const path = require('path')
+const fs = require('fs').promises
 
 class PanoramaMutationService {
   static async createPanorama(data) {
@@ -70,7 +72,17 @@ class PanoramaMutationService {
 
   static async deletePanorama(id) {
     try {
-      return await PanoramaModel.delete(id)
+      const panorama = await PanoramaModel.findById(parseInt(id))
+      if (!panorama) {
+        throw new Error('全景图不存在')
+      }
+
+      const success = await PanoramaModel.delete(id)
+      if (success) {
+        await this.deletePanoramaFiles(panorama)
+        return true
+      }
+      throw new Error('删除全景图失败')
     } catch (error) {
       Logger.error('删除全景图失败', error)
       throw error
@@ -79,7 +91,25 @@ class PanoramaMutationService {
 
   static async batchDeletePanoramas(ids) {
     try {
-      return await PanoramaModel.batchDelete(ids)
+      if (!Array.isArray(ids) || ids.length === 0) return 0
+
+      const panoramasToDelete = []
+      for (const pid of ids) {
+        try {
+          const p = await PanoramaModel.findById(parseInt(pid))
+          if (p) panoramasToDelete.push(p)
+        } catch (e) {
+          Logger.warn(`获取全景图信息失败 (ID: ${pid})`, e)
+        }
+      }
+
+      const affected = await PanoramaModel.batchDelete(ids)
+      // 清理物理文件（原图与缩略图）
+      for (const pano of panoramasToDelete) {
+        // 不阻断主流程
+        try { await this.deletePanoramaFiles(pano) } catch (_) {}
+      }
+      return affected
     } catch (error) {
       Logger.error('批量删除全景图失败', error)
       throw error
@@ -119,6 +149,38 @@ class PanoramaMutationService {
     } catch (error) {
       Logger.error('批量更新全景图可见性失败', error)
       throw error
+    }
+  }
+
+  static async deletePanoramaFiles(panorama) {
+    try {
+      // 删除原图
+      if (panorama.image_url) {
+        const imageFilename = path.basename(panorama.image_url)
+        const imagePath = path.join(process.cwd(), 'uploads', 'panoramas', imageFilename)
+        try {
+          await fs.access(imagePath)
+          await fs.unlink(imagePath)
+          Logger.debug('删除全景原图成功', { imagePath })
+        } catch (error) {
+          Logger.warn('全景原图不存在或删除失败', { imagePath, error: error.message })
+        }
+      }
+
+      // 删除缩略图
+      if (panorama.thumbnail_url) {
+        const thumbFilename = path.basename(panorama.thumbnail_url)
+        const thumbPath = path.join(process.cwd(), 'uploads', 'thumbnails', thumbFilename)
+        try {
+          await fs.access(thumbPath)
+          await fs.unlink(thumbPath)
+          Logger.debug('删除全景缩略图成功', { thumbPath })
+        } catch (error) {
+          Logger.warn('全景缩略图不存在或删除失败', { thumbPath, error: error.message })
+        }
+      }
+    } catch (error) {
+      Logger.warn('删除全景图文件失败:', error)
     }
   }
 }
