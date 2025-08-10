@@ -2,6 +2,7 @@ import L from 'leaflet';
 import StyleRenderer from '@/services/style-renderer.js';
 import { createPointIcon } from './kml-icon-factory.js';
 import { extractCoordinatesFromText, createFeatureData } from './kml-data-processor.js';
+import { wgs84ToGcj02, gcj02ToBd09 } from '@/utils/coordinate-transform.js';
 
 const styleRenderer = new StyleRenderer();
 
@@ -101,7 +102,7 @@ function extractPoints(placemark) {
       if (!isNaN(lat) && !isNaN(lng)) {
         const coords = extractCoordinatesFromText(coordinates)[0];
         if (coords) {
-          result.push(coords);
+          result.push({ gcj02: coords, wgs84: { lat, lng } });
         }
       }
     }
@@ -150,9 +151,13 @@ function extractPolygons(placemark) {
 function addPlacemarkFeatures(kmlLayer, featureData) {
   let featureCount = 0;
 
-  // 添加点
-  featureData.points.forEach(coords => {
-    kmlLayer.addData(createFeatureData(featureData.name, featureData.description, 'Point', coords));
+  // 添加点（同时附带原始WGS84坐标用于弹窗展示）
+  featureData.points.forEach(point => {
+    const coordinates = Array.isArray(point) ? point : point.gcj02;
+    const wgs84LatLng = Array.isArray(point) ? null : point.wgs84;
+    kmlLayer.addData(
+      createFeatureData(featureData.name, featureData.description, 'Point', coordinates, wgs84LatLng)
+    );
     featureCount++;
   });
 
@@ -171,12 +176,42 @@ function addPlacemarkFeatures(kmlLayer, featureData) {
   return featureCount;
 }
 
+function formatWgs84(feature) {
+  const lat = feature?.properties?.wgs84_lat;
+  const lng = feature?.properties?.wgs84_lng;
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  }
+  return '';
+}
+
 function createPopupContent(feature, kmlFile) {
+  const wgs84Text = formatWgs84(feature);
+  // 计算外链URL
+  let wgsLat = feature?.properties?.wgs84_lat;
+  let wgsLng = feature?.properties?.wgs84_lng;
+  let amapLng = null, amapLat = null, bmapLng = null, bmapLat = null;
+  if (typeof wgsLat === 'number' && typeof wgsLng === 'number') {
+    const [gcjLng, gcjLat] = wgs84ToGcj02(wgsLng, wgsLat);
+    [amapLng, amapLat] = [gcjLng, gcjLat];
+    [bmapLng, bmapLat] = gcj02ToBd09(gcjLng, gcjLat);
+  }
+  const amapUrl = (amapLng && amapLat)
+    ? `https://uri.amap.com/marker?position=${amapLng.toFixed(6)},${amapLat.toFixed(6)}&name=${encodeURIComponent(feature.properties.name || '')}`
+    : '';
+  const bmapUrl = (bmapLng && bmapLat)
+    ? `https://api.map.baidu.com/marker?location=${bmapLat.toFixed(6)},${bmapLng.toFixed(6)}&title=${encodeURIComponent(feature.properties.name || '')}&content=${encodeURIComponent(kmlFile.title || '')}&coord_type=bd09ll&output=html`
+    : '';
   return `
-    <div style="max-width: 200px;">
+    <div style="max-width: 240px;">
       ${feature.properties.name ? `<h4 style="margin: 0 0 8px 0;">${feature.properties.name}</h4>` : ''}
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">来源: ${kmlFile.title}</p>
-      ${feature.properties.description ? `<div style="font-size: 12px;">${feature.properties.description}</div>` : ''}
+      ${wgs84Text ? `<p style=\"margin: 0 0 4px 0; font-size: 12px;\">经纬度(WGS84): ${wgs84Text}</p>` : ''}
+      ${kmlFile?.description ? `<div style=\"font-size: 12px;\">备注：${kmlFile.description}</div>` : ''}
+      ${(amapUrl || bmapUrl) ? `<div style=\"margin-top: 8px; display: flex; gap: 8px;\">
+        ${amapUrl ? `<a href=\"${amapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#409eff;color:#fff;border-radius:3px;text-decoration:none;\">在高德地图打开</a>` : ''}
+        ${bmapUrl ? `<a href=\"${bmapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#67c23a;color:#fff;border-radius:3px;text-decoration:none;\">在百度地图打开</a>` : ''}
+      </div>` : ''}
     </div>
   `;
 }

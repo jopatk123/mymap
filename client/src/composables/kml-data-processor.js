@@ -45,8 +45,8 @@ export function extractCoordinatesFromText(coordinatesText) {
   }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
 }
 
-export function createFeatureData(name, description, geometryType, coordinates) {
-  return {
+export function createFeatureData(name, description, geometryType, coordinates, wgs84LatLng = null) {
+  const feature = {
     type: 'Feature',
     properties: {
       name: name || '未命名要素',
@@ -57,4 +57,13 @@ export function createFeatureData(name, description, geometryType, coordinates) 
       coordinates: coordinates
     }
   };
+
+  // 附带原始WGS84坐标（用于弹窗展示），仅对点要素有意义
+  if (geometryType === 'Point' && wgs84LatLng &&
+      typeof wgs84LatLng.lat === 'number' && typeof wgs84LatLng.lng === 'number') {
+    feature.properties.wgs84_lat = wgs84LatLng.lat;
+    feature.properties.wgs84_lng = wgs84LatLng.lng;
+  }
+
+  return feature;
 }

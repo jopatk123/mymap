@@ -129,6 +129,49 @@ export function convertCoordinate(lng, lat, from, to) {
 }
 
 /**
+ * GCJ02 转 BD09
+ * @param {number} lng
+ * @param {number} lat
+ * @returns {Array} [lng, lat]
+ */
+export function gcj02ToBd09(lng, lat) {
+  const x = lng
+  const y = lat
+  const z = Math.sqrt(x * x + y * y) + 0.00002 * Math.sin(y * PI)
+  const theta = Math.atan2(y, x) + 0.000003 * Math.cos(x * PI)
+  const bdLng = z * Math.cos(theta) + 0.0065
+  const bdLat = z * Math.sin(theta) + 0.006
+  return [bdLng, bdLat]
+}
+
+/**
+ * BD09 转 GCJ02
+ * @param {number} lng
+ * @param {number} lat
+ * @returns {Array} [lng, lat]
+ */
+export function bd09ToGcj02(lng, lat) {
+  const x = lng - 0.0065
+  const y = lat - 0.006
+  const z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * PI)
+  const theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * PI)
+  const ggLng = z * Math.cos(theta)
+  const ggLat = z * Math.sin(theta)
+  return [ggLng, ggLat]
+}
+
+/**
+ * WGS84 转 BD09（组合转换）
+ * @param {number} lng
+ * @param {number} lat
+ * @returns {Array} [lng, lat]
+ */
+export function wgs84ToBd09(lng, lat) {
+  const [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat)
+  return gcj02ToBd09(gcjLng, gcjLat)
+}
+
+/**
  * 获取点位的显示坐标（适配高德地图瓦片）
  * 高德地图瓦片期望GCJ02坐标系
  * 优先使用WGS84原始坐标，统一转换为GCJ02显示坐标
@@ -155,6 +198,9 @@ export function getDisplayCoordinates(point) {
 export default {
   wgs84ToGcj02,
   gcj02ToWgs84,
+  gcj02ToBd09,
+  bd09ToGcj02,
+  wgs84ToBd09,
   convertCoordinate,
   getDisplayCoordinates,
   isInChina

@@ -1,3 +1,4 @@
+import { wgs84ToGcj02, gcj02ToBd09 } from '@/utils/coordinate-transform.js';
 import L from 'leaflet';
 import StyleRenderer from '@/services/style-renderer.js';
 import { createPointIcon } from './kml-icon-factory.js';
@@ -75,7 +76,7 @@ function processPointData(point) {
     const coords = processCoordinates(point);
     if (!coords) return null;
 
-    return {
+    const feature = {
       type: 'Feature',
       properties: {
         name: point.name || '未命名地标',
@@ -86,6 +87,14 @@ function processPointData(point) {
         coordinates: [coords.lng, coords.lat]
       }
     };
+
+    // 如果服务端提供原始WGS84坐标，附带到属性中用于弹窗展示
+    if (point.latitude != null && point.longitude != null && !isNaN(point.latitude) && !isNaN(point.longitude)) {
+      feature.properties.wgs84_lat = Number(point.latitude);
+      feature.properties.wgs84_lng = Number(point.longitude);
+    }
+
+    return feature;
   } else if (point.point_type === 'LineString' && point.coordinates && point.coordinates.points) {
     const lineCoords = processCoordinates(point.coordinates.points);
     if (!lineCoords || lineCoords.length <= 1) return null;
@@ -121,12 +130,42 @@ function processPointData(point) {
   return null;
 }
 
+function formatWgs84(feature) {
+  const lat = feature?.properties?.wgs84_lat;
+  const lng = feature?.properties?.wgs84_lng;
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  }
+  return '';
+}
+
 function createPopupContent(feature, kmlFile) {
+  const wgs84Text = formatWgs84(feature);
+  // 计算外链URL
+  let wgsLat = feature?.properties?.wgs84_lat;
+  let wgsLng = feature?.properties?.wgs84_lng;
+  let amapLng = null, amapLat = null, bmapLng = null, bmapLat = null;
+  if (typeof wgsLat === 'number' && typeof wgsLng === 'number') {
+    const [gcjLng, gcjLat] = wgs84ToGcj02(wgsLng, wgsLat);
+    [amapLng, amapLat] = [gcjLng, gcjLat];
+    [bmapLng, bmapLat] = gcj02ToBd09(gcjLng, gcjLat);
+  }
+  const amapUrl = (amapLng && amapLat)
+    ? `https://uri.amap.com/marker?position=${amapLng.toFixed(6)},${amapLat.toFixed(6)}&name=${encodeURIComponent(feature.properties.name || '')}`
+    : '';
+  const bmapUrl = (bmapLng && bmapLat)
+    ? `https://api.map.baidu.com/marker?location=${bmapLat.toFixed(6)},${bmapLng.toFixed(6)}&title=${encodeURIComponent(feature.properties.name || '')}&content=${encodeURIComponent(kmlFile.title || '')}&coord_type=bd09ll&output=html`
+    : '';
   return `
-    <div style="max-width: 200px;">
+    <div style="max-width: 240px;">
       ${feature.properties.name ? `<h4 style="margin: 0 0 8px 0;">${feature.properties.name}</h4>` : ''}
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">来源: ${kmlFile.title}</p>
-      ${feature.properties.description ? `<div style="font-size: 12px;">${feature.properties.description}</div>` : ''}
+      ${wgs84Text ? `<p style=\"margin: 0 0 4px 0; font-size: 12px;\">经纬度(WGS84): ${wgs84Text}</p>` : ''}
+      ${kmlFile?.description ? `<div style=\"font-size: 12px;\">备注：${kmlFile.description}</div>` : ''}
+      ${(amapUrl || bmapUrl) ? `<div style=\"margin-top: 8px; display: flex; gap: 8px;\">
+        ${amapUrl ? `<a href=\"${amapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#409eff;color:#fff;border-radius:3px;text-decoration:none;\">在高德地图打开</a>` : ''}
+        ${bmapUrl ? `<a href=\"${bmapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#67c23a;color:#fff;border-radius:3px;text-decoration:none;\">在百度地图打开</a>` : ''}
+      </div>` : ''}
     </div>
   `;
 }
