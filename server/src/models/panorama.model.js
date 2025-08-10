@@ -167,54 +167,102 @@ class PanoramaModel {
   
   // 更新全景图
   static async update(id, panoramaData) {
-    const {
-      title,
-      description,
-      imageUrl,
-      thumbnailUrl,
-      latitude,
-      longitude,
-      gcj02Lat,
-      gcj02Lng,
-      folderId,
-      isVisible,
-      sortOrder
-    } = panoramaData
-    
-    const sql = `
-      UPDATE panoramas SET
-        title = ?,
-        description = ?,
-        image_url = ?,
-        thumbnail_url = ?,
-        latitude = ?,
-        longitude = ?,
-        gcj02_lat = ?,
-        gcj02_lng = ?,
-        folder_id = ?,
-        is_visible = ?,
-        sort_order = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `
-    
-    const params = [
-      title,
-      description || null,
-      imageUrl,
-      thumbnailUrl || null,
-      latitude,
-      longitude,
-      gcj02Lat || null,
-      gcj02Lng || null,
-      folderId || null,
-      isVisible !== undefined ? isVisible : true,
-      sortOrder !== undefined ? sortOrder : 0,
-      id
-    ]
-    
+    // 调试：更新前记录
+    const before = await this.findById(id)
+    if (!before) return null
+
+    const updates = []
+    const params = []
+
+    // 简单字段
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'title')) {
+      updates.push('title = ?')
+      params.push(panoramaData.title)
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'description')) {
+      updates.push('description = ?')
+      params.push(panoramaData.description || null)
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'imageUrl')) {
+      updates.push('image_url = ?')
+      params.push(panoramaData.imageUrl)
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'thumbnailUrl')) {
+      updates.push('thumbnail_url = ?')
+      params.push(panoramaData.thumbnailUrl || null)
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'folderId')) {
+      // 仅当提供的 folderId 非 null/undefined 时才更新，避免误将归属清空
+      if (panoramaData.folderId !== null && panoramaData.folderId !== undefined) {
+        updates.push('folder_id = ?')
+        params.push(panoramaData.folderId)
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'isVisible')) {
+      updates.push('is_visible = ?')
+      params.push(Boolean(panoramaData.isVisible))
+    }
+    if (Object.prototype.hasOwnProperty.call(panoramaData, 'sortOrder')) {
+      updates.push('sort_order = ?')
+      params.push(parseInt(panoramaData.sortOrder) || 0)
+    }
+
+    // 坐标相关：若提供lat或lng，需更新latitude/longitude及gcj02
+    const hasLat = Object.prototype.hasOwnProperty.call(panoramaData, 'latitude') || Object.prototype.hasOwnProperty.call(panoramaData, 'lat')
+    const hasLng = Object.prototype.hasOwnProperty.call(panoramaData, 'longitude') || Object.prototype.hasOwnProperty.call(panoramaData, 'lng')
+    if (hasLat || hasLng) {
+      // 读取当前以补全缺失一侧
+      const current = await this.findById(id)
+      if (!current) return null
+
+      const latitude = Object.prototype.hasOwnProperty.call(panoramaData, 'latitude')
+        ? panoramaData.latitude
+        : (Object.prototype.hasOwnProperty.call(panoramaData, 'lat') ? panoramaData.lat : current.latitude)
+      const longitude = Object.prototype.hasOwnProperty.call(panoramaData, 'longitude')
+        ? panoramaData.longitude
+        : (Object.prototype.hasOwnProperty.call(panoramaData, 'lng') ? panoramaData.lng : current.longitude)
+
+      updates.push('latitude = ?')
+      params.push(latitude)
+      updates.push('longitude = ?')
+      params.push(longitude)
+
+      try {
+        const { wgs84ToGcj02 } = require('../utils/coordinate')
+        const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude)
+        updates.push('gcj02_lat = ?')
+        params.push(gcj02Lat || null)
+        updates.push('gcj02_lng = ?')
+        params.push(gcj02Lng || null)
+      } catch (e) {
+        // 如果转换失败，保持为NULL
+        updates.push('gcj02_lat = ?')
+        params.push(null)
+        updates.push('gcj02_lng = ?')
+        params.push(null)
+      }
+    }
+
+    if (updates.length === 0) {
+      // 无更新字段，直接返回当前
+      return await this.findById(id)
+    }
+
+    const sql = `UPDATE panoramas SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+    params.push(id)
     await SQLiteAdapter.execute(sql, params)
-    return await this.findById(id)
+    const after = await this.findById(id)
+    try {
+      const keys = ['id','folder_id','title','description','image_url','thumbnail_url','latitude','longitude','gcj02_lat','gcj02_lng','is_visible','sort_order','updated_at']
+      const pick = (obj) => { const out = {}; keys.forEach(k => out[k] = obj ? obj[k] : undefined); return out }
+      const beforePicked = pick(before)
+      const afterPicked = pick(after)
+      const changed = {}
+      keys.forEach(k => { if (beforePicked[k] !== afterPicked[k]) changed[k] = { before: beforePicked[k], after: afterPicked[k] } })
+      // eslint-disable-next-line no-console
+      console.log('[PanoramaModel.update] id=%s before=%o after=%o changedKeys=%o diff=%o', id, beforePicked, afterPicked, Object.keys(changed), changed)
+    } catch (_) {}
+    return after
   }
   
   // 删除全景图

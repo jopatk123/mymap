@@ -282,7 +282,7 @@ class FolderController {
         page: parseInt(page),
         pageSize: parseInt(pageSize),
         keyword,
-        folderId: folderId === '0' ? null : (parseInt(folderId) || null), // 修复folderId处理
+        folderId: folderId === '0' ? 0 : (parseInt(folderId) || null),
         includeHidden: includeHidden === 'true'
       }
 

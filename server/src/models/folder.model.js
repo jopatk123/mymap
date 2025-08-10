@@ -122,9 +122,15 @@ class FolderModel {
 
   // 获取文件夹中的全景图数量
   static async getPanoramaCount(folderId) {
-    const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?'
-    const [{ count }] = await SQLiteAdapter.all(sql, [folderId])
-    return count
+    if (folderId === 0 || folderId === '0') {
+      const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id IS NULL'
+      const [{ count }] = await SQLiteAdapter.all(sql, [])
+      return count
+    } else {
+      const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?'
+      const [{ count }] = await SQLiteAdapter.all(sql, [folderId])
+      return count
+    }
   }
 
   // 获取文件夹中的视频点位数量

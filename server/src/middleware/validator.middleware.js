@@ -56,6 +56,13 @@ const updatePanoramaSchema = Joi.object({
     'string.max': '标题不能超过255个字符'
   }),
   
+  // 允许透传 folderId（可选），避免在更新其他字段时丢失归属
+  folderId: Joi.number().integer().min(0).allow(null).messages({
+    'number.base': 'folderId 必须是数字',
+    'number.integer': 'folderId 必须是整数',
+    'number.min': 'folderId 不能小于 0'
+  }),
+  
   description: Joi.string().max(1000).allow('', null).messages({
     'string.max': '描述不能超过1000个字符'
   }),

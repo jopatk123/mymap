@@ -35,7 +35,7 @@ class PanoramaMutationController {
   static async updatePanorama(req, res) {
     try {
       const { id } = req.params
-      const { title, description, lat, lng, imageUrl, thumbnailUrl } = req.body
+      const { title, description, lat, lng, imageUrl, thumbnailUrl, folderId, isVisible, sortOrder } = req.body
       if (!id || isNaN(id)) {
         return res.status(400).json(errorResponse('无效的全景图ID'))
       }
@@ -44,6 +44,9 @@ class PanoramaMutationController {
       if (description !== undefined) panoramaData.description = description
       if (imageUrl !== undefined) panoramaData.imageUrl = imageUrl
       if (thumbnailUrl !== undefined) panoramaData.thumbnailUrl = thumbnailUrl
+      if (folderId !== undefined) panoramaData.folderId = folderId
+      if (isVisible !== undefined) panoramaData.isVisible = isVisible
+      if (sortOrder !== undefined) panoramaData.sortOrder = sortOrder
       if (lat !== undefined && lng !== undefined) {
         panoramaData.lat = parseFloat(lat)
         panoramaData.lng = parseFloat(lng)

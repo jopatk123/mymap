@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="编辑全景图"
+    :title="dialogTitle"
     width="600px"
     @close="handleClose"
     destroy-on-close
@@ -15,7 +15,7 @@
       <el-form-item label="标题" prop="title">
         <el-input
           v-model="form.title"
-          placeholder="请输入全景图标题"
+          placeholder="请输入标题"
           maxlength="100"
           show-word-limit
         />
@@ -26,13 +26,13 @@
           v-model="form.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入全景图描述"
+          placeholder="请输入描述"
           maxlength="500"
           show-word-limit
         />
       </el-form-item>
       
-      <el-form-item label="坐标" prop="coordinate">
+      <el-form-item v-if="showCoordinate" label="坐标">
         <div class="coordinate-input">
           <el-input
             v-model="form.lat"
@@ -47,25 +47,6 @@
             type="number"
             step="0.000001"
           />
-          <el-button @click="getCurrentLocation" :loading="locating" type="info">
-            <el-icon><Location /></el-icon>
-            定位
-          </el-button>
-        </div>
-      </el-form-item>
-      
-      <el-form-item label="图片URL" prop="imageUrl">
-        <el-input
-          v-model="form.imageUrl"
-          placeholder="全景图URL"
-          readonly
-        />
-      </el-form-item>
-      
-      <!-- 预览 -->
-      <el-form-item v-if="form.imageUrl" label="预览">
-        <div class="preview-container">
-          <img :src="form.imageUrl" alt="预览" class="preview-image" />
         </div>
       </el-form-item>
     </el-form>
@@ -88,15 +69,16 @@
 <script setup>
 import { ref, computed, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Location } from '@element-plus/icons-vue'
-import { usePanoramaStore } from '@/store/panorama.js'
+import { updatePanorama, getPanoramaById } from '@/api/panorama.js'
+import { videoApi } from '@/api/video.js'
+import { kmlApi } from '@/api/kml.js'
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
   },
-  panorama: {
+  file: {
     type: Object,
     default: null
   }
@@ -112,102 +94,86 @@ const visible = computed({
 // 表单引用
 const formRef = ref(null)
 
-// Store
-const panoramaStore = usePanoramaStore()
-
 // 表单数据
 const form = reactive({
   title: '',
   description: '',
   lat: '',
-  lng: '',
-  imageUrl: '',
-  thumbnailUrl: ''
+  lng: ''
 })
 
-// 表单验证规则
-const rules = {
-  title: [
-    { required: true, message: '请输入标题', trigger: 'blur' },
-    { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
-  ],
-  lat: [
-    { required: true, message: '请输入纬度', trigger: 'blur' },
-    { 
-      validator: (rule, value, callback) => {
-        const lat = parseFloat(value)
-        if (isNaN(lat) || lat < -90 || lat > 90) {
-          callback(new Error('纬度必须在 -90 到 90 之间'))
-        } else {
-          callback()
-        }
-      }, 
-      trigger: 'blur' 
-    }
-  ],
-  lng: [
-    { required: true, message: '请输入经度', trigger: 'blur' },
-    { 
-      validator: (rule, value, callback) => {
-        const lng = parseFloat(value)
-        if (isNaN(lng) || lng < -180 || lng > 180) {
-          callback(new Error('经度必须在 -180 到 180 之间'))
-        } else {
-          callback()
-        }
-      }, 
-      trigger: 'blur' 
-    }
-  ]
-}
+// 表单验证规则（根据文件类型动态变化）
+const rules = computed(() => {
+  const base = {
+    title: [
+      { required: true, message: '请输入标题', trigger: 'blur' },
+      { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
+    ]
+  }
+  if (showCoordinate.value) {
+    base.lat = [
+      { required: true, message: '请输入纬度', trigger: 'blur' },
+      { 
+        validator: (rule, value, callback) => {
+          const lat = parseFloat(value)
+          if (isNaN(lat) || lat < -90 || lat > 90) {
+            callback(new Error('纬度必须在 -90 到 90 之间'))
+          } else {
+            callback()
+          }
+        }, 
+        trigger: 'blur' 
+      }
+    ]
+    base.lng = [
+      { required: true, message: '请输入经度', trigger: 'blur' },
+      { 
+        validator: (rule, value, callback) => {
+          const lng = parseFloat(value)
+          if (isNaN(lng) || lng < -180 || lng > 180) {
+            callback(new Error('经度必须在 -180 到 180 之间'))
+          } else {
+            callback()
+          }
+        }, 
+        trigger: 'blur' 
+      }
+    ]
+  }
+  return base
+})
 
 // 状态
 const submitting = ref(false)
-const locating = ref(false)
 
-// 监听全景图数据变化
-watch(() => props.panorama, (newPanorama) => {
-  if (newPanorama) {
-    form.title = newPanorama.title || ''
-    form.description = newPanorama.description || ''
-    form.lat = newPanorama.lat?.toString() || ''
-    form.lng = newPanorama.lng?.toString() || ''
-    form.imageUrl = newPanorama.imageUrl || ''
-    form.thumbnailUrl = newPanorama.thumbnailUrl || ''
+// 计算类型与标题
+const fileType = computed(() => props.file?.fileType || props.file?.type || '')
+const isPanorama = computed(() => fileType.value === 'panorama')
+const isVideo = computed(() => fileType.value === 'video')
+const isKml = computed(() => fileType.value === 'kml')
+const showCoordinate = computed(() => isPanorama.value || isVideo.value)
+const dialogTitle = computed(() => {
+  if (isPanorama.value) return '编辑全景图'
+  if (isVideo.value) return '编辑视频点位'
+  if (isKml.value) return '编辑KML文件'
+  return '编辑文件'
+})
+
+// 同步文件到表单
+watch(() => props.file, (newFile) => {
+  if (newFile) {
+    form.title = newFile.title || ''
+    form.description = newFile.description || ''
+    const lat = newFile.lat ?? newFile.latitude
+    const lng = newFile.lng ?? newFile.longitude
+    form.lat = lat != null ? String(lat) : ''
+    form.lng = lng != null ? String(lng) : ''
   }
 }, { immediate: true })
 
-// 获取当前位置
-const getCurrentLocation = () => {
-  if (!navigator.geolocation) {
-    ElMessage.warning('浏览器不支持地理定位')
-    return
-  }
-  
-  locating.value = true
-  
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      form.lat = position.coords.latitude.toFixed(6)
-      form.lng = position.coords.longitude.toFixed(6)
-      locating.value = false
-      ElMessage.success('定位成功')
-    },
-    (error) => {
-      locating.value = false
-      ElMessage.error('定位失败，请手动输入坐标')
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000
-    }
-  )
-}
-
 // 提交表单
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value || !props.file?.id) return
   
   try {
     // 表单验证
@@ -215,15 +181,58 @@ const handleSubmit = async () => {
     
     submitting.value = true
     
-    // 更新全景图
-    await panoramaStore.updatePanoramaAsync(props.panorama.id, {
-      title: form.title,
-      description: form.description,
-      lat: parseFloat(form.lat),
-      lng: parseFloat(form.lng),
-      imageUrl: form.imageUrl,
-      thumbnailUrl: form.thumbnailUrl
-    })
+    // 根据文件类型调用对应更新API
+    if (isPanorama.value) {
+      const origin = window.location?.origin || ''
+      const makeAbsolute = (url) => {
+        if (!url) return undefined
+        return url.startsWith('http://') || url.startsWith('https://') ? url : (origin ? origin + url : undefined)
+      }
+      const payload = {
+        title: form.title,
+        description: form.description,
+        lat: parseFloat(form.lat),
+        lng: parseFloat(form.lng),
+        imageUrl: makeAbsolute(props.file.imageUrl),
+        thumbnailUrl: makeAbsolute(props.file.thumbnailUrl)
+      }
+      // 传递当前 folderId，避免后端可能的空值覆盖
+      const currentFolderId = props.file.folder_id ?? props.file.folderId
+      if (currentFolderId !== undefined) {
+        payload.folderId = currentFolderId
+      }
+      // 前后对比日志（前端）
+      try {
+        // eslint-disable-next-line no-console
+        console.groupCollapsed('[EditDialog] Panorama save')
+        // eslint-disable-next-line no-console
+        console.log('Before (props.file):', props.file)
+        // eslint-disable-next-line no-console
+        console.log('Payload:', payload)
+      } catch (_) {}
+      await updatePanorama(props.file.id, payload)
+      try {
+        const afterResp = await getPanoramaById(props.file.id)
+        // eslint-disable-next-line no-console
+        console.log('After (server fetch):', afterResp)
+        // eslint-disable-next-line no-console
+        console.groupEnd()
+      } catch (_) {}
+    } else if (isVideo.value) {
+      await videoApi.updateVideoPoint(props.file.id, {
+        title: form.title,
+        description: form.description,
+        latitude: parseFloat(form.lat),
+        longitude: parseFloat(form.lng)
+      })
+    } else if (isKml.value) {
+      await kmlApi.updateKmlFile(props.file.id, {
+        title: form.title,
+        description: form.description
+      })
+    } else {
+      throw new Error('未知文件类型，无法更新')
+    }
     
     ElMessage.success('更新成功')
     emit('success')
@@ -252,8 +261,6 @@ const resetForm = () => {
   form.description = ''
   form.lat = ''
   form.lng = ''
-  form.imageUrl = ''
-  form.thumbnailUrl = ''
 }
 </script>
 
@@ -270,20 +277,6 @@ const resetForm = () => {
   .separator {
     color: #909399;
     font-weight: 500;
-  }
-}
-
-.preview-container {
-  width: 100%;
-  max-height: 200px;
-  overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid #dcdfe6;
-  
-  .preview-image {
-    width: 100%;
-    height: auto;
-    display: block;
   }
 }
 

@@ -29,6 +29,20 @@ class PanoramaMutationService {
   static async updatePanorama(id, updateData) {
     try {
       const mapped = { ...updateData }
+      // 读取当前记录，确保未提供时保留关键归属/状态字段
+      const current = await PanoramaModel.findById(parseInt(id))
+      if (!current) {
+        throw new Error('全景图不存在')
+      }
+      if (!Object.prototype.hasOwnProperty.call(mapped, 'folderId')) {
+        mapped.folderId = current.folder_id
+      }
+      if (!Object.prototype.hasOwnProperty.call(mapped, 'isVisible')) {
+        mapped.isVisible = current.is_visible
+      }
+      if (!Object.prototype.hasOwnProperty.call(mapped, 'sortOrder')) {
+        mapped.sortOrder = current.sort_order
+      }
       if (Object.prototype.hasOwnProperty.call(mapped, 'lat')) {
         mapped.latitude = mapped.lat
         delete mapped.lat
@@ -37,6 +51,12 @@ class PanoramaMutationService {
         mapped.longitude = mapped.lng
         delete mapped.lng
       }
+      // 调试：记录入参关键字段
+      try {
+        const debugKeys = Object.keys(mapped)
+        // eslint-disable-next-line no-console
+        console.log('[PanoramaMutationService.updatePanorama] id=%s keys=%o', id, debugKeys)
+      } catch (_) {}
       const panorama = await PanoramaModel.update(id, mapped)
       if (!panorama) {
         throw new Error('全景图不存在')
