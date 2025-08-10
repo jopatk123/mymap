@@ -1,6 +1,6 @@
 const PanoramaModel = require('../models/panorama.model')
-const VideoPointModel = require('../models/videoPoint.model')
-const KmlFileModel = require('../models/kmlFile.model')
+const VideoPointModel = require('../models/video-point.model')
+const KmlFileModel = require('../models/kml-file.model')
 const FolderModel = require('../models/folder.model')
 const Logger = require('../utils/logger')
 

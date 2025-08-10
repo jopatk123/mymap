@@ -1,4 +1,4 @@
-const KmlPointModel = require('../models/kmlPoint.model')
+const KmlPointModel = require('../models/kml-point.model')
 const Logger = require('../utils/logger')
 
 class KmlPointQueryController {

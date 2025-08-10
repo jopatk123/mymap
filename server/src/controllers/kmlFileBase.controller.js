@@ -1,5 +1,5 @@
-const KmlFileModel = require('../models/kmlFile.model')
-const KmlPointModel = require('../models/kmlPoint.model')
+const KmlFileModel = require('../models/kml-file.model')
+const KmlPointModel = require('../models/kml-point.model')
 const kmlParserService = require('../services/kmlParser.service')
 const KmlFileUtils = require('../utils/kmlFileUtils')
 const Logger = require('../utils/logger')

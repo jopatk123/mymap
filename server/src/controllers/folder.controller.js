@@ -309,7 +309,7 @@ class FolderController {
 
       if (fileType === 'all' || fileType === 'video') {
         try {
-          const VideoPointModel = require('../models/videoPoint.model')
+          const VideoPointModel = require('../models/video-point.model')
           const videoResult = await VideoPointModel.findAll(searchParams)
           const videosWithType = videoResult.data.map(item => ({
             ...item,
@@ -327,7 +327,7 @@ class FolderController {
 
       if (fileType === 'all' || fileType === 'kml') {
         try {
-          const KmlFileModel = require('../models/kmlFile.model')
+          const KmlFileModel = require('../models/kml-file.model')
           const kmlResult = await KmlFileModel.findAll(searchParams)
           const kmlsWithType = kmlResult.data.map(item => ({
             ...item,

@@ -1,4 +1,4 @@
-const KmlFileModel = require('../models/kmlFile.model')
+const KmlFileModel = require('../models/kml-file.model')
 const ConfigService = require('../services/ConfigService')
 const Logger = require('../utils/logger')
 

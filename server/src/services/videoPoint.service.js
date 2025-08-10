@@ -1,4 +1,4 @@
-const VideoPointModel = require('../models/videoPoint.model')
+const VideoPointModel = require('../models/video-point.model')
 const path = require('path')
 const fs = require('fs').promises
 const Logger = require('../utils/logger')
