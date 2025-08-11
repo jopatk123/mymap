@@ -23,6 +23,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import L from 'leaflet'
 import { ElMessage } from 'element-plus'
 import { useMap } from '@/composables/use-map.js'
 import { useAppStore } from '@/store/app.js'
@@ -66,6 +67,29 @@ const {
   fitBounds,
   onMarkerClick
 } = useMap('map')
+
+// 搜索结果临时标记
+let searchMarker = null
+
+const setSearchMarker = (lat, lng, label = '搜索位置') => {
+  if (!map.value) return
+  if (searchMarker) {
+    try { map.value.removeLayer(searchMarker) } catch (_) {}
+    searchMarker = null
+  }
+  searchMarker = L.marker([lat, lng], { title: label })
+  searchMarker.addTo(map.value)
+  if (label) {
+    searchMarker.bindPopup(label, { autoClose: true, closeOnClick: true }).openPopup()
+  }
+}
+
+const clearSearchMarker = () => {
+  if (map.value && searchMarker) {
+    try { map.value.removeLayer(searchMarker) } catch (_) {}
+  }
+  searchMarker = null
+}
 
 // 样式更新处理函数
 const handleStyleUpdate = (data) => {
@@ -216,7 +240,9 @@ defineExpose({
   addPointMarkers,
   addKmlLayers,
   clearMarkers,
-  clearKmlLayers
+  clearKmlLayers,
+  setSearchMarker,
+  clearSearchMarker
 })
 </script>
 

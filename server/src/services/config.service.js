@@ -168,7 +168,7 @@ class ConfigService {
           point_color: "#ff7800",
           point_size: 8,
           point_opacity: 1.0,
-          point_label_size: 12,
+          point_label_size: 0,
           point_label_color: "#000000",
           line_color: "#ff7800",
           line_width: 2,
@@ -181,7 +181,7 @@ class ConfigService {
           polygon_stroke_style: "solid",
           // KML图层聚合默认关闭
           cluster_enabled: false,
-          cluster_color: "#ff7800"
+          cluster_color: "#00ff00"
         }
       },
       mapSettings: {

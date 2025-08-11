@@ -107,7 +107,7 @@ const props = defineProps({
       color: '#ff7800',
       size: 8,
       opacity: 1.0,
-      labelSize: 12,
+      labelSize: 0,
       labelColor: '#000000'
     })
   }
@@ -120,10 +120,10 @@ const localStyles = reactive({
   color: '#ff7800',
   size: 8,
   opacity: 1.0,
-  labelSize: 12,
+  labelSize: 0,
     labelColor: '#000000',
     clusterEnabled: false,
-    clusterColor: '#ff7800'
+    clusterColor: '#00ff00'
 })
 
 // 用于颜色选择器的计算属性

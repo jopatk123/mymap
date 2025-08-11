@@ -38,7 +38,9 @@ defineExpose({
   addPanoramaMarkers: (panoramas) => mapRef.value?.addPanoramaMarkers(panoramas),
   addPointMarkers: (points) => mapRef.value?.addPointMarkers(points),
   addKmlLayers: (kmlFiles) => mapRef.value?.addKmlLayers(kmlFiles),
-  clearKmlLayers: () => mapRef.value?.clearKmlLayers()
+    clearKmlLayers: () => mapRef.value?.clearKmlLayers(),
+    setSearchMarker: (lat, lng, label) => mapRef.value?.setSearchMarker(lat, lng, label),
+    clearSearchMarker: () => mapRef.value?.clearSearchMarker()
 })
 </script>
 

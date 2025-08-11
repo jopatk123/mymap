@@ -21,6 +21,7 @@
       @toggle-sidebar="toggleSidebar"
       @update:search-params="Object.assign(searchParams, $event)"
       @search="handleSearch"
+      @locate="handleLocate"
 
       @select-panorama="selectPanorama"
       @view-panorama="viewPanorama"
@@ -242,6 +243,14 @@ const closePanoramaViewer = () => {
 
 // 初始化生命周期
 initializeMap()
+
+// 处理地址定位
+const handleLocate = ({ lat, lng, tip }) => {
+  // 标记并居中
+  mapRef.value?.setCenter(lat, lng, 16)
+  const label = tip?.name || '搜索位置'
+  mapRef.value?.setSearchMarker?.(lat, lng, label)
+}
 </script>
 
 <style lang="scss" scoped>

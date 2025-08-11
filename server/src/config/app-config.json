@@ -46,7 +46,7 @@
       "point_color": "#ff7800",
       "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 12,
+      "point_label_size": 0,
       "point_label_color": "#000000",
       "line_color": "#ff7800",
       "line_width": 2,
@@ -58,8 +58,9 @@
       "polygon_stroke_width": 2,
       "polygon_stroke_style": "solid",
       "cluster_enabled": true,
-      "cluster_icon_color": "#ffffff",
-      "cluster_text_color": "#000000"
+      "cluster_icon_color": "#00ff00",
+      "cluster_text_color": "#000000",
+      "cluster_color": "#00ff00"
     }
   },
   "mapSettings": {

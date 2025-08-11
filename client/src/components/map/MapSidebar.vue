@@ -13,6 +13,11 @@
     </div>
     
     <div class="sidebar-content" v-show="!sidebarCollapsed">
+      <SearchFilter
+        v-model="internalSearchParams"
+        @search="onSearch"
+        @locate="onLocate"
+      />
       <PanoramaList
         :panoramas="panoramas"
         :current-panorama="currentPanorama"
@@ -29,10 +34,12 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import { Expand, Fold } from '@element-plus/icons-vue'
 import PanoramaList from '@/components/map/PanoramaList.vue'
+import SearchFilter from '@/components/map/SearchFilter.vue'
 
-defineProps({
+const props = defineProps({
   panoramas: {
     type: Array,
     default: () => []
@@ -40,6 +47,10 @@ defineProps({
   currentPanorama: {
     type: Object,
     default: null
+  },
+  searchParams: {
+    type: Object,
+    default: () => ({ keyword: '' })
   },
   sidebarCollapsed: {
     type: Boolean,
@@ -59,8 +70,11 @@ defineProps({
   }
 })
 
-defineEmits([
+const emit = defineEmits([
   'toggle-sidebar',
+  'update:search-params',
+  'search',
+  'locate',
   'select-panorama',
   'view-panorama',
   'view-video',
@@ -68,6 +82,21 @@ defineEmits([
   'load-more',
   'image-error'
 ])
+
+const internalSearchParams = ref({ keyword: '' })
+
+watch(() => props.searchParams, (val) => {
+  internalSearchParams.value = { ...(val || { keyword: '' }) }
+}, { immediate: true, deep: true })
+
+const onSearch = (params) => {
+  emit('update:search-params', params)
+  emit('search', params)
+}
+
+const onLocate = ({ lat, lng }) => {
+  emit('locate', { lat, lng })
+}
 </script>
 
 <style lang="scss" scoped>
