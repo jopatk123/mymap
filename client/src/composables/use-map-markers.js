@@ -190,11 +190,26 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   };
 
   const fitBounds = () => {
-    if (!map.value || markers.value.length === 0) return;
+    if (!map.value) return;
     
     try {
-      const validMarkers = markers.value.filter(m => m.marker && m.marker._map);
-      if (validMarkers.length === 0) return;
+      const validMarkers = markers.value.filter(m => m.marker && m.marker._map && typeof m.marker.getLatLng === 'function');
+      // 如果没有独立标记，尝试用聚合组的边界
+      if (validMarkers.length === 0) {
+        let bounds = null
+        if (videoClusterGroup && map.value.hasLayer(videoClusterGroup) && typeof videoClusterGroup.getBounds === 'function') {
+          const b = videoClusterGroup.getBounds()
+          if (b && b.isValid && b.isValid()) bounds = bounds ? bounds.extend(b) : b
+        }
+        if (panoramaClusterGroup && map.value.hasLayer(panoramaClusterGroup) && typeof panoramaClusterGroup.getBounds === 'function') {
+          const b = panoramaClusterGroup.getBounds()
+          if (b && b.isValid && b.isValid()) bounds = bounds ? bounds.extend(b) : b
+        }
+        if (bounds && bounds.isValid && bounds.isValid()) {
+          map.value.fitBounds(bounds, { padding: [20, 20] });
+        }
+        return;
+      }
       
       const group = new L.featureGroup(validMarkers.map((m) => m.marker));
       const bounds = group.getBounds();
