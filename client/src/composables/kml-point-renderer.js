@@ -14,6 +14,13 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
   const clusterGroup = useCluster
     ? L.markerClusterGroup({
         iconCreateFunction: (cluster) => createClusterIcon(clusterColor, cluster.getChildCount()),
+        chunkedLoading: true,
+        chunkInterval: 50,
+        chunkDelay: 20,
+        removeOutsideVisibleBounds: true,
+        disableClusteringAtZoom: 19,
+        spiderfyOnEveryClick: false,
+        animate: false,
       })
     : null
 
@@ -74,19 +81,19 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
 
     let featureCount = 0;
 
+    // 批量快速添加
+    const batchMarkers = []
     for (const point of points) {
       const processedFeature = processPointData(point);
       if (processedFeature) {
         if (useCluster && clusterGroup) {
           const coords = processedFeature.geometry.coordinates
           const latlng = L.latLng(coords[1], coords[0])
-
           const pointSize = effectiveStyle.point_size;
           const labelSize = Number(effectiveStyle.point_label_size);
           const pointColor = effectiveStyle.point_color;
           const labelColor = effectiveStyle.point_label_color;
           const pointOpacity = effectiveStyle.point_opacity;
-
           const iconOptions = createPointIcon(
             pointSize,
             pointColor,
@@ -96,12 +103,15 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
             processedFeature.properties?.name
           );
           const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
-          clusterGroup.addLayer(marker)
+          batchMarkers.push(marker)
         } else {
           featureGeoJson.addData(processedFeature);
         }
         featureCount++;
       }
+    }
+    if (useCluster && clusterGroup && batchMarkers.length) {
+      clusterGroup.addLayers(batchMarkers)
     }
 
     return { kmlLayer: layer, featureCount };

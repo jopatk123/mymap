@@ -45,6 +45,13 @@ function createKmlLayer(kmlFile, effectiveStyle) {
   const clusterGroup = useCluster
     ? L.markerClusterGroup({
         iconCreateFunction: (cluster) => createClusterIcon(clusterColor, cluster.getChildCount()),
+        chunkedLoading: true,
+        chunkInterval: 50,
+        chunkDelay: 20,
+        removeOutsideVisibleBounds: true,
+        disableClusteringAtZoom: 19,
+        spiderfyOnEveryClick: false,
+        animate: false,
       })
     : null
 
@@ -172,6 +179,7 @@ function addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clust
   let featureCount = 0;
 
   // 添加点（同时附带原始WGS84坐标用于弹窗展示）
+  const batchMarkers = []
   featureData.points.forEach(point => {
     const coordinates = Array.isArray(point) ? point : point.gcj02;
     const wgs84LatLng = Array.isArray(point) ? null : point.wgs84;
@@ -191,7 +199,7 @@ function addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clust
         featureData.name
       );
       const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false });
-      clusterGroup.addLayer(marker);
+      batchMarkers.push(marker)
     } else {
       featureGeoJson.addData(
         createFeatureData(featureData.name, featureData.description, 'Point', coordinates, wgs84LatLng)
@@ -199,6 +207,9 @@ function addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clust
     }
     featureCount++;
   });
+  if (useCluster && clusterGroup && batchMarkers.length) {
+    clusterGroup.addLayers(batchMarkers)
+  }
 
   // 添加线
   featureData.lineStrings.forEach(coords => {

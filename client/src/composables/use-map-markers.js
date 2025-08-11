@@ -19,13 +19,31 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
     if (type === 'video') {
       if (!videoClusterGroup) {
-        videoClusterGroup = L.markerClusterGroup({ iconCreateFunction })
+        videoClusterGroup = L.markerClusterGroup({
+          iconCreateFunction,
+          chunkedLoading: true,
+          chunkInterval: 50,
+          chunkDelay: 20,
+          removeOutsideVisibleBounds: true,
+          disableClusteringAtZoom: 19,
+          spiderfyOnEveryClick: false,
+          animate: false,
+        })
         map.value.addLayer(videoClusterGroup)
       }
       return videoClusterGroup
     } else {
       if (!panoramaClusterGroup) {
-        panoramaClusterGroup = L.markerClusterGroup({ iconCreateFunction })
+        panoramaClusterGroup = L.markerClusterGroup({
+          iconCreateFunction,
+          chunkedLoading: true,
+          chunkInterval: 50,
+          chunkDelay: 20,
+          removeOutsideVisibleBounds: true,
+          disableClusteringAtZoom: 19,
+          spiderfyOnEveryClick: false,
+          animate: false,
+        })
         map.value.addLayer(panoramaClusterGroup)
       }
       return panoramaClusterGroup
@@ -106,7 +124,56 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   };
 
   const addPointMarkers = (points) => {
-    points.forEach(addPointMarker);
+    if (!Array.isArray(points) || points.length === 0) return
+    const videoStyles = window.videoPointStyles || {}
+    const panoStyles = window.panoramaPointStyles || {}
+    const videoClusterOn = Boolean(videoStyles.cluster_enabled)
+    const panoClusterOn = Boolean(panoStyles.cluster_enabled)
+
+    // 如果两类都不开聚合，走原逻辑
+    if (!videoClusterOn && !panoClusterOn) {
+      points.forEach(addPointMarker)
+      return
+    }
+
+    const batchVideo = []
+    const batchPano = []
+
+    for (const p of points) {
+      const pointType = p.type || 'panorama'
+      const coordinates = getDisplayCoordinates(p)
+      if (!coordinates) continue
+      const [displayLng, displayLat] = coordinates
+      const marker = createPointMarker([displayLat, displayLng], pointType, {
+        title: p.title || (pointType === 'video' ? '视频点位' : '全景图'),
+        updateWhenZoom: false,
+      }, null)
+      marker.on('click', () => onMarkerClick.value(p))
+
+      const markerInfo = { id: p.id, marker, type: pointType, data: p }
+      markers.value.push(markerInfo)
+      if (!window.currentMarkers) window.currentMarkers = []
+      window.currentMarkers.push(markerInfo)
+
+      if (pointType === 'video' && videoClusterOn) {
+        batchVideo.push(marker)
+      } else if (pointType === 'panorama' && panoClusterOn) {
+        batchPano.push(marker)
+      } else {
+        marker.addTo(map.value)
+      }
+    }
+
+    if (batchVideo.length) {
+      const group = ensureClusterGroup('video')
+      group.addLayers(batchVideo)
+      ensureZoomGuards()
+    }
+    if (batchPano.length) {
+      const group = ensureClusterGroup('panorama')
+      group.addLayers(batchPano)
+      ensureZoomGuards()
+    }
   };
 
   const removeMarker = (id) => {
