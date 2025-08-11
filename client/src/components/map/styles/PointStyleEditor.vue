@@ -70,6 +70,7 @@
           <span 
             class="preview-label"
             :style="labelStyle"
+            v-show="localStyles.labelSize > 0"
           >
             示例点位
           </span>

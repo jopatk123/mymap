@@ -70,7 +70,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
 
   const styles = styleConfig ?? window.panoramaPointStyles
   const labelText = options.title || '全景图'
-  const labelSize = styles.point_label_size || 12
+  const labelSize = Number(styles.point_label_size ?? 12)
 
   if (labelSize === 0) {
     const iconHtml = getIconShapeHtml(
@@ -160,7 +160,7 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
 
   const styles = styleConfig ?? window.videoPointStyles
   const labelText = options.title || '视频点位'
-  const labelSize = styles.point_label_size || 14
+  const labelSize = Number(styles.point_label_size ?? 14)
 
   if (labelSize === 0) {
     const iconHtml = getIconShapeHtml(
