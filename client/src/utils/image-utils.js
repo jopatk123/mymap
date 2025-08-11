@@ -43,41 +43,78 @@ export function extractTitleFromFilename(filename) {
 }
 
 /**
- * 读取图片EXIF信息中的GPS坐标
+ * 读取图片EXIF/XMP信息中的GPS坐标
+ * 优先使用 exifr（更健壮，支持XMP），失败时再安全回退到 exif.js
  * @param {File} file 图片文件
  * @returns {Promise<{lat: number, lng: number} | null>}
  */
-export function extractGPSFromImage(file) {
-  return new Promise((resolve) => {
-    // 使用EXIF.js库读取GPS信息
-    if (typeof EXIF === 'undefined') {
-      console.warn('EXIF.js库未加载，无法提取GPS信息')
-      resolve(null)
-      return
-    }
-
+export async function extractGPSFromImage(file) {
+  // 1) 优先尝试 exifr（支持EXIF+XMP，兼容性更好）
+  try {
+    const { default: exifr } = await import('exifr')
     try {
-      EXIF.getData(file, function() {
-        const lat = EXIF.getTag(this, 'GPSLatitude')
-        const latRef = EXIF.getTag(this, 'GPSLatitudeRef')
-        const lng = EXIF.getTag(this, 'GPSLongitude')
-        const lngRef = EXIF.getTag(this, 'GPSLongitudeRef')
-
-        if (lat && lng && latRef && lngRef) {
-          // 转换GPS坐标格式
-          const latitude = convertDMSToDD(lat, latRef)
-          const longitude = convertDMSToDD(lng, lngRef)
-          
-          resolve({ lat: latitude, lng: longitude })
-        } else {
-          resolve(null)
+      const gps = await exifr.gps(file)
+      if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number') {
+        return {
+          lat: parseFloat(gps.latitude.toFixed(6)),
+          lng: parseFloat(gps.longitude.toFixed(6))
         }
-      })
-    } catch (error) {
-      console.warn('提取GPS信息时出错:', error)
-      resolve(null)
+      }
+    } catch (e) {
+      console.warn('exifr 解析GPS失败，将回退到 exif.js:', e?.message || e)
     }
-  })
+  } catch (e) {
+    // 动态加载失败（例如未安装），继续回退 exif.js
+    console.warn('未安装 exifr 或加载失败，将回退到 exif.js')
+  }
+
+  // 2) 回退到 exif.js，但避免其内部 FileReader 回调中的未捕获异常
+  if (typeof EXIF === 'undefined') {
+    console.warn('EXIF.js库未加载，无法提取GPS信息（且 exifr 也不可用）')
+    return null
+  }
+
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const dataView = new DataView(arrayBuffer)
+    // 直接读取二进制，避免使用 EXIF.getData(file, cb) 内部的 FileReader 逻辑
+    const tags = EXIF.readFromBinaryFile(dataView)
+
+    if (!tags) return null
+
+    // 兼容多种可能的返回字段
+    const lat = tags.GPSLatitude
+    const latRef = tags.GPSLatitudeRef
+    const lng = tags.GPSLongitude
+    const lngRef = tags.GPSLongitudeRef
+
+    let latitude = null
+    let longitude = null
+
+    if (Array.isArray(lat) && latRef) {
+      latitude = convertDMSToDD(lat, latRef)
+    } else if (typeof lat === 'number') {
+      latitude = lat
+    }
+
+    if (Array.isArray(lng) && lngRef) {
+      longitude = convertDMSToDD(lng, lngRef)
+    } else if (typeof lng === 'number') {
+      longitude = lng
+    }
+
+    if (typeof latitude === 'number' && typeof longitude === 'number') {
+      return {
+        lat: parseFloat(latitude.toFixed(6)),
+        lng: parseFloat(longitude.toFixed(6))
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.warn('使用 exif.js 读取GPS信息时出错:', error?.message || error)
+    return null
+  }
 }
 
 /**
