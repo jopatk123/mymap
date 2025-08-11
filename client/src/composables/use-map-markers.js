@@ -24,6 +24,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     idToMarker: new Map(), // id -> { marker, type }
     onMoveEnd: null,
     onZoomEnd: null,
+    onZoomStart: null,
+    isZooming: false,
+    prevInterval: null,
   }
 
   const ensureClusterGroup = (type) => {
@@ -241,7 +244,14 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   const getPaddedBounds = () => {
     const b = map.value.getBounds()
     try {
-      return b.pad(viewportState.bufferPad)
+      // 动态调整 pad：缩放级别低时减少 pad，避免窗口切换时增删过多
+      const z = typeof map.value.getZoom === 'function' ? map.value.getZoom() : null
+      let pad = viewportState.bufferPad
+      if (typeof z === 'number') {
+        if (z <= 8) pad = Math.min(pad, 0.05)
+        else if (z <= 12) pad = Math.min(pad, 0.1)
+      }
+      return b.pad(pad)
     } catch { return b }
   }
 
@@ -364,8 +374,22 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     } catch {}
 
     // 事件监听
-    viewportState.onMoveEnd = () => scheduleViewportUpdate()
-    viewportState.onZoomEnd = () => scheduleViewportUpdate()
+    viewportState.onZoomStart = () => {
+      viewportState.isZooming = true
+      // 缩放期间提高节流间隔，降低计算频率
+      viewportState.prevInterval = viewportState.updateIntervalMs
+      viewportState.updateIntervalMs = Math.max(viewportState.updateIntervalMs, 300)
+    }
+    viewportState.onMoveEnd = () => { if (!viewportState.isZooming) scheduleViewportUpdate() }
+    viewportState.onZoomEnd = () => {
+      viewportState.isZooming = false
+      if (viewportState.prevInterval != null) {
+        viewportState.updateIntervalMs = viewportState.prevInterval
+        viewportState.prevInterval = null
+      }
+      scheduleViewportUpdate()
+    }
+    map.value.on('zoomstart', viewportState.onZoomStart)
     map.value.on('moveend', viewportState.onMoveEnd)
     map.value.on('zoomend', viewportState.onZoomEnd)
 
@@ -379,8 +403,10 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     viewportState.sourcePoints = []
     if (viewportState.onMoveEnd) map.value?.off('moveend', viewportState.onMoveEnd)
     if (viewportState.onZoomEnd) map.value?.off('zoomend', viewportState.onZoomEnd)
+    if (viewportState.onZoomStart) map.value?.off('zoomstart', viewportState.onZoomStart)
     viewportState.onMoveEnd = null
     viewportState.onZoomEnd = null
+    viewportState.onZoomStart = null
     viewportState.renderedIds.clear()
     viewportState.coordCache.clear()
     viewportState.idToMarker.clear()
