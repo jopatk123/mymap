@@ -46,12 +46,60 @@ export function useKmlLayer(map, kmlLayers) {
         const { layer, clusterGroup } = renderer
         if (!layer) return null
 
-        // 维护差异集，避免 clearLayers 抖动
+        // 维护差异集与空间索引，避免 clearLayers 抖动与 O(N) 扫描
         const rendered = new Map() // id -> marker
+        const spatialIndex = new Map() // key -> { id, lat, lng, p }[]
+        const cellSizeDeg = 0.05
+        let indexBuilt = false
+
+        const getCellKey = (lng, lat) => {
+          const cx = Math.floor(lng / cellSizeDeg)
+          const cy = Math.floor(lat / cellSizeDeg)
+          return `${cx}:${cy}`
+        }
+
+        const buildSpatialIndex = () => {
+          spatialIndex.clear()
+          for (const p of points) {
+            if (!p || (p.point_type && p.point_type !== 'Point')) continue
+            const coordObj = processCoordinates(p)
+            if (!coordObj || coordObj.lat == null || coordObj.lng == null) continue
+            const { lat, lng } = coordObj
+            if (!isFinite(lat) || !isFinite(lng)) continue
+            const key = getCellKey(lng, lat)
+            let bucket = spatialIndex.get(key)
+            if (!bucket) { bucket = []; spatialIndex.set(key, bucket) }
+            bucket.push({ id: p.id, lat, lng, p })
+          }
+          indexBuilt = true
+          try { console.info('[Map] KML 空间索引构建完成', { kmlId: kmlFile.id, cells: spatialIndex.size }) } catch {}
+        }
+
+        const getCandidatesByBounds = (west, south, east, north) => {
+          const minX = Math.floor(west / cellSizeDeg)
+          const maxX = Math.floor(east / cellSizeDeg)
+          const minY = Math.floor(south / cellSizeDeg)
+          const maxY = Math.floor(north / cellSizeDeg)
+          const out = []
+          const seen = new Set()
+          for (let x = minX; x <= maxX; x++) {
+            for (let y = minY; y <= maxY; y++) {
+              const key = `${x}:${y}`
+              const bucket = spatialIndex.get(key)
+              if (!bucket || bucket.length === 0) continue
+              for (const item of bucket) {
+                if (!seen.has(item.id)) { out.push(item); seen.add(item.id) }
+              }
+            }
+          }
+          return out
+        }
+
         const addVisibleMarkers = () => {
           if (!map.value || !clusterGroup) return
           const bounds = map.value.getBounds()?.pad(VIEWPORT_PADDING)
           if (!bounds) return
+          if (!indexBuilt) buildSpatialIndex()
           const sw = bounds?._southWest
           const ne = bounds?._northEast
           if (!sw || !ne) return
@@ -59,24 +107,20 @@ export function useKmlLayer(map, kmlLayers) {
 
           const current = new Set()
           const toAdd = []
-          // 线性扫描（后续可替换为空间索引）
-          for (const p of points) {
-            if (!p || (p.point_type && p.point_type !== 'Point')) continue
-            const coordObj = processCoordinates(p)
-            if (!coordObj || coordObj.lat == null || coordObj.lng == null) continue
-            const { lat, lng } = coordObj
-            if (!isFinite(lat) || !isFinite(lng)) continue
+          const candidates = getCandidatesByBounds(west, south, east, north)
+          for (const item of candidates) {
+            const { id, lat, lng, p } = item
             if (!(lat >= south && lat <= north && lng >= west && lng <= east)) continue
-            current.add(p.id)
-            if (!rendered.has(p.id)) {
+            current.add(id)
+            if (!rendered.has(id)) {
               const pointSize = styleConfig.point_size
               const labelSize = Number(styleConfig.point_label_size)
               const pointColor = styleConfig.point_color
               const labelColor = styleConfig.point_label_color
               const pointOpacity = styleConfig.point_opacity
-              const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p.name || '')
+              const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p?.name || '')
               const marker = L.marker([lat, lng], { icon: L.divIcon(iconOptions), updateWhenZoom: false })
-              toAdd.push([p.id, marker])
+              toAdd.push([id, marker])
             }
           }
           const toRemove = []
@@ -105,6 +149,8 @@ export function useKmlLayer(map, kmlLayers) {
         map.value.on('zoomstart', onZoomStart)
         map.value.on('zoomend', onZoomEnd)
         map.value.on('moveend', onMoveEnd)
+        // 异步构建索引，避免阻塞UI
+        setTimeout(() => { try { buildSpatialIndex() } catch {} }, 0)
         kmlViewportStates.set(
           kmlFile.id,
           { enabled: true, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }

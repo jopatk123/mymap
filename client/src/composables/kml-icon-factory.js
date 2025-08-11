@@ -1,10 +1,19 @@
+// 简单图标形状缓存：按 size/color/opacity 缓存 SVG 片段，减少重复字符串构造
+const iconShapeCache = new Map() // key -> svgHtml
+
 export function createPointIcon(pointSize, pointColor, pointOpacity, labelSize = 0, labelColor = null, labelText = '') {
   const getIconShapeHtml = (size) => {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-      <path fill="${pointColor}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${pointOpacity}"/>
-      <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
-      <circle fill="${pointColor}" cx="12.5" cy="12.5" r="3" opacity="${pointOpacity}"/>
-    </svg>`;
+    const key = `${size}|${pointColor}|${pointOpacity}`
+    let cached = iconShapeCache.get(key)
+    if (!cached) {
+      cached = `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <path fill="${pointColor}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${pointOpacity}"/>
+        <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
+        <circle fill="${pointColor}" cx="12.5" cy="12.5" r="3" opacity="${pointOpacity}"/>
+      </svg>`
+      iconShapeCache.set(key, cached)
+    }
+    return cached
   };
 
   // 当字体大小为0时，不显示标签，只显示点
