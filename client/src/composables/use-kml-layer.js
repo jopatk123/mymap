@@ -46,41 +46,69 @@ export function useKmlLayer(map, kmlLayers) {
         const { layer, clusterGroup } = renderer
         if (!layer) return null
 
+        // 维护差异集，避免 clearLayers 抖动
+        const rendered = new Map() // id -> marker
         const addVisibleMarkers = () => {
           if (!map.value || !clusterGroup) return
           const bounds = map.value.getBounds()?.pad(VIEWPORT_PADDING)
           if (!bounds) return
-          const batch = []
+          const sw = bounds?._southWest
+          const ne = bounds?._northEast
+          if (!sw || !ne) return
+          const south = sw.lat, west = sw.lng, north = ne.lat, east = ne.lng
+
+          const current = new Set()
+          const toAdd = []
+          // 线性扫描（后续可替换为空间索引）
           for (const p of points) {
-            // 仅处理点要素
             if (!p || (p.point_type && p.point_type !== 'Point')) continue
-            // 使用已有坐标处理工具，兼容 latitude/longitude 或 gcj02_*
             const coordObj = processCoordinates(p)
             if (!coordObj || coordObj.lat == null || coordObj.lng == null) continue
             const { lat, lng } = coordObj
             if (!isFinite(lat) || !isFinite(lng)) continue
-            if (!bounds.contains([lat, lng])) continue
-            const pointSize = styleConfig.point_size
-            const labelSize = Number(styleConfig.point_label_size)
-            const pointColor = styleConfig.point_color
-            const labelColor = styleConfig.point_label_color
-            const pointOpacity = styleConfig.point_opacity
-            const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p.name || '')
-            const marker = L.marker([lat, lng], { icon: L.divIcon(iconOptions), updateWhenZoom: false })
-            batch.push(marker)
+            if (!(lat >= south && lat <= north && lng >= west && lng <= east)) continue
+            current.add(p.id)
+            if (!rendered.has(p.id)) {
+              const pointSize = styleConfig.point_size
+              const labelSize = Number(styleConfig.point_label_size)
+              const pointColor = styleConfig.point_color
+              const labelColor = styleConfig.point_label_color
+              const pointOpacity = styleConfig.point_opacity
+              const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p.name || '')
+              const marker = L.marker([lat, lng], { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+              toAdd.push([p.id, marker])
+            }
           }
-          clusterGroup.clearLayers()
-          if (batch.length) clusterGroup.addLayers(batch)
+          const toRemove = []
+          rendered.forEach((_, id) => { if (!current.has(id)) toRemove.push(id) })
+          // 批量增删
+          if (toRemove.length) {
+            const removeMarkers = toRemove.map((id) => rendered.get(id)).filter(Boolean)
+            try { if (removeMarkers.length) clusterGroup.removeLayers(removeMarkers) } catch {}
+            toRemove.forEach((id) => rendered.delete(id))
+          }
+          if (toAdd.length) {
+            const addMarkers = toAdd.map(([, m]) => m)
+            try { clusterGroup.addLayers(addMarkers) } catch {}
+            toAdd.forEach(([id, m]) => rendered.set(id, m))
+          }
         }
 
-        const onMoveEnd = () => addVisibleMarkers()
-        const onZoomEnd = () => addVisibleMarkers()
+        // 缩放门控：缩放期间不更新，缩放结束后更新一次
+        let isZooming = false
+        const onZoomStart = () => { isZooming = true }
+        const onZoomEnd = () => { isZooming = false; addVisibleMarkers() }
+        const onMoveEnd = () => { if (!isZooming) addVisibleMarkers() }
 
         layer.addTo(map.value)
         addVisibleMarkers()
-        map.value.on('moveend', onMoveEnd)
+        map.value.on('zoomstart', onZoomStart)
         map.value.on('zoomend', onZoomEnd)
-        kmlViewportStates.set(kmlFile.id, { enabled: true, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd })
+        map.value.on('moveend', onMoveEnd)
+        kmlViewportStates.set(
+          kmlFile.id,
+          { enabled: true, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }
+        )
         kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title })
         try { console.info('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
         return layer

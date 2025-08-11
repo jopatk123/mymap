@@ -19,8 +19,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     sourcePoints: [],
     renderedIds: new Set(),
     throttleTimer: null,
-    updateIntervalMs: 120,
+    updateIntervalMs: 200,
     coordCache: new Map(), // id -> [lng, lat]
+    idToMarker: new Map(), // id -> { marker, type }
     onMoveEnd: null,
     onZoomEnd: null,
   }
@@ -125,6 +126,8 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
     const markerInfo = { id: point.id, marker, type: pointType, data: point };
     markers.value.push(markerInfo);
+    // 记录到快速索引
+    viewportState.idToMarker.set(point.id, { marker, type: pointType });
     
     // 同步到全局标记数组
     if (!window.currentMarkers) {
@@ -134,6 +137,25 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
     return marker;
   };
+
+  // 仅创建 Marker 对象与元信息，不进行任何 addTo/mapGroup 操作
+  const createMarkerInfo = (point) => {
+    if (!map.value) return null
+    let coordinates = viewportState.coordCache.get(point.id)
+    if (!coordinates) {
+      coordinates = getDisplayCoordinates(point)
+      if (coordinates) viewportState.coordCache.set(point.id, coordinates)
+    }
+    if (!coordinates) return null
+    const [displayLng, displayLat] = coordinates
+    const pointType = point.type || 'panorama'
+    const marker = createPointMarker([displayLat, displayLng], pointType, {
+      title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
+      updateWhenZoom: false,
+    }, null)
+    marker.on('click', () => onMarkerClick.value(point))
+    return { id: point.id, marker, type: pointType, data: point }
+  }
 
   const addPanoramaMarker = (panorama) => {
     return addPointMarker({ ...panorama, type: 'panorama' });
@@ -236,6 +258,12 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   const updateViewportRendering = () => {
     if (!map.value || !viewportState.enabled || !viewportState.sourcePoints?.length) return
     const bounds = getPaddedBounds()
+    // 使用数值比较，避免在循环中创建大量 L.latLng 对象
+    const sw = bounds?._southWest
+    const ne = bounds?._northEast
+    if (!sw || !ne) return
+    const south = sw.lat, west = sw.lng, north = ne.lat, east = ne.lng
+
     const toAdd = []
     const currentInBounds = new Set()
 
@@ -248,8 +276,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       }
       if (!coords) continue
       const [lng, lat] = coords
-      const ll = L.latLng(lat, lng)
-      if (bounds.contains(ll)) {
+      if (lat >= south && lat <= north && lng >= west && lng <= east) {
         currentInBounds.add(p.id)
         if (!viewportState.renderedIds.has(p.id)) {
           toAdd.push(p)
@@ -265,15 +292,56 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
     // 批量处理
     if (toRemove.length) {
-      toRemove.forEach(removeMarker)
+      removeMarkersBatch(toRemove)
       toRemove.forEach((id) => viewportState.renderedIds.delete(id))
     }
     if (toAdd.length) {
-      // 利用现有批量逻辑（会自动按聚合开关选择批量/单个）
-      // 但 addPointMarkers 会因 enabled 为 true 而 schedule，再次递归，因此改为逐个 addPointMarker
+      // 批量创建 & 批量添加
+      const createBatch = []
       for (const p of toAdd) {
-        addPointMarker(p)
-        viewportState.renderedIds.add(p.id)
+        const info = createMarkerInfo(p)
+        if (info) createBatch.push(info)
+      }
+      if (createBatch.length) {
+        const videoBatch = []
+        const panoBatch = []
+        const normalBatch = []
+        const videoStyles = window.videoPointStyles || {}
+        const panoStyles = window.panoramaPointStyles || {}
+        const videoClusterOn = Boolean(videoStyles.cluster_enabled)
+        const panoClusterOn = Boolean(panoStyles.cluster_enabled)
+
+        for (const info of createBatch) {
+          // 收集全局与索引
+          markers.value.push(info)
+          viewportState.idToMarker.set(info.id, { marker: info.marker, type: info.type })
+          if (!window.currentMarkers) window.currentMarkers = []
+          window.currentMarkers.push(info)
+
+          if (info.type === 'video' && videoClusterOn) {
+            videoBatch.push(info.marker)
+          } else if (info.type === 'panorama' && panoClusterOn) {
+            panoBatch.push(info.marker)
+          } else {
+            normalBatch.push(info.marker)
+          }
+          viewportState.renderedIds.add(info.id)
+        }
+
+        if (videoBatch.length) {
+          const group = ensureClusterGroup('video')
+          group.addLayers(videoBatch)
+          ensureZoomGuards()
+        }
+        if (panoBatch.length) {
+          const group = ensureClusterGroup('panorama')
+          group.addLayers(panoBatch)
+          ensureZoomGuards()
+        }
+        if (normalBatch.length) {
+          // 非聚合逐个 add，但已合并在一个阶段内，减少抖动
+          for (const m of normalBatch) m.addTo(map.value)
+        }
       }
     }
   }
@@ -315,6 +383,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     viewportState.onZoomEnd = null
     viewportState.renderedIds.clear()
     viewportState.coordCache.clear()
+    viewportState.idToMarker.clear()
     try { console.info('[Map] 视口裁剪渲染已关闭') } catch {}
   }
 
@@ -341,6 +410,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       }
       
       markers.value.splice(markerIndex, 1);
+      viewportState.idToMarker.delete(id)
       
       // 同步更新全局标记数组
       if (window.currentMarkers) {
@@ -348,6 +418,46 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       }
     }
   };
+
+  // 批量移除，尽可能使用聚合组的批量 API
+  const removeMarkersBatch = (ids) => {
+    if (!Array.isArray(ids) || ids.length === 0) return
+    const videoToRemove = []
+    const panoToRemove = []
+    const normalToRemove = []
+    for (const id of ids) {
+      const info = viewportState.idToMarker.get(id)
+      if (!info) continue
+      const { marker, type } = info
+      const styles = type === 'video' ? (window.videoPointStyles || {}) : (window.panoramaPointStyles || {})
+      const useCluster = Boolean(styles.cluster_enabled)
+      if (useCluster) {
+        if (type === 'video') videoToRemove.push(marker)
+        else panoToRemove.push(marker)
+      } else {
+        normalToRemove.push(marker)
+      }
+      // 从本地索引和集合移除
+      viewportState.idToMarker.delete(id)
+      const idx = markers.value.findIndex((m) => m.id === id)
+      if (idx > -1) markers.value.splice(idx, 1)
+      if (window.currentMarkers) {
+        window.currentMarkers = window.currentMarkers.filter(m => m.id !== id)
+      }
+    }
+    try {
+      if (videoToRemove.length && videoClusterGroup) videoClusterGroup.removeLayers(videoToRemove)
+      if (panoToRemove.length && panoramaClusterGroup) panoramaClusterGroup.removeLayers(panoToRemove)
+      if (normalToRemove.length) {
+        for (const m of normalToRemove) {
+          try { if (m && m._map && map.value) map.value.removeLayer(m) } catch {}
+        }
+      }
+    } catch (e) {
+      // 如果批量失败，逐个回退
+      for (const id of ids) removeMarker(id)
+    }
+  }
 
   const clearMarkers = () => {
     try {
