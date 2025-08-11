@@ -4,11 +4,26 @@ import { createPointMarker, createClusterIcon } from '@/utils/map-utils.js';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 
 export function useMapMarkers(map, markers, onMarkerClick) {
+  const VIEWPORT_THRESHOLD = 1200
   // 按类型维护两个 cluster group
   let panoramaClusterGroup = null;
   let videoClusterGroup = null;
   let onZoomStart = null;
   let onZoomEnd = null;
+
+  // 视口裁剪状态
+  const viewportState = {
+    enabled: false,
+    bufferPad: 0.2, // 视口外扩比例
+    minZoom: 0,
+    sourcePoints: [],
+    renderedIds: new Set(),
+    throttleTimer: null,
+    updateIntervalMs: 120,
+    coordCache: new Map(), // id -> [lng, lat]
+    onMoveEnd: null,
+    onZoomEnd: null,
+  }
 
   const ensureClusterGroup = (type) => {
     const styles = type === 'video' ? (window.videoPointStyles || {}) : (window.panoramaPointStyles || {})
@@ -70,7 +85,12 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     if (!map.value) return null;
 
     // 使用坐标转换工具获取显示坐标
-    const coordinates = getDisplayCoordinates(point);
+    // 坐标缓存
+    let coordinates = viewportState.coordCache.get(point.id)
+    if (!coordinates) {
+      coordinates = getDisplayCoordinates(point)
+      if (coordinates) viewportState.coordCache.set(point.id, coordinates)
+    }
     
     if (!coordinates) {
       console.warn('点位坐标无效:', point);
@@ -125,6 +145,25 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
   const addPointMarkers = (points) => {
     if (!Array.isArray(points) || points.length === 0) return
+    // 自动启用视口裁剪
+    if (!viewportState.enabled && points.length >= VIEWPORT_THRESHOLD) {
+      try {
+        // 控制台提示：启用视口裁剪渲染
+        console.info('[Map] 启用视口裁剪渲染:', {
+          totalPoints: points.length,
+          threshold: VIEWPORT_THRESHOLD,
+          bufferPad: viewportState.bufferPad,
+        })
+      } catch {}
+      enableViewportClipping(points)
+      return
+    }
+    // 若启用视口裁剪，则只渲染视口内的
+    if (viewportState.enabled) {
+      viewportState.sourcePoints = points
+      scheduleViewportUpdate()
+      return
+    }
     const videoStyles = window.videoPointStyles || {}
     const panoStyles = window.panoramaPointStyles || {}
     const videoClusterOn = Boolean(videoStyles.cluster_enabled)
@@ -176,6 +215,109 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
   };
 
+  // 计算扩展边界
+  const getPaddedBounds = () => {
+    const b = map.value.getBounds()
+    try {
+      return b.pad(viewportState.bufferPad)
+    } catch { return b }
+  }
+
+  // 视口裁剪：调度节流更新
+  const scheduleViewportUpdate = () => {
+    if (viewportState.throttleTimer) return
+    viewportState.throttleTimer = setTimeout(() => {
+      viewportState.throttleTimer = null
+      updateViewportRendering()
+    }, viewportState.updateIntervalMs)
+  }
+
+  // 视口裁剪：执行差异更新
+  const updateViewportRendering = () => {
+    if (!map.value || !viewportState.enabled || !viewportState.sourcePoints?.length) return
+    const bounds = getPaddedBounds()
+    const toAdd = []
+    const currentInBounds = new Set()
+
+    for (const p of viewportState.sourcePoints) {
+      // 仅窗口内的加入
+      let coords = viewportState.coordCache.get(p.id)
+      if (!coords) {
+        coords = getDisplayCoordinates(p)
+        if (coords) viewportState.coordCache.set(p.id, coords)
+      }
+      if (!coords) continue
+      const [lng, lat] = coords
+      const ll = L.latLng(lat, lng)
+      if (bounds.contains(ll)) {
+        currentInBounds.add(p.id)
+        if (!viewportState.renderedIds.has(p.id)) {
+          toAdd.push(p)
+        }
+      }
+    }
+
+    // 需要移除的：已渲染但不在当前窗口
+    const toRemove = []
+    viewportState.renderedIds.forEach((id) => {
+      if (!currentInBounds.has(id)) toRemove.push(id)
+    })
+
+    // 批量处理
+    if (toRemove.length) {
+      toRemove.forEach(removeMarker)
+      toRemove.forEach((id) => viewportState.renderedIds.delete(id))
+    }
+    if (toAdd.length) {
+      // 利用现有批量逻辑（会自动按聚合开关选择批量/单个）
+      // 但 addPointMarkers 会因 enabled 为 true 而 schedule，再次递归，因此改为逐个 addPointMarker
+      for (const p of toAdd) {
+        addPointMarker(p)
+        viewportState.renderedIds.add(p.id)
+      }
+    }
+  }
+
+  // 开启视口裁剪
+  const enableViewportClipping = (points, options = {}) => {
+    if (!map.value) return
+    viewportState.enabled = true
+    viewportState.bufferPad = options.bufferPad ?? viewportState.bufferPad
+    viewportState.minZoom = options.minZoom ?? viewportState.minZoom
+    viewportState.sourcePoints = points || []
+    viewportState.renderedIds.clear()
+    viewportState.coordCache.clear()
+    try {
+      console.info('[Map] 视口裁剪渲染已启用', {
+        count: viewportState.sourcePoints.length,
+        bufferPad: viewportState.bufferPad,
+        updateIntervalMs: viewportState.updateIntervalMs,
+      })
+    } catch {}
+
+    // 事件监听
+    viewportState.onMoveEnd = () => scheduleViewportUpdate()
+    viewportState.onZoomEnd = () => scheduleViewportUpdate()
+    map.value.on('moveend', viewportState.onMoveEnd)
+    map.value.on('zoomend', viewportState.onZoomEnd)
+
+    // 初次渲染
+    scheduleViewportUpdate()
+  }
+
+  // 关闭视口裁剪
+  const disableViewportClipping = () => {
+    viewportState.enabled = false
+    viewportState.sourcePoints = []
+    if (viewportState.onMoveEnd) map.value?.off('moveend', viewportState.onMoveEnd)
+    if (viewportState.onZoomEnd) map.value?.off('zoomend', viewportState.onZoomEnd)
+    viewportState.onMoveEnd = null
+    viewportState.onZoomEnd = null
+    viewportState.renderedIds.clear()
+    viewportState.coordCache.clear()
+    try { console.info('[Map] 视口裁剪渲染已关闭') } catch {}
+  }
+
   const removeMarker = (id) => {
     const markerIndex = markers.value.findIndex((m) => m.id === id);
     if (markerIndex > -1) {
@@ -209,6 +351,10 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
   const clearMarkers = () => {
     try {
+      // 关闭视口裁剪
+      if (viewportState.enabled) {
+        disableViewportClipping()
+      }
       // 先清理聚合组，避免在动画过程中移除单个标记
       if (panoramaClusterGroup) {
         panoramaClusterGroup.clearLayers();

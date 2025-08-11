@@ -1,8 +1,14 @@
 import L from 'leaflet';
-import { processKmlPoints } from './kml-point-renderer.js';
+import { processKmlPoints, createPointRenderer } from './kml-point-renderer.js';
 import { parseKmlText } from './kml-text-parser.js';
+import { processCoordinates } from './kml-data-processor.js'
+import { createPointIcon } from './kml-icon-factory.js';
 
 export function useKmlLayer(map, kmlLayers) {
+  const VIEWPORT_THRESHOLD = 1200
+  const VIEWPORT_PADDING = 0.2
+  const kmlViewportStates = new Map() // kmlId -> { enabled, clusterGroup, sourcePoints, style, onMoveEnd, onZoomEnd }
+
   const addKmlLayer = async (kmlFile, styleConfig = null) => {
     if (!map.value || !kmlFile.file_url) {
       console.warn('无法添加KML图层：地图未初始化或文件URL为空', { map: !!map.value, fileUrl: kmlFile.file_url });
@@ -32,19 +38,67 @@ export function useKmlLayer(map, kmlLayers) {
   };
 
   const processKmlLayerFromPoints = async (points, kmlFile, styleConfig) => {
-    const { kmlLayer, featureCount } = processKmlPoints(points, kmlFile, styleConfig);
-    
-    if (!kmlLayer) {
-      return null;
-    }
+    try {
+      const useViewport = Boolean(styleConfig?.cluster_enabled) && Array.isArray(points) && points.length >= VIEWPORT_THRESHOLD
+      if (useViewport) {
+        // 使用只渲染线/面 + 空聚合组，由我们填充视口内点
+        const renderer = createPointRenderer(kmlFile, styleConfig)
+        const { layer, clusterGroup } = renderer
+        if (!layer) return null
 
-    if (featureCount > 0) {
-      kmlLayer.addTo(map.value);
-      kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title });
-      return kmlLayer;
-    } else {
-      console.warn('KML文件中没有找到有效的几何要素');
-      return null;
+        const addVisibleMarkers = () => {
+          if (!map.value || !clusterGroup) return
+          const bounds = map.value.getBounds()?.pad(VIEWPORT_PADDING)
+          if (!bounds) return
+          const batch = []
+          for (const p of points) {
+            // 仅处理点要素
+            if (!p || (p.point_type && p.point_type !== 'Point')) continue
+            // 使用已有坐标处理工具，兼容 latitude/longitude 或 gcj02_*
+            const coordObj = processCoordinates(p)
+            if (!coordObj || coordObj.lat == null || coordObj.lng == null) continue
+            const { lat, lng } = coordObj
+            if (!isFinite(lat) || !isFinite(lng)) continue
+            if (!bounds.contains([lat, lng])) continue
+            const pointSize = styleConfig.point_size
+            const labelSize = Number(styleConfig.point_label_size)
+            const pointColor = styleConfig.point_color
+            const labelColor = styleConfig.point_label_color
+            const pointOpacity = styleConfig.point_opacity
+            const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p.name || '')
+            const marker = L.marker([lat, lng], { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+            batch.push(marker)
+          }
+          clusterGroup.clearLayers()
+          if (batch.length) clusterGroup.addLayers(batch)
+        }
+
+        const onMoveEnd = () => addVisibleMarkers()
+        const onZoomEnd = () => addVisibleMarkers()
+
+        layer.addTo(map.value)
+        addVisibleMarkers()
+        map.value.on('moveend', onMoveEnd)
+        map.value.on('zoomend', onZoomEnd)
+        kmlViewportStates.set(kmlFile.id, { enabled: true, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd })
+        kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title })
+        try { console.info('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
+        return layer
+      }
+
+      // 常规路径：直接处理全部点（已优化为批量和分片）
+      const { kmlLayer, featureCount } = processKmlPoints(points, kmlFile, styleConfig)
+      if (!kmlLayer) return null
+      if (featureCount > 0) {
+        kmlLayer.addTo(map.value)
+        kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
+        return kmlLayer
+      }
+      console.warn('KML文件中没有找到有效的几何要素')
+      return null
+    } catch (e) {
+      console.warn('处理KML点位视口渲染失败:', e)
+      return null
     }
   };
 
@@ -98,6 +152,16 @@ export function useKmlLayer(map, kmlLayers) {
       const { layer } = kmlLayers.value[layerIndex];
       map.value.removeLayer(layer);
       kmlLayers.value.splice(layerIndex, 1);
+      // 清理视口裁剪监听
+      const vs = kmlViewportStates.get(id)
+      if (vs) {
+        try {
+          if (vs.onMoveEnd) map.value.off('moveend', vs.onMoveEnd)
+          if (vs.onZoomEnd) map.value.off('zoomend', vs.onZoomEnd)
+        } catch {}
+        kmlViewportStates.delete(id)
+        try { console.info('[Map] KML 视口裁剪渲染已关闭:', { kmlId: id }) } catch {}
+      }
     }
   };
 
@@ -106,6 +170,14 @@ export function useKmlLayer(map, kmlLayers) {
       map.value.removeLayer(layer);
     });
     kmlLayers.value = [];
+    // 清理所有KML视口裁剪监听
+    kmlViewportStates.forEach((vs, id) => {
+      try {
+        if (vs.onMoveEnd) map.value.off('moveend', vs.onMoveEnd)
+        if (vs.onZoomEnd) map.value.off('zoomend', vs.onZoomEnd)
+      } catch {}
+    })
+    kmlViewportStates.clear()
   };
 
   return {
