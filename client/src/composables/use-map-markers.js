@@ -27,6 +27,10 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     onZoomStart: null,
     isZooming: false,
     prevInterval: null,
+    // 简易空间索引（固定度网格）
+    spatialIndex: new Map(), // key -> point[]
+    cellSizeDeg: 0.05,
+    buildIndexScheduled: false,
   }
 
   const ensureClusterGroup = (type) => {
@@ -277,8 +281,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const toAdd = []
     const currentInBounds = new Set()
 
-    for (const p of viewportState.sourcePoints) {
-      // 仅窗口内的加入
+    // 通过空间网格仅遍历候选点
+    const candidates = getCandidatesByBounds(west, south, east, north)
+    for (const p of candidates) {
       let coords = viewportState.coordCache.get(p.id)
       if (!coords) {
         coords = getDisplayCoordinates(p)
@@ -356,6 +361,54 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
   }
 
+  // ---------- 空间索引：固定度网格 ----------
+  const getCellKey = (lng, lat) => {
+    const size = viewportState.cellSizeDeg
+    const cx = Math.floor(lng / size)
+    const cy = Math.floor(lat / size)
+    return `${cx}:${cy}`
+  }
+
+  const buildSpatialIndex = () => {
+    viewportState.spatialIndex.clear()
+    for (const p of viewportState.sourcePoints) {
+      let coords = viewportState.coordCache.get(p.id)
+      if (!coords) {
+        coords = getDisplayCoordinates(p)
+        if (coords) viewportState.coordCache.set(p.id, coords)
+      }
+      if (!coords) continue
+      const [lng, lat] = coords
+      if (!isFinite(lat) || !isFinite(lng)) continue
+      const key = getCellKey(lng, lat)
+      let bucket = viewportState.spatialIndex.get(key)
+      if (!bucket) { bucket = []; viewportState.spatialIndex.set(key, bucket) }
+      bucket.push(p)
+    }
+    try { console.info('[Map] 空间索引构建完成', { cells: viewportState.spatialIndex.size }) } catch {}
+  }
+
+  const getCandidatesByBounds = (west, south, east, north) => {
+    const size = viewportState.cellSizeDeg
+    const minX = Math.floor(west / size)
+    const maxX = Math.floor(east / size)
+    const minY = Math.floor(south / size)
+    const maxY = Math.floor(north / size)
+    const out = []
+    const seen = new Set()
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        const key = `${x}:${y}`
+        const bucket = viewportState.spatialIndex.get(key)
+        if (!bucket || bucket.length === 0) continue
+        for (const p of bucket) {
+          if (!seen.has(p.id)) { out.push(p); seen.add(p.id) }
+        }
+      }
+    }
+    return out
+  }
+
   // 开启视口裁剪
   const enableViewportClipping = (points, options = {}) => {
     if (!map.value) return
@@ -365,6 +418,8 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     viewportState.sourcePoints = points || []
     viewportState.renderedIds.clear()
     viewportState.coordCache.clear()
+    viewportState.spatialIndex.clear()
+    viewportState.cellSizeDeg = options.cellSizeDeg ?? viewportState.cellSizeDeg
     try {
       console.info('[Map] 视口裁剪渲染已启用', {
         count: viewportState.sourcePoints.length,
@@ -372,6 +427,14 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         updateIntervalMs: viewportState.updateIntervalMs,
       })
     } catch {}
+
+    // 构建空间索引（切到下一个宏任务，避免阻塞UI）
+    if (!viewportState.buildIndexScheduled) {
+      viewportState.buildIndexScheduled = true
+      setTimeout(() => {
+        try { buildSpatialIndex() } finally { viewportState.buildIndexScheduled = false }
+      }, 0)
+    }
 
     // 事件监听
     viewportState.onZoomStart = () => {
@@ -410,6 +473,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     viewportState.renderedIds.clear()
     viewportState.coordCache.clear()
     viewportState.idToMarker.clear()
+    viewportState.spatialIndex.clear()
     try { console.info('[Map] 视口裁剪渲染已关闭') } catch {}
   }
 
