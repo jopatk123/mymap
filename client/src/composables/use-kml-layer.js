@@ -41,7 +41,6 @@ export function useKmlLayer(map, kmlLayers) {
     if (featureCount > 0) {
       kmlLayer.addTo(map.value);
       kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title });
-      console.log(`✅ KML图层加载成功 (${kmlFile.title}): ${featureCount} 个要素`);
       return kmlLayer;
     } else {
       console.warn('KML文件中没有找到有效的几何要素');
@@ -71,7 +70,6 @@ export function useKmlLayer(map, kmlLayers) {
         if (featureCount > 0) {
           kmlLayer.addTo(map.value);
           kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title });
-          console.log(`✅ KML图层加载成功 (${kmlFile.title}): ${featureCount} 个要素`);
           return kmlLayer;
         } else {
           console.warn('KML文件中没有找到有效的几何要素');

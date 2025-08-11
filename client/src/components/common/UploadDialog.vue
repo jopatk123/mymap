@@ -79,8 +79,6 @@ const panoramaRules = {
 }
 
 const handleFileChange = async (file, form) => {
-  console.log('UploadDialog handleFileChange called with:', file, 'form:', form)
-  
   // 检查文件对象是否有效
   if (!file || typeof file !== 'object') {
     console.error('UploadDialog: 文件对象无效!', file)
@@ -88,13 +86,19 @@ const handleFileChange = async (file, form) => {
   }
   
   if (validateFile(file)) {
-    console.log('File validation passed, processing...')
-    
     try {
       await processFile(file, form)
-      console.log('File processing completed successfully')
     } catch (error) {
       console.error('处理文件时出错:', error)
+      // 即使处理出错，也要确保文件被设置到表单中，让用户可以继续上传
+      if (!form.file) {
+        form.file = file
+        // 自动设置标题（如果表单中没有标题）
+        if (!form.title && file.name) {
+          const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
+          form.title = nameWithoutExt
+        }
+      }
     }
   } else {
     console.log('File validation failed')
