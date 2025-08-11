@@ -85,30 +85,33 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
     const batchMarkers = []
     for (const point of points) {
       const processedFeature = processPointData(point);
-      if (processedFeature) {
-        if (useCluster && clusterGroup) {
-          const coords = processedFeature.geometry.coordinates
-          const latlng = L.latLng(coords[1], coords[0])
-          const pointSize = effectiveStyle.point_size;
-          const labelSize = Number(effectiveStyle.point_label_size);
-          const pointColor = effectiveStyle.point_color;
-          const labelColor = effectiveStyle.point_label_color;
-          const pointOpacity = effectiveStyle.point_opacity;
-          const iconOptions = createPointIcon(
-            pointSize,
-            pointColor,
-            pointOpacity,
-            labelSize,
-            labelColor,
-            processedFeature.properties?.name
-          );
-          const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
-          batchMarkers.push(marker)
-        } else {
-          featureGeoJson.addData(processedFeature);
-        }
-        featureCount++;
+      if (!processedFeature) continue;
+
+      const geometryType = processedFeature.geometry?.type?.toLowerCase?.() || ''
+      if (useCluster && clusterGroup && geometryType === 'point') {
+        const coords = processedFeature.geometry.coordinates
+        const latlng = L.latLng(coords[1], coords[0])
+        const pointSize = effectiveStyle.point_size;
+        const labelSize = Number(effectiveStyle.point_label_size);
+        const pointColor = effectiveStyle.point_color;
+        const labelColor = effectiveStyle.point_label_color;
+        const pointOpacity = effectiveStyle.point_opacity;
+        const iconOptions = createPointIcon(
+          pointSize,
+          pointColor,
+          pointOpacity,
+          labelSize,
+          labelColor,
+          processedFeature.properties?.name
+        );
+        const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+        batchMarkers.push(marker)
+      } else {
+        // 非点要素在任何情况下都应直接添加到 geojson 图层；
+        // 非聚合模式下点要素也直接添加
+        featureGeoJson.addData(processedFeature);
       }
+      featureCount++;
     }
     if (useCluster && clusterGroup && batchMarkers.length) {
       clusterGroup.addLayers(batchMarkers)

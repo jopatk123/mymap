@@ -43,8 +43,40 @@ export function useKmlLayer(map, kmlLayers) {
       if (useViewport) {
         // 使用只渲染线/面 + 空聚合组，由我们填充视口内点
         const renderer = createPointRenderer(kmlFile, styleConfig)
-        const { layer, clusterGroup } = renderer
+        const { layer, clusterGroup, featureGeoJson } = renderer
         if (!layer) return null
+
+        // 先把所有非点要素一次性加入到 geojson 图层，确保线/面可见
+        try {
+          for (const p of points) {
+            if (!p || !p.point_type) continue
+            if (p.point_type === 'LineString' && p.coordinates && p.coordinates.points) {
+              const lineCoords = processCoordinates(p.coordinates.points)
+              if (Array.isArray(lineCoords) && lineCoords.length > 1) {
+                featureGeoJson.addData({
+                  type: 'Feature',
+                  properties: {
+                    name: p.name || '未命名线条',
+                    description: p.description || ''
+                  },
+                  geometry: { type: 'LineString', coordinates: lineCoords }
+                })
+              }
+            } else if (p.point_type === 'Polygon' && p.coordinates && p.coordinates.outer) {
+              const polygonCoords = processCoordinates(p.coordinates.outer)
+              if (Array.isArray(polygonCoords) && polygonCoords.length > 2) {
+                featureGeoJson.addData({
+                  type: 'Feature',
+                  properties: {
+                    name: p.name || '未命名多边形',
+                    description: p.description || ''
+                  },
+                  geometry: { type: 'Polygon', coordinates: [polygonCoords] }
+                })
+              }
+            }
+          }
+        } catch {}
 
         // 维护差异集与空间索引，避免 clearLayers 抖动与 O(N) 扫描
         const rendered = new Map() // id -> marker
