@@ -163,7 +163,10 @@ const selectKmlFile = async (kmlFile) => {
       size: Number(styles.point_size),
       opacity: parseFloat(styles.point_opacity),
       labelSize: Number(styles.point_label_size),
-      labelColor: styles.point_label_color
+      labelColor: styles.point_label_color,
+      // 聚合
+      clusterEnabled: Boolean(styles.cluster_enabled),
+      clusterColor: styles.cluster_color || styles.cluster_icon_color || styles.point_color
     }
     
     currentStyles.line = {
@@ -218,7 +221,7 @@ const handleSave = async () => {
     // 更新文件列表中的样式配置
     const fileIndex = kmlFiles.value.findIndex(f => f.id === selectedKmlFile.value.id)
     if (fileIndex !== -1) {
-      kmlFiles.value[fileIndex].styleConfig = styleConfig
+       kmlFiles.value[fileIndex].styleConfig = styleConfig
     }
     
     // 延迟触发事件，确保服务器配置已保存完成
@@ -279,6 +282,9 @@ const convertToApiFormat = (styles) => {
     point_icon_type: 'marker', // 固定使用marker形状
     point_label_size: styles.point.labelSize,
     point_label_color: styles.point.labelColor,
+    // 聚合
+    cluster_enabled: Boolean(styles.point.clusterEnabled),
+    cluster_color: styles.point.clusterColor || styles.point.color,
     
     line_color: styles.line.color,
     line_width: styles.line.width,

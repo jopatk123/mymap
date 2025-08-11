@@ -1,4 +1,6 @@
 import L from 'leaflet';
+import 'leaflet.markercluster';
+import { createClusterIcon } from '@/utils/map-utils.js';
 import StyleRenderer from '@/services/style-renderer.js';
 import { createPointIcon } from './kml-icon-factory.js';
 import { extractCoordinatesFromText, createFeatureData } from './kml-data-processor.js';
@@ -16,7 +18,7 @@ export function parseKmlText(kmlText, kmlFile, styleConfig) {
     }
 
     const effectiveStyle = styleConfig || {};
-    const kmlLayer = createKmlLayer(kmlFile, effectiveStyle);
+    const { layer, featureGeoJson, clusterGroup, useCluster } = createKmlLayer(kmlFile, effectiveStyle);
 
     let featureCount = 0;
     const placemarks = kmlDoc.getElementsByTagName('Placemark');
@@ -26,11 +28,11 @@ export function parseKmlText(kmlText, kmlFile, styleConfig) {
       const featureData = extractPlacemarkData(placemark, i);
       
       if (featureData) {
-        featureCount += addPlacemarkFeatures(kmlLayer, featureData);
+        featureCount += addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clusterGroup, useCluster);
       }
     }
 
-    return { kmlLayer, featureCount };
+    return { kmlLayer: layer, featureCount };
   } catch (error) {
     console.error('解析KML文件失败:', error);
     return { kmlLayer: null, featureCount: 0 };
@@ -38,7 +40,16 @@ export function parseKmlText(kmlText, kmlFile, styleConfig) {
 }
 
 function createKmlLayer(kmlFile, effectiveStyle) {
-  return L.geoJSON(null, {
+  const useCluster = Boolean(effectiveStyle?.cluster_enabled)
+  const clusterColor = effectiveStyle?.cluster_color || effectiveStyle?.point_color || '#3388ff'
+  const clusterGroup = useCluster
+    ? L.markerClusterGroup({
+        iconCreateFunction: (cluster) => createClusterIcon(clusterColor, cluster.getChildCount()),
+      })
+    : null
+
+  // 用于承载点/线/面的 geojson
+  const geoJsonOptions = {
     style: (feature) => {
       const geometryType = feature.geometry.type.toLowerCase();
       if (geometryType.includes('line')) {
@@ -49,7 +60,18 @@ function createKmlLayer(kmlFile, effectiveStyle) {
       }
       return {};
     },
-    pointToLayer: (feature, latlng) => {
+    onEachFeature: (feature, layer) => {
+      if (feature.properties && (feature.properties.name || feature.properties.description)) {
+        const popupContent = createPopupContent(feature, kmlFile);
+        layer.bindPopup(popupContent);
+      }
+    },
+  }
+
+  if (useCluster && clusterGroup) {
+    geoJsonOptions.filter = (feature) => (feature.geometry?.type?.toLowerCase?.() || '') !== 'point'
+  } else {
+    geoJsonOptions.pointToLayer = (feature, latlng) => {
       const pointSize = effectiveStyle.point_size;
       const labelSize = Number(effectiveStyle.point_label_size);
       const pointColor = effectiveStyle.point_color;
@@ -64,16 +86,14 @@ function createKmlLayer(kmlFile, effectiveStyle) {
         labelColor, 
         feature.properties.name
       );
-
       return L.marker(latlng, { icon: L.divIcon(iconOptions) });
-    },
-    onEachFeature: (feature, layer) => {
-      if (feature.properties && (feature.properties.name || feature.properties.description)) {
-        const popupContent = createPopupContent(feature, kmlFile);
-        layer.bindPopup(popupContent);
-      }
-    },
-  });
+    }
+  }
+
+  const featureGeoJson = L.geoJSON(null, geoJsonOptions);
+
+  const layer = useCluster && clusterGroup ? L.layerGroup([featureGeoJson, clusterGroup]) : featureGeoJson
+  return { layer, featureGeoJson, clusterGroup, useCluster }
 }
 
 function extractPlacemarkData(placemark, index) {
@@ -148,28 +168,47 @@ function extractPolygons(placemark) {
   return result;
 }
 
-function addPlacemarkFeatures(kmlLayer, featureData) {
+function addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clusterGroup, useCluster) {
   let featureCount = 0;
 
   // 添加点（同时附带原始WGS84坐标用于弹窗展示）
   featureData.points.forEach(point => {
     const coordinates = Array.isArray(point) ? point : point.gcj02;
     const wgs84LatLng = Array.isArray(point) ? null : point.wgs84;
-    kmlLayer.addData(
-      createFeatureData(featureData.name, featureData.description, 'Point', coordinates, wgs84LatLng)
-    );
+    if (useCluster && clusterGroup) {
+      const latlng = L.latLng(coordinates[1], coordinates[0])
+      const pointSize = effectiveStyle.point_size;
+      const labelSize = Number(effectiveStyle.point_label_size);
+      const pointColor = effectiveStyle.point_color;
+      const labelColor = effectiveStyle.point_label_color;
+      const pointOpacity = effectiveStyle.point_opacity;
+      const iconOptions = createPointIcon(
+        pointSize, 
+        pointColor, 
+        pointOpacity, 
+        labelSize, 
+        labelColor, 
+        featureData.name
+      );
+      const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false });
+      clusterGroup.addLayer(marker);
+    } else {
+      featureGeoJson.addData(
+        createFeatureData(featureData.name, featureData.description, 'Point', coordinates, wgs84LatLng)
+      );
+    }
     featureCount++;
   });
 
   // 添加线
   featureData.lineStrings.forEach(coords => {
-    kmlLayer.addData(createFeatureData(featureData.name, featureData.description, 'LineString', coords));
+    featureGeoJson.addData(createFeatureData(featureData.name, featureData.description, 'LineString', coords));
     featureCount++;
   });
 
   // 添加多边形
   featureData.polygons.forEach(coords => {
-    kmlLayer.addData(createFeatureData(featureData.name, featureData.description, 'Polygon', [coords]));
+    featureGeoJson.addData(createFeatureData(featureData.name, featureData.description, 'Polygon', [coords]));
     featureCount++;
   });
 

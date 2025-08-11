@@ -11,7 +11,9 @@ class StyleManager {
         point_opacity: 1.0,
         point_icon_type: 'marker',
         point_label_size: 14,
-        point_label_color: '#000000'
+        point_label_color: '#000000',
+        cluster_enabled: false,
+        cluster_color: '#ff4757'
       },
       panorama: {
         point_color: '#2ed573',
@@ -19,7 +21,9 @@ class StyleManager {
         point_opacity: 1.0,
         point_icon_type: 'marker',
         point_label_size: 12,
-        point_label_color: '#000000'
+        point_label_color: '#000000',
+        cluster_enabled: false,
+        cluster_color: '#2ed573'
       }
     }
     this.updateCallbacks = new Set()

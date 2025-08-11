@@ -60,6 +60,22 @@
       </el-form>
     </div>
     
+    <div class="style-section">
+      <h4>聚合显示</h4>
+      <el-form label-width="100px" size="small" class="compact-form">
+        <el-form-item label="启用聚合">
+          <el-switch v-model="localStyles.clusterEnabled" @change="handleChange" />
+        </el-form-item>
+        <el-form-item v-if="localStyles.clusterEnabled" label="聚合颜色">
+          <el-color-picker 
+            v-model="localStyles.clusterColor"
+            @change="handleChange"
+            show-alpha
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+    
     <div class="preview-section">
       <h4>预览效果</h4>
       <div class="point-preview">
@@ -105,7 +121,9 @@ const localStyles = reactive({
   size: 8,
   opacity: 1.0,
   labelSize: 12,
-  labelColor: '#000000'
+    labelColor: '#000000',
+    clusterEnabled: false,
+    clusterColor: '#ff7800'
 })
 
 // 用于颜色选择器的计算属性

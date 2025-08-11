@@ -36,6 +36,9 @@
         />
       </svg>
       
+      <!-- 聚合预览（仅颜色演示，不提供额外设置） -->
+      <div v-if="showFullPreview && showClusterPreview" class="preview-cluster" :style="clusterPreviewStyle">12</div>
+      
     </div>
   </div>
 </template>
@@ -72,6 +75,28 @@ const pointStyle = computed(() => {
     height: `${size}px`,
     opacity: opacity,
     borderRadius: '50%'
+  }
+})
+
+// 是否展示聚合预览（样式中存在 cluster_enabled）
+const showClusterPreview = computed(() => {
+  return props.styleConfig && (props.styleConfig.cluster_enabled === true || props.styleConfig.clusterEnabled === true)
+})
+
+// 聚合预览样式（简单色块）
+const clusterPreviewStyle = computed(() => {
+  const color = props.styleConfig.cluster_color || props.styleConfig.clusterColor || getPointColor()
+  return {
+    backgroundColor: color,
+    color: '#fff',
+    borderRadius: '12px',
+    padding: '0 6px',
+    height: '20px',
+    lineHeight: '20px',
+    fontSize: '12px',
+    fontWeight: 600,
+    display: 'inline-block',
+    marginLeft: '2px'
   }
 })
 

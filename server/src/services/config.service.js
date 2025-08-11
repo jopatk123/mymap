@@ -8,6 +8,23 @@ class ConfigService {
     this.lastModified = null
   }
 
+  /**
+   * 规范化聚合相关字段，兼容旧版字段
+   * 输入对象将被浅复制并补充：
+   * - cluster_enabled: boolean
+   * - cluster_color: string（若缺失则回退至 cluster_icon_color 或 point_color）
+   * 同时为保持向后兼容，写入时可同步设置 cluster_icon_color
+   */
+  normalizeClusterFields(input = {}) {
+    const normalized = { ...input }
+    const clusterEnabled = typeof normalized.cluster_enabled === 'boolean' ? normalized.cluster_enabled : false
+    // 颜色优先级：cluster_color -> cluster_icon_color(旧) -> point_color -> 默认色
+    const color = normalized.cluster_color || normalized.cluster_icon_color || normalized.point_color || '#3388ff'
+    normalized.cluster_enabled = clusterEnabled
+    normalized.cluster_color = color
+    return normalized
+  }
+
   async loadConfig() {
     try {
       const stats = await fs.stat(this.configPath)
@@ -51,13 +68,18 @@ class ConfigService {
   async getPointStyles(type) {
     const config = await this.loadConfig()
     const styles = config.pointStyles[type] || config.pointStyles.panorama
-    
-    return styles
+    // 兼容与补齐聚合字段
+    return this.normalizeClusterFields(styles)
   }
 
   async updatePointStyles(type, styles) {
     const config = await this.loadConfig()
-    config.pointStyles[type] = { ...config.pointStyles[type], ...styles }
+    const current = this.normalizeClusterFields(config.pointStyles[type] || {})
+    const incoming = this.normalizeClusterFields(styles || {})
+    const merged = { ...current, ...incoming }
+    // 为向后兼容同步旧字段（不在前端暴露）
+    merged.cluster_icon_color = merged.cluster_color
+    config.pointStyles[type] = merged
     const success = await this.saveConfig(config)
     
     return success
@@ -65,12 +87,18 @@ class ConfigService {
 
   async getKmlStyles(fileId = 'default') {
     const config = await this.loadConfig()
-    return config.kmlStyles[fileId] || config.kmlStyles.default
+    const raw = config.kmlStyles[fileId] || config.kmlStyles.default
+    return this.normalizeClusterFields(raw)
   }
 
   async updateKmlStyles(fileId, styles) {
     const config = await this.loadConfig()
-    config.kmlStyles[fileId] = { ...config.kmlStyles[fileId] || config.kmlStyles.default, ...styles }
+    const base = this.normalizeClusterFields(config.kmlStyles[fileId] || config.kmlStyles.default || {})
+    const incoming = this.normalizeClusterFields(styles || {})
+    const merged = { ...base, ...incoming }
+    // 为向后兼容同步旧字段（不在前端暴露）
+    merged.cluster_icon_color = merged.cluster_color
+    config.kmlStyles[fileId] = merged
     return await this.saveConfig(config)
   }
 
@@ -120,14 +148,19 @@ class ConfigService {
           point_size: 8,
           point_opacity: 1.0,
           point_label_size: 12,
-          point_label_color: "#000000"
+          point_label_color: "#000000",
+          // 聚合默认关闭，颜色回退到点颜色
+          cluster_enabled: false,
+          cluster_color: "#2ed573"
         },
         video: {
           point_color: "#ff4757",
           point_size: 10,
           point_opacity: 1.0,
           point_label_size: 14,
-          point_label_color: "#000000"
+          point_label_color: "#000000",
+          cluster_enabled: false,
+          cluster_color: "#ff4757"
         }
       },
       kmlStyles: {
@@ -146,9 +179,9 @@ class ConfigService {
           polygon_stroke_color: "#ff7800",
           polygon_stroke_width: 2,
           polygon_stroke_style: "solid",
-          cluster_enabled: true,
-          cluster_icon_color: "#ffffff",
-          cluster_text_color: "#000000"
+          // KML图层聚合默认关闭
+          cluster_enabled: false,
+          cluster_color: "#ff7800"
         }
       },
       mapSettings: {

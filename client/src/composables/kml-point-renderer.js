@@ -1,5 +1,7 @@
 import { wgs84ToGcj02, gcj02ToBd09 } from '@/utils/coordinate-transform.js';
 import L from 'leaflet';
+import 'leaflet.markercluster';
+import { createClusterIcon } from '@/utils/map-utils.js';
 import StyleRenderer from '@/services/style-renderer.js';
 import { createPointIcon } from './kml-icon-factory.js';
 import { processCoordinates } from './kml-data-processor.js';
@@ -7,8 +9,16 @@ import { processCoordinates } from './kml-data-processor.js';
 export function createPointRenderer(kmlFile, effectiveStyle) {
   const styleRenderer = new StyleRenderer();
 
-  const kmlLayer = L.geoJSON(null, {
-    // 为非点要素提供样式（线与面）
+  const useCluster = Boolean(effectiveStyle?.cluster_enabled)
+  const clusterColor = effectiveStyle?.cluster_color || effectiveStyle?.point_color || '#3388ff'
+  const clusterGroup = useCluster
+    ? L.markerClusterGroup({
+        iconCreateFunction: (cluster) => createClusterIcon(clusterColor, cluster.getChildCount()),
+      })
+    : null
+
+  // 按是否聚合分别配置 geojson 选项
+  const geoJsonOptions = {
     style: (feature) => {
       const geometryType = feature.geometry.type.toLowerCase();
       if (geometryType.includes('line')) {
@@ -19,8 +29,20 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
       }
       return {};
     },
-    // 点要素使用自定义图标
-    pointToLayer: (feature, latlng) => {
+    onEachFeature: (feature, layer) => {
+      if (feature.properties && (feature.properties.name || feature.properties.description)) {
+        const popupContent = createPopupContent(feature, kmlFile);
+        layer.bindPopup(popupContent);
+      }
+    },
+  }
+
+  if (useCluster) {
+    // 聚合时由我们手动创建点，不让 geojson 生成点图层
+    geoJsonOptions.filter = (feature) => (feature.geometry?.type?.toLowerCase?.() || '') !== 'point'
+  } else {
+    // 非聚合时，交给 geojson 的 pointToLayer 生成 marker
+    geoJsonOptions.pointToLayer = (feature, latlng) => {
       const pointSize = effectiveStyle.point_size;
       const labelSize = Number(effectiveStyle.point_label_size);
       const pointColor = effectiveStyle.point_color;
@@ -35,36 +57,54 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         labelColor,
         feature.properties.name
       );
-
       return L.marker(latlng, { icon: L.divIcon(iconOptions) });
-    },
-    onEachFeature: (feature, layer) => {
-      if (feature.properties && (feature.properties.name || feature.properties.description)) {
-        const popupContent = createPopupContent(feature, kmlFile);
-        layer.bindPopup(popupContent);
-      }
-    },
-  });
+    }
+  }
 
-  return kmlLayer;
+  const featureGeoJson = L.geoJSON(null, geoJsonOptions)
+
+  const layer = useCluster && clusterGroup ? L.layerGroup([featureGeoJson, clusterGroup]) : featureGeoJson
+  return { layer, featureGeoJson, useCluster, clusterGroup };
 }
 
 export function processKmlPoints(points, kmlFile, styleConfig) {
   try {
     const effectiveStyle = styleConfig || {};
-    const kmlLayer = createPointRenderer(kmlFile, effectiveStyle);
+    const { layer, featureGeoJson, useCluster, clusterGroup } = createPointRenderer(kmlFile, effectiveStyle);
 
     let featureCount = 0;
 
     for (const point of points) {
       const processedFeature = processPointData(point);
       if (processedFeature) {
-        kmlLayer.addData(processedFeature);
+        if (useCluster && clusterGroup) {
+          const coords = processedFeature.geometry.coordinates
+          const latlng = L.latLng(coords[1], coords[0])
+
+          const pointSize = effectiveStyle.point_size;
+          const labelSize = Number(effectiveStyle.point_label_size);
+          const pointColor = effectiveStyle.point_color;
+          const labelColor = effectiveStyle.point_label_color;
+          const pointOpacity = effectiveStyle.point_opacity;
+
+          const iconOptions = createPointIcon(
+            pointSize,
+            pointColor,
+            pointOpacity,
+            labelSize,
+            labelColor,
+            processedFeature.properties?.name
+          );
+          const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+          clusterGroup.addLayer(marker)
+        } else {
+          featureGeoJson.addData(processedFeature);
+        }
         featureCount++;
       }
     }
 
-    return { kmlLayer, featureCount };
+    return { kmlLayer: layer, featureCount };
   } catch (error) {
     console.error('处理KML点位数据失败:', error);
     return { kmlLayer: null, featureCount: 0 };

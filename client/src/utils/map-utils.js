@@ -1,4 +1,5 @@
 import L from 'leaflet'
+import 'leaflet.markercluster'
 import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate-transform.js'
 
 // 创建GCJ02坐标参考系统
@@ -86,7 +87,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
       iconSize: iconSize,
       iconAnchor: iconAnchor
     })
-    return L.marker(latlng, { icon, ...options })
+    return L.marker(latlng, { icon, updateWhenZoom: false, ...options })
   }
 
   const getLabelPosition = (size, labelSize) => {
@@ -136,7 +137,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
     iconAnchor: iconAnchor
   })
 
-  return L.marker(latlng, { icon, ...options })
+  return L.marker(latlng, { icon, updateWhenZoom: false, ...options })
 }
 
 /**
@@ -246,6 +247,51 @@ export function createPointMarker(latlng, type, options = {}, styleConfig = null
     default:
       return createPanoramaMarker(latlng, options, styleConfig)
   }
+}
+
+/**
+ * 根据聚合颜色与数量创建聚合簇图标
+ * @param {string} color 背景色
+ * @param {number} count 聚合数量
+ * @returns {L.DivIcon}
+ */
+export function createClusterIcon(color, count) {
+  // 自动选择对比文字颜色
+  const textColor = getContrastColor(color)
+  const html = `
+    <div style="
+      background:${color};
+      color:${textColor};
+      border-radius:20px;
+      padding:2px 8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
+      font-weight:600;
+      border:2px solid #fff;
+    ">${count}</div>
+  `
+  return L.divIcon({
+    html,
+    className: 'custom-cluster-icon',
+    iconSize: [30, 30]
+  })
+}
+
+function getContrastColor(bg) {
+  // 解析 #rrggbb 或 rgba(r,g,b,a)
+  let r = 0, g = 0, b = 0
+  if (typeof bg === 'string' && bg.startsWith('#')) {
+    const hex = bg.replace('#', '')
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex
+    r = parseInt(full.slice(0, 2), 16)
+    g = parseInt(full.slice(2, 4), 16)
+    b = parseInt(full.slice(4, 6), 16)
+  } else if (typeof bg === 'string' && bg.startsWith('rgb')) {
+    const nums = bg.replace(/rgba?\(|\)/g, '').split(',').map(n => parseFloat(n.trim()))
+    ;[r, g, b] = nums
+  }
+  // YIQ 计算
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq >= 128 ? '#000' : '#fff'
 }
 
 /**
