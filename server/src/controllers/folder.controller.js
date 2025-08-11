@@ -279,15 +279,14 @@ class FolderController {
       } = req.query
 
       const searchParams = {
-        page: parseInt(page),
-        pageSize: parseInt(pageSize),
+        page: 1, // 先获取所有数据，然后统一分页
+        pageSize: 1000, // 设置一个较大的值获取所有数据
         keyword,
         folderId: folderId === '0' ? 0 : (parseInt(folderId) || null),
         includeHidden: includeHidden === 'true'
       }
 
-      let results = []
-      let totalCount = 0
+      let allResults = []
 
       if (fileType === 'all' || fileType === 'panorama') {
         try {
@@ -298,8 +297,7 @@ class FolderController {
             displayType: '全景图',
             type: 'panorama' // 添加type字段以保持一致性
           }))
-          results = results.concat(panoramasWithType)
-          totalCount += panoramaResult.total || 0
+          allResults = allResults.concat(panoramasWithType)
         } catch (error) {
           Logger.error('获取全景图数据失败:', error)
           // 不要直接返回错误，而是记录错误并继续处理其他类型
@@ -317,8 +315,7 @@ class FolderController {
             displayType: '视频点位',
             type: 'video' // 添加type字段以保持一致性
           }))
-          results = results.concat(videosWithType)
-          totalCount += videoResult.total || 0
+          allResults = allResults.concat(videosWithType)
         } catch (error) {
           Logger.error('获取视频点位数据失败:', error)
           console.error('视频点位查询失败，跳过:', error.message)
@@ -342,8 +339,7 @@ class FolderController {
             image_url: item.file_url,
             url: item.file_url
           }))
-          results = results.concat(kmlsWithType)
-          totalCount += kmlResult.total || 0
+          allResults = allResults.concat(kmlsWithType)
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error)
           console.error('KML文件查询失败，跳过:', error.message)
@@ -351,15 +347,24 @@ class FolderController {
       }
 
       // 按创建时间排序
-      results.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      allResults.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+      // 手动分页
+      const total = allResults.length
+      const currentPage = parseInt(page)
+      const currentPageSize = parseInt(pageSize)
+      const startIndex = (currentPage - 1) * currentPageSize
+      const endIndex = startIndex + currentPageSize
+      const paginatedResults = allResults.slice(startIndex, endIndex)
 
       res.json({
         success: true,
-        data: results,
+        data: paginatedResults,
         pagination: {
-          page: parseInt(page),
-          pageSize: parseInt(pageSize),
-          total: results.length
+          page: currentPage,
+          pageSize: currentPageSize,
+          total: total,
+          totalPages: Math.ceil(total / currentPageSize)
         }
       })
     } catch (error) {
