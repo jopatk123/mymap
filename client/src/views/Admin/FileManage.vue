@@ -31,9 +31,10 @@
           :selected-count="selectedRows.length"
           :loading="loading"
           @search="handleSearch"
-          @reset="resetSearch"
+          @refresh="onRefresh"
           @batch-delete="handleBatchActionWithMove('delete')"
           @batch-hide="handleBatchActionWithMove('hide')"
+          @batch-show="handleBatchActionWithMove('show')"
           @batch-move="handleBatchActionWithMove('move')"
         />
       
@@ -243,6 +244,11 @@ const handleUploadSuccess = async () => {
 
 // 编辑成功
 const handleEditSuccess = async () => {
+  await loadFileList()
+}
+
+// 刷新：重新拉取当前条件下的列表
+const onRefresh = async () => {
   await loadFileList()
 }
 </script>

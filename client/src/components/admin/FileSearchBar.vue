@@ -27,7 +27,7 @@
       </el-form-item>
       <el-form-item>
         <el-button @click="$emit('search')" type="primary">搜索</el-button>
-        <el-button @click="$emit('reset')">重置</el-button>
+        <el-button @click="$emit('refresh')">刷新</el-button>
         <el-button 
           @click="$emit('batch-delete')" 
           type="danger" 
@@ -46,6 +46,15 @@
           隐藏{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
         </el-button>
         <el-button 
+          @click="$emit('batch-show')" 
+          type="success"
+          :disabled="selectedCount === 0"
+          :loading="loading"
+        >
+          <el-icon><View /></el-icon>
+          显示{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
+        </el-button>
+        <el-button 
           @click="$emit('batch-move')" 
           type="primary"
           :disabled="selectedCount === 0"
@@ -60,7 +69,7 @@
 </template>
 
 <script setup>
-import { Delete, Hide, FolderOpened } from '@element-plus/icons-vue'
+import { Delete, Hide, FolderOpened, View } from '@element-plus/icons-vue'
 
 const props = defineProps({
   searchForm: {
@@ -77,7 +86,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['search', 'reset', 'batch-delete', 'batch-hide', 'batch-move'])
+defineEmits(['search', 'refresh', 'batch-delete', 'batch-hide', 'batch-show', 'batch-move'])
 </script>
 
 <style lang="scss" scoped>

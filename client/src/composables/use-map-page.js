@@ -55,7 +55,8 @@ export function useMapPage() {
   const showPointSettings = ref(false)
 
   // 计算属性
-  const totalCount = computed(() => pagination.value.total)
+  // 点位列表数量以当前列表渲染的数据条数为准
+  const totalCount = computed(() => Array.isArray(panoramas.value) ? panoramas.value.length : 0)
 
   // 初始化
   const initializePage = async () => {
@@ -79,6 +80,12 @@ export function useMapPage() {
       if (window.allPoints && window.allPoints.length > 0) {
         try {
           panoramaStore.setPanoramas(window.allPoints)
+          // 同步更新分页信息，确保底部统计正确
+          panoramaStore.setPagination({
+            page: 1,
+            pageSize: window.allPoints.length,
+            total: window.allPoints.length
+          })
         } catch (error) {
           console.error('同步点位数据到store失败:', error)
         }
@@ -104,6 +111,8 @@ export function useMapPage() {
             // 1. 并行加载点位数据和KML文件基础数据
       const [pointsResponse, kmlFilesResponse] = await Promise.all([
         pointsApi.getAllPoints({
+          page: 1,
+          pageSize: 10000,
           respectFolderVisibility: true
         }),
         kmlApi.getKmlFiles({

@@ -100,6 +100,8 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       // 重新加载所有点位数据
       const { pointsApi } = await import('@/api/points.js')
       const response = await pointsApi.getAllPoints({
+        page: 1,
+        pageSize: 10000,
         respectFolderVisibility: true
       })
       
@@ -122,6 +124,12 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       window.allPoints = filteredPoints
       try {
         panoramaStore.setPanoramas(filteredPoints)
+        // 上传后刷新总数
+        panoramaStore.setPagination({
+          page: 1,
+          pageSize: filteredPoints.length,
+          total: filteredPoints.length
+        })
       } catch (error) {
         // console.error('更新panoramaStore失败:', error)
         throw error

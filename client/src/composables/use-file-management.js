@@ -17,7 +17,7 @@ export function useFileManagement() {
 
   const pagination = reactive({
     page: 1,
-    pageSize: 20,
+    pageSize: 100,
     total: 0
   })
 
