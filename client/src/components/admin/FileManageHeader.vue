@@ -3,7 +3,7 @@
     <h2>文件管理</h2>
     <div class="header-actions">
       <el-button @click="openLegacyPointSystem" class="legacy-open-btn">
-        打开点位展示(旧)
+        打开选点系统
       </el-button>
       <el-button @click="openPointSystem" class="new-open-btn">
         打开点位展示系统

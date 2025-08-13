@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { processKmlPoints, createPointRenderer } from './kml-point-renderer.js';
+import { processKmlPoints, createPointRenderer, createPopupContent } from './kml-point-renderer.js';
 import { parseKmlText } from './kml-text-parser.js';
 import { processCoordinates } from './kml-data-processor.js'
 import { createPointIcon } from './kml-icon-factory.js';
@@ -152,6 +152,23 @@ export function useKmlLayer(map, kmlLayers) {
               const pointOpacity = styleConfig.point_opacity
               const iconOptions = createPointIcon(pointSize, pointColor, pointOpacity, labelSize, labelColor, p?.name || '')
               const marker = L.marker([lat, lng], { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+              try {
+                // 构造最小要素用于生成弹窗内容（含可选的WGS84坐标）
+                const feature = {
+                  type: 'Feature',
+                  properties: {
+                    name: p?.name || '未命名地标',
+                    description: p?.description || ''
+                  },
+                  geometry: { type: 'Point', coordinates: [lng, lat] }
+                }
+                if (p && typeof p.latitude === 'number' && typeof p.longitude === 'number' && !isNaN(p.latitude) && !isNaN(p.longitude)) {
+                  feature.properties.wgs84_lat = Number(p.latitude)
+                  feature.properties.wgs84_lng = Number(p.longitude)
+                }
+                const popupContent = createPopupContent(feature, kmlFile)
+                marker.bindPopup(popupContent)
+              } catch {}
               toAdd.push([id, marker])
             }
           }

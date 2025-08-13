@@ -105,6 +105,10 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
           processedFeature.properties?.name
         );
         const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+        try {
+          const popupContent = createPopupContent(processedFeature, kmlFile)
+          marker.bindPopup(popupContent)
+        } catch {}
         batchMarkers.push(marker)
       } else {
         // 非点要素在任何情况下都应直接添加到 geojson 图层；
@@ -192,7 +196,7 @@ function formatWgs84(feature) {
   return '';
 }
 
-function createPopupContent(feature, kmlFile) {
+export function createPopupContent(feature, kmlFile) {
   const wgs84Text = formatWgs84(feature);
   // 计算外链URL
   let wgsLat = feature?.properties?.wgs84_lat;

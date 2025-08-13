@@ -199,6 +199,18 @@ function addPlacemarkFeatures(featureGeoJson, featureData, effectiveStyle, clust
         featureData.name
       );
       const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false });
+      try {
+        // 构造最小要素用于生成弹窗内容
+        const feature = createFeatureData(
+          featureData.name,
+          featureData.description,
+          'Point',
+          [coordinates[0], coordinates[1]],
+          wgs84LatLng
+        )
+        const popupContent = createPopupContent(feature, kmlFile)
+        marker.bindPopup(popupContent)
+      } catch {}
       batchMarkers.push(marker)
     } else {
       featureGeoJson.addData(
