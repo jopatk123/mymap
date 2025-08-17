@@ -217,10 +217,11 @@ export function createPopupContent(feature, kmlFile) {
     <div style="max-width: 240px;">
       ${feature.properties.name ? `<h4 style="margin: 0 0 8px 0;">${feature.properties.name}</h4>` : ''}
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">来源: ${kmlFile.title}</p>
+      ${feature.properties.description ? `<p style="margin: 0 0 4px 0; font-size: 12px;">${feature.properties.description}</p>` : ''}
       ${wgs84Text ? `<p style=\"margin: 0 0 4px 0; font-size: 12px;\">经纬度(WGS84): ${wgs84Text}</p>` : ''}
       ${kmlFile?.description ? `<div style=\"font-size: 12px;\">备注：${kmlFile.description}</div>` : ''}
-      ${(amapUrl || bmapUrl) ? `<div style=\"margin-top: 8px; display: flex; gap: 8px;\">
-        ${amapUrl ? `<a href=\"${amapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#409eff;color:#fff;border-radius:3px;text-decoration:none;\">在高德地图打开</a>` : ''}
+      ${(amapUrl || bmapUrl) ? `<div style=\"margin-top: 8px; display: flex; gap: 8px;\">\
+        ${amapUrl ? `<a href=\"${amapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#409eff;color:#fff;border-radius:3px;text-decoration:none;\">在高德地图打开</a>` : ''}\
         ${bmapUrl ? `<a href=\"${bmapUrl}\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;padding:4px 8px;background:#67c23a;color:#fff;border-radius:3px;text-decoration:none;\">在百度地图打开</a>` : ''}
       </div>` : ''}
     </div>

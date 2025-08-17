@@ -12,7 +12,7 @@ export const useAppStore = defineStore('app', {
     panoramaListVisible: false, // 默认隐藏
     // 地图设置
     mapSettings: {
-      mapType: 'normal' // normal, satellite
+      mapType: 'satellite' // normal, satellite
     },
     // 应用状态
     isOnline: navigator.onLine,
