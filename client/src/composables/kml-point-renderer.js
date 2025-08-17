@@ -21,11 +21,13 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         disableClusteringAtZoom: 19,
         spiderfyOnEveryClick: false,
         animate: false,
+        pane: 'kmlPane',
       })
     : null
 
   // 按是否聚合分别配置 geojson 选项
   const geoJsonOptions = {
+    pane: 'kmlPane',
     style: (feature) => {
       const geometryType = feature.geometry.type.toLowerCase();
       if (geometryType.includes('line')) {
@@ -64,7 +66,7 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         labelColor,
         feature.properties.name
       );
-      return L.marker(latlng, { icon: L.divIcon(iconOptions) });
+      return L.marker(latlng, { icon: L.divIcon(iconOptions), pane: 'kmlPane' });
     }
   }
 
@@ -104,7 +106,7 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
           labelColor,
           processedFeature.properties?.name
         );
-        const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false })
+        const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false, pane: 'kmlPane' })
         try {
           const popupContent = createPopupContent(processedFeature, kmlFile)
           marker.bindPopup(popupContent)

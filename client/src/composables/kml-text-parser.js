@@ -52,11 +52,13 @@ function createKmlLayer(kmlFile, effectiveStyle) {
         disableClusteringAtZoom: 19,
         spiderfyOnEveryClick: false,
         animate: false,
+        pane: 'kmlPane',
       })
     : null
 
   // 用于承载点/线/面的 geojson
   const geoJsonOptions = {
+    pane: 'kmlPane',
     style: (feature) => {
       const geometryType = feature.geometry.type.toLowerCase();
       if (geometryType.includes('line')) {
@@ -93,7 +95,7 @@ function createKmlLayer(kmlFile, effectiveStyle) {
         labelColor, 
         feature.properties.name
       );
-      return L.marker(latlng, { icon: L.divIcon(iconOptions) });
+      return L.marker(latlng, { icon: L.divIcon(iconOptions), pane: 'kmlPane' });
     }
   }
 

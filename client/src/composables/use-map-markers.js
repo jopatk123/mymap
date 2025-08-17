@@ -33,6 +33,10 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     buildIndexScheduled: false,
   }
 
+  const getPaneNameByType = (type) => {
+    return type === 'video' ? 'videoPane' : 'panoramaPane'
+  }
+
   const ensureClusterGroup = (type) => {
     const styles = type === 'video' ? (window.videoPointStyles || {}) : (window.panoramaPointStyles || {})
     const color = styles.cluster_color || styles.point_color || '#3388ff'
@@ -51,6 +55,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
           disableClusteringAtZoom: 19,
           spiderfyOnEveryClick: false,
           animate: false,
+          pane: getPaneNameByType('video'),
         })
         map.value.addLayer(videoClusterGroup)
       }
@@ -66,6 +71,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
           disableClusteringAtZoom: 19,
           spiderfyOnEveryClick: false,
           animate: false,
+          pane: getPaneNameByType('panorama'),
         })
         map.value.addLayer(panoramaClusterGroup)
       }
@@ -108,13 +114,15 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const [displayLng, displayLat] = coordinates;
     
 
-
+    
     const pointType = point.type || 'panorama';
+    const paneName = getPaneNameByType(pointType)
     
     // Leaflet需要[lat, lng]格式
     const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
       updateWhenZoom: false,
+      pane: paneName,
     }, null); // 传递null作为styleConfig，让函数使用全局样式
 
 
@@ -156,9 +164,11 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     if (!coordinates) return null
     const [displayLng, displayLat] = coordinates
     const pointType = point.type || 'panorama'
+    const paneName = getPaneNameByType(pointType)
     const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
       updateWhenZoom: false,
+      pane: paneName,
     }, null)
     marker.on('click', () => onMarkerClick.value(point))
     return { id: point.id, marker, type: pointType, data: point }

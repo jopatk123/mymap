@@ -18,6 +18,25 @@ export function useMapInstance(containerId) {
     const mapOptions = { ...defaultOptions, ...options };
     map.value = L.map(containerId, mapOptions);
 
+    // 自定义pane控制叠放顺序：KML < 视频 < 全景
+    try {
+      if (!map.value.getPane('kmlPane')) {
+        map.value.createPane('kmlPane');
+        map.value.getPane('kmlPane').style.zIndex = '580';
+        map.value.getPane('kmlPane').style.pointerEvents = 'auto';
+      }
+      if (!map.value.getPane('videoPane')) {
+        map.value.createPane('videoPane');
+        map.value.getPane('videoPane').style.zIndex = '600';
+        map.value.getPane('videoPane').style.pointerEvents = 'auto';
+      }
+      if (!map.value.getPane('panoramaPane')) {
+        map.value.createPane('panoramaPane');
+        map.value.getPane('panoramaPane').style.zIndex = '620';
+        map.value.getPane('panoramaPane').style.pointerEvents = 'auto';
+      }
+    } catch {}
+
     tileLayer.value = createAMapTileLayer(initialMapType);
     tileLayer.value.addTo(map.value);
 
