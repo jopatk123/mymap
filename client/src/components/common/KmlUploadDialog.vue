@@ -82,6 +82,11 @@ const handleFileChange = async (file, form) => {
   // 设置文件到表单
   if (form) {
     form.file = file
+    // 若标题为空，则自动使用文件名（去除扩展名）作为标题
+    if (!form.title && file && file.name) {
+      const baseName = file.name.replace(/\.[^.]+$/, '')
+      form.title = baseName
+    }
   }
   
   if (validateFile(file)) {
