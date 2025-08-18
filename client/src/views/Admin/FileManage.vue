@@ -30,12 +30,14 @@
           :search-form="searchForm"
           :selected-count="selectedRows.length"
           :loading="loading"
+          :downloading="downloading"
           @search="handleSearch"
           @refresh="onRefresh"
           @batch-delete="handleBatchActionWithMove('delete')"
           @batch-hide="handleBatchActionWithMove('hide')"
           @batch-show="handleBatchActionWithMove('show')"
           @batch-move="handleBatchActionWithMove('move')"
+          @batch-download="handleBatchActionWithMove('download')"
         />
       
         <!-- 文件列表表格 -->
@@ -97,7 +99,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted } from 'vue'
+import { reactive, computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useFileManagement } from '@/composables/use-file-management'
@@ -156,6 +158,9 @@ const {
   handleSelectionChange,
   handleBatchAction
 } = useBatchOperations()
+
+// 下载状态
+const downloading = ref(false)
 
 // 对话框状态管理
 const uploadDialogs = reactive({
@@ -220,6 +225,8 @@ const handleBatchActionWithMove = async (command) => {
   if (command === 'move') {
     movingFiles.value = selectedRows.value
     actionDialogs.showMoveDialog = true
+  } else if (command === 'download') {
+    await handleBatchDownload()
   } else {
     await handleBatchAction(command, () => {
       selectedRows.value = []
@@ -235,6 +242,55 @@ const handleMoveConfirmWithCleanup = async () => {
     loadFileList()
     loadFolders()
   })
+}
+
+// 生成下载链接
+const getFileDownloadUrl = (file) => {
+  if (!file) return null
+  switch (file.fileType) {
+    case 'panorama':
+      return file.image_url || file.imageUrl || null
+    case 'video':
+      return file.video_url || null
+    case 'kml':
+      return file.file_url || file.url || file.image_url || null
+    default:
+      return file.url || file.image_url || null
+  }
+}
+
+// 触发浏览器下载
+const triggerDownload = (url, filename) => {
+  if (!url) return
+  const a = document.createElement('a')
+  a.href = url
+  if (filename) a.download = filename
+  a.target = '_blank'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+// 批量下载
+const handleBatchDownload = async () => {
+  if (!selectedRows.value || selectedRows.value.length === 0) return
+  try {
+    downloading.value = true
+    // 逐个触发下载，避免被浏览器拦截
+    selectedRows.value.forEach((file, index) => {
+      const url = getFileDownloadUrl(file)
+      const ext = (() => {
+        if (file.fileType === 'panorama') return (file.file_type && file.file_type.split('/')[1]) || 'jpg'
+        if (file.fileType === 'video') return (file.file_type && file.file_type.split('/')[1]) || 'mp4'
+        if (file.fileType === 'kml') return 'kml'
+        return ''
+      })()
+      const name = (file.title || 'file') + (ext ? `.${ext}` : '')
+      setTimeout(() => triggerDownload(url, name), index * 200)
+    })
+  } finally {
+    setTimeout(() => { downloading.value = false }, Math.min(selectedRows.value.length * 200 + 300, 3000))
+  }
 }
 
 // 上传成功

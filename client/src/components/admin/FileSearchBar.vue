@@ -63,13 +63,22 @@
           <el-icon><FolderOpened /></el-icon>
           移动
         </el-button>
+        <el-button 
+          @click="$emit('batch-download')" 
+          type="info"
+          :disabled="selectedCount === 0"
+          :loading="downloading"
+        >
+          <el-icon><Download /></el-icon>
+          下载{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
+        </el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script setup>
-import { Delete, Hide, FolderOpened, View } from '@element-plus/icons-vue'
+import { Delete, Hide, FolderOpened, View, Download } from '@element-plus/icons-vue'
 
 const props = defineProps({
   searchForm: {
@@ -83,10 +92,14 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  downloading: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['search', 'refresh', 'batch-delete', 'batch-hide', 'batch-show', 'batch-move'])
+defineEmits(['search', 'refresh', 'batch-delete', 'batch-hide', 'batch-show', 'batch-move', 'batch-download'])
 </script>
 
 <style lang="scss" scoped>

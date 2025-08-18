@@ -9,6 +9,10 @@
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
+            <el-dropdown-item command="download">
+              <el-icon><Download /></el-icon>
+              下载所选
+            </el-dropdown-item>
             <el-dropdown-item command="move">
               <el-icon><FolderOpened /></el-icon>
               移动到文件夹
@@ -38,7 +42,8 @@ import {
   FolderOpened, 
   View, 
   Hide, 
-  Delete 
+  Delete,
+  Download
 } from '@element-plus/icons-vue'
 
 const props = defineProps({
