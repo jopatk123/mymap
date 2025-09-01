@@ -63,7 +63,8 @@ main() {
   docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
 
   log "启动/更新服务: $APP_NAME (Node + Nginx)"
-  $DC -f "$COMPOSE_FILE" up -d --remove-orphans
+  # 不自动移除孤立容器，避免误删同宿主机上其他容器
+  $DC -f "$COMPOSE_FILE" up -d
 
   log "等待健康检查..."
   sleep 3
