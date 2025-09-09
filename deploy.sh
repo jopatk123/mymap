@@ -38,26 +38,14 @@ detect_compose() {
 
 main() {
   log "检查依赖..."
-  need_cmd git
   need_cmd docker
 
   local DC
   DC=$(detect_compose)
   log "使用 compose 命令: $DC"
 
-  log "同步代码..."
-  if [ -d .git ]; then
-    git fetch --all --prune
-    # 优先保持在 main 分支
-    if git rev-parse --abbrev-ref HEAD | grep -q "main"; then
-      git pull --rebase
-    else
-      warn "当前不在 main 分支，跳过强制切换"
-      git pull --rebase || true
-    fi
-  else
-    warn "未检测到 .git 目录，跳过拉取"
-  fi
+  # 已移除自动 git 拉取逻辑；部署脚本不会再尝试拉取或切换分支
+  log "跳过自动代码同步：已移除 git 操作"
 
   log "构建镜像: $IMAGE_NAME"
   docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
