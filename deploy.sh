@@ -48,7 +48,21 @@ main() {
   log "跳过自动代码同步：已移除 git 操作"
 
   log "构建镜像: $IMAGE_NAME"
-  docker build -t "$IMAGE_NAME" -f docker/Dockerfile .
+  # Collect proxy/mirror vars from environment to pass as build args when present
+  BUILD_ARGS=( )
+  [ -n "${http_proxy:-}" ] && BUILD_ARGS+=(--build-arg HTTP_PROXY="$http_proxy")
+  [ -n "${https_proxy:-}" ] && BUILD_ARGS+=(--build-arg HTTPS_PROXY="$https_proxy")
+  [ -n "${no_proxy:-}" ] && BUILD_ARGS+=(--build-arg NO_PROXY="$no_proxy")
+  [ -n "${ALPINE_MIRROR:-}" ] && BUILD_ARGS+=(--build-arg ALPINE_MIRROR="$ALPINE_MIRROR")
+
+  # If proxy targets localhost, docker build needs host network so build steps can reach it
+  BUILD_NETWORK=""
+  if [ -n "${http_proxy:-}" ] && printf "%s" "$http_proxy" | grep -Eq "127\\.0\\.0\\.1|localhost"; then
+    BUILD_NETWORK=(--network host)
+    warn "Proxy points to localhost - using host network for docker build so build can reach the proxy"
+  fi
+
+  docker build -t "$IMAGE_NAME" -f docker/Dockerfile "${BUILD_ARGS[@]}" "${BUILD_NETWORK[@]}" .
 
   log "启动/更新服务: $APP_NAME (Node + Nginx)"
   # 不自动移除孤立容器，避免误删同宿主机上其他容器
