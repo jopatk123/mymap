@@ -158,3 +158,6 @@ debug-startup.js
 
 # Root level log files
 *.log
+
+#docker
+images/*
