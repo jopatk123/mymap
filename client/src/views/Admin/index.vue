@@ -9,11 +9,15 @@
           <el-icon><HomeFilled /></el-icon>
           返回首页
         </el-button>
+        <el-button @click="toggleSidebar" link>
+          <!-- 不依赖额外图标，简单文本切换 -->
+          切换侧栏
+        </el-button>
       </div>
     </div>
     
     <div class="admin-content">
-      <div class="admin-sidebar">
+  <div class="admin-sidebar" :class="{ 'is-hidden': !sidebarVisible }">
         <el-menu
           :default-active="activeMenu"
           router
@@ -35,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, Folder } from '@element-plus/icons-vue'
 
@@ -46,6 +50,13 @@ const activeMenu = computed(() => route.path)
 
 const goHome = () => {
   router.push('/')
+}
+
+// 侧栏显示状态，默认隐藏
+const sidebarVisible = ref(false)
+
+const toggleSidebar = () => {
+  sidebarVisible.value = !sidebarVisible.value
 }
 </script>
 
@@ -82,10 +93,19 @@ const goHome = () => {
       width: 200px;
       background: white;
       border-right: 1px solid #e6e6e6;
+      transition: width 0.2s ease, padding 0.2s ease;
+      overflow: hidden;
       
       .admin-menu {
         border-right: none;
       }
+    }
+
+    /* 隐藏侧栏时让其宽度折叠，主内容撑满 */
+    .admin-sidebar.is-hidden {
+      width: 0;
+      padding: 0;
+      border-right: none;
     }
     
     .admin-main {

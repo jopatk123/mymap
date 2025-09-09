@@ -10,9 +10,9 @@
       <el-tab-pane label="地图设置" name="map">
         <el-form label-width="120px">
           <el-form-item label="地图底图">
-            <el-radio-group v-model="mapSettings.mapType">
-              <el-radio label="normal">普通地图</el-radio>
-              <el-radio label="satellite">卫星地图</el-radio>
+              <el-radio-group v-model="mapSettings.mapType">
+              <el-radio value="normal">普通地图</el-radio>
+              <el-radio value="satellite">卫星地图</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-form>

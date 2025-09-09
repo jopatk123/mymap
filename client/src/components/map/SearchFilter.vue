@@ -2,8 +2,8 @@
   <div class="search-filter">
     <div class="search-section">
       <el-radio-group v-model="searchMode" size="small">
-        <el-radio-button label="point">点位搜索</el-radio-button>
-        <el-radio-button label="address">地址搜索</el-radio-button>
+        <el-radio-button value="point">点位搜索</el-radio-button>
+        <el-radio-button value="address">地址搜索</el-radio-button>
       </el-radio-group>
       <div class="search-input">
         <el-input
