@@ -53,5 +53,3 @@
 - 在 CI 上执行构建并发布带 tag 的镜像到内部 registry，可长期解决网络受限环境下的分发问题。
 
 ---
-
-如果你希望我现在把 `build_mymap_images_tar.sh` 自动化（复制 node_modules、清理临时目录并更新 `.gitignore`），请回复“自动化”。
