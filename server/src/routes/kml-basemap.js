@@ -5,6 +5,8 @@ const fs = require('fs').promises
 const fsSync = require('fs')
 const { DOMParser } = require('xmldom')
 const router = express.Router()
+const KmlFileModel = require('../models/kml-file.model')
+const KmlPointModel = require('../models/kml-point.model')
 
 // 配置文件上传
 const storage = multer.diskStorage({
@@ -41,9 +43,7 @@ const upload = multer({
   }
 })
 
-// KML底图数据库模拟（实际项目中应使用真实数据库）
-let kmlFiles = []
-let kmlFileIdCounter = 1
+// 使用数据库模型进行持久化，移除内存模拟存储
 
 /**
  * 解析KML文件内容
@@ -91,46 +91,61 @@ function parseKMLFile(kmlContent) {
  * POST /api/kml-basemap/upload
  * 上传KML底图文件
  */
-router.post('/upload', upload.single('kml'), async (req, res) => {
+// 支持前端可能使用的字段名（kml 或 file），使用 upload.any() 接受任意文件字段
+router.post('/upload', upload.any(), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: '请选择KML文件'
-      })
+    // multer.any() 将文件放到 req.files 数组
+    const uploadedFile = req.file || (req.files && req.files[0])
+    if (!uploadedFile) {
+      return res.status(400).json({ success: false, message: '请选择KML文件' })
     }
 
-    const filePath = req.file.path
+    const filePath = uploadedFile.path
     const kmlContent = await fs.readFile(filePath, 'utf-8')
-    
+
     // 解析KML文件获取点位数据
     const points = parseKMLFile(kmlContent)
-    
-    // 保存文件信息
-    const fileInfo = {
-      id: kmlFileIdCounter++,
-      name: req.file.originalname,
-      filename: req.file.filename,
-      path: filePath,
-      size: req.file.size,
-      pointsCount: points.length,
-      points: points,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+
+    // 从表单中读取额外参数
+    const { title, description, folderId } = req.body
+    const fileUrl = `/uploads/kml-basemap/${uploadedFile.filename}`
+
+    // 修复可能的文件名编码问题（multer 在某些环境会以 latin1 提供 originalname）
+    let originalName = uploadedFile.originalname || ''
+    try {
+      originalName = Buffer.from(originalName, 'latin1').toString('utf8')
+    } catch (e) {
+      // ignore and keep original
     }
-    
-    kmlFiles.push(fileInfo)
-    
-    res.json({
-      success: true,
-      message: 'KML文件上传成功',
-      data: {
-        id: fileInfo.id,
-        name: fileInfo.name,
-        pointsCount: fileInfo.pointsCount,
-        createdAt: fileInfo.createdAt
-      }
+
+    // 创建 KML 文件记录到数据库
+    const kmlFile = await KmlFileModel.create({
+      title: title || originalName || uploadedFile.originalname,
+      description: description || '',
+      fileUrl,
+      fileSize: uploadedFile.size,
+      folderId: folderId ? parseInt(folderId) : null
     })
+
+    // 批量写入点位
+    const pointsData = points.map(p => ({
+      kmlFileId: kmlFile.id,
+      name: p.name || '',
+      description: p.description || '',
+      latitude: p.latitude,
+      longitude: p.longitude,
+      altitude: p.altitude || 0,
+      pointType: p.pointType || 'Point',
+      coordinates: p.coordinates || {},
+      styleData: p.styleData || {}
+    }))
+
+    if (pointsData.length > 0) {
+      await KmlPointModel.batchCreate(pointsData)
+    }
+
+    const completeKmlFile = await KmlFileModel.findById(kmlFile.id)
+    res.status(201).json({ success: true, message: `KML文件上传成功，解析出 ${points.length} 个地标`, data: completeKmlFile })
     
   } catch (error) {
     console.error('上传KML文件失败:', error)
@@ -145,27 +160,24 @@ router.post('/upload', upload.single('kml'), async (req, res) => {
  * GET /api/kml-basemap/files
  * 获取KML底图文件列表
  */
-router.get('/files', (req, res) => {
+router.get('/files', async (req, res) => {
   try {
-    const fileList = kmlFiles.map(file => ({
-      id: file.id,
-      name: file.name,
-      size: file.size,
-      pointsCount: file.pointsCount,
-      createdAt: file.createdAt
-    }))
-    
+    const { page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility } = req.query
+    const result = await KmlFileModel.findAll({ page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility })
+
     res.json({
       success: true,
-      data: fileList
+      data: result.data,
+      pagination: {
+        page: result.page,
+        pageSize: result.pageSize,
+        total: result.total,
+        totalPages: result.totalPages
+      }
     })
-    
   } catch (error) {
     console.error('获取KML文件列表失败:', error)
-    res.status(500).json({
-      success: false,
-      message: '获取文件列表失败'
-    })
+    res.status(500).json({ success: false, message: '获取文件列表失败' })
   }
 })
 
@@ -173,29 +185,14 @@ router.get('/files', (req, res) => {
  * GET /api/kml-basemap/:fileId/points
  * 获取指定KML文件的点位数据
  */
-router.get('/:fileId/points', (req, res) => {
+router.get('/:fileId/points', async (req, res) => {
   try {
     const fileId = parseInt(req.params.fileId)
-    const file = kmlFiles.find(f => f.id === fileId)
-    
-    if (!file) {
-      return res.status(404).json({
-        success: false,
-        message: 'KML文件不存在'
-      })
-    }
-    
-    res.json({
-      success: true,
-      data: file.points || []
-    })
-    
+    const points = await KmlPointModel.findByKmlFileId(fileId)
+    res.json({ success: true, data: points })
   } catch (error) {
     console.error('获取KML点位数据失败:', error)
-    res.status(500).json({
-      success: false,
-      message: '获取点位数据失败'
-    })
+    res.status(500).json({ success: false, message: '获取点位数据失败' })
   }
 })
 
@@ -206,33 +203,25 @@ router.get('/:fileId/points', (req, res) => {
 router.get('/:fileId/download', async (req, res) => {
   try {
     const fileId = parseInt(req.params.fileId)
-    const file = kmlFiles.find(f => f.id === fileId)
-    
+    const file = await KmlFileModel.findById(fileId)
     if (!file) {
-      return res.status(404).json({
-        success: false,
-        message: 'KML文件不存在'
-      })
+      return res.status(404).json({ success: false, message: 'KML文件不存在' })
     }
-    
-    // 检查文件是否存在
+
+    const fileUrl = file.file_url || file.fileUrl || ''
+    const filePath = path.join(process.cwd(), fileUrl)
+
     try {
-      await fs.access(file.path)
+      await fs.access(filePath)
     } catch (error) {
-      return res.status(404).json({
-        success: false,
-        message: '文件已被删除'
-      })
+      return res.status(404).json({ success: false, message: '文件已被删除' })
     }
-    
-    res.download(file.path, file.name)
-    
+
+    const downloadName = file.title || file.name || path.basename(filePath)
+    res.download(filePath, downloadName)
   } catch (error) {
     console.error('下载KML文件失败:', error)
-    res.status(500).json({
-      success: false,
-      message: '下载失败'
-    })
+    res.status(500).json({ success: false, message: '下载失败' })
   }
 })
 
@@ -243,38 +232,37 @@ router.get('/:fileId/download', async (req, res) => {
 router.delete('/:fileId', async (req, res) => {
   try {
     const fileId = parseInt(req.params.fileId)
-    const fileIndex = kmlFiles.findIndex(f => f.id === fileId)
-    
-    if (fileIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'KML文件不存在'
-      })
+    const file = await KmlFileModel.findById(fileId)
+    if (!file) {
+      return res.status(404).json({ success: false, message: 'KML文件不存在' })
     }
-    
-    const file = kmlFiles[fileIndex]
-    
+
+    const fileUrl = file.file_url || file.fileUrl || ''
+    const filePath = path.join(process.cwd(), fileUrl)
+
     // 删除物理文件
     try {
-      await fs.unlink(file.path)
+      await fs.unlink(filePath)
     } catch (error) {
       console.warn('删除物理文件失败:', error.message)
     }
-    
-    // 从数组中移除
-    kmlFiles.splice(fileIndex, 1)
-    
-    res.json({
-      success: true,
-      message: 'KML文件删除成功'
-    })
-    
+
+    // 删除点位与文件记录
+    try {
+      await KmlPointModel.deleteByKmlFileId(fileId)
+    } catch (err) {
+      console.warn('删除KML点位失败:', err && err.message)
+    }
+
+    const success = await KmlFileModel.delete(fileId)
+    if (success) {
+      res.json({ success: true, message: 'KML文件删除成功' })
+    } else {
+      res.status(500).json({ success: false, message: '删除失败' })
+    }
   } catch (error) {
     console.error('删除KML文件失败:', error)
-    res.status(500).json({
-      success: false,
-      message: '删除失败'
-    })
+    res.status(500).json({ success: false, message: '删除失败' })
   }
 })
 

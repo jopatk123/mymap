@@ -40,7 +40,11 @@ export function useKMLBaseMap() {
     
     try {
       uploading.value = true
-      await store.uploadKMLFile(file)
+  await store.uploadKMLFile(file)
+
+  // 通知 KML 侧栏与主文件列表刷新
+  window.dispatchEvent(new CustomEvent('kml-files-updated'))
+  window.dispatchEvent(new CustomEvent('show-kml-files'))
       
       ElMessage.success('KML文件上传成功')
       uploadDialogVisible.value = false

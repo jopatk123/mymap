@@ -1,14 +1,12 @@
 <template>
   <div class="kml-basemap-folder">
-    <div class="folder-header">
+  <div class="folder-header" @click="handleHeaderClick">
       <div class="folder-info">
         <el-icon class="folder-icon">
           <FolderOpened />
         </el-icon>
         <span class="folder-name">KML底图</span>
-        <el-tag size="small" type="info">
-          {{ kmlFiles.length }}个文件
-        </el-tag>
+  <!-- 文件数量显示已移除（根据要求） -->
       </div>
       
       <div class="folder-actions">
@@ -162,7 +160,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   FolderOpened,
@@ -193,6 +191,17 @@ const filePoints = ref([])
 // 初始化
 onMounted(() => {
   initialize()
+})
+
+// 响应外部事件，刷新 KML 列表（例如上传成功后）
+const refreshHandler = () => {
+  initialize()
+}
+
+window.addEventListener('kml-files-updated', refreshHandler)
+
+onUnmounted(() => {
+  window.removeEventListener('kml-files-updated', refreshHandler)
 })
 
 // 选择文件
@@ -227,6 +236,17 @@ const downloadFile = (file) => {
   document.body.removeChild(link)
   
   ElMessage.success('文件下载已开始')
+}
+
+// 点击 header 时触发刷新（并尝试聚焦/展开）
+const handleHeaderClick = async () => {
+  try {
+    await initialize()
+  // 通知主区域显示 KML 文件列表（例如当用户在其他文件夹时点击回到KML）
+  window.dispatchEvent(new CustomEvent('show-kml-files'))
+  } catch (error) {
+    console.error('刷新KML列表失败:', error)
+  }
 }
 
 // 删除文件

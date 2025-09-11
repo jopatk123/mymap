@@ -100,6 +100,7 @@
 
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue'
+import { onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useFileManagement } from '@/composables/use-file-management'
@@ -189,6 +190,11 @@ const validFolders = computed(() => {
 onMounted(() => {
   loadFileList()
   loadFolders()
+  window.addEventListener('show-kml-files', handleShowKmlFiles)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('show-kml-files', handleShowKmlFiles)
 })
 
 // 加载文件夹
@@ -296,6 +302,21 @@ const handleBatchDownload = async () => {
 // 上传成功
 const handleUploadSuccess = async () => {
   await loadFileList()
+  // 通知侧边栏KML组件刷新列表
+  window.dispatchEvent(new CustomEvent('kml-files-updated'))
+}
+
+// 显示 KML 文件视图并刷新列表
+const handleShowKmlFiles = async () => {
+  try {
+    // 切换搜索为 KML 类型并重载
+    searchForm.fileType = 'kml'
+    selectedFolder.value = null
+    pagination.page = 1
+    await loadFileList()
+  } catch (error) {
+    console.error('切换到KML列表失败:', error)
+  }
 }
 
 // 编辑成功
