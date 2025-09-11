@@ -109,7 +109,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const addArea = (area) => {
     areas.value.push({
       id: crypto.randomUUID(),
-      ...area,
+  ...area,
+  // 默认新建区域为可见，toggleAreaVisibility 会切换此字段
+  visible: area.visible !== undefined ? area.visible : true,
       createdAt: new Date()
     })
     updateVisiblePoints()
@@ -148,17 +150,20 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 更新可见点位
   const updateVisiblePoints = () => {
-    if (areas.value.length === 0) {
+    // 只使用标记为可见的区域来决定哪些点应显示
+    const activeAreas = areas.value.filter(a => a.visible !== false)
+
+    if (activeAreas.length === 0) {
       visiblePoints.value = []
       return
     }
-    
+
     const visible = []
-    
+
     for (const point of kmlPoints.value) {
       let isVisible = false
-      
-      for (const area of areas.value) {
+
+      for (const area of activeAreas) {
         if (area.type === 'circle') {
           if (areaCalculationService.isPointInCircle(point, area.center, area.radius)) {
             isVisible = true
@@ -171,7 +176,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
           }
         }
       }
-      
+
       if (isVisible) {
         visible.push({
           ...point,
@@ -179,7 +184,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         })
       }
     }
-    
+
     visiblePoints.value = visible
   }
   

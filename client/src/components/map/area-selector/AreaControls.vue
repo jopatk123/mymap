@@ -33,6 +33,15 @@
         清除
       </el-button>
 
+      <!-- 完成绘制按钮（绘制中显示） -->
+      <el-button
+        v-if="isDrawing"
+        @click="handleFinishDrawing"
+        type="primary"
+      >
+        完成
+      </el-button>
+
       <!-- 导出按钮 -->
       <el-button
         @click="handleExport"
@@ -153,6 +162,7 @@ const {
   setMapInstance,
   startCircleSelection,
   startPolygonSelection,
+  finishDrawing,
   clearAllAreas,
   removeArea,
   setCircleRadius
@@ -207,6 +217,10 @@ const handleCustomAreaClick = () => {
 // 处理清除区域
 const handleClearAreas = () => {
   clearAllAreas()
+}
+
+const handleFinishDrawing = async () => {
+  await finishDrawing()
 }
 
 // 处理导出

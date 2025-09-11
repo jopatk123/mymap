@@ -506,7 +506,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
           map.value.removeLayer(marker);
         }
       } catch (error) {
-        console.debug('移除单个标记时出错:', error);
+        // 移除单个标记时出错（已静默处理）
       }
       
       markers.value.splice(markerIndex, 1);
@@ -596,7 +596,6 @@ export function useMapMarkers(map, markers, onMarkerClick) {
           }
         } catch (error) {
           // 静默处理单个标记移除失败
-          console.debug('移除标记时出错:', error);
         }
       });
 

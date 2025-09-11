@@ -68,6 +68,11 @@ const {
   onMarkerClick
 } = useMap('map')
 
+// 记录 map 值何时变化，便于调试暴露链路
+watch(map, (v) => {
+  // map changed — no debug logging to avoid noisy console output
+}, { immediate: true })
+
 // 搜索结果临时标记
 let searchMarker = null
 
@@ -243,6 +248,9 @@ defineExpose({
   clearKmlLayers,
   setSearchMarker,
   clearSearchMarker
+  ,
+  // 将底层地图实例暴露给父组件（例如 MapView -> 上层页面）
+  map
 })
 </script>
 
