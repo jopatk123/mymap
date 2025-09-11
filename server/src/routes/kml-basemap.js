@@ -7,6 +7,7 @@ const { DOMParser } = require('xmldom')
 const router = express.Router()
 const KmlFileModel = require('../models/kml-file.model')
 const KmlPointModel = require('../models/kml-point.model')
+const { transaction } = require('../config/database')
 
 // 配置文件上传
 const storage = multer.diskStorage({
@@ -238,27 +239,39 @@ router.delete('/:fileId', async (req, res) => {
     }
 
     const fileUrl = file.file_url || file.fileUrl || ''
-    const filePath = path.join(process.cwd(), fileUrl)
+    // ensure relative path
+    const filePath = path.join(process.cwd(), (fileUrl || '').replace(/^\//, ''))
 
-    // 删除物理文件
+    // 使用事务：先在事务中删除点位与文件记录，再删除物理文件；若物理文件删除失败（非ENOENT），回滚事务
     try {
-      await fs.unlink(filePath)
-    } catch (error) {
-      console.warn('删除物理文件失败:', error.message)
-    }
+      await transaction(async (db) => {
+        // 删除点位
+        await db.run('DELETE FROM kml_points WHERE kml_file_id = ?', [fileId])
 
-    // 删除点位与文件记录
-    try {
-      await KmlPointModel.deleteByKmlFileId(fileId)
+        // 删除文件记录
+        const delRes = await db.run('DELETE FROM kml_files WHERE id = ?', [fileId])
+        if (!delRes || delRes.changes === 0) {
+          throw new Error('删除数据库记录失败')
+        }
+
+        // 删除物理文件（如果不存在则视为成功；其他错误则抛出以触发回滚）
+        try {
+          await fs.unlink(filePath)
+        } catch (err) {
+          if (err && err.code === 'ENOENT') {
+            // 文件已不存在，继续完成事务
+            console.warn('物理文件已不存在:', filePath)
+          } else {
+            console.warn('删除物理文件失败:', err && err.message)
+            throw err
+          }
+        }
+      })
+
+      return res.json({ success: true, message: 'KML文件删除成功' })
     } catch (err) {
-      console.warn('删除KML点位失败:', err && err.message)
-    }
-
-    const success = await KmlFileModel.delete(fileId)
-    if (success) {
-      res.json({ success: true, message: 'KML文件删除成功' })
-    } else {
-      res.status(500).json({ success: false, message: '删除失败' })
+      console.error('事务性删除KML文件失败:', err)
+      return res.status(500).json({ success: false, message: '删除失败，已回滚' })
     }
   } catch (error) {
     console.error('删除KML文件失败:', error)
