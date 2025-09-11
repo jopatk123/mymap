@@ -20,7 +20,8 @@
     "sharp": "^0.32.5",
     "sqlite": "^4.2.1",
     "sqlite3": "^5.1.6",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "jest": "^29.6.2",

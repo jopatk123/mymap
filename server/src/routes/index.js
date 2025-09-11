@@ -50,6 +50,10 @@ router.use('/video-points', videoPointRoutes)
 const kmlFileRoutes = require('./kml-file.routes')
 router.use('/kml-files', kmlFileRoutes)
 
+// KML底图（前端专用路由）
+const kmlBaseMapRoutes = require('./kml-basemap')
+router.use('/kml-basemap', kmlBaseMapRoutes)
+
 // 统一点位相关路由（全景图 + 视频点位）
 const pointsRoutes = require('./points.routes')
 router.use('/points', pointsRoutes)

@@ -9,6 +9,13 @@
     </div>
     
     <div class="tree-content">
+      <!-- KML底图文件夹 -->
+      <div class="kml-basemap-section">
+        <KMLBaseMapFolder />
+      </div>
+      
+      <el-divider />
+      
       <el-tree
         ref="treeRef"
         :data="folderTree"
@@ -45,6 +52,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { FolderAdd } from '@element-plus/icons-vue'
 import FolderTreeNode from './FolderTreeNode.vue'
 import FolderContextMenu from './FolderContextMenu.vue'
+import KMLBaseMapFolder from '@/components/map/kml-basemap/KMLBaseMapFolder.vue'
 
 defineProps({
   folderTree: {
@@ -129,6 +137,10 @@ const hideContextMenu = () => {
     flex: 1;
     padding: 16px;
     overflow-y: auto;
+    
+    .kml-basemap-section {
+      margin-bottom: 16px;
+    }
   }
 }
 </style>

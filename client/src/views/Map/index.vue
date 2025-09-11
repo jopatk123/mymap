@@ -37,6 +37,7 @@
       :loading="loading"
       :total-count="totalCount"
       :is-online="isOnline"
+      :map-instance="mapRef?.map"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
       @show-settings="showSettings = true"

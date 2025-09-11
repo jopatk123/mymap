@@ -24,16 +24,19 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true
-      },
-      '/uploads': {
-        target: 'http://localhost:3002',
-        changeOrigin: true
+    proxy: (() => {
+      const backend = process.env.BACKEND_URL || 'http://localhost:3002'
+      return {
+        '/api': {
+          target: backend,
+          changeOrigin: true
+        },
+        '/uploads': {
+          target: backend,
+          changeOrigin: true
+        }
       }
-    }
+    })()
   },
   css: {
     preprocessorOptions: {

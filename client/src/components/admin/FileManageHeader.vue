@@ -20,6 +20,8 @@
         <el-icon><Document /></el-icon>
         添加KML文件
       </el-button>
+      <!-- 新增KML底图按钮 -->
+      <KMLBaseMapButton />
     </div>
   </div>
 </template>
@@ -27,6 +29,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { Plus, VideoPlay, Document } from '@element-plus/icons-vue'
+import KMLBaseMapButton from './KMLBaseMapButton.vue'
 
 defineEmits(['upload-request'])
 
