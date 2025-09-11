@@ -216,14 +216,29 @@ class KmlFileBaseController {
         })
       }
 
-      const success = await KmlFileModel.delete(parseInt(id))
-      if (success) {
-        await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+      const { transaction } = require('../../config/database')
+
+      try {
+        await transaction(async (db) => {
+          // 删除点位
+          await db.run('DELETE FROM kml_points WHERE kml_file_id = ?', [parseInt(id)])
+
+          // 删除文件记录
+          const delRes = await db.run('DELETE FROM kml_files WHERE id = ?', [parseInt(id)])
+          if (!delRes || delRes.changes === 0) {
+            throw new Error('删除数据库记录失败')
+          }
+
+          // 删除物理文件（KmlFileUtils 在失败时会抛出异常以触发回滚）
+          await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+        })
+
         const ConfigService = require('../../services/config.service')
         await ConfigService.deleteKmlStyles(id)
         res.json({ success: true, message: 'KML文件删除成功' })
-      } else {
-        res.status(404).json({ success: false, message: 'KML文件不存在' })
+      } catch (err) {
+        Logger.error('事务性删除KML文件失败:', err)
+        return res.status(500).json({ success: false, message: '删除KML文件失败，已回滚', error: err.message })
       }
     } catch (error) {
       Logger.error('删除KML文件失败:', error)
