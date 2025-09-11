@@ -23,7 +23,7 @@ export function useKMLBaseMap() {
   }
   
   // 处理文件上传
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (file, options = {}) => {
     if (!file) return
     
     // 验证文件类型
@@ -40,7 +40,11 @@ export function useKMLBaseMap() {
     
     try {
       uploading.value = true
-  await store.uploadKMLFile(file)
+      // If options.title not provided, try to infer from file name
+      if (!options.title && file && file.name) {
+        options.title = file.name.replace(/\.[^.]+$/, '')
+      }
+      await store.uploadKMLFile(file, options)
 
   // 通知 KML 侧栏与主文件列表刷新
   window.dispatchEvent(new CustomEvent('kml-files-updated'))

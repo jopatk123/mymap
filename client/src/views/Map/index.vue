@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useMapPage } from '@/composables/use-map-page'
 import { useMapInteractions } from '@/composables/use-map-interactions'
 import { usePanoramaViewer } from '@/composables/use-panorama-viewer'
@@ -244,6 +244,19 @@ const closePanoramaViewer = () => {
 
 // 初始化生命周期
 initializeMap()
+
+// 监听全局事件以便从侧栏快捷入口打开 KML 设置
+onMounted(() => {
+  window.addEventListener('show-kml-settings', () => {
+    showKmlSettings.value = true
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('show-kml-settings', () => {
+    showKmlSettings.value = true
+  })
+})
 
 // 处理地址定位
 const handleLocate = ({ lat, lng, tip }) => {

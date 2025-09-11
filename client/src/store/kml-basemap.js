@@ -61,10 +61,18 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   }
   
   // 上传KML文件
-  const uploadKMLFile = async (file) => {
+  const uploadKMLFile = async (file, options = {}) => {
     try {
       loading.value = true
-      const result = await kmlBaseMapService.uploadKMLFile(file)
+      const isBasemap = options.isBasemap === true || file?.isBasemap === true
+      // forward title/description/folderId from options to backend
+      const payloadOptions = {
+        isBasemap,
+        title: options.title,
+        description: options.description,
+        folderId: options.folderId
+      }
+      const result = await kmlBaseMapService.uploadKMLFile(file, payloadOptions)
       
       // 重新获取文件列表
       await fetchKMLFiles()

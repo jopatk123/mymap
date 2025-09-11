@@ -10,6 +10,12 @@ export function useKmlLayer(map, kmlLayers) {
   const kmlViewportStates = new Map() // kmlId -> { enabled, clusterGroup, sourcePoints, style, onMoveEnd, onZoomEnd }
 
   const addKmlLayer = async (kmlFile, styleConfig = null) => {
+    const isBasemap = Boolean(
+      kmlFile?.isBasemap === true ||
+      kmlFile?.is_basemap === 1 ||
+      kmlFile?.is_basemap === true ||
+      kmlFile?.isBasemap === 1
+    )
     if (!map.value || !kmlFile.file_url) {
       console.warn('无法添加KML图层：地图未初始化或文件URL为空', { map: !!map.value, fileUrl: kmlFile.file_url });
       return null;
@@ -38,9 +44,15 @@ export function useKmlLayer(map, kmlLayers) {
   };
 
   const processKmlLayerFromPoints = async (points, kmlFile, styleConfig) => {
+    const isBasemap = Boolean(
+      kmlFile?.isBasemap === true ||
+      kmlFile?.is_basemap === 1 ||
+      kmlFile?.is_basemap === true ||
+      kmlFile?.isBasemap === 1
+    )
     try {
       const useViewport = Boolean(styleConfig?.cluster_enabled) && Array.isArray(points) && points.length >= VIEWPORT_THRESHOLD
-      if (useViewport) {
+  if (useViewport) {
         // 使用只渲染线/面 + 空聚合组，由我们填充视口内点
         const renderer = createPointRenderer(kmlFile, styleConfig)
         const { layer, clusterGroup, featureGeoJson } = renderer
@@ -193,18 +205,21 @@ export function useKmlLayer(map, kmlLayers) {
         const onZoomEnd = () => { isZooming = false; addVisibleMarkers() }
         const onMoveEnd = () => { if (!isZooming) addVisibleMarkers() }
 
-        layer.addTo(map.value)
-        addVisibleMarkers()
-        map.value.on('zoomstart', onZoomStart)
-        map.value.on('zoomend', onZoomEnd)
-        map.value.on('moveend', onMoveEnd)
+        // 对于标记为底图的 KML，默认不把点位渲染到地图上（保留图层对象用于后续切换可见性）
+        if (!isBasemap) {
+          layer.addTo(map.value)
+          addVisibleMarkers()
+          map.value.on('zoomstart', onZoomStart)
+          map.value.on('zoomend', onZoomEnd)
+          map.value.on('moveend', onMoveEnd)
+        }
         // 异步构建索引，避免阻塞UI
         setTimeout(() => { try { buildSpatialIndex() } catch {} }, 0)
         kmlViewportStates.set(
           kmlFile.id,
-          { enabled: true, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }
+          { enabled: !isBasemap, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }
         )
-        kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title })
+        kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title, visible: !isBasemap })
         try { console.info('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
         return layer
       }
@@ -213,8 +228,11 @@ export function useKmlLayer(map, kmlLayers) {
       const { kmlLayer, featureCount } = processKmlPoints(points, kmlFile, styleConfig)
       if (!kmlLayer) return null
       if (featureCount > 0) {
-        kmlLayer.addTo(map.value)
-        kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title })
+        // 底图默认不将点位加入地图
+        if (!isBasemap) {
+          kmlLayer.addTo(map.value)
+        }
+        kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title, visible: !isBasemap })
         return kmlLayer
       }
       console.warn('KML文件中没有找到有效的几何要素')
@@ -226,6 +244,12 @@ export function useKmlLayer(map, kmlLayers) {
   };
 
   const loadAndParseKmlFile = async (kmlFile, styleConfig) => {
+    const isBasemap = Boolean(
+      kmlFile?.isBasemap === true ||
+      kmlFile?.is_basemap === 1 ||
+      kmlFile?.is_basemap === true ||
+      kmlFile?.isBasemap === 1
+    )
     let retryCount = 0;
     const maxRetries = 3;
     let lastError = null;
@@ -245,8 +269,11 @@ export function useKmlLayer(map, kmlLayers) {
         }
 
         if (featureCount > 0) {
-          kmlLayer.addTo(map.value);
-          kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title });
+          // 如果是底图则默认不把点位显示到地图
+          if (!isBasemap) {
+            kmlLayer.addTo(map.value);
+          }
+          kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title, visible: !isBasemap });
           return kmlLayer;
         } else {
           console.warn('KML文件中没有找到有效的几何要素');

@@ -25,6 +25,11 @@
         @file-change="(file) => handleFileChange(file, form)"
         @file-remove="handleFileRemove"
       />
+
+      <!-- 作为底图 选项 -->
+      <el-form-item label="作为底图" v-if="form">
+        <el-checkbox v-model="form.isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
+      </el-form-item>
       
       <!-- 地标预览 -->
       <el-form-item 
@@ -123,6 +128,9 @@ const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
   formData.append('file', form.file)  // ★ 使用form.file
   formData.append('title', form.title)
   formData.append('description', form.description)
+  if (form.isBasemap) {
+    formData.append('isBasemap', '1')
+  }
   if (form.folderId !== undefined && form.folderId !== null) {
     formData.append('folderId', form.folderId)
   }

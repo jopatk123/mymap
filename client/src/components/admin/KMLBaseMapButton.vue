@@ -33,6 +33,15 @@
           </el-alert>
         </div>
 
+        <el-form :model="meta" label-width="80px">
+          <el-form-item label="标题">
+            <el-input v-model="meta.title" placeholder="文件标题（可选）" />
+          </el-form-item>
+          <el-form-item label="描述">
+            <el-input v-model="meta.description" placeholder="描述（可选）" />
+          </el-form-item>
+        </el-form>
+
         <div class="upload-area">
           <el-upload
             ref="uploadRef"
@@ -70,6 +79,10 @@
               </div>
             </div>
           </el-card>
+        </div>
+        
+        <div class="basemap-option">
+          <el-checkbox v-model="isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
         </div>
 
   <!-- 统计信息 -->
@@ -128,6 +141,8 @@ const {
 // 本地状态
 const uploadRef = ref()
 const selectedFile = ref(null)
+const isBasemap = ref(true)
+const meta = ref({ title: '', description: '' })
 
 // 处理文件选择
 const handleFileChange = (file) => {
@@ -147,7 +162,7 @@ const handleUpload = async () => {
   }
 
   try {
-    await handleFileUpload(selectedFile.value)
+  await handleFileUpload(selectedFile.value, { isBasemap: isBasemap.value, title: meta.value.title, description: meta.value.description })
     
     // 清理状态
     selectedFile.value = null

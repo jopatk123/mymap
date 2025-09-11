@@ -1,7 +1,6 @@
 const KmlFileModel = require('../../models/kml-file.model')
 const KmlPointModel = require('../../models/kml-point.model')
 const kmlParserService = require('../../services/kml-parser.service')
-const KmlFileUtils = require('../../utils/kml-file-utils')
 const Logger = require('../../utils/logger')
 
 class KmlFileBaseController {
@@ -88,20 +87,17 @@ class KmlFileBaseController {
       const { uploadedFile } = req
       const { title, description, folderId } = req.body
 
+      // 延迟加载工具以避免可能的循环依赖导致的初始化问题
+      const KmlFileUtils = require('../../utils/kml-file-utils')
+
       const typeValidation = KmlFileUtils.validateKmlFileType(uploadedFile)
       if (!typeValidation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: typeValidation.message
-        })
+        return res.status(400).json({ success: false, message: typeValidation.message })
       }
 
       const paramValidation = KmlFileUtils.validateUploadParams({ title })
       if (!paramValidation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: paramValidation.message
-        })
+        return res.status(400).json({ success: false, message: paramValidation.message })
       }
 
       const filePath = uploadedFile.path
@@ -114,15 +110,15 @@ class KmlFileBaseController {
         })
       }
 
-      const KmlFileUtils = require('../../utils/kml-file-utils')
-      const { transaction } = require('../../config/database')
-      const { wgs84ToGcj02 } = require('../../utils/coordinate')
+  const { transaction } = require('../../config/database')
+  const { wgs84ToGcj02 } = require('../../utils/coordinate')
+  const isBasemapFlag = req.body && (req.body.isBasemap === '1' || req.body.isBasemap === 'true' || req.body.isBasemap === true)
 
       try {
         let insertedFileId = null
         await transaction(async (db) => {
           // 插入 kml_files
-          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
           const fileRes = await db.run(insertFileSql, [
             title,
             description || '',
@@ -130,7 +126,8 @@ class KmlFileBaseController {
             uploadedFile.size,
             folderId ? parseInt(folderId) : null,
             1,
-            0
+            0,
+            isBasemapFlag ? 1 : 0
           ])
           insertedFileId = fileRes.lastID
 
@@ -178,6 +175,24 @@ class KmlFileBaseController {
         message: '上传KML文件失败',
         error: error.message
       })
+    }
+  }
+
+  static async setBasemapFlag(req, res) {
+    try {
+      const { id } = req.params
+      const { isBasemap } = req.body
+      if (typeof isBasemap === 'undefined') {
+        return res.status(400).json({ success: false, message: '请提供 isBasemap 字段' })
+      }
+
+      const KmlFileModel = require('../../models/kml-file.model')
+      const updated = await KmlFileModel.update(parseInt(id), { is_basemap: isBasemap ? 1 : 0 })
+      if (!updated) return res.status(404).json({ success: false, message: 'KML 文件不存在' })
+      res.json({ success: true, data: updated })
+    } catch (error) {
+      console.error('设置 KML 底图标志失败:', error)
+      res.status(500).json({ success: false, message: error.message })
     }
   }
 
@@ -243,6 +258,9 @@ class KmlFileBaseController {
           message: 'KML文件不存在'
         })
       }
+
+  // 延迟加载工具以避免循环依赖问题
+  const KmlFileUtils = require('../../utils/kml-file-utils')
 
       const { transaction } = require('../../config/database')
 

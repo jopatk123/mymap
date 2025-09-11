@@ -4,7 +4,7 @@
  */
 export class KMLBaseMapService {
   constructor() {
-    this.baseUrl = '/api/kml-basemap'
+  this.baseUrl = '/api/kml-files'
   }
 
   /**
@@ -12,10 +12,24 @@ export class KMLBaseMapService {
    * @param {File} file KML文件
    * @returns {Promise<Object>} 上传结果
    */
-  async uploadKMLFile(file) {
+  async uploadKMLFile(file, options = {}) {
     const formData = new FormData()
-    formData.append('kml', file)
-    
+    // backend expects field name 'file'
+    formData.append('file', file)
+    if (options.isBasemap) {
+      // send as string flag; backend will coerce
+      formData.append('isBasemap', '1')
+    }
+    if (options.title) {
+      formData.append('title', options.title)
+    }
+    if (options.description) {
+      formData.append('description', options.description)
+    }
+    if (options.folderId !== undefined && options.folderId !== null) {
+      formData.append('folderId', options.folderId)
+    }
+
     const response = await fetch(`${this.baseUrl}/upload`, {
       method: 'POST',
       body: formData
@@ -34,7 +48,7 @@ export class KMLBaseMapService {
    * @returns {Promise<Array>} KML文件列表
    */
   async getKMLFiles() {
-    const response = await fetch(`${this.baseUrl}/files`)
+  const response = await fetch(`${this.baseUrl}`)
     if (!response.ok) {
       throw new Error('获取KML文件列表失败')
     }

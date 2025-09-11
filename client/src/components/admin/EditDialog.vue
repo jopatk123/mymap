@@ -31,6 +31,11 @@
           show-word-limit
         />
       </el-form-item>
+
+      <!-- KML: 作为底图 复选框 -->
+      <el-form-item v-if="isKml.value" label="作为底图">
+        <el-checkbox v-model="form.isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
+      </el-form-item>
       
       <el-form-item v-if="showCoordinate" label="坐标">
         <div class="coordinate-input">
@@ -226,10 +231,13 @@ const handleSubmit = async () => {
         longitude: parseFloat(form.lng)
       })
     } else if (isKml.value) {
-      await kmlApi.updateKmlFile(props.file.id, {
+      const payload = {
         title: form.title,
         description: form.description
-      })
+      }
+      if (form.isBasemap) payload.isBasemap = true
+      else payload.isBasemap = false
+      await kmlApi.updateKmlFile(props.file.id, payload)
     } else {
       throw new Error('未知文件类型，无法更新')
     }

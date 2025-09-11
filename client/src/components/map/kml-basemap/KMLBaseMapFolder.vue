@@ -15,6 +15,14 @@
             <InfoFilled />
           </el-icon>
         </el-tooltip>
+        <el-button
+          class="manage-basemap-btn"
+          type="primary"
+          size="small"
+          @click.stop="openManageBasemap"
+        >
+          管理底图 KML
+        </el-button>
       </div>
     </div>
 
@@ -247,6 +255,14 @@ const handleHeaderClick = async () => {
   } catch (error) {
     console.error('刷新KML列表失败:', error)
   }
+}
+
+// 打开管理底图快捷入口：通知主区域打开KML设置对话框
+const openManageBasemap = () => {
+  // show-kml-files 切换到 KML 列表并打开设置
+  window.dispatchEvent(new CustomEvent('show-kml-files'))
+  // 触发显示 KML 设置对话框
+  window.dispatchEvent(new CustomEvent('show-kml-settings'))
 }
 
 // 删除文件
