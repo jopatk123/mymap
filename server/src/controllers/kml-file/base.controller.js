@@ -114,35 +114,63 @@ class KmlFileBaseController {
         })
       }
 
-      const kmlFile = await KmlFileModel.create({
-        title,
-        description: description || '',
-        fileUrl: uploadedFile.url,
-        fileSize: uploadedFile.size,
-        folderId: folderId ? parseInt(folderId) : null
-      })
+      const KmlFileUtils = require('../../utils/kml-file-utils')
+      const { transaction } = require('../../config/database')
+      const { wgs84ToGcj02 } = require('../../utils/coordinate')
 
-      const pointsData = placemarks.map(placemark => ({
-        kmlFileId: kmlFile.id,
-        name: placemark.name,
-        description: placemark.description,
-        latitude: placemark.latitude,
-        longitude: placemark.longitude,
-        altitude: placemark.altitude,
-        pointType: placemark.pointType,
-        coordinates: placemark.coordinates,
-        styleData: placemark.styleData
-      }))
+      try {
+        let insertedFileId = null
+        await transaction(async (db) => {
+          // 插入 kml_files
+          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+          const fileRes = await db.run(insertFileSql, [
+            title,
+            description || '',
+            uploadedFile.url,
+            uploadedFile.size,
+            folderId ? parseInt(folderId) : null,
+            1,
+            0
+          ])
+          insertedFileId = fileRes.lastID
 
-      await KmlPointModel.batchCreate(pointsData)
+          if (!insertedFileId) throw new Error('创建KML文件记录失败')
 
-      const completeKmlFile = await KmlFileModel.findById(kmlFile.id)
+          // 批量插入点位
+          if (placemarks && placemarks.length > 0) {
+            const values = []
+            const params = []
+            for (const p of placemarks) {
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
+              values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )')
+              params.push(
+                insertedFileId,
+                p.name || '',
+                p.description || '',
+                p.latitude,
+                p.longitude,
+                gcj02Lat || null,
+                gcj02Lng || null,
+                p.altitude || 0,
+                p.pointType || 'Point',
+                JSON.stringify(p.coordinates || {}),
+                JSON.stringify(p.styleData || {})
+              )
+            }
 
-      res.status(201).json({
-        success: true,
-        message: `KML文件上传成功，解析出 ${placemarks.length} 个地标`,
-        data: completeKmlFile
-      })
+            const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
+            await db.run(insertPointsSql, params)
+          }
+        })
+
+        const completeKmlFile = await KmlFileModel.findById(insertedFileId)
+        res.status(201).json({ success: true, message: `KML文件上传成功，解析出 ${placemarks.length} 个地标`, data: completeKmlFile })
+      } catch (txErr) {
+        // 事务失败：尝试删除物理文件以避免孤儿文件
+        try { await require('../../utils/kml-file-utils').deletePhysicalFile(uploadedFile.url) } catch (e) { /* ignore */ }
+        Logger.error('上传事务失败:', txErr)
+        return res.status(500).json({ success: false, message: '上传失败（事务回滚）', error: txErr.message })
+      }
     } catch (error) {
       Logger.error('上传KML文件失败:', error)
       res.status(500).json({
