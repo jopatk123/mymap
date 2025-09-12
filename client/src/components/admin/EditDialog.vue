@@ -206,22 +206,10 @@ const handleSubmit = async () => {
       if (currentFolderId !== undefined) {
         payload.folderId = currentFolderId
       }
-      // 前后对比日志（前端）
-      try {
-        // eslint-disable-next-line no-console
-        console.groupCollapsed('[EditDialog] Panorama save')
-        // eslint-disable-next-line no-console
-        console.log('Before (props.file):', props.file)
-        // eslint-disable-next-line no-console
-        console.log('Payload:', payload)
-      } catch (_) {}
+  // 前端调试日志已删除以避免泄露和噪音
       await updatePanorama(props.file.id, payload)
       try {
-        const afterResp = await getPanoramaById(props.file.id)
-        // eslint-disable-next-line no-console
-        console.log('After (server fetch):', afterResp)
-        // eslint-disable-next-line no-console
-        console.groupEnd()
+        await getPanoramaById(props.file.id)
       } catch (_) {}
     } else if (isVideo.value) {
       await videoApi.updateVideoPoint(props.file.id, {

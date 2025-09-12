@@ -81,7 +81,8 @@ const panoramaRules = {
 const handleFileChange = async (file, form) => {
   // 检查文件对象是否有效
   if (!file || typeof file !== 'object') {
-    console.error('UploadDialog: 文件对象无效!', file)
+    // 文件对象无效，记录为警告以便开发时查看
+    console.warn('UploadDialog: 文件对象无效!')
     return
   }
   
@@ -89,7 +90,7 @@ const handleFileChange = async (file, form) => {
     try {
       await processFile(file, form)
     } catch (error) {
-      console.error('处理文件时出错:', error)
+      console.warn('处理文件时出错:')
       // 即使处理出错，也要确保文件被设置到表单中，让用户可以继续上传
       if (!form.file) {
         form.file = file
@@ -101,7 +102,7 @@ const handleFileChange = async (file, form) => {
       }
     }
   } else {
-    console.log('File validation failed')
+    // 验证失败：在 UI 上显示错误，无需控制台打印
   }
 }
 

@@ -87,7 +87,7 @@ export function useMapPage() {
             total: window.allPoints.length
           })
         } catch (error) {
-          console.error('同步点位数据到store失败:', error)
+        console.warn('同步点位数据到store失败:')
         }
       }
       // 数据加载完成后自动适应所有标记点并初始化KML图层
@@ -158,7 +158,7 @@ export function useMapPage() {
       window.allKmlFiles = kmlFilesWithStyles;
 
     } catch (error) {
-      console.error('加载点位数据失败:', error)
+    console.error('加载点位数据失败:', error)
       window.allPoints = []
       window.allKmlFiles = []
     }
@@ -176,13 +176,13 @@ export function useMapPage() {
     // 同步到全局变量
     window.kmlLayersVisible = kmlLayersVisible.value
 
-    console.log('切换KML图层显示状态:', kmlLayersVisible.value)
+  console.debug && console.debug('切换KML图层显示状态:', kmlLayersVisible.value)
 
     // 通知地图组件更新KML图层显示状态
     if (mapRef.value) {
       if (kmlLayersVisible.value) {
         // 显示KML图层
-        console.log('准备显示KML图层，文件数量:', window.allKmlFiles?.length || 0)
+  console.debug && console.debug('准备显示KML图层，文件数量:', window.allKmlFiles?.length || 0)
         if (window.allKmlFiles && window.allKmlFiles.length > 0) {
           // 先清除现有图层，避免重复
           mapRef.value.clearKmlLayers()
@@ -190,7 +190,7 @@ export function useMapPage() {
         }
       } else {
         // 隐藏KML图层
-        console.log('隐藏KML图层')
+  console.debug && console.debug('隐藏KML图层')
         mapRef.value.clearKmlLayers()
       }
     } else {

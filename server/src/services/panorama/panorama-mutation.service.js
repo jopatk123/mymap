@@ -83,8 +83,7 @@ class PanoramaMutationService {
       // 调试：记录入参关键字段
       try {
         const debugKeys = Object.keys(mapped)
-        // eslint-disable-next-line no-console
-        console.log('[PanoramaMutationService.updatePanorama] id=%s keys=%o', id, debugKeys)
+        Logger.debug('[PanoramaMutationService.updatePanorama] keys', { id, keys: debugKeys })
       } catch (_) {}
       const panorama = await PanoramaModel.update(id, mapped)
       if (!panorama) {

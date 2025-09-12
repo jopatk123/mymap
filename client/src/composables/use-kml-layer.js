@@ -116,7 +116,7 @@ export function useKmlLayer(map, kmlLayers) {
             bucket.push({ id: p.id, lat, lng, p })
           }
           indexBuilt = true
-          try { console.info('[Map] KML 空间索引构建完成', { kmlId: kmlFile.id, cells: spatialIndex.size }) } catch {}
+          try { console.debug && console.debug('[Map] KML 空间索引构建完成', { kmlId: kmlFile.id, cells: spatialIndex.size }) } catch {}
         }
 
         const getCandidatesByBounds = (west, south, east, north) => {
@@ -220,7 +220,7 @@ export function useKmlLayer(map, kmlLayers) {
           { enabled: !isBasemap, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }
         )
         kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title, visible: !isBasemap })
-        try { console.info('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
+  try { console.debug && console.debug('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
         return layer
       }
 
@@ -235,7 +235,7 @@ export function useKmlLayer(map, kmlLayers) {
         kmlLayers.value.push({ id: kmlFile.id, layer: kmlLayer, title: kmlFile.title, visible: !isBasemap })
         return kmlLayer
       }
-      console.warn('KML文件中没有找到有效的几何要素')
+  console.warn('KML文件中没有找到有效的几何要素')
       return null
     } catch (e) {
       console.warn('处理KML点位视口渲染失败:', e)
@@ -283,7 +283,7 @@ export function useKmlLayer(map, kmlLayers) {
         lastError = error;
         retryCount++;
         if (retryCount < maxRetries) {
-          console.log(`KML文件加载失败，${retryCount}秒后重试...`, kmlFile.file_url);
+          console.debug && console.debug(`KML文件加载失败，${retryCount}秒后重试...`, kmlFile.file_url);
           await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
       }
@@ -310,7 +310,7 @@ export function useKmlLayer(map, kmlLayers) {
           if (vs.onZoomEnd) map.value.off('zoomend', vs.onZoomEnd)
         } catch {}
         kmlViewportStates.delete(id)
-        try { console.info('[Map] KML 视口裁剪渲染已关闭:', { kmlId: id }) } catch {}
+  try { console.debug && console.debug('[Map] KML 视口裁剪渲染已关闭:', { kmlId: id }) } catch {}
       }
     }
   };

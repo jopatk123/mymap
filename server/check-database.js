@@ -1,12 +1,12 @@
 const { getDatabase } = require('./src/config/database')
+const Logger = require('./src/utils/logger')
 
 /**
  * 检查SQLite数据库状态
  */
 async function checkDatabase() {
   try {
-    console.log('🔍 检查SQLite数据库状态...')
-    console.log('')
+  Logger.info('🔍 检查SQLite数据库状态...')
     
     const db = await getDatabase()
     
@@ -17,23 +17,23 @@ async function checkDatabase() {
       ORDER BY name
     `)
     
-    console.log('📋 数据表:')
+  Logger.info('📋 数据表:')
     for (const table of tables) {
       const count = await db.get(`SELECT COUNT(*) as count FROM ${table.name}`)
-      console.log(`   ${table.name}: ${count.count} 条记录`)
+      Logger.info(`   ${table.name}: ${count.count} 条记录`)
     }
     
-    console.log('')
+  // spacer
     
     // 检查文件夹结构
     const folders = await db.all('SELECT * FROM folders ORDER BY id')
-    console.log('📁 文件夹结构:')
+    Logger.info('📁 文件夹结构:')
     folders.forEach(folder => {
       const prefix = folder.parent_id ? '  └─ ' : '├─ '
-      console.log(`   ${prefix}${folder.name} (ID: ${folder.id})`)
+      Logger.info(`   ${prefix}${folder.name} (ID: ${folder.id})`)
     })
     
-    console.log('')
+  // spacer
     
     // 检查最近的数据
     const recentPanoramas = await db.all(`
@@ -42,17 +42,17 @@ async function checkDatabase() {
     `)
     
     if (recentPanoramas.length > 0) {
-      console.log('📸 最近的全景图:')
+      Logger.info('📸 最近的全景图:')
       recentPanoramas.forEach(p => {
-        console.log(`   ${p.title} (${p.created_at})`)
+        Logger.info(`   ${p.title} (${p.created_at})`)
       })
     }
     
-    console.log('')
-    console.log('✅ 数据库状态正常')
+  // spacer
+    Logger.info('✅ 数据库状态正常')
     
   } catch (error) {
-    console.error('❌ 数据库检查失败:', error.message)
+  Logger.error('❌ 数据库检查失败:', error.message)
     process.exit(1)
   }
 }
@@ -62,7 +62,7 @@ if (require.main === module) {
   checkDatabase()
     .then(() => process.exit(0))
     .catch(error => {
-      console.error(error)
+      Logger.error(error)
       process.exit(1)
     })
 }

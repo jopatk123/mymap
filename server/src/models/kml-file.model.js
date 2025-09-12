@@ -1,5 +1,6 @@
 const SQLiteAdapter = require('../utils/sqlite-adapter')
 const QueryBuilder = require('../utils/QueryBuilder')
+const Logger = require('../utils/logger')
 
 class KmlFileModel {
   static async create({
@@ -31,7 +32,7 @@ class KmlFileModel {
       )
       return await this.findById(result.insertId)
     } catch (error) {
-      console.error('创建KML文件记录失败:', error)
+      Logger.error('创建KML文件记录失败:', error)
       throw error
     }
   }
@@ -47,7 +48,7 @@ class KmlFileModel {
       )
       return rows[0] || null
     } catch (error) {
-      console.error('查找KML文件失败:', error)
+      Logger.error('查找KML文件失败:', error)
       throw error
     }
   }
@@ -132,7 +133,7 @@ class KmlFileModel {
         totalPages: Math.ceil(total / pageSize)
       }
     } catch (error) {
-      console.error('获取KML文件列表失败:', error)
+      Logger.error('获取KML文件列表失败:', error)
       throw error
     }
   }
@@ -159,7 +160,7 @@ class KmlFileModel {
 
       return rows
     } catch (error) {
-      console.error('根据文件夹查找KML文件失败:', error)
+      Logger.error('根据文件夹查找KML文件失败:', error)
       throw error
     }
   }
@@ -195,7 +196,7 @@ class KmlFileModel {
 
       return await this.findById(id)
     } catch (error) {
-      console.error('更新KML文件失败:', error)
+      Logger.error('更新KML文件失败:', error)
       throw error
     }
   }
@@ -205,7 +206,7 @@ class KmlFileModel {
       const [result] = await SQLiteAdapter.execute('DELETE FROM kml_files WHERE id = ?', [id])
       return result.affectedRows > 0
     } catch (error) {
-      console.error('删除KML文件失败:', error)
+      Logger.error('删除KML文件失败:', error)
       throw error
     }
   }
@@ -223,7 +224,7 @@ class KmlFileModel {
       )
       return result.affectedRows
     } catch (error) {
-      console.error('批量删除KML文件失败:', error)
+      Logger.error('批量删除KML文件失败:', error)
       throw error
     }
   }
@@ -241,7 +242,7 @@ class KmlFileModel {
       )
       return result.affectedRows
     } catch (error) {
-      console.error('批量更新KML文件可见性失败:', error)
+      Logger.error('批量更新KML文件可见性失败:', error)
       throw error
     }
   }
@@ -258,7 +259,7 @@ class KmlFileModel {
       )
       return result.affectedRows
     } catch (error) {
-      console.error('批量移动KML文件到文件夹失败:', error)
+      Logger.error('批量移动KML文件到文件夹失败:', error)
       throw error
     }
   }
@@ -275,7 +276,7 @@ class KmlFileModel {
       `)
       return rows[0]
     } catch (error) {
-      console.error('获取KML文件统计失败:', error)
+      Logger.error('获取KML文件统计失败:', error)
       throw error
     }
   }

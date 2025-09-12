@@ -1,5 +1,6 @@
 const { getDatabase } = require('../config/database')
 const { convertBooleanFields } = require('./sqlite-helper')
+const Logger = require('./logger')
 
 /**
  * SQLite数据库适配器
@@ -37,9 +38,7 @@ class SQLiteAdapter {
         }]
       }
     } catch (error) {
-      console.error('SQLite查询错误:', error.message)
-      console.error('SQL:', sql)
-      console.error('参数:', params)
+      Logger.error('SQLite查询错误:', { message: error.message, sql, params })
       throw error
     }
   }

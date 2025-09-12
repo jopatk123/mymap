@@ -78,7 +78,7 @@ export function usePointStyles() {
       
       // 同步更新全局变量
       window.videoPointStyles = { ...window.videoPointStyles, ...response.data }
-      console.log('🔄 已加载并同步视频点位样式:', response.data)
+  console.debug && console.debug('🔄 已加载并同步视频点位样式:', response.data)
       
       saveToLocalCache()
       return response.data
@@ -114,7 +114,7 @@ export function usePointStyles() {
       
       // 同步更新全局变量
       window.panoramaPointStyles = { ...window.panoramaPointStyles, ...response.data }
-      console.log('🔄 已加载并同步全景图点位样式:', response.data)
+  console.debug && console.debug('🔄 已加载并同步全景图点位样式:', response.data)
       
       saveToLocalCache()
       return response.data

@@ -7,13 +7,16 @@ server/node_modules/
 client/dist/
 server/build/
 
-# Environment variables
-#.env
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 #server/.env
+
+# ignore local env files in client and server
+client/.env
+server/.env
 
 # Logs
 logs/

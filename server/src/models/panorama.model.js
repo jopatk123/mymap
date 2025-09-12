@@ -1,5 +1,6 @@
 const SQLiteAdapter = require('../utils/sqlite-adapter')
 const QueryBuilder = require('../utils/QueryBuilder')
+const Logger = require('../utils/logger')
 
 class PanoramaModel {
   // 获取全景图列表
@@ -252,16 +253,15 @@ class PanoramaModel {
     params.push(id)
     await SQLiteAdapter.execute(sql, params)
     const after = await this.findById(id)
-    try {
-      const keys = ['id','folder_id','title','description','image_url','thumbnail_url','latitude','longitude','gcj02_lat','gcj02_lng','is_visible','sort_order','updated_at']
-      const pick = (obj) => { const out = {}; keys.forEach(k => out[k] = obj ? obj[k] : undefined); return out }
-      const beforePicked = pick(before)
-      const afterPicked = pick(after)
-      const changed = {}
-      keys.forEach(k => { if (beforePicked[k] !== afterPicked[k]) changed[k] = { before: beforePicked[k], after: afterPicked[k] } })
-      // eslint-disable-next-line no-console
-      console.log('[PanoramaModel.update] id=%s before=%o after=%o changedKeys=%o diff=%o', id, beforePicked, afterPicked, Object.keys(changed), changed)
-    } catch (_) {}
+      try {
+        const keys = ['id','folder_id','title','description','image_url','thumbnail_url','latitude','longitude','gcj02_lat','gcj02_lng','is_visible','sort_order','updated_at']
+        const pick = (obj) => { const out = {}; keys.forEach(k => out[k] = obj ? obj[k] : undefined); return out }
+        const beforePicked = pick(before)
+        const afterPicked = pick(after)
+        const changed = {}
+        keys.forEach(k => { if (beforePicked[k] !== afterPicked[k]) changed[k] = { before: beforePicked[k], after: afterPicked[k] } })
+        Logger.debug('[PanoramaModel.update] id=%s changedKeys=%o diff=%o', { id, changedKeys: Object.keys(changed), diff: changed })
+      } catch (_) {}
     return after
   }
   

@@ -92,7 +92,8 @@ export function useMapStyleUpdater(map, markers) {
 
       await Promise.all(recreatePromises)
       
-      console.log(`成功更新 ${markers.value.length} 个标记的样式`)
+  // 成功信息改为调试级别，开发模式下可查看
+  console.debug && console.debug(`成功更新 ${markers.value.length} 个标记的样式`)
       
     } catch (error) {
       console.error('更新标记样式失败:', error)
@@ -174,7 +175,8 @@ export function useMapStyleUpdater(map, markers) {
         }
       }
       
-      console.log(`成功更新 ${type} 类型的 ${typePointsData.length} 个标记样式`)
+  // 成功信息改为调试级别，开发模式下可查看
+  console.debug && console.debug(`成功更新 ${type} 类型的 ${typePointsData.length} 个标记样式`)
       
     } catch (error) {
       console.error(`更新 ${type} 标记样式失败:`, error)

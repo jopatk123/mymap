@@ -15,25 +15,9 @@ ensureUploadDirectories()
 // 3. 注册KML底图路由（在其他路由之前）
 app.use('/api/kml-basemap', kmlBaseMapRoutes)
 
-// 4. 添加错误处理中间件（如果尚未存在）
-app.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: '文件大小超过限制'
-      })
-    }
-  }
-  
-  console.error('服务器错误:', error)
-  res.status(500).json({
-    success: false,
-    message: '服务器内部错误'
-  })
-})
-
-console.log('KML底图功能已集成')
+// 错误处理应在 app.js 中集中处理，避免在集成脚本中直接操作 app 或未定义的依赖。
+const Logger = require('../utils/logger')
+Logger.info('KML底图模块加载（integration script）。')
 
 module.exports = {
   // 导出必要的功能供其他模块使用
