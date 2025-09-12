@@ -95,6 +95,17 @@ export function useFileManagement() {
 
   // 文件夹选择处理
   const handleFolderSelected = (folder) => {
+    // 当用户在侧栏显式选中文件夹时，清除任何 KML 视图相关的临时筛选
+    // （例如之前通过“KML底图”入口设置的 fileType/basemapOnly），
+    // 以便在选中文件夹时能正常显示该文件夹下的所有文件。
+    try {
+      searchForm.fileType = 'all'
+      searchForm.basemapOnly = false
+      searchForm.includeBasemap = false
+    } catch (e) {
+      // ignore
+    }
+
     selectedFolder.value = folder
     pagination.page = 1
     loadFileList()
