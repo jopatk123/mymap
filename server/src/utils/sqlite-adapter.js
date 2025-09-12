@@ -58,8 +58,7 @@ class SQLiteAdapter {
       .replace(/DATE_SUB\(NOW\(\), INTERVAL (\d+) DAY\)/g, "datetime('now', '-$1 days')")
       // 替换NOW()函数
       .replace(/NOW\(\)/g, "datetime('now')")
-      // 替换LIMIT语法
-      .replace(/LIMIT (\d+) OFFSET (\d+)/g, 'LIMIT $2, $1')
+  // 保留原生的 LIMIT x OFFSET y 语法 (之前反转会导致 LIMIT 0,20 取0条)
   }
 
   /**

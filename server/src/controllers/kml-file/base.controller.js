@@ -1,7 +1,6 @@
 const KmlFileModel = require('../../models/kml-file.model')
 const KmlPointModel = require('../../models/kml-point.model')
 const kmlParserService = require('../../services/kml-parser.service')
-const KmlFileUtils = require('../../utils/kml-file-utils')
 const Logger = require('../../utils/logger')
 
 class KmlFileBaseController {
@@ -13,7 +12,9 @@ class KmlFileBaseController {
         keyword = '',
         folderId = null,
         includeHidden = false,
-        respectFolderVisibility = false
+        respectFolderVisibility = false,
+        includeBasemap = false,
+        basemapOnly = false
       } = req.query
 
       let searchParams = {
@@ -21,7 +22,9 @@ class KmlFileBaseController {
         pageSize: parseInt(pageSize),
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
-        includeHidden: includeHidden === 'true'
+        includeHidden: includeHidden === 'true',
+        includeBasemap: includeBasemap === 'true',
+        basemapOnly: basemapOnly === 'true'
       }
 
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
@@ -88,20 +91,17 @@ class KmlFileBaseController {
       const { uploadedFile } = req
       const { title, description, folderId } = req.body
 
+      // 延迟加载工具以避免可能的循环依赖导致的初始化问题
+      const KmlFileUtils = require('../../utils/kml-file-utils')
+
       const typeValidation = KmlFileUtils.validateKmlFileType(uploadedFile)
       if (!typeValidation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: typeValidation.message
-        })
+        return res.status(400).json({ success: false, message: typeValidation.message })
       }
 
       const paramValidation = KmlFileUtils.validateUploadParams({ title })
       if (!paramValidation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: paramValidation.message
-        })
+        return res.status(400).json({ success: false, message: paramValidation.message })
       }
 
       const filePath = uploadedFile.path
@@ -114,35 +114,64 @@ class KmlFileBaseController {
         })
       }
 
-      const kmlFile = await KmlFileModel.create({
-        title,
-        description: description || '',
-        fileUrl: uploadedFile.url,
-        fileSize: uploadedFile.size,
-        folderId: folderId ? parseInt(folderId) : null
-      })
+  const { transaction } = require('../../config/database')
+  const { wgs84ToGcj02 } = require('../../utils/coordinate')
+  const isBasemapFlag = req.body && (req.body.isBasemap === '1' || req.body.isBasemap === 'true' || req.body.isBasemap === true)
 
-      const pointsData = placemarks.map(placemark => ({
-        kmlFileId: kmlFile.id,
-        name: placemark.name,
-        description: placemark.description,
-        latitude: placemark.latitude,
-        longitude: placemark.longitude,
-        altitude: placemark.altitude,
-        pointType: placemark.pointType,
-        coordinates: placemark.coordinates,
-        styleData: placemark.styleData
-      }))
+      try {
+        let insertedFileId = null
+        await transaction(async (db) => {
+          // 插入 kml_files
+          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+          const fileRes = await db.run(insertFileSql, [
+            title,
+            description || '',
+            uploadedFile.url,
+            uploadedFile.size,
+            folderId ? parseInt(folderId) : null,
+            1,
+            0,
+            isBasemapFlag ? 1 : 0
+          ])
+          insertedFileId = fileRes.lastID
 
-      await KmlPointModel.batchCreate(pointsData)
+          if (!insertedFileId) throw new Error('创建KML文件记录失败')
 
-      const completeKmlFile = await KmlFileModel.findById(kmlFile.id)
+          // 批量插入点位
+          if (placemarks && placemarks.length > 0) {
+            const values = []
+            const params = []
+            for (const p of placemarks) {
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
+              values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )')
+              params.push(
+                insertedFileId,
+                p.name || '',
+                p.description || '',
+                p.latitude,
+                p.longitude,
+                gcj02Lat || null,
+                gcj02Lng || null,
+                p.altitude || 0,
+                p.pointType || 'Point',
+                JSON.stringify(p.coordinates || {}),
+                JSON.stringify(p.styleData || {})
+              )
+            }
 
-      res.status(201).json({
-        success: true,
-        message: `KML文件上传成功，解析出 ${placemarks.length} 个地标`,
-        data: completeKmlFile
-      })
+            const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
+            await db.run(insertPointsSql, params)
+          }
+        })
+
+        const completeKmlFile = await KmlFileModel.findById(insertedFileId)
+        res.status(201).json({ success: true, message: `KML文件上传成功，解析出 ${placemarks.length} 个地标`, data: completeKmlFile })
+      } catch (txErr) {
+        // 事务失败：尝试删除物理文件以避免孤儿文件
+        try { await require('../../utils/kml-file-utils').deletePhysicalFile(uploadedFile.url) } catch (e) { /* ignore */ }
+        Logger.error('上传事务失败:', txErr)
+        return res.status(500).json({ success: false, message: '上传失败（事务回滚）', error: txErr.message })
+      }
     } catch (error) {
       Logger.error('上传KML文件失败:', error)
       res.status(500).json({
@@ -150,6 +179,24 @@ class KmlFileBaseController {
         message: '上传KML文件失败',
         error: error.message
       })
+    }
+  }
+
+  static async setBasemapFlag(req, res) {
+    try {
+      const { id } = req.params
+      const { isBasemap } = req.body
+      if (typeof isBasemap === 'undefined') {
+        return res.status(400).json({ success: false, message: '请提供 isBasemap 字段' })
+      }
+
+      const KmlFileModel = require('../../models/kml-file.model')
+      const updated = await KmlFileModel.update(parseInt(id), { is_basemap: isBasemap ? 1 : 0 })
+      if (!updated) return res.status(404).json({ success: false, message: 'KML 文件不存在' })
+      res.json({ success: true, data: updated })
+    } catch (error) {
+      console.error('设置 KML 底图标志失败:', error)
+      res.status(500).json({ success: false, message: error.message })
     }
   }
 
@@ -216,14 +263,32 @@ class KmlFileBaseController {
         })
       }
 
-      const success = await KmlFileModel.delete(parseInt(id))
-      if (success) {
-        await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+  // 延迟加载工具以避免循环依赖问题
+  const KmlFileUtils = require('../../utils/kml-file-utils')
+
+      const { transaction } = require('../../config/database')
+
+      try {
+        await transaction(async (db) => {
+          // 删除点位
+          await db.run('DELETE FROM kml_points WHERE kml_file_id = ?', [parseInt(id)])
+
+          // 删除文件记录
+          const delRes = await db.run('DELETE FROM kml_files WHERE id = ?', [parseInt(id)])
+          if (!delRes || delRes.changes === 0) {
+            throw new Error('删除数据库记录失败')
+          }
+
+          // 删除物理文件（KmlFileUtils 在失败时会抛出异常以触发回滚）
+          await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+        })
+
         const ConfigService = require('../../services/config.service')
         await ConfigService.deleteKmlStyles(id)
         res.json({ success: true, message: 'KML文件删除成功' })
-      } else {
-        res.status(404).json({ success: false, message: 'KML文件不存在' })
+      } catch (err) {
+        Logger.error('事务性删除KML文件失败:', err)
+        return res.status(500).json({ success: false, message: '删除KML文件失败，已回滚', error: err.message })
       }
     } catch (error) {
       Logger.error('删除KML文件失败:', error)

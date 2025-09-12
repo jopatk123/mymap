@@ -30,6 +30,8 @@ const KmlFileController = {
   // 点位查询
   getKmlFilePoints: KmlPointQueryController.getKmlFilePoints,
   getKmlPointsByBounds: KmlPointQueryController.getKmlPointsByBounds
+  ,
+  setBasemapFlag: KmlFileBaseController.setBasemapFlag
 }
 
 module.exports = KmlFileController

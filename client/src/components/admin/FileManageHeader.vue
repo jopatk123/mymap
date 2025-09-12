@@ -20,17 +20,75 @@
         <el-icon><Document /></el-icon>
         添加KML文件
       </el-button>
+      <!-- 新增KML底图按钮 -->
+      <KMLBaseMapButton />
+      
+      <!-- KML样式配置入口 -->
+      <el-dropdown @command="handleStyleConfigCommand">
+        <el-button type="info">
+          <el-icon><Setting /></el-icon>
+          KML样式配置
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="normal">普通KML文件设置</el-dropdown-item>
+            <el-dropdown-item command="basemap">底图KML文件设置</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
+    
+    <!-- KML样式配置对话框 -->
+    <KmlStyleDialog 
+      v-model="styleDialogVisible"
+      :basemap-mode="styleDialogBasemapMode"
+      @styles-updated="handleStylesUpdated"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, VideoPlay, Document } from '@element-plus/icons-vue'
+import { Plus, VideoPlay, Document, Setting, ArrowDown } from '@element-plus/icons-vue'
+import KMLBaseMapButton from './KMLBaseMapButton.vue'
+import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
 
 defineEmits(['upload-request'])
 
 const router = useRouter()
+
+// KML样式配置状态
+const styleDialogVisible = ref(false)
+const styleDialogBasemapMode = ref(false)
+
+// 处理样式配置命令
+const handleStyleConfigCommand = (command) => {
+  styleDialogBasemapMode.value = command === 'basemap'
+  styleDialogVisible.value = true
+}
+
+// 监听全局事件以便从其他组件快捷打开 KML 样式设置
+const handleShowKmlSettings = (event) => {
+  const detail = (event && event.detail) || {}
+  styleDialogBasemapMode.value = !!detail.basemap
+  styleDialogVisible.value = true
+}
+
+onMounted(() => {
+  window.addEventListener('show-kml-settings', handleShowKmlSettings)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('show-kml-settings', handleShowKmlSettings)
+})
+
+// 样式更新处理
+const handleStylesUpdated = () => {
+  // 简单通知地图刷新
+}
+
 const openPointSystem = () => {
   const { href } = router.resolve({ name: 'Home' })
   window.open(href, '_blank')

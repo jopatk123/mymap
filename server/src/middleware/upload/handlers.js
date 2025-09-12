@@ -178,6 +178,49 @@ const handleKmlUpload = (req, res, next) => {
   })
 }
 
+// 底图KML上传（单独目录）
+const handleBasemapKmlUpload = (req, res, next) => {
+  uploaders.basemapKml.single('file')(req, res, async (err) => {
+    if (err) {
+      console.error('底图KML文件上传错误:', err)
+      if (err instanceof multer.MulterError) {
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return res.status(400).json(errorResponse('文件大小超出限制'))
+          case 'LIMIT_FILE_COUNT':
+            return res.status(400).json(errorResponse('文件数量超出限制'))
+          case 'LIMIT_UNEXPECTED_FILE':
+            return res.status(400).json(errorResponse('意外的文件字段'))
+          default:
+            return res.status(400).json(errorResponse('文件上传失败'))
+        }
+      }
+      return res.status(400).json(errorResponse(err.message))
+    }
+    if (!req.file) {
+      return res.status(400).json(errorResponse('请选择要上传的文件'))
+    }
+    try {
+      const fileUrl = buildFileUrl(req, `uploads/kml-basemap/${req.file.filename}`)
+      req.uploadedFile = {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        url: fileUrl
+      }
+      if (!req.body) req.body = {}
+      req.body.isBasemap = '1'
+      next()
+    } catch (error) {
+      console.error('处理底图KML文件失败:', error)
+      await cleanupFiles(req.file.path)
+      return res.status(500).json(errorResponse('处理底图KML文件失败'))
+    }
+  })
+}
+
 /**
  * 处理批量文件上传
  */
@@ -249,5 +292,6 @@ module.exports = {
   handleSingleUpload,
   handleBatchUpload,
   handleKmlUpload,
+  handleBasemapKmlUpload,
   handleVideoUpload
 }

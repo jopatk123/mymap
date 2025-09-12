@@ -66,6 +66,9 @@ router.put('/:id', validateId, KmlFileController.updateKmlFile)
 // 删除KML文件
 router.delete('/:id', validateId, KmlFileController.deleteKmlFile)
 
+// 设置/取消 底图 标志
+router.patch('/:id/basemap', validateId, KmlFileController.setBasemapFlag)
+
 // 移动KML文件到文件夹
 router.patch('/:id/move', validateId, KmlFileController.moveKmlFileToFolder)
 

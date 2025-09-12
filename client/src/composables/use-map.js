@@ -34,6 +34,11 @@ export function useMap(containerId) {
     clearMarkersLogic();
     clearKmlLayersLogic(); // 原始逻辑是在清除标记时也清除KML
   };
+
+  // 仅清除点位标记（不触及 KML 图层）
+  const clearPointMarkers = () => {
+    clearMarkersLogic();
+  };
   
   const clearKmlLayers = () => {
     clearKmlLayersLogic();
@@ -62,7 +67,8 @@ export function useMap(containerId) {
     addPanoramaMarkers,
     addPointMarkers,
     removeMarker,
-    clearMarkers,
+  clearMarkers,
+  clearPointMarkers,
     fitBounds,
 
     // KML

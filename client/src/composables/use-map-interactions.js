@@ -12,8 +12,63 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
   const appStore = useAppStore()
 
   // 处理点位标记点击（区分全景图和视频点位）
-  const handlePanoramaClick = (point) => {
-    // 根据点位类型判断是全景图还是视频点位
+  const handlePanoramaClick = async (point) => {
+    // 根据点位类型判断是全景图、视频或 KML 点位
+    if (point.type === 'kml') {
+      // 尝试为 KML 点位打开与普通 KML 相同的弹窗内容（若可生成）
+      try {
+        // 组织 feature-like 对象以复用 createPopupContent
+        // 构建与 kml-point-renderer 一致的 feature 结构，并携带原始 WGS84 坐标
+        const wgsLat = (point.latitude != null) ? Number(point.latitude) : ((point.lat != null) ? Number(point.lat) : null)
+        const wgsLng = (point.longitude != null) ? Number(point.longitude) : ((point.lng != null) ? Number(point.lng) : null)
+        const feature = {
+          type: 'Feature',
+          properties: {
+            name: point.title || point.name || '',
+            description: point.description || '',
+            // kml-point-renderer 依赖的字段，用于在弹窗显示 WGS84 和生成外链
+            ...(wgsLat != null && wgsLng != null ? { wgs84_lat: wgsLat, wgs84_lng: wgsLng } : {})
+          },
+          geometry: {
+            type: 'Point',
+            // geometry 使用 [lng, lat]
+            coordinates: [wgsLng, wgsLat]
+          }
+        }
+
+        // 从全局 KML 文件列表中尝试找到来源文件（若存在）
+        const kmlFiles = (typeof window !== 'undefined' && window.allKmlFiles) ? window.allKmlFiles : []
+        const kmlFile = kmlFiles.find(f => f.id === point.fileId || f.id === point.file_id || f.name === point.sourceFile) || { title: '' }
+
+        const mod = await import('@/composables/kml-point-renderer.js')
+        const popupContent = mod.createPopupContent(feature, kmlFile)
+
+        // 尝试在已存在的 marker 上打开 popup
+        const currentMarkers = (typeof window !== 'undefined' && window.currentMarkers) ? window.currentMarkers : []
+        const markerInfo = currentMarkers.find(m => m && m.data && (m.data.id === point.id || m.data._id === point.id || m.data === point))
+        if (markerInfo && markerInfo.marker) {
+          try {
+            markerInfo.marker.bindPopup(popupContent).openPopup()
+            return
+          } catch (e) { /* fallback to map popup */ }
+        }
+
+        // 回退：在地图指定坐标处打开 popup
+        const mapInstance = (typeof window !== 'undefined') ? window.mapInstance : null
+        if (mapInstance && (point.lat || point.latitude) && (point.lng || point.longitude)) {
+          const L = (typeof window !== 'undefined' && window.L) ? window.L : (await import('leaflet')).default
+          L.popup().setLatLng([point.lat || point.latitude, point.lng || point.longitude]).setContent(popupContent).openOn(mapInstance)
+          return
+        }
+      } catch (err) {
+        console.warn('打开 KML 点弹窗失败，回退为信息提示', err)
+      }
+
+      // 最后回退行为：提示用户查看 KML 管理
+      ElMessage.info('此为 KML 底图点位，详情请在KML管理中查看')
+      return
+    }
+
     if (point.type === 'video' || point.videoUrl || point.video_url) {
       // 视频点位 - 直接打开视频播放器
       selectedVideo.value = point
@@ -121,8 +176,17 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
       })
       
       // 同时更新两个数据源，确保数据一致性
-      window.allPoints = filteredPoints
+      // 保留当前任何由 KML 选区合并到地图的点（window.kmlSelectedPoints）和 basePoints
       try {
+        const base = Array.isArray(window.basePoints) ? window.basePoints : []
+        const kmlSel = Array.isArray(window.kmlSelectedPoints) ? window.kmlSelectedPoints : []
+        // filteredPoints 是来自服务器的非 KML 点，优先使用 filteredPoints 覆盖 base
+        window.basePoints = filteredPoints
+        window.allPoints = [...filteredPoints, ...kmlSel]
+      } catch (err) {
+        window.allPoints = filteredPoints
+      }
+  try {
         panoramaStore.setPanoramas(filteredPoints)
         // 上传后刷新总数
         panoramaStore.setPagination({

@@ -65,10 +65,10 @@ export function useMapStyleUpdater(map, markers) {
 
           const pointType = pointData.type || markerInfo.type || 'panorama'
           
-          // 使用最新样式创建标记
+          // 使用最新样式创建标记，优先使用点级 styleConfig（例如来自 KML 的 styleConfig）
           const marker = createPointMarker([displayLat, displayLng], pointType, {
             title: pointData.title || (pointType === 'video' ? '视频点位' : '全景图'),
-          }, null) // 传递null让函数使用全局样式
+          }, pointData.styleConfig || markerInfo.data?.styleConfig || null)
 
           // 重新绑定点击事件
           if (window.mapMarkerClickHandler) {
@@ -149,10 +149,10 @@ export function useMapStyleUpdater(map, markers) {
             continue
           }
 
-          // 使用最新样式创建标记
+          // 使用最新样式创建标记，传入点级 styleConfig
           const marker = createPointMarker([displayLat, displayLng], type, {
             title: pointData.title || (type === 'video' ? '视频点位' : '全景图'),
-          }, null)
+          }, pointData.styleConfig || null)
 
           // 重新绑定点击事件
           if (window.mapMarkerClickHandler) {

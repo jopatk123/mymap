@@ -7,24 +7,26 @@ class KmlFileModel {
     description,
     fileUrl,
     fileSize,
-    folderId = null,
-    isVisible = true,
-    sortOrder = 0
+  folderId = null,
+  isVisible = true,
+  sortOrder = 0,
+  isBasemap = 0
   }) {
     try {
       const [result] = await SQLiteAdapter.execute(
         `INSERT INTO kml_files (
           title, description, file_url, file_size, 
-          folder_id, is_visible, sort_order
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      folder_id, is_visible, sort_order, is_basemap
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           title,
           description,
           fileUrl,
           fileSize,
-          folderId,
-          isVisible,
-          sortOrder
+      folderId,
+      isVisible,
+      sortOrder,
+      isBasemap
         ]
       )
       return await this.findById(result.insertId)
@@ -56,7 +58,9 @@ class KmlFileModel {
     keyword = '',
     folderId = null,
     includeHidden = false,
-    visibleFolderIds = null
+    visibleFolderIds = null,
+    includeBasemap = false,
+    basemapOnly = false
   } = {}) {
     try {
       let whereConditions = []
@@ -84,6 +88,16 @@ class KmlFileModel {
       if (!includeHidden) {
         whereConditions.push('kf.is_visible = TRUE')
       }
+
+      // 底图过滤逻辑
+      if (basemapOnly) {
+        // 只显示底图文件
+        whereConditions.push('kf.is_basemap = 1')
+      } else if (!includeBasemap) {
+        // 默认不包含底图文件，只显示普通文件
+        whereConditions.push('(kf.is_basemap = 0 OR kf.is_basemap IS NULL)')
+      }
+      // 如果includeBasemap=true且basemapOnly=false，则显示所有文件
 
       const whereClause = whereConditions.length > 0 
         ? 'WHERE ' + whereConditions.join(' AND ')
@@ -153,7 +167,7 @@ class KmlFileModel {
   static async update(id, updateData) {
     try {
       const allowedFields = [
-        'title', 'description', 'folder_id', 'is_visible', 'sort_order'
+        'title', 'description', 'folder_id', 'is_visible', 'sort_order', 'is_basemap', 'isBasemap'
       ]
 
       const updates = []
@@ -161,7 +175,9 @@ class KmlFileModel {
 
       for (const [key, value] of Object.entries(updateData)) {
         if (allowedFields.includes(key) && value !== undefined) {
-          updates.push(`${key} = ?`)
+          // normalize camelCase isBasemap => is_basemap
+          const column = key === 'isBasemap' ? 'is_basemap' : key
+          updates.push(`${column} = ?`)
           params.push(value)
         }
       }

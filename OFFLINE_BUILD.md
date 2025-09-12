@@ -47,9 +47,5 @@
 - 修改：`docker/Dockerfile`：
   - 在 runtime 阶段添加 `COPY build_context_extra/server_node_modules /app/server/node_modules`，支持使用本地依赖进行离线构建。
 
-## 后续改进建议
-
-- 我可以把 `build_mymap_images_tar.sh` 增强为自动检测并复制 `server/node_modules` 到 `build_context_extra`，并在完成后清理临时目录。
-- 在 CI 上执行构建并发布带 tag 的镜像到内部 registry，可长期解决网络受限环境下的分发问题。
 
 ---

@@ -8,28 +8,39 @@ class KmlFileUtils {
    * @param {string} fileUrl - 文件URL
    */
   static async deletePhysicalFile(fileUrl) {
-    if (!fileUrl) return
+    if (!fileUrl) return true
+
+    // 允许 fileUrl 为 /uploads/... 的绝对路径或相对路径，优先使用原始路径重建绝对文件路径
+    let filePath
+    if (fileUrl.startsWith('/')) {
+      filePath = path.join(process.cwd(), fileUrl.replace(/^\/+/, ''))
+    } else if (fileUrl.includes('/uploads/')) {
+      // 处理可能的相对路径
+      filePath = path.join(process.cwd(), fileUrl)
+    } else {
+      // 兼容旧实现：放在 uploads/kml 下
+      const filename = path.basename(fileUrl)
+      filePath = path.join(process.cwd(), 'uploads', 'kml', filename)
+    }
+
+    Logger.debug('准备删除KML文件', { fileUrl, filePath })
 
     try {
-      const filename = path.basename(fileUrl)
-      const filePath = path.join(process.cwd(), 'uploads', 'kml', filename)
-      Logger.debug('准备删除KML文件', { filename, filePath })
-      
-      // 检查文件是否存在
-      try {
-        await fs.access(filePath)
-        Logger.debug('KML文件存在，开始删除')
-      } catch (accessError) {
-        Logger.warn('KML文件不存在', { filePath })
-        return false
-      }
-      
+      await fs.access(filePath)
+    } catch (accessError) {
+      // 文件不存在：视为已删除，返回成功
+      Logger.warn('KML文件不存在，忽略删除', { filePath })
+      return true
+    }
+
+    try {
       await fs.unlink(filePath)
       Logger.debug('删除KML文件成功', { filePath })
       return true
     } catch (error) {
-      Logger.warn('删除KML文件失败:', error)
-      return false
+      // 对于不能忽略的错误，向上抛出以便调用方（事务）处理回滚
+      Logger.error('删除KML文件失败:', error)
+      throw error
     }
   }
 

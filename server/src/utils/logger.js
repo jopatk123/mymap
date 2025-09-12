@@ -15,7 +15,7 @@ class Logger {
   
   static debug(message, data = {}) {
     if (process.env.NODE_ENV === 'development') {
-      console.debug(`[DEBUG] ${new Date().toISOString()} - ${message}`, data)
+  // debug logging suppressed in production
     }
   }
 }

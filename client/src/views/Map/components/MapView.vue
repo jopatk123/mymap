@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import MapContainer from '@/components/map/MapContainer.vue'
 
 defineProps({
@@ -30,6 +30,11 @@ defineEmits(['panorama-click', 'map-click'])
 
 const mapRef = ref(null)
 
+// 调试：观察 mapRef.value.map 何时被设置
+watch(() => mapRef.value?.map, (v) => {
+  // exposed map changed — suppressed debug logging
+}, { immediate: true })
+
 // 暴露方法给父组件
 defineExpose({
   fitBounds: () => mapRef.value?.fitBounds(),
@@ -40,7 +45,10 @@ defineExpose({
   addKmlLayers: (kmlFiles) => mapRef.value?.addKmlLayers(kmlFiles),
     clearKmlLayers: () => mapRef.value?.clearKmlLayers(),
     setSearchMarker: (lat, lng, label) => mapRef.value?.setSearchMarker(lat, lng, label),
-    clearSearchMarker: () => mapRef.value?.clearSearchMarker()
+    clearSearchMarker: () => mapRef.value?.clearSearchMarker(),
+  // 将内部 map 实例直接暴露，便于上层组件通过 mapRef?.map 访问
+  // 使用 computed 返回底层 map 对象（自动解包），避免暴露为函数或未解包的 ref
+  map: computed(() => mapRef.value?.map?.value)
 })
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="KML样式配置"
+    :title="dialogTitle"
     width="80%"
     :close-on-click-modal="false"
     class="kml-style-dialog"
@@ -10,12 +10,24 @@
       <!-- 左侧：KML文件列表 -->
       <div class="kml-file-list">
         <div class="list-header">
-          <h3>KML文件列表</h3>
+          <h3>{{ listTitle }}</h3>
+          <el-tag v-if="props.basemapMode" type="warning" size="small">
+            底图模式
+          </el-tag>
+          <el-tag v-else type="info" size="small">
+            普通模式
+          </el-tag>
         </div>
         
         <el-scrollbar height="500px">
+          <div v-if="filteredKmlFiles.length === 0" class="empty-state">
+            <el-empty 
+              :description="props.basemapMode ? '暂无底图KML文件' : '暂无普通KML文件'" 
+              :image-size="80"
+            />
+          </div>
           <div 
-            v-for="kmlFile in kmlFiles"
+            v-for="kmlFile in filteredKmlFiles"
             :key="kmlFile.id"
             class="kml-file-item"
             :class="{ active: selectedKmlFile?.id === kmlFile.id }"
@@ -24,6 +36,14 @@
             <div class="file-info">
               <span class="file-name">{{ kmlFile.title }}</span>
               <span class="point-count">{{ kmlFile.point_count || 0 }} 个点位</span>
+              <el-tag 
+                v-if="kmlFile.is_basemap" 
+                type="warning" 
+                size="small" 
+                class="file-type-tag"
+              >
+                底图
+              </el-tag>
             </div>
             <div class="file-preview">
               <StylePreview :style-config="kmlFile.styleConfig" />
@@ -89,6 +109,10 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  basemapMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -115,11 +139,33 @@ const currentStyles = reactive({
 // 原始样式配置（用于取消时恢复）
 const originalStyles = ref({})
 
+// 计算属性
+const dialogTitle = computed(() => {
+  return props.basemapMode ? '底图KML样式配置' : 'KML样式配置'
+})
+
+const listTitle = computed(() => {
+  return props.basemapMode ? '底图KML文件列表' : 'KML文件列表'
+})
+
+const filteredKmlFiles = computed(() => {
+  return kmlFiles.value.filter(file => {
+    // basemapMode为true时只显示底图文件(is_basemap=1)
+    // basemapMode为false时只显示普通文件(is_basemap=0或null)
+    return props.basemapMode ? file.is_basemap : !file.is_basemap
+  })
+})
+
 // 监听对话框显示状态
 watch(visible, async (newVisible) => {
   if (newVisible) {
     await loadKmlFiles()
   }
+})
+
+// 监听底图模式变化，清空选中的文件
+watch(() => props.basemapMode, () => {
+  selectedKmlFile.value = null
 })
 
 // 加载KML文件列表
@@ -129,7 +175,10 @@ const loadKmlFiles = async () => {
     const response = await kmlApi.getKmlFiles({ 
       includeHidden: false,
       respectFolderVisibility: true,
-      _t: new Date().getTime() // 添加时间戳以防止缓存
+      // basemapMode: 需要所有；否则仅普通
+      includeBasemap: props.basemapMode ? true : false,
+      basemapOnly: props.basemapMode ? true : false,
+      _t: new Date().getTime()
     })
     kmlFiles.value = response.data || []
     
@@ -224,10 +273,7 @@ const handleSave = async () => {
        kmlFiles.value[fileIndex].styleConfig = styleConfig
     }
     
-    // 延迟触发事件，确保服务器配置已保存完成
-    setTimeout(() => {
-      emit('styles-updated')
-    }, 300)
+    emit('styles-updated')
     
   } catch (error) {
     ElMessage.error('保存样式配置失败')
@@ -339,13 +385,22 @@ const getDefaultStyles = () => {
     
     .list-header {
       margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       
       h3 {
-        margin: 0 0 12px 0;
+        margin: 0;
         font-size: 16px;
         font-weight: 600;
       }
-      
+    }
+    
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
     }
     
     .kml-file-item {
@@ -376,6 +431,11 @@ const getDefaultStyles = () => {
         .point-count {
           font-size: 12px;
           color: #666;
+          margin-bottom: 4px;
+        }
+        
+        .file-type-tag {
+          margin-left: 8px;
         }
       }
       
