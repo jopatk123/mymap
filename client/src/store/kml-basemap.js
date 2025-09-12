@@ -283,6 +283,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
           __kmlSelected: true,
           sourceFile: p.sourceFile,
           fileId: p.fileId
+          ,
+          // 从已加载的 kmlFiles 中继承 styleConfig（若存在）
+          styleConfig: (kmlFiles.value && Array.isArray(kmlFiles.value)) ? (kmlFiles.value.find(f => f.id === p.fileId)?.styleConfig || null) : null
         }))
 
         window.kmlSelectedPoints = kmlPointsForMap

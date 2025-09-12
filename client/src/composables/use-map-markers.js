@@ -119,11 +119,11 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const paneName = getPaneNameByType(pointType)
     
     // Leaflet需要[lat, lng]格式
-    const marker = createPointMarker([displayLat, displayLng], pointType, {
+  const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
       updateWhenZoom: false,
       pane: paneName,
-    }, null); // 传递null作为styleConfig，让函数使用全局样式
+  }, point.styleConfig || null); // 传递每点 styleConfig（若存在），否则回退到全局样式
 
 
     marker.on('click', () => {
@@ -165,11 +165,11 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const [displayLng, displayLat] = coordinates
     const pointType = point.type || 'panorama'
     const paneName = getPaneNameByType(pointType)
-    const marker = createPointMarker([displayLat, displayLng], pointType, {
+  const marker = createPointMarker([displayLat, displayLng], pointType, {
       title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
       updateWhenZoom: false,
       pane: paneName,
-    }, null)
+  }, point.styleConfig || null)
     marker.on('click', () => onMarkerClick.value(point))
     return { id: point.id, marker, type: pointType, data: point }
   }
@@ -225,7 +225,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       const marker = createPointMarker([displayLat, displayLng], pointType, {
         title: p.title || (pointType === 'video' ? '视频点位' : '全景图'),
         updateWhenZoom: false,
-      }, null)
+        }, p.styleConfig || null)
       marker.on('click', () => onMarkerClick.value(p))
 
       const markerInfo = { id: p.id, marker, type: pointType, data: p }
