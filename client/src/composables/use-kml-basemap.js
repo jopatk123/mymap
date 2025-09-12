@@ -109,9 +109,23 @@ export function useKMLBaseMap() {
     }
   })
   
+  const kmlFilesComputed = computed(() => {
+    let arr
+    // Pinia setup store返回的 ref 会被自动解包；如果是解包后的数组，store.kmlFiles 直接是数组
+    if (Array.isArray(store.kmlFiles)) {
+      arr = store.kmlFiles
+    } else if (store.kmlFiles && Array.isArray(store.kmlFiles.value)) {
+      arr = store.kmlFiles.value
+    } else {
+      arr = []
+    }
+    try { console.debug('[use-kml-basemap] computed kmlFiles length', arr.length, 'rawType', typeof store.kmlFiles, 'hasValue', !!store.kmlFiles?.value) } catch(e){}
+    return arr
+  })
+
   return {
   // 响应式数据（模板中会自动解包这些 computed）
-  kmlFiles: computed(() => store.kmlFiles && store.kmlFiles.value ? store.kmlFiles.value : []),
+  kmlFiles: kmlFilesComputed,
   kmlPoints: computed(() => store.kmlPoints && store.kmlPoints.value ? store.kmlPoints.value : []),
   visiblePoints: computed(() => store.visiblePoints && store.visiblePoints.value ? store.visiblePoints.value : []),
   loading: computed(() => (store.loading && typeof store.loading.value !== 'undefined') ? store.loading.value : false),

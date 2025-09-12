@@ -13,6 +13,11 @@ export function useFileManagement() {
     fileType: 'all',
     keyword: '',
     includeHidden: false
+  ,
+  // 是否仅显示底图 KML（默认 false）
+  basemapOnly: false,
+  // 是否包含底图（用于包含底图与普通文件同时显示）
+  includeBasemap: false
   })
 
   const pagination = reactive({
@@ -29,7 +34,10 @@ export function useFileManagement() {
       const response = await folderApi.getFolderContents(folderId, {
         keyword: searchForm.keyword,
         includeHidden: searchForm.includeHidden,
-        fileType: searchForm.fileType,
+  fileType: searchForm.fileType,
+  // 将 basemap 参数透传给后端
+  includeBasemap: searchForm.includeBasemap,
+  basemapOnly: searchForm.basemapOnly,
         page: pagination.page,
         pageSize: pagination.pageSize
       })

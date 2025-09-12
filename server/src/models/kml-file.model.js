@@ -58,7 +58,9 @@ class KmlFileModel {
     keyword = '',
     folderId = null,
     includeHidden = false,
-    visibleFolderIds = null
+    visibleFolderIds = null,
+    includeBasemap = false,
+    basemapOnly = false
   } = {}) {
     try {
       let whereConditions = []
@@ -86,6 +88,16 @@ class KmlFileModel {
       if (!includeHidden) {
         whereConditions.push('kf.is_visible = TRUE')
       }
+
+      // 底图过滤逻辑
+      if (basemapOnly) {
+        // 只显示底图文件
+        whereConditions.push('kf.is_basemap = 1')
+      } else if (!includeBasemap) {
+        // 默认不包含底图文件，只显示普通文件
+        whereConditions.push('(kf.is_basemap = 0 OR kf.is_basemap IS NULL)')
+      }
+      // 如果includeBasemap=true且basemapOnly=false，则显示所有文件
 
       const whereClause = whereConditions.length > 0 
         ? 'WHERE ' + whereConditions.join(' AND ')

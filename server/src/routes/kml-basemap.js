@@ -126,7 +126,7 @@ router.post('/upload', upload.any(), async (req, res) => {
     try {
       let insertedId = null
       await transaction(async (db) => {
-        const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
+        const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
         const insertRes = await db.run(insertFileSql, [
           title || originalName || uploadedFile.originalname,
           description || '',
@@ -134,7 +134,8 @@ router.post('/upload', upload.any(), async (req, res) => {
           uploadedFile.size,
           folderId ? parseInt(folderId) : null,
           1,
-          0
+          0,
+          1
         ])
         insertedId = insertRes.lastID
 
@@ -189,8 +190,8 @@ router.post('/upload', upload.any(), async (req, res) => {
  */
 router.get('/files', async (req, res) => {
   try {
-    const { page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility } = req.query
-    const result = await KmlFileModel.findAll({ page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility })
+  const { page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility } = req.query
+  const result = await KmlFileModel.findAll({ page, pageSize, keyword, folderId, includeHidden, respectFolderVisibility, basemapOnly: true })
 
     res.json({
       success: true,

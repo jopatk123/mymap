@@ -96,6 +96,11 @@ const uploaders = {
   kml: createUploader(
     createStorage('kml', 'kml'),
     kmlFileFilter
+  ),
+  // 底图KML上传（单独目录）
+  basemapKml: createUploader(
+    createStorage('kml-basemap', 'kmlbm'),
+    kmlFileFilter
   )
 }
 

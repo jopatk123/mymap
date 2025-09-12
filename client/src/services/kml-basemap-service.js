@@ -4,7 +4,7 @@
  */
 export class KMLBaseMapService {
   constructor() {
-  this.baseUrl = '/api/kml-files'
+  this.baseUrl = '/api/kml-basemap'
   }
 
   /**
@@ -48,17 +48,43 @@ export class KMLBaseMapService {
    * @returns {Promise<Array>} KML文件列表
    */
   async getKMLFiles() {
-  const response = await fetch(`${this.baseUrl}`)
+  // 仅获取底图文件，调用 /files 列表端点，添加时间戳避免缓存
+  const url = `${this.baseUrl}/files?basemapOnly=true&_t=${Date.now()}`
+    let response
+    try {
+      response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+    } catch (e) {
+      throw new Error('获取KML文件列表失败: 网络错误')
+    }
+
+    // 处理 304 (Not Modified) — 返回缓存内容（如果有）
+    if (response.status === 304) {
+      return this._cachedFiles || []
+    }
+
     if (!response.ok) {
       throw new Error('获取KML文件列表失败')
     }
 
-    const json = await response.json()
-    // 后端返回 { success: true, data: [...] }
-    if (json && Array.isArray(json.data)) return json.data
-    // 兼容可能直接返回数组的情况
-    if (Array.isArray(json)) return json
-    return []
+    let json = null
+    try {
+      json = await response.json()
+    } catch (e) {
+      // 空响应体或解析失败，回退缓存
+      return this._cachedFiles || []
+    }
+
+    let files = []
+    if (json && Array.isArray(json.data)) files = json.data
+    else if (Array.isArray(json)) files = json
+
+    // 缓存结果以应对 304 或解析失败情况
+    this._cachedFiles = files
+    return files
   }
 
   /**

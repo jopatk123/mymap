@@ -115,8 +115,10 @@ export function useMapPage() {
           pageSize: 10000,
           respectFolderVisibility: true
         }),
+        // 这里仅加载普通 KML（排除底图），底图由 basemap store 单独管理
         kmlApi.getKmlFiles({
           respectFolderVisibility: true,
+          includeBasemap: false,
           _t: new Date().getTime()
         })
       ]);

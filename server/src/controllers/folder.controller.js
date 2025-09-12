@@ -325,7 +325,10 @@ class FolderController {
       if (fileType === 'all' || fileType === 'kml') {
         try {
           const KmlFileModel = require('../models/kml-file.model')
-          const kmlResult = await KmlFileModel.findAll(searchParams)
+          // 透传 basemap 相关参数
+          const includeBasemap = (req.query.includeBasemap === 'true') || (req.query.includeBasemap === true)
+          const basemapOnly = (req.query.basemapOnly === 'true') || (req.query.basemapOnly === true)
+          const kmlResult = await KmlFileModel.findAll({ ...searchParams, includeBasemap, basemapOnly })
           const kmlsWithType = kmlResult.data.map(item => ({
             ...item,
             fileType: 'kml',

@@ -12,7 +12,9 @@ class KmlFileBaseController {
         keyword = '',
         folderId = null,
         includeHidden = false,
-        respectFolderVisibility = false
+        respectFolderVisibility = false,
+        includeBasemap = false,
+        basemapOnly = false
       } = req.query
 
       let searchParams = {
@@ -20,7 +22,9 @@ class KmlFileBaseController {
         pageSize: parseInt(pageSize),
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
-        includeHidden: includeHidden === 'true'
+        includeHidden: includeHidden === 'true',
+        includeBasemap: includeBasemap === 'true',
+        basemapOnly: basemapOnly === 'true'
       }
 
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {

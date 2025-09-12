@@ -307,10 +307,15 @@ const handleUploadSuccess = async () => {
 }
 
 // 显示 KML 文件视图并刷新列表
-const handleShowKmlFiles = async () => {
+// event.detail 可包含 { basemapOnly: boolean, includeBasemap: boolean }
+const handleShowKmlFiles = async (event) => {
   try {
+    const detail = (event && event.detail) || {}
     // 切换搜索为 KML 类型并重载
     searchForm.fileType = 'kml'
+    // 透传 basemap 相关参数到 searchForm
+    searchForm.basemapOnly = !!detail.basemapOnly
+    searchForm.includeBasemap = !!detail.includeBasemap
     selectedFolder.value = null
     pagination.page = 1
     await loadFileList()

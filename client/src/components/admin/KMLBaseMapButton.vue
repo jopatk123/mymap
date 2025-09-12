@@ -16,6 +16,8 @@
       title="添加KML底图"
       width="500px"
       :close-on-click-modal="false"
+      :append-to-body="true"
+      custom-class="kml-basemap-dialog"
     >
       <div class="upload-content">
         <div class="upload-info">
@@ -197,6 +199,28 @@ watch(() => uploadDialogVisible.value, (visible) => {
   if (!visible) {
     handleDialogClose()
   }
+})
+
+// 打开时提升 dialog 的 z-index，防止被其他组件遮挡
+watch(() => uploadDialogVisible.value, (visible) => {
+  if (!visible) return
+  // 在下一个 tick 找到 el-dialog__wrapper 并提升 z-index
+  setTimeout(() => {
+    try {
+      const wrappers = Array.from(document.querySelectorAll('.kml-basemap-dialog'))
+      wrappers.forEach(w => {
+        const wrapParent = w.closest('.el-dialog__wrapper') || w
+        if (wrapParent) {
+          try { wrapParent.style.zIndex = '3000' } catch(e){}
+        }
+      })
+      // 也尝试提升弹窗遮罩层（.v-modal）
+      const modals = Array.from(document.querySelectorAll('.v-modal'))
+  modals.forEach(m => { try { m.style.zIndex = '2999' } catch(e){} })
+    } catch (e) {
+      // ignore
+    }
+  }, 0)
 })
 </script>
 

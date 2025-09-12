@@ -14,8 +14,6 @@
         <KMLBaseMapFolder />
       </div>
       
-      <el-divider />
-      
       <el-tree
         ref="treeRef"
         :data="folderTree"

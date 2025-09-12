@@ -40,9 +40,16 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 获取KML文件列表
   const fetchKMLFiles = async () => {
+    // 防抖 / 并发保护：如果已经在加载，直接返回当前 promise
+    if (fetchKMLFiles._inFlight) {
+      try { console.debug('[kml-basemap-debug] fetchKMLFiles skipped (in-flight)') } catch(e){}
+      return fetchKMLFiles._inFlight
+    }
     try {
       loading.value = true
-      const files = await kmlBaseMapService.getKMLFiles()
+      const p = kmlBaseMapService.getKMLFiles()
+      fetchKMLFiles._inFlight = p
+      const files = await p
       try { console.debug('[kml-basemap-debug] fetchKMLFiles got', Array.isArray(files) ? files.length : typeof files, files && files.slice ? files.map(f=>f.id||f.name||f) : files) } catch(e){}
 
       if (!Array.isArray(files)) {
@@ -51,7 +58,22 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         return
       }
 
-      kmlFiles.value = files
+      // 兼容后端（或缓存层）返回的纯ID数组情况：转为对象数组
+      const normalized = Array.isArray(files) ? files.map(f => {
+        if (typeof f === 'number') return { id: f }
+        return f
+      }) : []
+      kmlFiles.value = normalized
+      try {
+        if (normalized.length>0) {
+          console.debug('[kml-basemap-debug] first file keys', Object.keys(normalized[0]))
+        }
+        console.debug('[kml-basemap-debug] after assignment kmlFiles length', kmlFiles.value.length)
+        if (typeof window !== 'undefined') {
+          window.__kmlFilesRef = kmlFiles
+          window.__kmlFilesValueSnapshot = JSON.parse(JSON.stringify(kmlFiles.value))
+        }
+      } catch(e){}
 
       // 加载所有KML文件的点位数据
       try { console.debug('[kml-basemap-debug] starting loadAllKMLPoints, kmlFilesCount', kmlFiles.value.length) } catch(e){}
@@ -60,7 +82,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       console.error('获取KML文件失败:', error)
       throw error
     } finally {
-      loading.value = false
+  loading.value = false
+  fetchKMLFiles._inFlight = null
     }
   }
   
@@ -103,8 +126,10 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       }
       const result = await kmlBaseMapService.uploadKMLFile(file, payloadOptions)
       
-      // 重新获取文件列表
-      await fetchKMLFiles()
+  // 重新获取文件列表（仅底图）
+  await fetchKMLFiles()
+  // 上传后重置点数据加载标记，确保新文件点位被加载
+  updateVisiblePoints._attemptedLoad = false
       
       return result
     } catch (error) {
@@ -201,17 +226,16 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     const activeAreas = areas.value.filter(a => a.visible !== false)
 
     // 如果 KML 点位尚未加载，先异步加载再重试（避免首次绘制无点）
-    if ((kmlPoints.value || []).length === 0 && !updateVisiblePoints._loadingKml) {
-      try { console.debug('[kml-basemap-debug] KML points empty, triggering fetchKMLFiles before computing visible points') } catch(e){}
-      updateVisiblePoints._loadingKml = true
-      fetchKMLFiles().then(() => {
-        updateVisiblePoints._loadingKml = false
-        try { console.debug('[kml-basemap-debug] fetchKMLFiles finished, retrying updateVisiblePoints') } catch(e){}
-        updateVisiblePoints()
-      }).catch(err => {
-        updateVisiblePoints._loadingKml = false
-        console.warn('[kml-basemap-debug] fetchKMLFiles failed', err)
-      })
+    if ((kmlPoints.value || []).length === 0) {
+      // 若尚无点数据，仅首次（且文件列表已获取）尝试异步加载点；避免在点仍为空时递归 fetch 文件形成循环
+      if (!updateVisiblePoints._attemptedLoad && Array.isArray(kmlFiles.value) && kmlFiles.value.length > 0) {
+        updateVisiblePoints._attemptedLoad = true
+        try { console.debug('[kml-basemap-debug] no kmlPoints yet, loading points once') } catch(e){}
+        loadAllKMLPoints().then(() => {
+          try { console.debug('[kml-basemap-debug] kmlPoints loaded after empty state, recomputing visible') } catch(e){}
+          updateVisiblePoints()
+        }).catch(err => console.warn('[kml-basemap-debug] loadAllKMLPoints failed', err))
+      }
       return
     }
 

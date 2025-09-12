@@ -26,101 +26,36 @@
       </div>
     </div>
 
-    <!-- KML文件列表 -->
-    <div class="kml-files-list" v-if="kmlFiles.length > 0">
-      <div
-        v-for="file in kmlFiles"
-        :key="file.id"
-        class="kml-file-item"
-        @click="handleFileSelect(file)"
-        :class="{ 'selected': selectedFileId === file.id }"
-      >
-        <div class="file-info">
-          <el-icon class="file-icon">
-            <Document />
-          </el-icon>
-          <div class="file-details">
-            <div class="file-name">{{ file.name }}</div>
-            <div class="file-meta">
-              <span class="file-size">{{ formatFileSize(file.size) }}</span>
-              <span class="file-points">{{ file.pointsCount || 0 }}个点位</span>
-              <span class="file-date">{{ formatDate(file.createdAt) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="file-actions">
-          <el-tooltip content="查看文件详情" placement="top">
-            <el-button
-              @click.stop="viewFileDetails(file)"
-              type="info"
-              size="small"
-              text
-            >
-              <el-icon><View /></el-icon>
-            </el-button>
-          </el-tooltip>
-          
-          <el-tooltip content="下载文件" placement="top">
-            <el-button
-              @click.stop="downloadFile(file)"
-              type="success"
-              size="small"
-              text
-            >
-              <el-icon><Download /></el-icon>
-            </el-button>
-          </el-tooltip>
-          
-          <el-tooltip content="删除文件" placement="top">
-            <el-button
-              @click.stop="deleteFile(file)"
-              type="danger"
-              size="small"
-              text
-            >
-              <el-icon><Delete /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </div>
-      </div>
-    </div>
-
-    <!-- 空状态（已简化：移除图标与描述，仅保留添加按钮，并缩小高度） -->
-    <div v-else class="empty-state">
-      <div class="empty-compact">
-        <KMLBaseMapButton />
-      </div>
-    </div>
+  <!-- 废弃：已移除空状态点位展示容器（点位通过文件详情对话框查看） -->
+  <div class="kml-table-wrapper"></div>
 
     <!-- 文件详情对话框 -->
     <el-dialog
       v-model="detailsDialogVisible"
-      :title="`KML文件详情 - ${selectedFile?.name}`"
+  :title="`KML文件详情 - ${selectedFile?.title || selectedFile?.name}`"
       width="600px"
     >
       <div v-if="selectedFile" class="file-details-content">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="文件名">
-            {{ selectedFile.name }}
+            {{ selectedFile.title || selectedFile.name }}
           </el-descriptions-item>
           <el-descriptions-item label="文件大小">
-            {{ formatFileSize(selectedFile.size) }}
+            {{ formatFileSize(selectedFile.file_size || selectedFile.size) }}
           </el-descriptions-item>
           <el-descriptions-item label="点位数量">
-            {{ selectedFile.pointsCount || 0 }}
+            {{ selectedFile.point_count || selectedFile.pointsCount || 0 }}
           </el-descriptions-item>
           <el-descriptions-item label="上传时间">
-            {{ formatDate(selectedFile.createdAt) }}
+            {{ formatDate(selectedFile.created_at || selectedFile.createdAt) }}
           </el-descriptions-item>
           <el-descriptions-item label="文件路径" span="2">
-            {{ selectedFile.path || '未知' }}
+            {{ selectedFile.file_url || selectedFile.fileUrl || selectedFile.path || '未知' }}
           </el-descriptions-item>
         </el-descriptions>
 
-        <!-- 点位预览 -->
-        <div v-if="filePoints.length > 0" class="points-preview">
-          <el-divider>点位数据预览</el-divider>
+  <!-- 点位预览 -->
+  <div v-if="filePoints.length > 0" class="points-preview">
           <el-table
             :data="filePoints.slice(0, 10)"
             size="small"
@@ -168,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   FolderOpened,
@@ -180,7 +115,6 @@ import {
 } from '@element-plus/icons-vue'
 import { useKMLBaseMap } from '@/composables/use-kml-basemap.js'
 import { kmlBaseMapService } from '@/services/kml-basemap-service.js'
-import KMLBaseMapButton from '@/components/admin/KMLBaseMapButton.vue'
 
 // 使用组合式函数
 const {
@@ -196,14 +130,21 @@ const selectedFile = ref(null)
 const detailsDialogVisible = ref(false)
 const filePoints = ref([])
 
+// 表格行样式
+const rowClassName = ({ row }) => {
+  return row.id === selectedFileId.value ? 'is-selected-row' : ''
+}
+
 // 初始化
 onMounted(() => {
   initialize()
+  try { console.debug('[kml-basemap-folder] mounted, initial kmlFiles length', kmlFiles.length) } catch(e){}
 })
 
 // 响应外部事件，刷新 KML 列表（例如上传成功后）
 const refreshHandler = () => {
   initialize()
+  try { console.debug('[kml-basemap-folder] refresh event, kmlFiles length(after async) maybe pending') } catch(e){}
 }
 
 window.addEventListener('kml-files-updated', refreshHandler)
@@ -215,6 +156,7 @@ onUnmounted(() => {
 // 选择文件
 const handleFileSelect = (file) => {
   selectedFileId.value = file.id
+  try { console.debug('[kml-basemap-folder] select file', file.id, file.title || file.name) } catch(e){}
 }
 
 // 查看文件详情
@@ -231,12 +173,24 @@ const viewFileDetails = async (file) => {
   }
 }
 
+// 当选中文件变更且未加载点位时自动加载点位到空块展示区域
+watch(selectedFile, async (newVal) => {
+  if (!newVal) return
+  if (filePoints.value && filePoints.value.length > 0) return
+
+  try {
+    filePoints.value = await kmlBaseMapService.getKMLPoints(newVal.id)
+  } catch (err) {
+    console.error('[kml-basemap-folder] load points for selectedFile failed', err)
+  }
+})
+
 // 下载文件
 const downloadFile = (file) => {
   // 创建下载链接
   const link = document.createElement('a')
   link.href = `/api/kml-basemap/${file.id}/download`
-  link.download = file.name
+  link.download = file.title || file.name
   link.style.display = 'none'
   
   document.body.appendChild(link)
@@ -251,7 +205,8 @@ const handleHeaderClick = async () => {
   try {
     await initialize()
   // 通知主区域显示 KML 文件列表（例如当用户在其他文件夹时点击回到KML）
-  window.dispatchEvent(new CustomEvent('show-kml-files'))
+  // 作为底图入口，默认只显示底图文件
+  window.dispatchEvent(new CustomEvent('show-kml-files', { detail: { basemapOnly: true } }))
   } catch (error) {
     console.error('刷新KML列表失败:', error)
   }
@@ -261,15 +216,15 @@ const handleHeaderClick = async () => {
 const openManageBasemap = () => {
   // show-kml-files 切换到 KML 列表并打开设置
   window.dispatchEvent(new CustomEvent('show-kml-files'))
-  // 触发显示 KML 设置对话框
-  window.dispatchEvent(new CustomEvent('show-kml-settings'))
+  // 触发显示 KML 设置对话框（标记为底图模式）
+  window.dispatchEvent(new CustomEvent('show-kml-settings', { detail: { basemap: true } }))
 }
 
 // 删除文件
 const deleteFile = async (file) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除KML文件"${file.name}"吗？此操作不可恢复。`,
+  `确定要删除KML文件"${file.title || file.name}"吗？此操作不可恢复。`,
       '确认删除',
       {
         confirmButtonText: '确定',
@@ -278,7 +233,7 @@ const deleteFile = async (file) => {
       }
     )
     
-    await deleteKMLFile(file.id, file.name)
+  await deleteKMLFile(file.id, file.title || file.name)
     
   } catch (error) {
     if (error !== 'cancel') {
@@ -319,6 +274,8 @@ const formatDate = (dateString) => {
 
 <style lang="scss" scoped>
 .kml-basemap-folder {
+  outline: 1px solid rgba(64,158,255,0.25);
+
   .folder-header {
     display: flex;
     align-items: center;
@@ -326,123 +283,37 @@ const formatDate = (dateString) => {
     padding: 12px 16px;
     border-bottom: 1px solid #ebeef5;
     background-color: #f8f9fa;
-    
+
     .folder-info {
       display: flex;
       align-items: center;
       gap: 8px;
-      
-      .folder-icon {
-        color: #409eff;
-        font-size: 18px;
-      }
-      
-      .folder-name {
-        font-weight: 500;
-        color: #303133;
-      }
+      .folder-icon { color: #409eff; font-size: 18px; }
+      .folder-name { font-weight: 500; color: #303133; }
     }
-    
+
     .folder-actions {
-      .info-icon {
-        color: #909399;
-        cursor: help;
-      }
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      .info-icon { color: #909399; cursor: help; }
     }
   }
 
-  .kml-files-list {
-    max-height: 400px;
-    overflow-y: auto;
-    
-    .kml-file-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid #f0f0f0;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      
-      &:hover {
-        background-color: #f5f7fa;
-      }
-      
-      &.selected {
-        background-color: #ecf5ff;
-        border-color: #b3d8ff;
-      }
-      
-      .file-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex: 1;
-        
-        .file-icon {
-          color: #67c23a;
-          font-size: 20px;
-        }
-        
-        .file-details {
-          flex: 1;
-          
-          .file-name {
-            font-weight: 500;
-            color: #303133;
-            margin-bottom: 4px;
-          }
-          
-          .file-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            color: #909399;
-            
-            span {
-              white-space: nowrap;
-            }
-          }
-        }
-      }
-      
-      .file-actions {
-        display: flex;
-        gap: 4px;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-      
-      &:hover .file-actions {
-        opacity: 1;
-      }
-    }
+  .kml-table-wrapper { padding: 4px 8px 8px; }
+
+  :deep(.el-table__row.is-selected-row) {
+    background-color: #ecf5ff !important;
   }
 
   .empty-state {
-  padding: 10px 10px;
-  text-align: center;
-    
-    :deep(.el-empty__description) {
-      margin-bottom: 8px;
-    }
-    .empty-compact {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 0;
-    }
+    padding: 16px 0;
+    text-align: center;
   }
 }
 
 .file-details-content {
-  .points-preview {
-    margin-top: 20px;
-    
-    .more-points-tip {
-      text-align: center;
-      margin-top: 8px;
-    }
-  }
+  .points-preview { margin-top: 20px; }
+  .more-points-tip { text-align: center; margin-top: 8px; }
 }
 </style>
