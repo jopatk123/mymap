@@ -86,8 +86,7 @@ onUnmounted(() => {
 
 // 样式更新处理
 const handleStylesUpdated = () => {
-  // 通知地图组件刷新样式
-  window.dispatchEvent(new CustomEvent('kml-styles-updated'))
+  // 简单通知地图刷新
 }
 
 const openPointSystem = () => {

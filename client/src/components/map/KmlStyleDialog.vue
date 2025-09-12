@@ -273,10 +273,7 @@ const handleSave = async () => {
        kmlFiles.value[fileIndex].styleConfig = styleConfig
     }
     
-    // 延迟触发事件，确保服务器配置已保存完成
-    setTimeout(() => {
-      emit('styles-updated')
-    }, 300)
+    emit('styles-updated')
     
   } catch (error) {
     ElMessage.error('保存样式配置失败')

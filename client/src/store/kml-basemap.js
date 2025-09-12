@@ -4,7 +4,7 @@ import { kmlBaseMapService } from '@/services/kml-basemap-service.js'
 import { areaCalculationService } from '@/services/area-calculation-service.js'
 
 export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
-  try { console.debug('[kml-basemap-debug] store initialized') } catch(e){}
+
   // 状态
   const kmlFiles = ref([]) // KML底图文件列表
   const kmlPoints = ref([]) // 所有KML点位数据
@@ -12,26 +12,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const areas = ref([]) // 选择的区域列表
   const loading = ref(false)
 
-  // 暴露到 window 以便调试（浏览器控制台直接访问）
-  try {
-    if (typeof window !== 'undefined') {
-      window.__kmlBasemapStoreRefs = {
-        kmlFiles,
-        kmlPoints,
-        visiblePoints,
-        areas,
-        loading
-      }
-      // 允许从控制台手动触发加载
-      window.kmlFetch = async () => {
-        try {
-          console.debug('[kml-basemap-debug] manual kmlFetch invoked')
-          await fetchKMLFiles()
-          console.debug('[kml-basemap-debug] manual kmlFetch done, kmlFiles:', kmlFiles.value.length, 'kmlPoints:', kmlPoints.value.length)
-        } catch (e) { console.error('[kml-basemap-debug] manual kmlFetch error', e) }
-      }
-    }
-  } catch (e) { /* ignore */ }
+
   
   // 计算属性
   const totalPointsCount = computed(() => kmlPoints.value.length)
@@ -40,17 +21,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 获取KML文件列表
   const fetchKMLFiles = async () => {
-    // 防抖 / 并发保护：如果已经在加载，直接返回当前 promise
-    if (fetchKMLFiles._inFlight) {
-      try { console.debug('[kml-basemap-debug] fetchKMLFiles skipped (in-flight)') } catch(e){}
-      return fetchKMLFiles._inFlight
-    }
     try {
       loading.value = true
-      const p = kmlBaseMapService.getKMLFiles()
-      fetchKMLFiles._inFlight = p
-      const files = await p
-      try { console.debug('[kml-basemap-debug] fetchKMLFiles got', Array.isArray(files) ? files.length : typeof files, files && files.slice ? files.map(f=>f.id||f.name||f) : files) } catch(e){}
+      const files = await kmlBaseMapService.getKMLFiles()
 
       if (!Array.isArray(files)) {
         console.error('fetchKMLFiles: expected array, got', files)
@@ -63,20 +36,27 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         if (typeof f === 'number') return { id: f }
         return f
       }) : []
+
+      // 为每个文件获取样式配置
+      const { kmlApi } = await import('@/api/kml.js')
+      for (const file of normalized) {
+        try {
+          const styleResponse = await kmlApi.getKmlFileStyles(file.id)
+          file.styleConfig = styleResponse.data
+        } catch (error) {
+          file.styleConfig = null
+        }
+      }
+
       kmlFiles.value = normalized
-      try {
-        // keep assignment; avoid verbose debug output in production
-      } catch(e){}
 
       // 加载所有KML文件的点位数据
-  try { /* start loading points */ } catch(e){}
       await loadAllKMLPoints()
     } catch (error) {
       console.error('获取KML文件失败:', error)
       throw error
     } finally {
-  loading.value = false
-  fetchKMLFiles._inFlight = null
+      loading.value = false
     }
   }
   
@@ -90,15 +70,14 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         const mapped = points.map(point => ({
           ...point,
           sourceFile: file.name,
-          fileId: file.id
+          fileId: file.id,
+          // inherit file-level styleConfig so point-level rendering can apply KML styles
+          styleConfig: file.styleConfig || null
         }))
         allPoints.push(...mapped)
-        // debug
-    try { /* loaded points for file */ } catch(e){}
       }
       
       kmlPoints.value = allPoints
-  try { /* total kmlPoints loaded */ } catch(e){}
     } catch (error) {
       console.error('加载KML点位数据失败:', error)
       throw error
@@ -411,7 +390,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         }
       }
 
-      console.debug('[kml-basemap-debug] debugPointChecks results count', results.length)
+
       console.table(results.map(r => ({ pointId: r.pointId, title: r.title, matched: r.matched, isInAny: r.isInAny, isNearBoundary: r.isNearBoundary || false })))
       return results
       } catch (err) {

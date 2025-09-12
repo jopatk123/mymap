@@ -133,14 +133,18 @@ onMounted(async () => {
     },
     mapType.value // 使用 store 中的地图类型进行初始化
   )
+  try { console.debug('[map-container] initMap returned', mapInstance) } catch(e){}
   
   // 设置地图实例到刷新工具
   if (mapInstance) {
     const mod = await import('@/utils/marker-refresh.js')
+    try { console.debug('[map-container] imported marker-refresh', !!mod) } catch(e){}
     setMapInstance = mod.setMapInstance
     setMarkersData = mod.setMarkersData
+    try { console.debug('[map-container] about to call setMapInstance') } catch(e){}
   // 将刷新工具所需的 clear 函数指向仅清除点位的实现，避免移除 KML 图层
-  setMapInstance({ clearMarkers: (typeof clearPointMarkers === 'function' ? clearPointMarkers : clearMarkers), addPointMarkers })
+    setMapInstance({ clearMarkers: (typeof clearPointMarkers === 'function' ? clearPointMarkers : clearMarkers), addPointMarkers })
+    try { console.debug('[map-container] setMapInstance called') } catch(e){}
   }
   
   // 设置标记点击事件处理函数
