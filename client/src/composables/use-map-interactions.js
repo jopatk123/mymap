@@ -13,7 +13,13 @@ export function useMapInteractions(mapRef, selectedPanorama, showPanoramaModal, 
 
   // 处理点位标记点击（区分全景图和视频点位）
   const handlePanoramaClick = (point) => {
-    // 根据点位类型判断是全景图还是视频点位
+    // 根据点位类型判断是全景图、视频或 KML 点位
+    if (point.type === 'kml') {
+      // KML 底图点位：不作为全景图打开，可扩展为显示详情或跳转到 KML 文件
+      ElMessage.info('此为 KML 底图点位，详情请在KML管理中查看')
+      return
+    }
+
     if (point.type === 'video' || point.videoUrl || point.video_url) {
       // 视频点位 - 直接打开视频播放器
       selectedVideo.value = point

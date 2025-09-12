@@ -4,12 +4,34 @@ import { kmlBaseMapService } from '@/services/kml-basemap-service.js'
 import { areaCalculationService } from '@/services/area-calculation-service.js'
 
 export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
+  try { console.debug('[kml-basemap-debug] store initialized') } catch(e){}
   // 状态
   const kmlFiles = ref([]) // KML底图文件列表
   const kmlPoints = ref([]) // 所有KML点位数据
   const visiblePoints = ref([]) // 当前显示的点位
   const areas = ref([]) // 选择的区域列表
   const loading = ref(false)
+
+  // 暴露到 window 以便调试（浏览器控制台直接访问）
+  try {
+    if (typeof window !== 'undefined') {
+      window.__kmlBasemapStoreRefs = {
+        kmlFiles,
+        kmlPoints,
+        visiblePoints,
+        areas,
+        loading
+      }
+      // 允许从控制台手动触发加载
+      window.kmlFetch = async () => {
+        try {
+          console.debug('[kml-basemap-debug] manual kmlFetch invoked')
+          await fetchKMLFiles()
+          console.debug('[kml-basemap-debug] manual kmlFetch done, kmlFiles:', kmlFiles.value.length, 'kmlPoints:', kmlPoints.value.length)
+        } catch (e) { console.error('[kml-basemap-debug] manual kmlFetch error', e) }
+      }
+    }
+  } catch (e) { /* ignore */ }
   
   // 计算属性
   const totalPointsCount = computed(() => kmlPoints.value.length)
@@ -21,6 +43,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       loading.value = true
       const files = await kmlBaseMapService.getKMLFiles()
+      try { console.debug('[kml-basemap-debug] fetchKMLFiles got', Array.isArray(files) ? files.length : typeof files, files && files.slice ? files.map(f=>f.id||f.name||f) : files) } catch(e){}
+
       if (!Array.isArray(files)) {
         console.error('fetchKMLFiles: expected array, got', files)
         kmlFiles.value = []
@@ -30,6 +54,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       kmlFiles.value = files
 
       // 加载所有KML文件的点位数据
+      try { console.debug('[kml-basemap-debug] starting loadAllKMLPoints, kmlFilesCount', kmlFiles.value.length) } catch(e){}
       await loadAllKMLPoints()
     } catch (error) {
       console.error('获取KML文件失败:', error)
@@ -46,14 +71,18 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       
       for (const file of kmlFiles.value) {
         const points = await kmlBaseMapService.getKMLPoints(file.id)
-        allPoints.push(...points.map(point => ({
+        const mapped = points.map(point => ({
           ...point,
           sourceFile: file.name,
           fileId: file.id
-        })))
+        }))
+        allPoints.push(...mapped)
+        // debug
+        try { console.debug('[kml-basemap-debug] loaded kml points for file', file.id, 'count', mapped.length) } catch(e){}
       }
       
       kmlPoints.value = allPoints
+      try { console.debug('[kml-basemap-debug] total kmlPoints loaded', kmlPoints.value.length) } catch(e){}
     } catch (error) {
       console.error('加载KML点位数据失败:', error)
       throw error
@@ -114,11 +143,13 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   visible: area.visible !== undefined ? area.visible : true,
       createdAt: new Date()
     })
-    updateVisiblePoints()
+  try { console.debug('[kml-basemap-debug] addArea', area) } catch(e){}
+  updateVisiblePoints()
   }
   
   // 添加圆形区域
   const addCircleArea = (center, radius) => {
+    try { console.debug('[kml-basemap-debug] addCircleArea center', center, 'radius', radius) } catch(e){}
     addArea({
       type: 'circle',
       center,
@@ -129,6 +160,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 添加自定义区域
   const addCustomArea = (polygon, name = '自定义区域') => {
+    try { console.debug('[kml-basemap-debug] addCustomArea polygon points', polygon.length) } catch(e){}
     addArea({
       type: 'polygon',
       polygon,
@@ -140,6 +172,21 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const clearAllAreas = () => {
     areas.value = []
     visiblePoints.value = []
+    // 恢复地图点位（移除KML选区点）
+    try {
+      if (typeof window !== 'undefined') {
+        if (window.basePoints) {
+          window.allPoints = [...window.basePoints]
+          // 触发一次标记刷新
+          import('@/utils/marker-refresh.js').then(mod => {
+            try { mod.refreshAllMarkers && mod.refreshAllMarkers() } catch (e) { console.warn('[kml-basemap] clearAllAreas refreshAllMarkers error', e) }
+          }).catch(()=>{})
+        }
+        window.kmlSelectedPoints = []
+      }
+    } catch (err) {
+      console.warn('[kml-basemap] clearAllAreas restore basePoints failed', err)
+    }
   }
   
   // 删除指定区域
@@ -153,8 +200,33 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     // 只使用标记为可见的区域来决定哪些点应显示
     const activeAreas = areas.value.filter(a => a.visible !== false)
 
+    // 如果 KML 点位尚未加载，先异步加载再重试（避免首次绘制无点）
+    if ((kmlPoints.value || []).length === 0 && !updateVisiblePoints._loadingKml) {
+      try { console.debug('[kml-basemap-debug] KML points empty, triggering fetchKMLFiles before computing visible points') } catch(e){}
+      updateVisiblePoints._loadingKml = true
+      fetchKMLFiles().then(() => {
+        updateVisiblePoints._loadingKml = false
+        try { console.debug('[kml-basemap-debug] fetchKMLFiles finished, retrying updateVisiblePoints') } catch(e){}
+        updateVisiblePoints()
+      }).catch(err => {
+        updateVisiblePoints._loadingKml = false
+        console.warn('[kml-basemap-debug] fetchKMLFiles failed', err)
+      })
+      return
+    }
+
+    try { console.debug('[kml-basemap-debug] updateVisiblePoints activeAreasCount', activeAreas.length, 'totalKmlPoints', kmlPoints.value.length) } catch(e){}
+
     if (activeAreas.length === 0) {
       visiblePoints.value = []
+      // 没有选区时还原基础点数据
+      try {
+        if (typeof window !== 'undefined' && window.basePoints) {
+          window.allPoints = [...window.basePoints]
+          import('@/utils/marker-refresh.js').then(mod => { try { mod.refreshAllMarkers && mod.refreshAllMarkers() } catch (e) {} })
+        }
+        if (typeof window !== 'undefined') window.kmlSelectedPoints = []
+      } catch (e) { console.warn('[kml-basemap] updateVisiblePoints reset error', e) }
       return
     }
 
@@ -185,15 +257,67 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       }
     }
 
-    visiblePoints.value = visible
+  visiblePoints.value = visible
+  try { console.debug('[kml-basemap-debug] visiblePoints computed count', visible.length) } catch(e){}
+
+    // 将选区内的KML点位合并到地图现有点位中
+    try {
+      if (typeof window !== 'undefined') {
+        // 缓存基础点（不含任何KML选区点）
+        if (!window.basePoints) {
+          const current = Array.isArray(window.allPoints) ? window.allPoints : []
+          // basePoints 只保存非 KML 选区添加的点（当前逻辑里 window.allPoints 原本不包含 KML 点，这里直接克隆即可）
+          window.basePoints = current.filter(p => !p.__kmlSelected)
+        }
+
+        // 标记并转换KML点为地图可识别格式（避免过滤掉 type==='kml' 的旧逻辑影响，这里使用保留原 type 但加辅助字段）
+        const kmlPointsForMap = visible.map(p => ({
+          // 使用唯一ID，避免与基础点冲突
+          id: `kml-${p.fileId}-${p.id || p._id || Math.random().toString(36).slice(2)}`,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          lat: p.latitude,
+          lng: p.longitude,
+          title: p.name || p.title || 'KML点位',
+          type: 'kml', // 标记为 KML 类型，避免被当作全景点直接打开查看
+          __kmlSelected: true,
+          sourceFile: p.sourceFile,
+          fileId: p.fileId
+        }))
+
+        window.kmlSelectedPoints = kmlPointsForMap
+        window.allPoints = [...(window.basePoints || []), ...kmlPointsForMap]
+
+        // 刷新地图标记（延迟并打印 map/marker 状态，降低与 Leaflet 聚簇模块的 race-condition）
+        try {
+          const mapExists = typeof window !== 'undefined' && (!!window.mapInstance || !!window.map)
+          try { console.debug('[kml-basemap-debug] preparing to refresh markers', { mapExists, currentMarkersCount: (window.currentMarkers||[]).length, allPointsCount: (window.allPoints||[]).length }) } catch(e){}
+          setTimeout(() => {
+            import('@/utils/marker-refresh.js').then(mod => {
+              try {
+                console.debug('[kml-basemap-debug] calling refreshAllMarkers')
+                mod.refreshAllMarkers && mod.refreshAllMarkers()
+              } catch (e) {
+                console.warn('[kml-basemap] refreshAllMarkers error', e)
+              }
+            }).catch((e) => { console.warn('[kml-basemap] import marker-refresh failed', e) })
+          }, 200)
+        } catch (err) {
+          console.warn('[kml-basemap] schedule refresh failed', err)
+        }
+      }
+    } catch (err) {
+      console.warn('[kml-basemap] merge visible KML points failed', err)
+    }
   }
   
   // 获取区域内的点位
   const getPointsInArea = (areaId) => {
     const area = areas.value.find(a => a.id === areaId)
     if (!area) return []
-    
-    return kmlPoints.value.filter(point => {
+  try { console.debug('[kml-basemap-debug] getPointsInArea areaId', areaId, 'type', area.type) } catch(e){}
+
+  return kmlPoints.value.filter(point => {
       if (area.type === 'circle') {
         return areaCalculationService.isPointInCircle(point, area.center, area.radius)
       } else if (area.type === 'polygon') {
@@ -201,6 +325,63 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       }
       return false
     })
+  }
+
+  // 调试函数：检查所有 KML 点与当前区域的匹配情况，阈值单位为米
+  const debugPointChecks = (thresholdMeters = 50) => {
+    try {
+      const activeAreas = areas.value.filter(a => a.visible !== false)
+      if (!activeAreas.length) {
+        console.info('[kml-basemap-debug] debugPointChecks: no active areas')
+        return []
+      }
+
+      const results = []
+      for (const point of kmlPoints.value) {
+        const matched = visiblePoints.value.find(p => (p.id === point.id || p._id === point.id))
+        let isInAny = false
+        let details = []
+
+        for (const area of activeAreas) {
+          if (area.type === 'circle') {
+            const d = areaCalculationService.calculateDistance(point.latitude, point.longitude, area.center.latitude, area.center.longitude)
+            const inside = d <= area.radius
+            details.push({ areaId: area.id, type: 'circle', distance: Math.round(d), radius: Math.round(area.radius), inside })
+            if (inside) isInAny = true
+          } else if (area.type === 'polygon') {
+            const inside = areaCalculationService.isPointInPolygon(point, area.polygon)
+            const center = areaCalculationService.getPolygonCenter(area.polygon) || { latitude: 0, longitude: 0 }
+            const d = areaCalculationService.calculateDistance(point.latitude, point.longitude, center.latitude, center.longitude)
+            details.push({ areaId: area.id, type: 'polygon', distance: Math.round(d), inside })
+            if (inside) isInAny = true
+          }
+        }
+
+        const mismatch = (matched && !isInAny) || (!matched && isInAny)
+        // 仅列出明显不一致或边界附近的点
+        if (mismatch) {
+          results.push({ pointId: point.id || point._id, matched: !!matched, isInAny, details, title: point.name || point.title })
+        } else {
+          // 若在边界附近也记录（便于排查 ~500m 偏移）
+          for (const d of details) {
+            if (d.type === 'circle') {
+              const delta = Math.abs(d.distance - d.radius)
+              if (delta <= thresholdMeters) {
+                results.push({ pointId: point.id || point._id, matched: !!matched, isNearBoundary: true, delta, details, title: point.name || point.title })
+                break
+              }
+            }
+          }
+        }
+      }
+
+      console.debug('[kml-basemap-debug] debugPointChecks results count', results.length)
+      console.table(results.map(r => ({ pointId: r.pointId, title: r.title, matched: r.matched, isInAny: r.isInAny, isNearBoundary: r.isNearBoundary || false })))
+      return results
+    } catch (err) {
+      console.error('[kml-basemap-debug] debugPointChecks error', err)
+      return []
+    }
   }
   
   // 切换区域显示状态
@@ -219,6 +400,12 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     visiblePoints.value = []
     areas.value = []
     loading.value = false
+    try {
+      if (typeof window !== 'undefined') {
+        if (window.__kmlBasemapStoreRefs) delete window.__kmlBasemapStoreRefs
+        if (window.kmlFetch) delete window.kmlFetch
+      }
+    } catch (e) {}
   }
   
   return {

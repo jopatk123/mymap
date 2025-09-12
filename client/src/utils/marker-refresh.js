@@ -25,7 +25,7 @@ export function setMarkersData(markers) {
     const invalidMarkers = markers.filter(marker => {
       const lat = marker.lat || marker.latitude
       const lng = marker.lng || marker.longitude
-      return lat == null || lng == null || isNaN(lat) || isNaN(lng) || marker.type === 'kml'
+  return lat == null || lng == null || isNaN(lat) || isNaN(lng)
     })
     
     if (invalidMarkers.length > 0) {
@@ -49,13 +49,18 @@ export function refreshAllMarkers() {
         return true
       }
 
-      // 清除现有标记
-      mapInstanceData.clearMarkers()
-      
-      // 重新添加标记
+      // 清除现有标记（保护：只在函数存在时调用）
+      try { console.debug('[marker-refresh] using mapInstanceData to refresh markers, points:', currentPoints.length) } catch(e){}
+      try { mapInstanceData.clearMarkers && mapInstanceData.clearMarkers() } catch (e) { console.warn('[marker-refresh] clearMarkers failed', e) }
+
+      // 重新添加标记（延迟以避免与 Leaflet 动画/聚簇冲突）
       setTimeout(() => {
-        mapInstanceData.addPointMarkers(currentPoints)
-      }, 100)
+        try {
+          mapInstanceData.addPointMarkers && mapInstanceData.addPointMarkers(currentPoints)
+        } catch (e) {
+          console.warn('[marker-refresh] addPointMarkers failed', e)
+        }
+      }, 500)
       
       return true
     }
@@ -74,9 +79,14 @@ export function refreshAllMarkers() {
     }
 
     // 清除现有标记
+    try { console.debug('[marker-refresh] clearing existing markers, count:', currentMarkers.length) } catch(e){}
     currentMarkers.forEach(markerInfo => {
-      if (markerInfo.marker && mapInstance) {
-        mapInstance.removeLayer(markerInfo.marker)
+      try {
+        if (markerInfo.marker && mapInstance && mapInstance.removeLayer) {
+          mapInstance.removeLayer(markerInfo.marker)
+        }
+      } catch (err) {
+        console.warn('[marker-refresh] removeLayer failed for', markerInfo.id, err)
       }
     })
 
@@ -84,10 +94,10 @@ export function refreshAllMarkers() {
     const { createPointMarker } = require('./map-utils.js')
     const newMarkers = []
 
-    currentMarkers.forEach(markerInfo => {
+  currentMarkers.forEach(markerInfo => {
       try {
         const { data, type } = markerInfo
-        if (!data || !data.lat || !data.lng) {
+    if (!data || (data.lat == null && data.latitude == null) || (data.lng == null && data.longitude == null)) {
           console.warn('标记数据不完整，跳过:', markerInfo.id)
           return
         }
@@ -105,8 +115,8 @@ export function refreshAllMarkers() {
           displayLng = data.gcj02_lng
         }
 
-        // 创建新标记
-        const newMarker = createPointMarker([displayLat, displayLng], type, {
+  // 创建新标记
+  const newMarker = createPointMarker([displayLat, displayLng], type, {
           title: data.title || (type === 'video' ? '视频点位' : '全景图'),
         }, null)
 
@@ -117,7 +127,7 @@ export function refreshAllMarkers() {
           })
         }
 
-        newMarker.addTo(mapInstance)
+  try { newMarker.addTo(mapInstance) } catch (e) { console.warn('[marker-refresh] newMarker.addTo failed', e) }
         newMarkers.push({
           id: data.id,
           marker: newMarker,
@@ -130,8 +140,8 @@ export function refreshAllMarkers() {
       }
     })
 
-    // 更新全局标记数组
-    window.currentMarkers = newMarkers
+  // 更新全局标记数组
+  window.currentMarkers = newMarkers
 
   } catch (error) {
     console.error('刷新标记失败:', error)

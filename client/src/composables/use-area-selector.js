@@ -1,6 +1,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useKMLBaseMapStore } from '@/store/kml-basemap.js'
+import { gcj02ToWgs84, wgs84ToGcj02 } from '@/utils/coordinate-transform.js'
 
 /**
  * 区域选择组合式函数
@@ -60,15 +61,36 @@ export function useAreaSelector() {
         // 创建新的 layer
         let layer = null
         if (area.type === 'circle' && window.L) {
-          layer = window.L.circle([area.center.latitude, area.center.longitude], {
-            radius: area.radius,
-            color: 'blue',
-            weight: 2,
-            opacity: 0.6,
-            fill: false
-          })
+          // area.center is stored in WGS84; convert to GCJ02 for display
+          try {
+            const [gcjLng, gcjLat] = wgs84ToGcj02(area.center.longitude, area.center.latitude)
+            layer = window.L.circle([gcjLat, gcjLng], {
+              radius: area.radius,
+              color: 'blue',
+              weight: 2,
+              opacity: 0.6,
+              fill: false
+            })
+          } catch (err) {
+            // fallback to raw coords if conversion fails
+            layer = window.L.circle([area.center.latitude, area.center.longitude], {
+              radius: area.radius,
+              color: 'blue',
+              weight: 2,
+              opacity: 0.6,
+              fill: false
+            })
+          }
         } else if (area.type === 'polygon' && window.L) {
-          const latlngs = (area.polygon || []).map(p => [p.latitude, p.longitude])
+          // convert polygon vertices from WGS84 -> GCJ02 for display
+          const latlngs = (area.polygon || []).map(p => {
+            try {
+              const [gcjLng, gcjLat] = wgs84ToGcj02(p.longitude, p.latitude)
+              return [gcjLat, gcjLng]
+            } catch (err) {
+              return [p.latitude, p.longitude]
+            }
+          })
           layer = window.L.polygon(latlngs, {
             color: 'blue',
             weight: 2,
@@ -202,10 +224,11 @@ export function useAreaSelector() {
   // 处理圆形区域点击
   const handleCircleClick = (e) => {
     if (!isDrawingCircle.value) return
-    
+    // e.latlng 来自地图（显示坐标，通常为 GCJ02），将其转换回 WGS84 以便与 KML 点位保持一致
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat)
     const center = {
-      latitude: e.latlng.lat,
-      longitude: e.latlng.lng
+      latitude: wgsLat,
+      longitude: wgsLng
     }
     
     // 添加圆形区域
@@ -214,15 +237,27 @@ export function useAreaSelector() {
     // 在地图上绘制临时圆形覆盖层，便于用户预览
     try {
       if (window.L && mapInstance.value) {
-        const circleLayer = window.L.circle([center.latitude, center.longitude], {
-          radius: circleRadius.value,
-          color: 'blue',
-          weight: 2,
-          opacity: 0.6,
-          fill: false
-        }).addTo(mapInstance.value)
-
-        tempLayers.value.push(circleLayer)
+        try {
+          const [gcjLng, gcjLat] = wgs84ToGcj02(center.longitude, center.latitude)
+          const circleLayer = window.L.circle([gcjLat, gcjLng], {
+            radius: circleRadius.value,
+            color: 'blue',
+            weight: 2,
+            opacity: 0.6,
+            fill: false
+          }).addTo(mapInstance.value)
+          tempLayers.value.push(circleLayer)
+        } catch (err) {
+          // fallback
+          const circleLayer = window.L.circle([center.latitude, center.longitude], {
+            radius: circleRadius.value,
+            color: 'blue',
+            weight: 2,
+            opacity: 0.6,
+            fill: false
+          }).addTo(mapInstance.value)
+          tempLayers.value.push(circleLayer)
+        }
       }
     } catch (err) {
       console.warn('[useAreaSelector] failed to draw preview circle:', err)
@@ -300,10 +335,11 @@ export function useAreaSelector() {
   // 处理多边形点击
   const handlePolygonClick = (e) => {
     if (!isDrawingPolygon.value) return
-    
+    // e.latlng 为地图显示坐标（GCJ02），转换为 WGS84 保存
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat)
     const point = {
-      latitude: e.latlng.lat,
-      longitude: e.latlng.lng
+      latitude: wgsLat,
+      longitude: wgsLng
     }
     
     polygonPoints.value.push(point)
@@ -320,7 +356,14 @@ export function useAreaSelector() {
     // 例如使用Leaflet的情况下：
     clearTempLayers()
     
-    const latlngs = polygonPoints.value.map(p => [p.latitude, p.longitude])
+    const latlngs = polygonPoints.value.map(p => {
+      try {
+        const [gcjLng, gcjLat] = wgs84ToGcj02(p.longitude, p.latitude)
+        return [gcjLat, gcjLng]
+      } catch (err) {
+        return [p.latitude, p.longitude]
+      }
+    })
     
     if (window.L && mapInstance.value) {
       if (polygonPoints.value.length >= 3) {
