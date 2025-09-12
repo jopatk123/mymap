@@ -62,6 +62,7 @@ const {
   addPointMarkers,
   addKmlLayers,
   clearMarkers,
+  clearPointMarkers,
   clearKmlLayers,
   setCenter,
   fitBounds,
@@ -103,10 +104,18 @@ const handleStyleUpdate = (data) => {
 
 // 标记刷新处理函数
 const handleMarkersRefresh = (data) => {
-  // 强制刷新所有标记
+  // 强制刷新点位（仅点位，不移除 KML 图层）
   setTimeout(() => {
-    clearMarkers()
-    
+    try {
+      if (typeof clearPointMarkers === 'function') {
+        clearPointMarkers()
+      } else {
+        clearMarkers()
+      }
+    } catch (e) {
+      clearMarkers()
+    }
+
     // 获取当前应该显示的点位数据
     const currentPoints = window.allPoints || props.panoramas
     if (currentPoints && currentPoints.length > 0) {
@@ -130,7 +139,8 @@ onMounted(async () => {
     const mod = await import('@/utils/marker-refresh.js')
     setMapInstance = mod.setMapInstance
     setMarkersData = mod.setMarkersData
-    setMapInstance({ clearMarkers, addPointMarkers })
+  // 将刷新工具所需的 clear 函数指向仅清除点位的实现，避免移除 KML 图层
+  setMapInstance({ clearMarkers: (typeof clearPointMarkers === 'function' ? clearPointMarkers : clearMarkers), addPointMarkers })
   }
   
   // 设置标记点击事件处理函数
@@ -161,7 +171,8 @@ onUnmounted(() => {
 
 // 监听全景图数据变化
 watch(() => props.panoramas, async (newPanoramas) => {
-  clearMarkers()
+  // 仅清除点位，保留 KML 图层
+  try { if (typeof clearPointMarkers === 'function') clearPointMarkers() } catch(e) { clearMarkers() }
   
   // 优先使用全局点位数据，如果不存在则使用props数据
   const pointsToShow = window.allPoints && window.allPoints.length > 0 ? window.allPoints : newPanoramas
@@ -187,7 +198,8 @@ watch(mapType, (newType) => {
 // 监听全局点位数据变化
 watch(() => window.allPoints, async (newPoints) => {
   if (newPoints && newPoints.length > 0) {
-    clearMarkers()
+  // 刷新点位时仅清除点位，保留 KML 图层
+  try { if (typeof clearPointMarkers === 'function') clearPointMarkers() } catch(e) { clearMarkers() }
     // 存储标记数据到刷新工具
     if (!setMarkersData) {
       const mod = await import('@/utils/marker-refresh.js')

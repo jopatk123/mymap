@@ -65,18 +65,11 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       }) : []
       kmlFiles.value = normalized
       try {
-        if (normalized.length>0) {
-          console.debug('[kml-basemap-debug] first file keys', Object.keys(normalized[0]))
-        }
-        console.debug('[kml-basemap-debug] after assignment kmlFiles length', kmlFiles.value.length)
-        if (typeof window !== 'undefined') {
-          window.__kmlFilesRef = kmlFiles
-          window.__kmlFilesValueSnapshot = JSON.parse(JSON.stringify(kmlFiles.value))
-        }
+        // keep assignment; avoid verbose debug output in production
       } catch(e){}
 
       // 加载所有KML文件的点位数据
-      try { console.debug('[kml-basemap-debug] starting loadAllKMLPoints, kmlFilesCount', kmlFiles.value.length) } catch(e){}
+  try { /* start loading points */ } catch(e){}
       await loadAllKMLPoints()
     } catch (error) {
       console.error('获取KML文件失败:', error)
@@ -101,11 +94,11 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         }))
         allPoints.push(...mapped)
         // debug
-        try { console.debug('[kml-basemap-debug] loaded kml points for file', file.id, 'count', mapped.length) } catch(e){}
+    try { /* loaded points for file */ } catch(e){}
       }
       
       kmlPoints.value = allPoints
-      try { console.debug('[kml-basemap-debug] total kmlPoints loaded', kmlPoints.value.length) } catch(e){}
+  try { /* total kmlPoints loaded */ } catch(e){}
     } catch (error) {
       console.error('加载KML点位数据失败:', error)
       throw error
@@ -168,13 +161,13 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   visible: area.visible !== undefined ? area.visible : true,
       createdAt: new Date()
     })
-  try { console.debug('[kml-basemap-debug] addArea', area) } catch(e){}
+  try { /* area added */ } catch(e){}
   updateVisiblePoints()
   }
   
   // 添加圆形区域
   const addCircleArea = (center, radius) => {
-    try { console.debug('[kml-basemap-debug] addCircleArea center', center, 'radius', radius) } catch(e){}
+  try { /* circle area added */ } catch(e){}
     addArea({
       type: 'circle',
       center,
@@ -185,7 +178,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 添加自定义区域
   const addCustomArea = (polygon, name = '自定义区域') => {
-    try { console.debug('[kml-basemap-debug] addCustomArea polygon points', polygon.length) } catch(e){}
+  try { /* custom area added */ } catch(e){}
     addArea({
       type: 'polygon',
       polygon,
@@ -230,16 +223,14 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       // 若尚无点数据，仅首次（且文件列表已获取）尝试异步加载点；避免在点仍为空时递归 fetch 文件形成循环
       if (!updateVisiblePoints._attemptedLoad && Array.isArray(kmlFiles.value) && kmlFiles.value.length > 0) {
         updateVisiblePoints._attemptedLoad = true
-        try { console.debug('[kml-basemap-debug] no kmlPoints yet, loading points once') } catch(e){}
         loadAllKMLPoints().then(() => {
-          try { console.debug('[kml-basemap-debug] kmlPoints loaded after empty state, recomputing visible') } catch(e){}
           updateVisiblePoints()
-        }).catch(err => console.warn('[kml-basemap-debug] loadAllKMLPoints failed', err))
+        }).catch(err => console.warn('loadAllKMLPoints failed', err))
       }
       return
     }
 
-    try { console.debug('[kml-basemap-debug] updateVisiblePoints activeAreasCount', activeAreas.length, 'totalKmlPoints', kmlPoints.value.length) } catch(e){}
+  try { /* update visible points */ } catch(e){}
 
     if (activeAreas.length === 0) {
       visiblePoints.value = []
@@ -282,7 +273,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     }
 
   visiblePoints.value = visible
-  try { console.debug('[kml-basemap-debug] visiblePoints computed count', visible.length) } catch(e){}
+  try { /* visible points computed */ } catch(e){}
 
     // 将选区内的KML点位合并到地图现有点位中
     try {
@@ -318,11 +309,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         // 刷新地图标记（延迟并打印 map/marker 状态，降低与 Leaflet 聚簇模块的 race-condition）
         try {
           const mapExists = typeof window !== 'undefined' && (!!window.mapInstance || !!window.map)
-          try { console.debug('[kml-basemap-debug] preparing to refresh markers', { mapExists, currentMarkersCount: (window.currentMarkers||[]).length, allPointsCount: (window.allPoints||[]).length }) } catch(e){}
           setTimeout(() => {
             import('@/utils/marker-refresh.js').then(mod => {
               try {
-                console.debug('[kml-basemap-debug] calling refreshAllMarkers')
                 mod.refreshAllMarkers && mod.refreshAllMarkers()
               } catch (e) {
                 console.warn('[kml-basemap] refreshAllMarkers error', e)
@@ -342,7 +331,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const getPointsInArea = (areaId) => {
     const area = areas.value.find(a => a.id === areaId)
     if (!area) return []
-  try { console.debug('[kml-basemap-debug] getPointsInArea areaId', areaId, 'type', area.type) } catch(e){}
+  try { /* getPointsInArea called */ } catch(e){}
 
   return kmlPoints.value.filter(point => {
       if (area.type === 'circle') {
@@ -353,6 +342,21 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       return false
     })
   }
+
+  // 自动触发首次加载（仅在浏览器环境）——方便调试和首次页面打开时自动拉取KML文件
+  try {
+    if (typeof window !== 'undefined') {
+      // only attempt if we don't already have files and not currently loading
+      if ((!kmlFiles.value || kmlFiles.value.length === 0) && !loading.value) {
+        // defer to next tick to avoid blocking initialization
+        setTimeout(() => {
+          try {
+            fetchKMLFiles().catch(err => console.warn('auto fetchKMLFiles failed', err))
+          } catch (e) { /* ignore */ }
+        }, 50)
+      }
+    }
+  } catch (e) { /* ignore */ }
 
   // 调试函数：检查所有 KML 点与当前区域的匹配情况，阈值单位为米
   const debugPointChecks = (thresholdMeters = 50) => {
@@ -405,10 +409,10 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       console.debug('[kml-basemap-debug] debugPointChecks results count', results.length)
       console.table(results.map(r => ({ pointId: r.pointId, title: r.title, matched: r.matched, isInAny: r.isInAny, isNearBoundary: r.isNearBoundary || false })))
       return results
-    } catch (err) {
-      console.error('[kml-basemap-debug] debugPointChecks error', err)
-      return []
-    }
+      } catch (err) {
+        console.error('debugPointChecks error', err)
+        return []
+      }
   }
   
   // 切换区域显示状态
