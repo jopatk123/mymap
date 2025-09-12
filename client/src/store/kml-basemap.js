@@ -294,6 +294,11 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
           lat: p.latitude,
           lng: p.longitude,
           title: p.name || p.title || 'KML点位',
+          // 保留原始描述字段，供弹窗显示备注
+          description: p.description || p.desc || p.note || '',
+          // 原始 WGS84 坐标（用于弹窗和外链生成）
+          wgs84_lat: p.latitude != null ? Number(p.latitude) : null,
+          wgs84_lng: p.longitude != null ? Number(p.longitude) : null,
           type: 'kml', // 标记为 KML 类型，避免被当作全景点直接打开查看
           __kmlSelected: true,
           sourceFile: p.sourceFile,
