@@ -116,7 +116,7 @@ export function useKmlLayer(map, kmlLayers) {
             bucket.push({ id: p.id, lat, lng, p })
           }
           indexBuilt = true
-          try { console.debug && console.debug('[Map] KML 空间索引构建完成', { kmlId: kmlFile.id, cells: spatialIndex.size }) } catch {}
+          // debug: spatial index built (suppressed)
         }
 
         const getCandidatesByBounds = (west, south, east, north) => {
@@ -169,7 +169,7 @@ export function useKmlLayer(map, kmlLayers) {
                 const feature = {
                   type: 'Feature',
                   properties: {
-                    name: p?.name || '未命名地标',
+                    name: p?.name || '未命名点',
                     description: p?.description || ''
                   },
                   geometry: { type: 'Point', coordinates: [lng, lat] }
@@ -220,7 +220,7 @@ export function useKmlLayer(map, kmlLayers) {
           { enabled: !isBasemap, clusterGroup, sourcePoints: points, style: styleConfig, onMoveEnd, onZoomEnd, onZoomStart }
         )
         kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title, visible: !isBasemap })
-  try { console.debug && console.debug('[Map] KML 视口裁剪渲染启用:', { kmlId: kmlFile.id, title: kmlFile.title, totalPoints: points.length }) } catch {}
+  // debug: viewport clipping rendering enabled (suppressed)
         return layer
       }
 
@@ -283,7 +283,7 @@ export function useKmlLayer(map, kmlLayers) {
         lastError = error;
         retryCount++;
         if (retryCount < maxRetries) {
-          console.debug && console.debug(`KML文件加载失败，${retryCount}秒后重试...`, kmlFile.file_url);
+          // debug: KML file load failed, retry suppressed
           await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
       }
@@ -310,7 +310,7 @@ export function useKmlLayer(map, kmlLayers) {
           if (vs.onZoomEnd) map.value.off('zoomend', vs.onZoomEnd)
         } catch {}
         kmlViewportStates.delete(id)
-  try { console.debug && console.debug('[Map] KML 视口裁剪渲染已关闭:', { kmlId: id }) } catch {}
+  // debug: viewport clipping rendering closed (suppressed)
       }
     }
   };

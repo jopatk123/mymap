@@ -1,37 +1,31 @@
 import axios from 'axios'
 
-// 从环境变量读取高德 Key（需在 .env 中配置 VITE_AMAP_KEY）
-const AMAP_KEY = import.meta.env.VITE_AMAP_KEY
+// 注意：为避免在浏览器中暴露高德 Key，项目改为由后端代理调用高德接口。
+// 后端代理路由：GET /api/amap/inputtips 和 GET /api/amap/place-text
+// 后端会从服务器环境变量 AMAP_KEY 中读取 Key 并转发请求。
 
-if (!AMAP_KEY) {
-  // 非致命，仅提示；开发环境可在控制台看到
-  // eslint-disable-next-line no-console
-  console.warn('未检测到 VITE_AMAP_KEY，地址搜索将不可用')
-}
-
-const AMAP_BASE = 'https://restapi.amap.com/v3'
+const BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 export const amapApi = {
-  // 输入提示（联想）
   async inputTips(keywords, opts = {}) {
-    if (!AMAP_KEY || !keywords) return { tips: [] }
+    if (!keywords) return { tips: [] }
     const params = {
-      key: AMAP_KEY,
       keywords,
       type: opts.type || '',
       city: opts.city || '',
       citylimit: opts.citylimit ? 'true' : 'false',
     }
-    const { data } = await axios.get(`${AMAP_BASE}/assistant/inputtips`, { params })
-    if (data.status !== '1') return { tips: [] }
-    return { tips: data.tips || [] }
+    const url = `${BACKEND_BASE}/api/amap/inputtips`
+    const { data } = await axios.get(url, { params })
+    if (!data || !data.success) return { tips: [] }
+    const payload = data.data || {}
+    // 兼容后端原样转发的格式（高德返回在 payload.tips）
+    return { tips: payload.tips || [] }
   },
 
-  // 关键字 POI 搜索
   async searchPlaces(keywords, opts = {}) {
-    if (!AMAP_KEY || !keywords) return { pois: [] }
+    if (!keywords) return { pois: [] }
     const params = {
-      key: AMAP_KEY,
       keywords,
       city: opts.city || '',
       citylimit: opts.citylimit ? 'true' : 'false',
@@ -39,9 +33,11 @@ export const amapApi = {
       offset: opts.offset || 20,
       page: opts.page || 1,
     }
-    const { data } = await axios.get(`${AMAP_BASE}/place/text`, { params })
-    if (data.status !== '1') return { pois: [] }
-    return { pois: data.pois || [] }
+    const url = `${BACKEND_BASE}/api/amap/place-text`
+    const { data } = await axios.get(url, { params })
+    if (!data || !data.success) return { pois: [] }
+    const payload = data.data || {}
+    return { pois: payload.pois || [] }
   }
 }
 

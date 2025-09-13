@@ -138,13 +138,13 @@ const rowClassName = ({ row }) => {
 // 初始化
 onMounted(() => {
   initialize()
-  try { console.debug('[kml-basemap-folder] mounted, initial kmlFiles length', kmlFiles.length) } catch(e){}
+  // debug: initial kmlFiles length (suppressed)
 })
 
 // 响应外部事件，刷新 KML 列表（例如上传成功后）
 const refreshHandler = () => {
   initialize()
-  try { console.debug('[kml-basemap-folder] refresh event, kmlFiles length(after async) maybe pending') } catch(e){}
+  // debug: refresh event (suppressed)
 }
 
 window.addEventListener('kml-files-updated', refreshHandler)
@@ -156,7 +156,7 @@ onUnmounted(() => {
 // 选择文件
 const handleFileSelect = (file) => {
   selectedFileId.value = file.id
-  try { console.debug('[kml-basemap-folder] select file', file.id, file.title || file.name) } catch(e){}
+  // debug: selected file (suppressed)
 }
 
 // 查看文件详情

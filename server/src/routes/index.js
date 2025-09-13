@@ -58,6 +58,10 @@ router.use('/kml-basemap', kmlBaseMapRoutes)
 const pointsRoutes = require('./points.routes')
 router.use('/points', pointsRoutes)
 
+// 高德地图代理路由（用于地址联想与 POI 搜索，避免前端直接暴露 Key）
+const amapRoutes = require('./amap.routes')
+router.use('/amap', amapRoutes)
+
 
 // 点位样式配置路由
 const pointStyleRoutes = require('./point-styles.routes')

@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps, reactive } from 'vue'
+import { reactive } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import VideoUploadArea from './VideoUploadArea.vue'

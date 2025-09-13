@@ -1,3 +1,21 @@
+# Node
+node_modules/
+
+# Build
+client/dist/
+
+# Env files
+.env
+server/.env
+client/.env
+
+# Uploads and runtime data
+/server/uploads/
+/server/data/
+
+# Logs
+*.log
+logs/
 # Dependencies
 node_modules/
 client/node_modules/

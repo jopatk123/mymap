@@ -35,7 +35,7 @@ export function useFileOperations() {
   // 删除文件
   const deleteFile = async (file, onSuccess) => {
     try {
-      console.debug && console.debug('准备删除文件:', file)
+      // debug: 准备删除文件 (suppressed)
       
       await ElMessageBox.confirm(
         `确定要删除${file.displayType}"${file.title}"吗？`,
@@ -47,21 +47,21 @@ export function useFileOperations() {
         }
       )
       
-  console.debug && console.debug('用户确认删除，开始调用API')
+        // debug: 用户确认删除，开始调用API (suppressed)
       
       // 根据文件类型调用相应的删除API
       let req
       switch (file.fileType) {
         case 'panorama':
-          console.debug && console.debug('调用全景图删除API, ID:', file.id)
+            // debug: 调用全景图删除API (suppressed)
           req = deletePanorama(file.id)
           break
         case 'video':
-          console.debug && console.debug('调用视频删除API, ID:', file.id)
+            // debug: 调用视频删除API (suppressed)
           req = videoApi.deleteVideoPoint(file.id)
           break
         case 'kml':
-          console.debug && console.debug('调用KML删除API, ID:', file.id)
+            // debug: 调用KML删除API (suppressed)
           req = kmlApi.deleteKmlFile(file.id)
           break
         default:
@@ -69,16 +69,16 @@ export function useFileOperations() {
       }
       
       const result = await req
-  console.debug && console.debug('删除API调用成功，结果:', result)
+        // debug: 删除API调用成功 (suppressed)
       
       ElMessage.success('删除成功')
       
-  console.debug && console.debug('准备调用onSuccess回调')
+        // debug: 准备调用 onSuccess (suppressed)
       if (onSuccess) {
   await onSuccess()
-  console.debug && console.debug('onSuccess回调执行完成')
+          // debug: onSuccess 回调已执行 (suppressed)
       } else {
-        console.debug && console.debug('onSuccess回调未提供')
+          // debug: onSuccess 回调未提供 (suppressed)
       }
       
     } catch (error) {

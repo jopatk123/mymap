@@ -11,7 +11,7 @@ const exportDialogVisible = ref(false)
 const exportFormat = ref('csv') // 'csv', 'kml', 'json'
 const exportFilename = ref('')
 
-console.debug('[use-kml-export] module loaded, shared export state created')
+// debug logging removed for cleaner console output in production/dev
   
   // 初始化导出文件名
   const initializeFilename = () => {
@@ -19,7 +19,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
     const dateStr = now.toISOString().split('T')[0]
     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-')
     exportFilename.value = `kml_points_${dateStr}_${timeStr}`
-    console.debug('[use-kml-export] initializeFilename ->', exportFilename.value)
+  // filename initialized
   }
   
   // 获取可导出的点位数据
@@ -41,7 +41,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
   
   // 打开导出对话框
   const openExportDialog = () => {
-    console.debug('[use-kml-export] openExportDialog called; hasExportableData=', hasExportableData.value)
+  // openExportDialog called
     if (!hasExportableData.value) {
       ElMessage.warning('没有可导出的点位数据，请先选择区域显示点位')
       return
@@ -49,27 +49,27 @@ console.debug('[use-kml-export] module loaded, shared export state created')
 
     initializeFilename()
     exportDialogVisible.value = true
-    console.debug('[use-kml-export] exportDialogVisible set true')
+  // exportDialogVisible set true
   }
   
   // 关闭导出对话框
   const closeExportDialog = () => {
     exportDialogVisible.value = false
-    console.debug('[use-kml-export] exportDialogVisible set false')
+  // exportDialogVisible set false
   }
   
   // 执行导出
   const performExport = async () => {
-    console.debug('[use-kml-export] performExport called; format=', exportFormat.value, 'filename=', exportFilename.value)
+  // performExport called
     if (!hasExportableData.value) {
       ElMessage.error('没有可导出的数据')
-      console.debug('[use-kml-export] performExport aborted: no exportable data')
+  // no exportable data
       return
     }
 
     if (!exportFilename.value.trim()) {
       ElMessage.error('请输入文件名')
-      console.debug('[use-kml-export] performExport aborted: empty filename')
+  // empty filename
       return
     }
 
@@ -78,7 +78,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
       const points = getExportablePoints.value
       const filename = exportFilename.value.trim()
 
-      console.debug('[use-kml-export] about to call kmlExportService with points.length=', points.length)
+  // calling kmlExportService with points.length = points.length
 
       switch (exportFormat.value) {
         case 'csv':
@@ -102,7 +102,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
       }
 
       ElMessage.success(`数据导出成功！共导出 ${points.length} 个点位`)
-      console.debug('[use-kml-export] export success')
+  // export success
       closeExportDialog()
 
     } catch (error) {
@@ -115,7 +115,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
   
   // 快速导出（直接导出为CSV，不显示对话框）
   const quickExportCSV = async () => {
-    console.debug('[use-kml-export] quickExportCSV called')
+  // quickExportCSV called
     if (!hasExportableData.value) {
       ElMessage.warning('没有可导出的点位数据，请先选择区域显示点位')
       return
@@ -126,7 +126,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
       const points = getExportablePoints.value
 
       initializeFilename()
-      console.debug('[use-kml-export] quickExportCSV -> filename=', exportFilename.value, 'points=', points.length)
+  // quickExportCSV -> filename and points count
       await kmlExportService.exportToCSV(points, exportFilename.value)
 
       ElMessage.success(`CSV文件导出成功！共导出 ${points.length} 个点位`)
@@ -141,7 +141,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
   
   // 快速导出KML
   const quickExportKML = async () => {
-    console.debug('[use-kml-export] quickExportKML called')
+  // quickExportKML called
     if (!hasExportableData.value) {
       ElMessage.warning('没有可导出的点位数据，请先选择区域显示点位')
       return
@@ -152,7 +152,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
       const points = getExportablePoints.value
 
       initializeFilename()
-      console.debug('[use-kml-export] quickExportKML -> filename=', exportFilename.value, 'points=', points.length)
+  // quickExportKML -> filename and points count
       await kmlExportService.exportToKML(
         points,
         exportFilename.value,
@@ -189,8 +189,7 @@ console.debug('[use-kml-export] module loaded, shared export state created')
     }))
     
   console.table(preview)
-  console.debug('[use-kml-export] previewExportData -> preview rows=', preview.length)
-
+  // previewExportData generated; output suppressed
   ElMessage.info(`数据预览已输出到控制台，共 ${points.length} 个点位`)
   }
   

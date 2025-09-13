@@ -303,10 +303,25 @@ const showPointSettings = () => {
   gap: 6px;
   /* 再次缩小内边距，使白色区域更紧凑 */
   padding: 4px 4px;
-  background: rgba(255, 255, 255, 0.95);
+  background: transparent; /* 修改为完全透明 */
   border-radius: 4px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
-    backdrop-filter: blur(4px);
+  box-shadow: none; /* 移除阴影 */
+    backdrop-filter: none; /* 移除模糊效果 */
+    
+    /* 为工具栏中的所有按钮添加圆角 */
+    .el-button {
+      border-radius: 8px !important; /* 添加圆角 */
+      transition: all 0.3s ease; /* 平滑过渡效果 */
+      
+      &:hover {
+        transform: translateY(-1px); /* 悬停时轻微上移效果 */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 悬停阴影 */
+      }
+      
+      &:active {
+        transform: translateY(0); /* 点击时恢复位置 */
+      }
+    }
   }
 
   /* 状态栏样式已移除 */

@@ -43,7 +43,10 @@
           <h3>全景图信息</h3>
           <el-descriptions :column="2" border>
             <el-descriptions-item label="坐标">
-              {{ formatCoordinate(file.lat, file.lng) }}
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span>{{ formatCoordinate(file.lat, file.lng) }}</span>
+                  <el-button type="text" size="small" @click="copyFileCoords(file)">复制经纬度</el-button>
+                </div>
             </el-descriptions-item>
             <el-descriptions-item label="文件大小">
               {{ formatFileSize(file.file_size) }}
@@ -225,6 +228,36 @@ const handleDelete = async () => {
     if (error !== 'cancel') {
       ElMessage.error('删除失败: ' + error.message)
     }
+  }
+}
+
+// 复制文件坐标（lng,lat），保留6位小数
+const copyFileCoords = async (file) => {
+  const lat = Number(file.lat ?? file.latitude)
+  const lng = Number(file.lng ?? file.longitude)
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法复制')
+    return
+  }
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(formatted)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = formatted
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (!ok) throw new Error('execCommand failed')
+    }
+    ElMessage.success('坐标已复制：' + formatted)
+  } catch (e) {
+    console.error('复制失败', e)
+    ElMessage.error('复制失败，请手动复制：' + formatted)
   }
 }
 </script>

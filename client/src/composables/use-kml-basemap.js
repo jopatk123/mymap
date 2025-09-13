@@ -119,7 +119,7 @@ export function useKMLBaseMap() {
     } else {
       arr = []
     }
-    try { console.debug('[use-kml-basemap] computed kmlFiles length', arr.length, 'rawType', typeof store.kmlFiles, 'hasValue', !!store.kmlFiles?.value) } catch(e){}
+  // debug: computed kmlFiles length (suppressed)
     return arr
   })
 

@@ -52,6 +52,7 @@
                 <span class="placemark-coords">
                   {{ placemark.latitude?.toFixed(4) }}, {{ placemark.longitude?.toFixed(4) }}
                 </span>
+                <el-button type="text" size="small" @click="copyPlacemarkCoords(placemark)">复制经纬度</el-button>
               </div>
             </div>
           </div>
@@ -62,7 +63,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, defineEmits, defineProps } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import KmlUploadArea from './KmlUploadArea.vue'
@@ -110,6 +112,35 @@ const getPlacemarkTypeText = (type) => {
     'Polygon': '面'
   }
   return typeMap[type] || type
+}
+
+const copyPlacemarkCoords = async (placemark) => {
+  const lat = Number(placemark.latitude)
+  const lng = Number(placemark.longitude)
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法复制')
+    return
+  }
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(formatted)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = formatted
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (!ok) throw new Error('execCommand failed')
+    }
+    ElMessage.success('坐标已复制：' + formatted)
+  } catch (e) {
+    console.error('复制失败', e)
+    ElMessage.error('复制失败，请手动复制：' + formatted)
+  }
 }
 
 const handleKmlUpload = async (form, { setProgress, setProcessing }) => {

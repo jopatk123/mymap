@@ -176,13 +176,13 @@ export function useMapPage() {
     // 同步到全局变量
     window.kmlLayersVisible = kmlLayersVisible.value
 
-  console.debug && console.debug('切换KML图层显示状态:', kmlLayersVisible.value)
+  // debug: 切换KML图层显示状态 (suppressed)
 
     // 通知地图组件更新KML图层显示状态
     if (mapRef.value) {
       if (kmlLayersVisible.value) {
         // 显示KML图层
-  console.debug && console.debug('准备显示KML图层，文件数量:', window.allKmlFiles?.length || 0)
+  // debug: 准备显示KML图层 (suppressed)
         if (window.allKmlFiles && window.allKmlFiles.length > 0) {
           // 先清除现有图层，避免重复
           mapRef.value.clearKmlLayers()
@@ -190,7 +190,7 @@ export function useMapPage() {
         }
       } else {
         // 隐藏KML图层
-  console.debug && console.debug('隐藏KML图层')
+  // debug: 隐藏KML图层 (suppressed)
         mapRef.value.clearKmlLayers()
       }
     } else {

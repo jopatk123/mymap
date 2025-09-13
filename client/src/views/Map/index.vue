@@ -45,6 +45,11 @@
       @show-point-settings="showPointSettings = true"
     />
     
+    <!-- 绘图工具栏 -->
+    <DrawingToolbar
+      :map-instance="mapRef?.map"
+    />
+    
     <!-- 对话框组 -->
     <MapDialogs
       :show-panorama-modal="showPanoramaModal"
@@ -108,6 +113,7 @@ import { useMapInitializer } from './composables/map-initializer'
 import MapView from './components/MapView.vue'
 import MapSidebar from '@/components/map/MapSidebar.vue'
 import MapControls from '@/components/map/MapControls.vue'
+import DrawingToolbar from '@/components/map/drawing-toolbar/DrawingToolbar.vue'
 import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
@@ -265,6 +271,18 @@ const handleLocate = ({ lat, lng, tip }) => {
   const label = tip?.name || '搜索位置'
   mapRef.value?.setSearchMarker?.(lat, lng, label)
 }
+
+// 调试：监听 mapRef 和地图实例的变化（使用共享 dlog）
+import { watch } from 'vue'
+import { dlog } from '@/composables/drawing-tools/utils/debug.js'
+
+watch(() => mapRef.value, (newMapRef) => {
+  dlog('主视图: mapRef 变化:', newMapRef)
+}, { immediate: true })
+
+watch(() => mapRef.value?.map, (newMap) => {
+  dlog('主视图: mapRef.map 变化:', newMap)
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
