@@ -23,6 +23,59 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     buildIndexScheduled: false,
   };
 
+  // Inline worker for building spatial index off the main thread (PoC)
+  let indexWorker = null;
+  const ensureIndexWorker = () => {
+    if (indexWorker) return indexWorker;
+    try {
+      const workerCode = `
+      self.onmessage = function(e) {
+        const msg = e.data;
+        if (!msg || msg.type !== 'buildIndex') return;
+        const points = msg.points || [];
+        const cellSize = msg.cellSizeDeg || 0.05;
+        const index = Object.create(null);
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          try {
+            const coords = p && p.wgs84_lng != null && p.wgs84_lat != null ? [p.wgs84_lng, p.wgs84_lat] : (p && p.coordinates ? (Array.isArray(p.coordinates) ? p.coordinates : null) : null);
+            if (!coords) continue;
+            const lng = coords[0]; const lat = coords[1];
+            if (!isFinite(lng) || !isFinite(lat)) continue;
+            const x = Math.floor(lng / cellSize);
+            const y = Math.floor(lat / cellSize);
+            const key = x + ':' + y;
+            if (!index[key]) index[key] = [];
+            index[key].push(p);
+          } catch (err) { /* skip bad point */ }
+        }
+        self.postMessage({ type: 'indexBuilt', index });
+      };
+      `;
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      indexWorker = new Worker(URL.createObjectURL(blob));
+      indexWorker.onmessage = (ev) => {
+        const msg = ev.data;
+        if (!msg) return;
+        if (msg.type === 'indexBuilt') {
+          try {
+            // convert received plain object to Map for existing code compatibility
+            state.spatialIndex = new Map(Object.entries(msg.index || {}));
+            try { console.info('[Map] 空间索引(Worker) 构建完成', { cells: state.spatialIndex.size }); } catch {}
+          } catch (err) {
+            try { console.warn('Failed to apply spatial index from worker', err); } catch {}
+          }
+        }
+      };
+      indexWorker.onerror = (err) => { try { console.warn('Index worker error', err); } catch {} };
+      return indexWorker;
+    } catch (err) {
+      try { console.warn('Failed to create index worker', err); } catch {}
+      indexWorker = null;
+      return null;
+    }
+  };
+
   const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
 
   const scheduleViewportUpdate = () => {
@@ -39,9 +92,22 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
   };
 
   const buildSpatialIndex = () => {
+    // 优先使用 worker 进行索引构建
+    const worker = ensureIndexWorker();
+    adjustCellSizeByZoom();
+    if (worker) {
+      try {
+        // worker 接收原始点数组；为避免 circular 引用，传送最小字段
+        const payloadPoints = state.sourcePoints.map(p => ({ id: p.id, wgs84_lng: p.wgs84_lng, wgs84_lat: p.wgs84_lat, coordinates: p.coordinates }));
+        worker.postMessage({ type: 'buildIndex', points: payloadPoints, cellSizeDeg: state.cellSizeDeg });
+        return;
+      } catch (err) {
+        try { console.warn('[Map] index worker postMessage failed, falling back to main-thread build', err); } catch {}
+      }
+    }
+
+    // fallback: 同步构建（原实现）
     state.spatialIndex.clear();
-  // 在构建索引前根据当前缩放自动调整栅格大小
-  adjustCellSizeByZoom();
     for (const p of state.sourcePoints) {
       let coords = state.coordCache.get(p.id);
       if (!coords) {
