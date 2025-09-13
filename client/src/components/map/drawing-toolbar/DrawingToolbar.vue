@@ -20,7 +20,7 @@
             @click="toggleTool('measure')"
             circle
           >
-            <el-icon><Ruler /></el-icon>
+            <el-icon><Compass /></el-icon>
           </el-button>
         </el-tooltip>
 
@@ -56,19 +56,25 @@
             @click="toggleTool('polygon')"
             circle
           >
-            <el-icon><Menu /></el-icon>
+            <el-icon><Operation /></el-icon>
           </el-button>
         </el-tooltip>
 
         <!-- 画笔工具 -->
-        <el-tooltip content="画笔工具" placement="left">
+        <el-tooltip 
+          :content="activeTool === 'draw' ? '画笔工具 (地图拖拽已禁用)' : '画笔工具'" 
+          placement="left"
+        >
           <el-button
             :type="activeTool === 'draw' ? 'primary' : 'default'"
-            :class="{ active: activeTool === 'draw' }"
+            :class="{ 
+              active: activeTool === 'draw',
+              'draw-tool-active': activeTool === 'draw'
+            }"
             @click="toggleTool('draw')"
             circle
           >
-            <el-icon><EditPen /></el-icon>
+            <el-icon><Edit /></el-icon>
           </el-button>
         </el-tooltip>
 
@@ -130,11 +136,11 @@ import { ref, computed } from 'vue'
 import { 
   ArrowLeft, 
   ArrowRight, 
-  Ruler, 
+  Compass, 
   Location, 
   Minus, 
-  Menu, 
-  EditPen, 
+  Operation, 
+  Edit, 
   Delete, 
   Download 
 } from '@element-plus/icons-vue'
@@ -172,9 +178,15 @@ const toggleCollapse = () => {
 }
 
 const toggleTool = (toolType) => {
+  console.log('toggleTool called with:', toolType, 'mapInstance:', props.mapInstance)
+  
   if (activeTool.value === toolType) {
     deactivateTool()
   } else {
+    if (!props.mapInstance) {
+      ElMessage.warning('地图尚未加载完成，请稍后再试')
+      return
+    }
     activateTool(toolType, props.mapInstance)
   }
 }
@@ -202,16 +214,35 @@ const exportData = async () => {
 }
 
 // 监听地图实例变化
-import { watch } from 'vue'
-watch(() => props.mapInstance, (newMap) => {
+import { watch, nextTick } from 'vue'
+watch(() => props.mapInstance, async (newMap, oldMap) => {
+  console.log('地图实例变化:', oldMap, '=>', newMap)
   if (newMap) {
+    // 等待下一个tick确保地图完全渲染
+    await nextTick()
+    console.log('初始化绘图工具')
     initializeTools(newMap)
   }
 }, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
-@import './drawing-tools.scss';
+/* 测距工具样式 */
+:global(.measure-marker) {
+  background: transparent;
+  border: none;
+}
+
+:global(.measure-point) {
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
 .drawing-toolbar {
   position: fixed;
   right: 20px;
@@ -301,6 +332,24 @@ watch(() => props.mapInstance, (newMap) => {
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+}
+
+// 画笔工具特殊状态样式
+.el-button.draw-tool-active {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #f56c6c;
+    border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
   }
 }
 

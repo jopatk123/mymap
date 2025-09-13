@@ -32,7 +32,7 @@ const mapRef = ref(null)
 
 // 调试：观察 mapRef.value.map 何时被设置
 watch(() => mapRef.value?.map, (v) => {
-  // exposed map changed — suppressed debug logging
+  console.log('MapView: mapRef.value?.map 变化:', v)
 }, { immediate: true })
 
 // 暴露方法给父组件
@@ -48,7 +48,11 @@ defineExpose({
     clearSearchMarker: () => mapRef.value?.clearSearchMarker(),
   // 将内部 map 实例直接暴露，便于上层组件通过 mapRef?.map 访问
   // 使用 computed 返回底层 map 对象（自动解包），避免暴露为函数或未解包的 ref
-  map: computed(() => mapRef.value?.map?.value)
+  map: computed(() => {
+    const result = mapRef.value?.map
+    console.log('MapView: computed map 计算结果:', result)
+    return result
+  })
 })
 </script>
 

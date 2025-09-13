@@ -271,6 +271,16 @@ const handleLocate = ({ lat, lng, tip }) => {
   const label = tip?.name || '搜索位置'
   mapRef.value?.setSearchMarker?.(lat, lng, label)
 }
+
+// 调试：监听 mapRef 和地图实例的变化
+import { watch } from 'vue'
+watch(() => mapRef.value, (newMapRef) => {
+  console.log('主视图: mapRef 变化:', newMapRef)
+}, { immediate: true })
+
+watch(() => mapRef.value?.map, (newMap) => {
+  console.log('主视图: mapRef.map 变化:', newMap)
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
