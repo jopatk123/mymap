@@ -149,8 +149,8 @@ class ConfigService {
           point_opacity: 1.0,
           point_label_size: 12,
           point_label_color: "#000000",
-          // 聚合默认关闭，颜色回退到点颜色
-          cluster_enabled: false,
+          // 与 app-config.json 对齐：默认启用聚合
+          cluster_enabled: true,
           cluster_color: "#2ed573"
         },
         video: {
@@ -159,7 +159,7 @@ class ConfigService {
           point_opacity: 1.0,
           point_label_size: 14,
           point_label_color: "#000000",
-          cluster_enabled: false,
+          cluster_enabled: true,
           cluster_color: "#ff4757"
         }
       },
@@ -179,8 +179,8 @@ class ConfigService {
           polygon_stroke_color: "#ff7800",
           polygon_stroke_width: 2,
           polygon_stroke_style: "solid",
-          // KML图层聚合默认关闭
-          cluster_enabled: false,
+          // 与 app-config.json 对齐：默认启用聚合
+          cluster_enabled: true,
           cluster_color: "#00ff00"
         }
       },

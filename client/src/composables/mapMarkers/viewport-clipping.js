@@ -40,6 +40,8 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
 
   const buildSpatialIndex = () => {
     state.spatialIndex.clear();
+  // 在构建索引前根据当前缩放自动调整栅格大小
+  adjustCellSizeByZoom();
     for (const p of state.sourcePoints) {
       let coords = state.coordCache.get(p.id);
       if (!coords) {
@@ -55,6 +57,25 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       bucket.push(p);
     }
     try { console.info('[Map] 空间索引构建完成', { cells: state.spatialIndex.size }); } catch {}
+  };
+
+  // 根据当前地图缩放级别自适应 cellSizeDeg
+  const adjustCellSizeByZoom = () => {
+    try {
+      const z = typeof map.value.getZoom === 'function' ? map.value.getZoom() : null;
+      if (typeof z !== 'number' || isNaN(z)) return;
+      // 经验映射：缩放越小（更远），cell 更大；缩放越大（更近），cell 更精细
+      let newSize = 0.05;
+      if (z <= 6) newSize = 1.0;
+      else if (z <= 9) newSize = 0.5;
+      else if (z <= 12) newSize = 0.1;
+      else if (z <= 15) newSize = 0.05;
+      else newSize = 0.02;
+      if (Math.abs(newSize - state.cellSizeDeg) > 1e-9) {
+        state.cellSizeDeg = newSize;
+        try { console.info('[Map] 调整 cellSizeDeg', { zoom: z, cellSizeDeg: state.cellSizeDeg }); } catch {}
+      }
+    } catch {}
   };
 
   const getCandidatesByBounds = (west, south, east, north) => {
@@ -213,7 +234,17 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
 
     state.onZoomStart = () => { state.isZooming = true; state.prevInterval = state.updateIntervalMs; state.updateIntervalMs = Math.max(state.updateIntervalMs, 300); };
     state.onMoveEnd = () => { if (!state.isZooming) scheduleViewportUpdate(); };
-    state.onZoomEnd = () => { state.isZooming = false; if (state.prevInterval != null) { state.updateIntervalMs = state.prevInterval; state.prevInterval = null; } scheduleViewportUpdate(); };
+    state.onZoomEnd = () => { 
+      state.isZooming = false; 
+      if (state.prevInterval != null) { state.updateIntervalMs = state.prevInterval; state.prevInterval = null; }
+      // 缩放结束后根据新缩放级别调整栅格大小并重建索引
+      adjustCellSizeByZoom();
+      if (!state.buildIndexScheduled) {
+        state.buildIndexScheduled = true;
+        setTimeout(() => { try { buildSpatialIndex(); } finally { state.buildIndexScheduled = false; } }, 0);
+      }
+      scheduleViewportUpdate(); 
+    };
     map.value.on('zoomstart', state.onZoomStart);
     map.value.on('moveend', state.onMoveEnd);
     map.value.on('zoomend', state.onZoomEnd);
