@@ -43,11 +43,11 @@
       "cluster_color": "#00ff00",
       "point_icon_type": "marker"
     },
-    "19": {
-      "point_color": "#e1320eff",
+    "21": {
+      "point_color": "#ff2200ff",
       "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 8,
+      "point_label_size": 10,
       "point_label_color": "#000000",
       "line_color": "#ff7800",
       "line_width": 2,

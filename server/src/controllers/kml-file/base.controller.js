@@ -139,28 +139,36 @@ class KmlFileBaseController {
 
           // 批量插入点位
           if (placemarks && placemarks.length > 0) {
-            const values = []
-            const params = []
-            for (const p of placemarks) {
-              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
-              values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )')
-              params.push(
-                insertedFileId,
-                p.name || '',
-                p.description || '',
-                p.latitude,
-                p.longitude,
-                gcj02Lat || null,
-                gcj02Lng || null,
-                p.altitude || 0,
-                p.pointType || 'Point',
-                JSON.stringify(p.coordinates || {}),
-                JSON.stringify(p.styleData || {})
-              )
-            }
+            // SQLite has a limit on number of bound variables (default 999).
+            // Each point uses 11 variables; chunk inserts to stay under the limit.
+            const varsPerPoint = 11
+            const maxSqlVars = 999
+            const maxPointsPerBatch = Math.max(1, Math.floor(maxSqlVars / varsPerPoint))
 
-            const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
-            await db.run(insertPointsSql, params)
+            for (let i = 0; i < placemarks.length; i += maxPointsPerBatch) {
+              const chunk = placemarks.slice(i, i + maxPointsPerBatch)
+              const values = []
+              const params = []
+              for (const p of chunk) {
+                const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
+                values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                params.push(
+                  insertedFileId,
+                  p.name || '',
+                  p.description || '',
+                  p.latitude,
+                  p.longitude,
+                  gcj02Lat || null,
+                  gcj02Lng || null,
+                  p.altitude || 0,
+                  p.pointType || 'Point',
+                  JSON.stringify(p.coordinates || {}),
+                  JSON.stringify(p.styleData || {})
+                )
+              }
+              const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
+              await db.run(insertPointsSql, params)
+            }
           }
         })
 

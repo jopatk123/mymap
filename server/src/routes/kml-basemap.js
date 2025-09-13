@@ -93,7 +93,37 @@ function parseKMLFile(kmlContent) {
  * 上传KML底图文件
  */
 // 支持前端可能使用的字段名（kml 或 file），使用 upload.any() 接受任意文件字段
-router.post('/upload', upload.any(), async (req, res) => {
+// 包装 upload.any() 以便在 multer 抛错时记录详细信息
+const multerUploadWrapper = (req, res, next) => {
+  // log arrival
+  const arrivalLog = `[${new Date().toISOString()}] [KML BASEMAP] upload route hit: ${req.ip} ${req.headers['user-agent']}\n`
+  try {
+    const p = require('path')
+    const fs = require('fs')
+    const logDir = p.join(__dirname, '../../logs')
+    fs.mkdirSync(logDir, { recursive: true })
+    fs.appendFileSync(p.join(logDir, 'upload-debug.log'), arrivalLog)
+  } catch (e) { /* ignore */ }
+  console.info('[KML BASEMAP] upload route hit:', req.ip, req.headers['user-agent'])
+  upload.any()(req, res, (err) => {
+    if (err) {
+      const errLog = `[${new Date().toISOString()}] [KML BASEMAP] multer upload error: ${err && err.stack ? err.stack : err}\n`
+      try {
+        const p = require('path')
+        const fs = require('fs')
+        const logDir = p.join(__dirname, '../../logs')
+        fs.mkdirSync(logDir, { recursive: true })
+        fs.appendFileSync(p.join(logDir, 'upload-debug.log'), errLog)
+      } catch (e) { /* ignore */ }
+      console.error('[KML BASEMAP] multer upload error:', err)
+      // 把错误传递给全局错误处理器，同时在开发环境返回堆栈
+      return next(err)
+    }
+    next()
+  })
+}
+
+router.post('/upload', multerUploadWrapper, async (req, res) => {
   try {
     // multer.any() 将文件放到 req.files 数组
     const uploadedFile = req.file || (req.files && req.files[0])
@@ -142,27 +172,34 @@ router.post('/upload', upload.any(), async (req, res) => {
         if (!insertedId) throw new Error('创建KML文件记录失败')
 
         if (points && points.length > 0) {
-          const values = []
-          const params = []
-          for (const p of points) {
-            const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
-            values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            params.push(
-              insertedId,
-              p.name || '',
-              p.description || '',
-              p.latitude,
-              p.longitude,
-              gcj02Lat || null,
-              gcj02Lng || null,
-              p.altitude || 0,
-              p.pointType || 'Point',
-              JSON.stringify(p.coordinates || {}),
-              JSON.stringify(p.styleData || {})
-            )
+          const varsPerPoint = 11
+          const maxSqlVars = 999
+          const maxPointsPerBatch = Math.max(1, Math.floor(maxSqlVars / varsPerPoint))
+
+          for (let i = 0; i < points.length; i += maxPointsPerBatch) {
+            const chunk = points.slice(i, i + maxPointsPerBatch)
+            const values = []
+            const params = []
+            for (const p of chunk) {
+              const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude)
+              values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+              params.push(
+                insertedId,
+                p.name || '',
+                p.description || '',
+                p.latitude,
+                p.longitude,
+                gcj02Lat || null,
+                gcj02Lng || null,
+                p.altitude || 0,
+                p.pointType || 'Point',
+                JSON.stringify(p.coordinates || {}),
+                JSON.stringify(p.styleData || {})
+              )
+            }
+            const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
+            await db.run(insertPointsSql, params)
           }
-          const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(',')}`
-          await db.run(insertPointsSql, params)
         }
       })
 
@@ -177,10 +214,14 @@ router.post('/upload', upload.any(), async (req, res) => {
     
   } catch (error) {
     console.error('上传KML文件失败:', error)
-    res.status(500).json({
+    const responseBody = {
       success: false,
       message: error.message || '上传失败'
-    })
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      responseBody.error = (error && error.stack) ? error.stack : error
+    }
+    res.status(500).json(responseBody)
   }
 })
 

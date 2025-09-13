@@ -12,6 +12,15 @@ const notFoundHandler = (req, res, next) => {
  */
 const errorHandler = (err, req, res, next) => {
   console.error('全局错误:', err)
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const logDir = path.join(__dirname, '../../logs')
+    fs.mkdirSync(logDir, { recursive: true })
+    fs.appendFileSync(path.join(logDir, 'error-debug.log'), `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - ${err && err.stack ? err.stack : JSON.stringify(err)}\n`)
+  } catch (e) {
+    // ignore logging errors
+  }
   
   // 数据库错误
   if (err.code === 'ER_DUP_ENTRY') {

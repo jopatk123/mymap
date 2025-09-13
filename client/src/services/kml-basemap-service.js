@@ -35,9 +35,24 @@ export class KMLBaseMapService {
       body: formData
     })
     
-    if (!response.ok) {
-      throw new Error('KML文件上传失败')
+      if (!response.ok) {
+        // try to extract server response for better diagnostics
+        let bodyText = null
+        try {
+          const contentType = response.headers.get('content-type') || ''
+          if (contentType.includes('application/json')) {
+            const j = await response.json()
+            bodyText = JSON.stringify(j)
+          } else {
+            bodyText = await response.text()
+          }
+        } catch (e) {
+          bodyText = `<unable to read response body: ${e.message}>`
+        }
+
+        throw new Error(`KML文件上传失败: HTTP ${response.status} ${response.statusText} - ${bodyText}`)
     }
+
   const json = await response.json()
   if (json && json.success) return json.data || json
   throw new Error(json?.message || 'KML文件上传失败')

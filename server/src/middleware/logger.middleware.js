@@ -34,9 +34,21 @@ const devFormat = ':method :url :status :response-time ms - :res[content-length]
 const prodFormat = ':real-ip - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" :response-time ms'
 
 // 日志中间件配置
-const loggerMiddleware = process.env.NODE_ENV === 'production'
-  ? morgan(prodFormat, { stream: accessLogStream })
-  : morgan(devFormat)
+// 始终写入 access.log；在开发环境同时在控制台输出方便调试
+const fileLogger = morgan(prodFormat, { stream: accessLogStream })
+const consoleLogger = morgan(devFormat)
+const loggerMiddleware = (req, res, next) => {
+  // write to file
+  fileLogger(req, res, (err) => {
+    if (err) console.error('fileLogger error:', err)
+  })
+  // write to console in development
+  if (process.env.NODE_ENV !== 'production') {
+    consoleLogger(req, res, next)
+  } else {
+    next()
+  }
+}
 
 // 错误日志记录器
 const logError = (error, req = null) => {
