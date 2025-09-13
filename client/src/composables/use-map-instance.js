@@ -15,7 +15,15 @@ export function useMapInstance(containerId) {
       // 暂时不使用自定义CRS，使用标准配置
     };
 
-    const mapOptions = { ...defaultOptions, ...options };
+
+    // 禁用一些动画以避免在缩放动画与图层移除并发时访问已为 null 的内部字段
+    const animationSafeDefaults = {
+      zoomAnimation: false,
+      markerZoomAnimation: false,
+      fadeAnimation: false,
+    };
+
+    const mapOptions = { ...defaultOptions, ...animationSafeDefaults, ...options };
     map.value = L.map(containerId, mapOptions);
 
     // 自定义pane控制叠放顺序：KML < 视频 < 全景
