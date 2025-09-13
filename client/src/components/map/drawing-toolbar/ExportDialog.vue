@@ -46,19 +46,19 @@
       <div class="export-format">
         <h4>导出格式</h4>
         <el-radio-group v-model="exportFormat" class="format-options">
-          <el-radio label="kml" class="format-option">
+          <el-radio value="kml" class="format-option">
             <div class="format-info">
               <div class="format-name">KML 格式</div>
               <div class="format-desc">适用于 Google Earth 等地理信息软件</div>
             </div>
           </el-radio>
-          <el-radio label="csv" class="format-option">
+          <el-radio value="csv" class="format-option">
             <div class="format-info">
               <div class="format-name">CSV 格式</div>
               <div class="format-desc">适用于 Excel 等表格处理软件</div>
             </div>
           </el-radio>
-          <el-radio label="geojson" class="format-option">
+          <el-radio value="geojson" class="format-option">
             <div class="format-info">
               <div class="format-name">GeoJSON 格式</div>
               <div class="format-desc">适用于 Web 地图应用和 GIS 软件</div>
@@ -71,9 +71,9 @@
       <div class="export-settings">
         <h4>导出选项</h4>
         <el-checkbox-group v-model="exportOptions">
-          <el-checkbox label="includeStyles">包含样式信息</el-checkbox>
-          <el-checkbox label="includeTimestamp">包含时间戳</el-checkbox>
-          <el-checkbox label="compressOutput">压缩输出文件</el-checkbox>
+          <el-checkbox value="includeStyles">包含样式信息</el-checkbox>
+          <el-checkbox value="includeTimestamp">包含时间戳</el-checkbox>
+          <el-checkbox value="compressOutput">压缩输出文件</el-checkbox>
         </el-checkbox-group>
       </div>
 
