@@ -53,25 +53,6 @@
         </div>
       </el-form-item>
       
-      <el-form-item label="颜色">
-        <el-color-picker 
-          v-model="formData.color" 
-          :predefine="colorPresets"
-          show-alpha
-        />
-      </el-form-item>
-      
-      <el-form-item label="大小">
-        <el-slider
-          v-model="formData.size"
-          :min="16"
-          :max="48"
-          :step="2"
-          show-input
-          :show-input-controls="false"
-          input-size="small"
-        />
-      </el-form-item>
       
       <el-form-item label="坐标">
         <div class="coordinate-display">
@@ -121,7 +102,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'save'])
+const emit = defineEmits(['update:modelValue', 'save', 'save-ref'])
 
 const dialogVisible = ref(false)
 const formRef = ref(null)
@@ -131,8 +112,7 @@ const formData = reactive({
   name: '',
   description: '',
   icon: '📍',
-  color: '#409eff',
-  size: 24,
+  id: undefined,
   latlng: { lat: 0, lng: 0 }
 })
 
@@ -159,35 +139,23 @@ const iconOptions = [
   { value: '📡', name: '信号' }
 ]
 
-// 颜色预设
-const colorPresets = [
-  '#409eff',
-  '#67c23a',
-  '#e6a23c',
-  '#f56c6c',
-  '#909399',
-  '#ff4d4f',
-  '#52c41a',
-  '#1890ff',
-  '#722ed1',
-  '#eb2f96'
-]
+// 颜色相关已移除（由上层样式统一管理）
 
 // 监听对话框显示状态
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
   if (val) {
+    try { console.debug('[DEBUG] PointPropertiesDialog opened with props.point:', props.point) } catch (e) {}
     const p = props.point || {}
     // 初始化表单数据，添加默认名称
     const defaultName = p.name && String(p.name).trim() ? p.name : `点位${Date.now().toString().slice(-6)}`
     const lat = Number(p?.latlng?.lat ?? 0)
     const lng = Number(p?.latlng?.lng ?? 0)
     Object.assign(formData, {
+      id: p.id,
       name: defaultName,
       description: p.description || '',
       icon: p.icon || '📍',
-      color: p.color || '#409eff',
-      size: p.size || 24,
       latlng: { lat: isFinite(lat) ? lat : 0, lng: isFinite(lng) ? lng : 0 }
     })
   }
@@ -212,7 +180,27 @@ const handleClose = () => {
 const handleSave = async () => {
   try {
     await formRef.value?.validate()
-    emit('save', { ...formData })
+    // 如果父组件传入了 point 对象引用，先直接写回，以确保父侧引用同步
+    try {
+      if (props.point && typeof props.point === 'object') {
+        // 只写入允许的字段，避免覆盖其它元数据
+        props.point.name = formData.name
+        props.point.description = formData.description
+        props.point.icon = formData.icon
+        props.point.latlng = { ...formData.latlng }
+  // wrote to props.point for parent-side sync
+      }
+    } catch (e) {
+      console.warn('[PointPropertiesDialog] failed to write to props.point:', e)
+    }
+
+  // emit minimal save payload; parent will use selectedPoint or id to locate the drawing
+  try { console.debug('[DEBUG] PointPropertiesDialog emitting save-ref with pointRef and payload') } catch (e) {}
+  try { console.debug('[DEBUG] PointPropertiesDialog props.point before emit:', props.point) } catch (e) {}
+  // emit a separate event carrying the raw reference (point object) and the payload
+  emit('save-ref', props.point, { id: formData.id, ...formData })
+  try { console.debug('[DEBUG] PointPropertiesDialog emitting save with payload:', { id: props.point?.id, ...formData }) } catch (e) {}
+  emit('save', { id: formData.id, ...formData })
     handleClose()
   } catch (error) {
     console.error('表单验证失败:', error)

@@ -98,17 +98,16 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { hexToRgba, rgbaToHex } from '@/utils/color-utils.js'
 
 const props = defineProps({
   modelValue: {
     type: Object,
     default: () => ({
-      color: '#ff7800',
-      size: 8,
       opacity: 1.0,
       labelSize: 0,
-      labelColor: '#000000'
+      labelColor: '#000000',
+      clusterEnabled: false,
+      clusterColor: '#00ff00'
     })
   }
 })
@@ -117,57 +116,60 @@ const emit = defineEmits(['update:modelValue', 'change'])
 
 // 本地样式状态
 const localStyles = reactive({
-  color: '#ff7800',
-  size: 8,
   opacity: 1.0,
   labelSize: 0,
-    labelColor: '#000000',
-    clusterEnabled: false,
-    clusterColor: '#00ff00'
-})
-
-// 用于颜色选择器的计算属性
-const pickerColor = computed({
-  get() {
-    // 确保始终为 color-picker 提供它能理解的格式
-    return localStyles.color.startsWith('rgba') ? localStyles.color : hexToRgba(localStyles.color)
-  },
-  set(newValue) {
-    // 当 color-picker 更新时，转换回十六进制格式
-    localStyles.color = rgbaToHex(newValue)
-  }
+  labelColor: '#000000',
+  clusterEnabled: false,
+  clusterColor: '#00ff00'
 })
 
 // 监听props变化
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    Object.assign(localStyles, newValue)
+    // 仅拷贝允许的字段，避免将 color/size 等旧字段再次引入
+    const allowed = {
+      opacity: newValue.opacity,
+      labelSize: newValue.labelSize,
+      labelColor: newValue.labelColor,
+      clusterEnabled: newValue.clusterEnabled,
+      clusterColor: newValue.clusterColor
+    }
+    Object.assign(localStyles, allowed)
   }
 }, { immediate: true, deep: true })
 
 // 处理样式变化
 const handleChange = () => {
-  emit('update:modelValue', { ...localStyles })
+  // 发出仅包含允许字段的值，不包括 color/size
+  emit('update:modelValue', {
+    opacity: localStyles.opacity,
+    labelSize: localStyles.labelSize,
+    labelColor: localStyles.labelColor,
+    clusterEnabled: localStyles.clusterEnabled,
+    clusterColor: localStyles.clusterColor
+  })
   emit('change')
 }
 
 // 预览样式 - 固定使用marker形状
 const previewStyle = computed(() => {
-  // 地图标记使用SVG，这里显示一个简化的预览
+  // 使用固定颜色和大小展示预览（颜色/大小不再是可配置项）
+  const FIXED_COLOR = '#ff7800'
+  const FIXED_SIZE = 8
   return {
     backgroundColor: 'transparent',
     backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="${localStyles.size * 2}" height="${localStyles.size * 3.2}" viewBox="0 0 25 41">
-        <path fill="${localStyles.color}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${localStyles.opacity}"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="${FIXED_SIZE * 2}" height="${FIXED_SIZE * 3.2}" viewBox="0 0 25 41">
+        <path fill="${FIXED_COLOR}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${localStyles.opacity}"/>
         <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
-        <circle fill="${localStyles.color}" cx="12.5" cy="12.5" r="3" opacity="${localStyles.opacity}"/>
+        <circle fill="${FIXED_COLOR}" cx="12.5" cy="12.5" r="3" opacity="${localStyles.opacity}"/>
       </svg>
     `)}")`,
     backgroundSize: 'contain',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',
-    width: `${localStyles.size * 2}px`,
-    height: `${localStyles.size * 3.2}px`,
+    width: `${FIXED_SIZE * 2}px`,
+    height: `${FIXED_SIZE * 3.2}px`,
     position: 'relative',
     display: 'inline-block'
   }

@@ -1,10 +1,8 @@
 <!-- 交互管理器组件 - 管理所有弹窗和菜单 -->
 <template>
   <div class="interactive-manager">
-    <!-- 导出对话框 -->
     <ExportDialog v-model="showExportDialog" />
-    
-    <!-- 点位交互组件 -->
+
     <PointInfoPopup
       :visible="showPointPopup"
       :point="selectedPoint"
@@ -13,7 +11,7 @@
       @edit-properties="openPointProperties"
       @delete-point="deletePoint"
     />
-    
+
     <PointContextMenu
       :visible="showPointContextMenu"
       :position="contextMenuPosition"
@@ -21,14 +19,14 @@
       @edit-properties="openPointProperties"
       @delete-point="deletePoint"
     />
-    
+
     <PointPropertiesDialog
       v-model="showPointPropertiesDialog"
       :point="selectedPoint"
-      @save="savePointProperties"
+      @save="handleSaveFromDialog"
+      @save-ref="handleSaveRefFromDialog"
     />
-    
-    <!-- 线段交互组件 -->
+
     <LineInfoPopup
       :visible="showLinePopup"
       :line="selectedLine"
@@ -37,7 +35,7 @@
       @edit-properties="openLineProperties"
       @delete-line="deleteLine"
     />
-    
+
     <LineContextMenu
       :visible="showLineContextMenu"
       :position="contextMenuPosition"
@@ -45,14 +43,13 @@
       @edit-properties="openLineProperties"
       @delete-line="deleteLine"
     />
-    
+
     <LinePropertiesDialog
       v-model="showLinePropertiesDialog"
       :line="selectedLine"
       @save="saveLineProperties"
     />
-    
-    <!-- 面积交互组件 -->
+
     <PolygonInfoPopup
       :visible="showPolygonPopup"
       :polygon="selectedPolygon"
@@ -61,7 +58,7 @@
       @edit-properties="openPolygonProperties"
       @delete-polygon="deletePolygon"
     />
-    
+
     <PolygonContextMenu
       :visible="showPolygonContextMenu"
       :position="contextMenuPosition"
@@ -69,7 +66,7 @@
       @edit-properties="openPolygonProperties"
       @delete-polygon="deletePolygon"
     />
-    
+
     <PolygonPropertiesDialog
       v-model="showPolygonPropertiesDialog"
       :polygon="selectedPolygon"
@@ -83,124 +80,75 @@ import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ExportDialog from './ExportDialog.vue'
 
-// 点位组件
 import PointInfoPopup from './PointInfoPopup.vue'
 import PointContextMenu from './PointContextMenu.vue'
 import PointPropertiesDialog from './PointPropertiesDialog.vue'
 
-// 线段组件
 import LineInfoPopup from './LineInfoPopup.vue'
 import LineContextMenu from './LineContextMenu.vue'
 import LinePropertiesDialog from './LinePropertiesDialog.vue'
 
-// 面积组件
 import PolygonInfoPopup from './PolygonInfoPopup.vue'
 import PolygonContextMenu from './PolygonContextMenu.vue'
 import PolygonPropertiesDialog from './PolygonPropertiesDialog.vue'
 
-// 工具函数导入
-import { createPointIcon } from '@/composables/drawing-tools/tools/point.js'
+import { createPointIcon, setupMarkerEvents } from '@/composables/drawing-tools/tools/point.js'
+import L from 'leaflet'
 import { updateLineStyle } from '@/composables/drawing-tools/tools/line.js'
 import { updatePolygonStyle } from '@/composables/drawing-tools/tools/polygon.js'
 
 const props = defineProps({
-  mapInstance: {
-    type: Object,
-    default: null
-  },
-  drawings: {
-    type: Array,
-    default: () => []
-  }
+  mapInstance: { type: Object, default: null },
+  drawings: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['show-export-dialog'])
-
-// 通用状态
 const showExportDialog = ref(false)
 const popupTriggerRef = ref(null)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 
-// 点位状态
 const showPointPopup = ref(false)
 const showPointContextMenu = ref(false)
 const showPointPropertiesDialog = ref(false)
 const selectedPoint = ref(null)
 
-// 线段状态
 const showLinePopup = ref(false)
 const showLineContextMenu = ref(false)
 const showLinePropertiesDialog = ref(false)
 const selectedLine = ref(null)
 
-// 面积状态  
 const showPolygonPopup = ref(false)
 const showPolygonContextMenu = ref(false)
 const showPolygonPropertiesDialog = ref(false)
 const selectedPolygon = ref(null)
 
-// 点位方法
-const closePointPopup = () => {
-  showPointPopup.value = false
-  selectedPoint.value = null
-  popupTriggerRef.value = null
-}
-
-const closePointContextMenu = () => {
-  showPointContextMenu.value = false
-  selectedPoint.value = null
-}
-
+const closePointPopup = () => { showPointPopup.value = false; selectedPoint.value = null; popupTriggerRef.value = null }
+const closePointContextMenu = () => { showPointContextMenu.value = false; selectedPoint.value = null }
 const openPointProperties = () => {
-  // 保留当前选中的点位，避免在关闭弹窗/菜单时被置空
   const current = selectedPoint.value
-  closePointPopup()
-  closePointContextMenu()
+  console.debug('[DEBUG] openPointProperties current before close:', current)
+  closePointPopup(); closePointContextMenu()
+  // restore selectedPoint quickly
   selectedPoint.value = current
+  console.debug('[DEBUG] openPointProperties restored selectedPoint:', selectedPoint.value)
   showPointPropertiesDialog.value = true
 }
 
 const deletePoint = async () => {
   if (!selectedPoint.value) return
-  
   try {
-    await ElMessageBox.confirm(
-      `确定要删除点位"${selectedPoint.value.name}"吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
-      }
-    )
-    
-    // 从地图上移除标记
-    if (selectedPoint.value.marker) {
-      props.mapInstance.drawingLayerGroup.removeLayer(selectedPoint.value.marker)
-    }
-    
-    // 从绘图数组中移除
+    await ElMessageBox.confirm(`确定要删除点位"${selectedPoint.value.name}"吗？`, '删除确认', { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning', confirmButtonClass: 'el-button--danger' })
+    if (selectedPoint.value.marker) props.mapInstance.drawingLayerGroup.removeLayer(selectedPoint.value.marker)
     const index = props.drawings.findIndex(d => d.id === selectedPoint.value.id)
-    if (index !== -1) {
-      props.drawings.splice(index, 1)
-    }
-    
-    closePointPopup()
-    closePointContextMenu()
-    
-    ElMessage.success('点位已删除')
-  } catch (error) {
-    // 用户取消删除
-  }
+    if (index !== -1) props.drawings.splice(index, 1)
+    closePointPopup(); closePointContextMenu(); ElMessage.success('点位已删除')
+  } catch (error) {}
 }
 
 const savePointProperties = (updatedProperties) => {
-  if (!selectedPoint.value) return
-  
-  // 检查经纬度是否有效
-  if (updatedProperties.latlng) {
-    // 统一转数字
+  // debug: print incoming payload to help diagnose save failures
+  try { console.debug('[DEBUG] savePointProperties payload:', updatedProperties, 'selectedPoint.id=', selectedPoint.value && selectedPoint.value.id) } catch (e) {}
+  // validate and normalize latlng
+  if (updatedProperties && updatedProperties.latlng) {
     const lat = Number(updatedProperties.latlng.lat)
     const lng = Number(updatedProperties.latlng.lng)
     updatedProperties.latlng = { lat, lng }
@@ -209,287 +157,123 @@ const savePointProperties = (updatedProperties) => {
       return
     }
   }
-  
-  // 检查坐标是否发生变化
-  const hasLocationChanged = updatedProperties.latlng && 
-    (Math.abs(selectedPoint.value.latlng.lat - updatedProperties.latlng.lat) > 0.000001 ||
-     Math.abs(selectedPoint.value.latlng.lng - updatedProperties.latlng.lng) > 0.000001)
-  
-  // 更新点位数据
-  Object.assign(selectedPoint.value, updatedProperties)
-  
-  // 更新标记位置和图标
-  if (selectedPoint.value.marker) {
-    if (hasLocationChanged) {
-      // 更新标记位置
-      selectedPoint.value.marker.setLatLng([updatedProperties.latlng.lat, updatedProperties.latlng.lng])
-      // 地图视角跳转到新位置
-      props.mapInstance.setView([updatedProperties.latlng.lat, updatedProperties.latlng.lng], props.mapInstance.getZoom())
-    }
-    // 更新标记图标
-    selectedPoint.value.marker.setIcon(createPointIcon(selectedPoint.value))
-  }
-  
-  // 更新绘图数组中的数据
-  const index = props.drawings.findIndex(d => d.id === selectedPoint.value.id)
-  if (index !== -1) {
-    Object.assign(props.drawings[index], selectedPoint.value)
-  }
-  
-  ElMessage.success(hasLocationChanged ? '点位属性和位置已更新' : '点位属性已更新')
-}
 
-// 线段方法
-const closeLinePopup = () => {
-  showLinePopup.value = false
-  selectedLine.value = null
-  popupTriggerRef.value = null
-}
-
-const closeLineContextMenu = () => {
-  showLineContextMenu.value = false
-  selectedLine.value = null
-}
-
-const openLineProperties = () => {
-  // 保留当前选中的线段
-  const current = selectedLine.value
-  closeLinePopup()
-  closeLineContextMenu()
-  selectedLine.value = current
-  showLinePropertiesDialog.value = true
-}
-
-const deleteLine = async () => {
-  if (!selectedLine.value) return
-  
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除线段"${selectedLine.value.name}"吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
+  // require id to find canonical drawing object
+    // resolve canonical drawing object: prefer id, fallback to selectedPoint reference or name+latlng
+    let idx = -1
+    if (updatedProperties && updatedProperties.pointRef) {
+      idx = props.drawings.findIndex(d => d === updatedProperties.pointRef)
+      console.debug('[DEBUG] drawings lookup by reference idx=', idx)
+      if (idx === -1 && updatedProperties.pointRef && updatedProperties.pointRef.id) {
+        idx = props.drawings.findIndex(d => d.id === updatedProperties.pointRef.id)
       }
-    )
-    
-    // 从地图上移除
-    if (selectedLine.value.polyline) {
-      props.mapInstance.drawingLayerGroup.removeLayer(selectedLine.value.polyline)
-    }
-    
-    // 从绘图数组中移除
-    const index = props.drawings.findIndex(d => d.id === selectedLine.value.id)
-    if (index !== -1) {
-      props.drawings.splice(index, 1)
-    }
-    
-    closeLinePopup()
-    closeLineContextMenu()
-    
-    ElMessage.success('线段已删除')
-  } catch (error) {
-    // 用户取消删除
-  }
-}
-
-const saveLineProperties = (updatedProperties) => {
-  if (!selectedLine.value) return
-  
-  // 更新线段数据
-  Object.assign(selectedLine.value, updatedProperties)
-  
-  // 更新线段样式
-  if (selectedLine.value.polyline) {
-    updateLineStyle(selectedLine.value.polyline, selectedLine.value)
-  }
-  
-  // 更新绘图数组中的数据
-  const index = props.drawings.findIndex(d => d.id === selectedLine.value.id)
-  if (index !== -1) {
-    Object.assign(props.drawings[index], updatedProperties)
-  }
-  
-  ElMessage.success('线段属性已更新')
-}
-
-// 面积方法
-const closePolygonPopup = () => {
-  showPolygonPopup.value = false
-  selectedPolygon.value = null
-  popupTriggerRef.value = null
-}
-
-const closePolygonContextMenu = () => {
-  showPolygonContextMenu.value = false
-  selectedPolygon.value = null
-}
-
-const openPolygonProperties = () => {
-  // 保留当前选中的多边形
-  const current = selectedPolygon.value
-  closePolygonPopup()
-  closePolygonContextMenu()
-  selectedPolygon.value = current
-  showPolygonPropertiesDialog.value = true
-}
-
-const deletePolygon = async () => {
-  if (!selectedPolygon.value) return
-  
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除面积"${selectedPolygon.value.name}"吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
+    } else if (updatedProperties && updatedProperties.id) {
+      idx = props.drawings.findIndex(d => d.id === updatedProperties.id)
+      console.debug('[DEBUG] drawings lookup by id idx=', idx, 'drawings.length=', props.drawings.length)
+    } else if (selectedPoint.value) {
+      // try to find by reference first
+      idx = props.drawings.findIndex(d => d === selectedPoint.value)
+      if (idx === -1 && selectedPoint.value.id) {
+        idx = props.drawings.findIndex(d => d.id === selectedPoint.value.id)
       }
-    )
-    
-    // 从地图上移除
-    if (selectedPolygon.value.polygon) {
-      props.mapInstance.drawingLayerGroup.removeLayer(selectedPolygon.value.polygon)
+      // fallback to name+latlng match
+      if (idx === -1 && selectedPoint.value.name && selectedPoint.value.latlng) {
+        idx = props.drawings.findIndex(d => d.name === selectedPoint.value.name && d.latlng && d.latlng.lat === selectedPoint.value.latlng.lat && d.latlng.lng === selectedPoint.value.latlng.lng)
+      }
+      console.debug('[DEBUG] drawings lookup by selectedPoint fallback idx=', idx)
+    } else {
+      console.warn('[DEBUG] savePointProperties missing id and no selectedPoint: payload', updatedProperties)
     }
-    
-    // 从绘图数组中移除
-    const index = props.drawings.findIndex(d => d.id === selectedPolygon.value.id)
-    if (index !== -1) {
-      props.drawings.splice(index, 1)
+
+    if (idx === -1) {
+      console.warn('[DEBUG] savePointProperties could not resolve a target drawing for payload:', updatedProperties)
+      return
     }
-    
-    closePolygonPopup()
-    closePolygonContextMenu()
-    
-    ElMessage.success('面积已删除')
-  } catch (error) {
-    // 用户取消删除
+
+    const target = props.drawings[idx]
+    try { console.debug('[DEBUG] savePointProperties resolved target id=', target && target.id, 'target.icon=', target && target.icon) } catch (e) {}
+
+  // detect previous state
+  const prevIcon = target.icon
+  const prevLatLng = target.latlng && { ...target.latlng }
+
+  // apply updates to canonical object (props.drawings)
+  Object.assign(target, updatedProperties)
+
+  // update marker position if latlng changed
+  if (target.marker && updatedProperties.latlng && prevLatLng) {
+    if (prevLatLng.lat !== updatedProperties.latlng.lat || prevLatLng.lng !== updatedProperties.latlng.lng) {
+      try {
+        target.marker.setLatLng([updatedProperties.latlng.lat, updatedProperties.latlng.lng])
+        try { props.mapInstance.setView([updatedProperties.latlng.lat, updatedProperties.latlng.lng], props.mapInstance.getZoom()) } catch (e) {}
+      } catch (e) {}
+    }
+  }
+
+  // if icon changed, recreate marker to ensure DOM refresh; otherwise setIcon
+  if (target.marker) {
+    try {
+      if (updatedProperties.icon && updatedProperties.icon !== prevIcon) {
+        const oldMarker = target.marker
+        const currentLatLng = oldMarker.getLatLng()
+        try { props.mapInstance.drawingLayerGroup.removeLayer(oldMarker) } catch (e) {}
+        const newMarker = L.marker(currentLatLng, { icon: createPointIcon(target), pointId: target.id, riseOnHover: true }).addTo(props.mapInstance.drawingLayerGroup)
+        setupMarkerEvents(newMarker, target, props.drawings, props.mapInstance)
+        target.marker = newMarker
+        try { const el = target.marker.getElement(); console.debug('[DEBUG] marker recreated, marker.innerHTML=', el && el.innerHTML) } catch(e) {}
+      } else {
+        target.marker.setIcon(createPointIcon(target))
+        try { const el = target.marker.getElement(); console.debug('[DEBUG] marker setIcon called, marker.innerHTML=', el && el.innerHTML) } catch(e) {}
+      }
+    } catch (e) {
+      try { target.marker.setIcon(createPointIcon(target)) } catch (err) {}
+    }
+  }
+
+  ElMessage.success('点位属性已更新')
+}
+
+const handleSaveFromDialog = (updatedProperties) => { try { savePointProperties(updatedProperties) } catch (e) { console.error('[InteractiveManager] savePointProperties threw error:', e) } }
+
+const handleSaveRefFromDialog = (pointRef, payload) => {
+  try {
+    console.debug('[DEBUG] handleSaveRefFromDialog received pointRef:', pointRef, 'payload:', payload)
+    // forward to savePointProperties with explicit pointRef
+    savePointProperties({ pointRef, ...payload })
+  } catch (e) {
+    console.error('[InteractiveManager] handleSaveRefFromDialog error:', e)
   }
 }
 
-const savePolygonProperties = (updatedProperties) => {
-  if (!selectedPolygon.value) return
-  
-  // 更新面积数据
-  Object.assign(selectedPolygon.value, updatedProperties)
-  
-  // 更新面积样式
-  if (selectedPolygon.value.polygon) {
-    updatePolygonStyle(selectedPolygon.value.polygon, selectedPolygon.value)
-  }
-  
-  // 更新绘图数组中的数据
-  const index = props.drawings.findIndex(d => d.id === selectedPolygon.value.id)
-  if (index !== -1) {
-    Object.assign(props.drawings[index], updatedProperties)
-  }
-  
-  ElMessage.success('面积属性已更新')
-}
+const closeLinePopup = () => { showLinePopup.value = false; selectedLine.value = null; popupTriggerRef.value = null }
+const closeLineContextMenu = () => { showLineContextMenu.value = false; selectedLine.value = null }
+const openLineProperties = () => { const current = selectedLine.value; closeLinePopup(); closeLineContextMenu(); selectedLine.value = current; showLinePropertiesDialog.value = true }
 
-// 处理不同类型的事件
+const deleteLine = async () => { if (!selectedLine.value) return; try { await ElMessageBox.confirm(`确定要删除线段"${selectedLine.value.name}"吗？`, '删除确认', { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning', confirmButtonClass: 'el-button--danger' }); if (selectedLine.value.polyline) props.mapInstance.drawingLayerGroup.removeLayer(selectedLine.value.polyline); const index = props.drawings.findIndex(d => d.id === selectedLine.value.id); if (index !== -1) props.drawings.splice(index, 1); closeLinePopup(); closeLineContextMenu(); ElMessage.success('线段已删除') } catch (error) {} }
+
+const saveLineProperties = (updatedProperties) => { if (!selectedLine.value) return; Object.assign(selectedLine.value, updatedProperties); if (selectedLine.value.polyline) updateLineStyle(selectedLine.value.polyline, selectedLine.value); const index = props.drawings.findIndex(d => d.id === selectedLine.value.id); if (index !== -1) Object.assign(props.drawings[index], updatedProperties); ElMessage.success('线段属性已更新') }
+
+const closePolygonPopup = () => { showPolygonPopup.value = false; selectedPolygon.value = null; popupTriggerRef.value = null }
+const closePolygonContextMenu = () => { showPolygonContextMenu.value = false; selectedPolygon.value = null }
+const openPolygonProperties = () => { const current = selectedPolygon.value; closePolygonPopup(); closePolygonContextMenu(); selectedPolygon.value = current; showPolygonPropertiesDialog.value = true }
+
+const deletePolygon = async () => { if (!selectedPolygon.value) return; try { await ElMessageBox.confirm(`确定要删除面积"${selectedPolygon.value.name}"吗？`, '删除确认', { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning', confirmButtonClass: 'el-button--danger' }); if (selectedPolygon.value.polygon) props.mapInstance.drawingLayerGroup.removeLayer(selectedPolygon.value.polygon); const index = props.drawings.findIndex(d => d.id === selectedPolygon.value.id); if (index !== -1) props.drawings.splice(index, 1); closePolygonPopup(); closePolygonContextMenu(); ElMessage.success('面积已删除') } catch (error) {} }
+
+const savePolygonProperties = (updatedProperties) => { if (!selectedPolygon.value) return; Object.assign(selectedPolygon.value, updatedProperties); if (selectedPolygon.value.polygon) updatePolygonStyle(selectedPolygon.value.polygon, selectedPolygon.value); const index = props.drawings.findIndex(d => d.id === selectedPolygon.value.id); if (index !== -1) Object.assign(props.drawings[index], updatedProperties); ElMessage.success('面积属性已更新') }
+
 const handlePointClick = (e) => {
+  console.debug('[DEBUG] handlePointClick received event.point:', e.point)
   selectedPoint.value = e.point
-  
-  // 创建虚拟触发元素用于定位弹窗
-  const triggerEl = document.createElement('div')
-  triggerEl.style.position = 'absolute'
-  triggerEl.style.left = e.containerPoint.x + 'px'
-  triggerEl.style.top = e.containerPoint.y + 'px'
-  triggerEl.style.width = '1px'
-  triggerEl.style.height = '1px'
-  triggerEl.style.pointerEvents = 'none'
-  props.mapInstance.getContainer().appendChild(triggerEl)
-  
-  popupTriggerRef.value = triggerEl
-  showPointPopup.value = true
-  
-  // 清理触发元素
-  setTimeout(() => {
-    if (triggerEl.parentNode) {
-      triggerEl.parentNode.removeChild(triggerEl)
-    }
-  }, 100)
+  const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showPointPopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100)
 }
 
-const handlePointContextMenu = (e) => {
-  selectedPoint.value = e.point
-  contextMenuPosition.value = e.position
-  showPointContextMenu.value = true
-}
+const handlePointContextMenu = (e) => { selectedPoint.value = e.point; contextMenuPosition.value = e.position; showPointContextMenu.value = true }
+const handleLineClick = (e) => { selectedLine.value = e.line; const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showLinePopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100) }
+const handleLineContextMenu = (e) => { selectedLine.value = e.line; contextMenuPosition.value = e.position; showLineContextMenu.value = true }
+const handlePolygonClick = (e) => { selectedPolygon.value = e.polygon; const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showPolygonPopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100) }
+const handlePolygonContextMenu = (e) => { selectedPolygon.value = e.polygon; contextMenuPosition.value = e.position; showPolygonContextMenu.value = true }
 
-const handleLineClick = (e) => {
-  selectedLine.value = e.line
-  
-  const triggerEl = document.createElement('div')
-  triggerEl.style.position = 'absolute'
-  triggerEl.style.left = e.containerPoint.x + 'px'
-  triggerEl.style.top = e.containerPoint.y + 'px'
-  triggerEl.style.width = '1px'
-  triggerEl.style.height = '1px'
-  triggerEl.style.pointerEvents = 'none'
-  props.mapInstance.getContainer().appendChild(triggerEl)
-  
-  popupTriggerRef.value = triggerEl
-  showLinePopup.value = true
-  
-  setTimeout(() => {
-    if (triggerEl.parentNode) {
-      triggerEl.parentNode.removeChild(triggerEl)
-    }
-  }, 100)
-}
+const handleShowExport = () => { showExportDialog.value = true }
 
-const handleLineContextMenu = (e) => {
-  selectedLine.value = e.line
-  contextMenuPosition.value = e.position
-  showLineContextMenu.value = true
-}
-
-const handlePolygonClick = (e) => {
-  selectedPolygon.value = e.polygon
-  
-  const triggerEl = document.createElement('div')
-  triggerEl.style.position = 'absolute'
-  triggerEl.style.left = e.containerPoint.x + 'px'
-  triggerEl.style.top = e.containerPoint.y + 'px'
-  triggerEl.style.width = '1px'
-  triggerEl.style.height = '1px'
-  triggerEl.style.pointerEvents = 'none'
-  props.mapInstance.getContainer().appendChild(triggerEl)
-  
-  popupTriggerRef.value = triggerEl
-  showPolygonPopup.value = true
-  
-  setTimeout(() => {
-    if (triggerEl.parentNode) {
-      triggerEl.parentNode.removeChild(triggerEl)
-    }
-  }, 100)
-}
-
-const handlePolygonContextMenu = (e) => {
-  selectedPolygon.value = e.polygon
-  contextMenuPosition.value = e.position
-  showPolygonContextMenu.value = true
-}
-
-const handleShowExport = () => {
-  showExportDialog.value = true
-}
-
-// 暴露方法给父组件调用
-defineExpose({
-  handlePointClick,
-  handlePointContextMenu,
-  handleLineClick,
-  handleLineContextMenu,
-  handlePolygonClick,
-  handlePolygonContextMenu,
-  handleShowExport
-})
+defineExpose({ handlePointClick, handlePointContextMenu, handleLineClick, handleLineContextMenu, handlePolygonClick, handlePolygonContextMenu, handleShowExport })
 </script>

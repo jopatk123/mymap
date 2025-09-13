@@ -109,7 +109,7 @@ import {
   ArrowLeft, 
   ArrowRight, 
   Compass, 
-  Location, 
+  Location,
   Minus, 
   Operation, 
   Edit,
