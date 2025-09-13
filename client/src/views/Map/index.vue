@@ -45,6 +45,11 @@
       @show-point-settings="showPointSettings = true"
     />
     
+    <!-- 绘图工具栏 -->
+    <DrawingToolbar
+      :map-instance="mapRef?.map"
+    />
+    
     <!-- 对话框组 -->
     <MapDialogs
       :show-panorama-modal="showPanoramaModal"
@@ -108,6 +113,7 @@ import { useMapInitializer } from './composables/map-initializer'
 import MapView from './components/MapView.vue'
 import MapSidebar from '@/components/map/MapSidebar.vue'
 import MapControls from '@/components/map/MapControls.vue'
+import DrawingToolbar from '@/components/map/drawing-toolbar/DrawingToolbar.vue'
 import MapDialogs from './components/MapDialogs.vue'
 import VideoModal from '@/components/map/VideoModal.vue'
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
