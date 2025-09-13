@@ -6,7 +6,6 @@
         <el-button 
           @click="togglePanoramaList" 
           type="primary"
-          :icon="panoramaListVisible ? Hide : View"
           :title="panoramaListVisible ? '隐藏点位列表' : '显示点位列表'"
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
@@ -15,7 +14,6 @@
         <el-button 
           @click="toggleKmlLayers" 
           type="warning"
-          :icon="kmlLayersVisible ? Hide : View"
           :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
@@ -24,6 +22,7 @@
         <!-- 新增的4个按钮 -->
         <el-button
           @click="handleCircleAreaClick"
+          class="btn-circle-area"
           type="success"
           :disabled="isDrawing"
           :loading="isDrawingCircle"
@@ -156,7 +155,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   Setting, 
-  View, Hide, Tools, Location,
+  Tools, Location,
   Compass, Crop, Delete, Download
 } from '@element-plus/icons-vue'
 import { useAreaSelector } from '@/composables/use-area-selector.js'
@@ -340,6 +339,28 @@ const handleLocateAddress = (data) => {
       &:active {
         transform: translateY(0); /* 点击时恢复位置 */
       }
+    }
+
+    /* 单独覆盖“圆形区域”按钮为紫色主题（优先级更高，使用 !important 以覆盖 element-plus 主题样式） */
+    .el-button.btn-circle-area {
+      background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%) !important;
+      border-color: #8e44ad !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(142,68,173,0.2);
+    }
+
+    .el-button.btn-circle-area:hover {
+      background: linear-gradient(180deg, #8e44ad 0%, #7a2f9b 100%) !important;
+      border-color: #7a2f9b !important;
+    }
+
+    .el-button.btn-circle-area:active {
+      background: linear-gradient(180deg, #7a2f9b 0%, #6a267f 100%) !important;
+      border-color: #6a267f !important;
+    }
+
+    .el-button.btn-circle-area .el-icon {
+      color: #fff !important;
     }
   }
 
