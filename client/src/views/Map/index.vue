@@ -272,11 +272,9 @@ const handleLocate = ({ lat, lng, tip }) => {
   mapRef.value?.setSearchMarker?.(lat, lng, label)
 }
 
-// 调试：监听 mapRef 和地图实例的变化
+// 调试：监听 mapRef 和地图实例的变化（使用共享 dlog）
 import { watch } from 'vue'
-// 调试开关
-const DEBUG = false
-function dlog(...args) { if (DEBUG) console.log(...args) }
+import { dlog } from '@/composables/drawing-tools/utils/debug.js'
 
 watch(() => mapRef.value, (newMapRef) => {
   dlog('主视图: mapRef 变化:', newMapRef)

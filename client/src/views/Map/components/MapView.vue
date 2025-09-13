@@ -30,9 +30,8 @@ defineEmits(['panorama-click', 'map-click'])
 
 const mapRef = ref(null)
 
-// 调试：观察 mapRef.value.map 何时被设置
-const DEBUG = false
-function dlog(...args) { if (DEBUG) console.log(...args) }
+// 调试：观察 mapRef.value.map 何时被设置（使用共享 dlog）
+import { dlog } from '@/composables/drawing-tools/utils/debug.js'
 watch(() => mapRef.value?.map, (v) => {
   dlog('MapView: mapRef.value?.map 变化:', v)
 }, { immediate: true })

@@ -38,9 +38,7 @@ import { useDrawingTools } from '@/composables/drawing-tools.js'
 import ToolbarButtons from './ToolbarButtons.vue'
 import InteractiveManager from './InteractiveManager.vue'
 
-// 调试开关与小工具（与 composable 保持一致）
-const DEBUG = true
-function dlog(...args) { if (DEBUG) console.log(...args) }
+import { dlog } from '@/composables/drawing-tools/utils/debug.js'
 
 // Props
 const props = defineProps({
