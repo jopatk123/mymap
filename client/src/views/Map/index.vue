@@ -43,6 +43,8 @@
       @show-settings="showSettings = true"
       @show-kml-settings="showKmlSettings = true"
       @show-point-settings="showPointSettings = true"
+      @locate-kml-point="handleLocateKMLPoint"
+      @locate-address="handleLocateAddress"
     />
     
     <!-- 绘图工具栏 -->
@@ -269,6 +271,22 @@ const handleLocate = ({ lat, lng, tip }) => {
   // 标记并居中
   mapRef.value?.setCenter(lat, lng, 16)
   const label = tip?.name || '搜索位置'
+  mapRef.value?.setSearchMarker?.(lat, lng, label)
+}
+
+// 处理KML点位定位
+const handleLocateKMLPoint = ({ lat, lng, point }) => {
+  // 标记并居中到KML点位
+  mapRef.value?.setCenter(lat, lng, 16)
+  // 将完整 point 对象传给 setSearchMarker，以便渲染丰富弹窗
+  mapRef.value?.setSearchMarker?.(lat, lng, point)
+}
+
+// 处理地址定位（从搜索工具）
+const handleLocateAddress = ({ lat, lng, tip }) => {
+  // 标记并居中到地址
+  mapRef.value?.setCenter(lat, lng, 16)
+  const label = tip?.name || '搜索地址'
   mapRef.value?.setSearchMarker?.(lat, lng, label)
 }
 

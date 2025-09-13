@@ -62,6 +62,9 @@ router.use('/points', pointsRoutes)
 const amapRoutes = require('./amap.routes')
 router.use('/amap', amapRoutes)
 
+// KML搜索相关路由
+const kmlSearchRoutes = require('./kml-search.routes')
+router.use('/kml-search', kmlSearchRoutes)
 
 // 点位样式配置路由
 const pointStyleRoutes = require('./point-styles.routes')

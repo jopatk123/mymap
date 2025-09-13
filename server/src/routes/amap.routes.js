@@ -51,6 +51,10 @@ router.get('/inputtips', async (req, res, next) => {
     const data = await forwardGetRequest('/v3/assistant/inputtips', params)
     res.json({ success: true, data })
   } catch (err) {
+    // 开发环境直接返回错误详情，便于调试
+    if (process.env.NODE_ENV !== 'production') {
+      return res.status(500).json({ success: false, message: err.message, stack: err.stack })
+    }
     next(err)
   }
 })
@@ -67,6 +71,9 @@ router.get('/place-text', async (req, res, next) => {
     const data = await forwardGetRequest('/v3/place/text', params)
     res.json({ success: true, data })
   } catch (err) {
+    if (process.env.NODE_ENV !== 'production') {
+      return res.status(500).json({ success: false, message: err.message, stack: err.stack })
+    }
     next(err)
   }
 })

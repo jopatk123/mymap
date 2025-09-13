@@ -88,6 +88,12 @@
           <el-icon><Location /></el-icon>
           点位图标
         </el-button>
+
+        <!-- 搜索工具 -->
+        <SearchTool 
+          @locate-kml-point="handleLocateKMLPoint"
+          @locate-address="handleLocateAddress"
+        />
       </el-button-group>
     </div>
     
@@ -157,6 +163,7 @@ import { useAreaSelector } from '@/composables/use-area-selector.js'
 import { useKMLExport } from '@/composables/use-kml-export.js'
 import { useKMLBaseMapStore } from '@/store/kml-basemap.js'
 import KMLDataExporter from './kml-basemap/KMLDataExporter.vue'
+import SearchTool from './SearchTool.vue'
 
 const props = defineProps({
   panoramaListVisible: {
@@ -190,7 +197,9 @@ const emit = defineEmits([
   'toggle-kml-layers',
   'show-settings',
   'show-kml-settings',
-  'show-point-settings'
+  'show-point-settings',
+  'locate-kml-point',
+  'locate-address'
 ])
 
 // 使用组合式函数
@@ -287,6 +296,16 @@ const showKmlSettings = () => {
 
 const showPointSettings = () => {
   emit('show-point-settings')
+}
+
+// 处理KML点位定位
+const handleLocateKMLPoint = (data) => {
+  emit('locate-kml-point', data)
+}
+
+// 处理地址定位
+const handleLocateAddress = (data) => {
+  emit('locate-address', data)
 }
 </script>
 
