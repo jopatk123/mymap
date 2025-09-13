@@ -31,8 +31,9 @@ export class KMLExportService {
       ].join(','))
     ]
     
-    const csvContent = csvRows.join('\n')
-    this.downloadFile(csvContent, `${filename}.csv`, 'text/csv;charset=utf-8;')
+  // Use CRLF for better compatibility with Excel on Windows
+  const csvContent = csvRows.join('\r\n')
+  this.downloadFile(csvContent, `${filename}.csv`, 'text/csv;charset=utf-8')
   }
 
   /**
@@ -47,8 +48,9 @@ export class KMLExportService {
       throw new Error('没有可导出的点位数据')
     }
 
-    const kmlContent = this.generateKMLContent(points, title)
-    this.downloadFile(kmlContent, `${filename}.kml`, 'application/vnd.google-earth.kml+xml')
+  const kmlContent = this.generateKMLContent(points, title)
+  // include charset so consumers know the encoding
+  this.downloadFile(kmlContent, `${filename}.kml`, 'application/vnd.google-earth.kml+xml;charset=utf-8')
   }
 
   /**
@@ -74,8 +76,8 @@ export class KMLExportService {
       }))
     }
 
-    const jsonContent = JSON.stringify(exportData, null, 2)
-    this.downloadFile(jsonContent, `${filename}.json`, 'application/json')
+  const jsonContent = JSON.stringify(exportData, null, 2)
+  this.downloadFile(jsonContent, `${filename}.json`, 'application/json;charset=utf-8')
   }
 
   /**
@@ -147,15 +149,38 @@ export class KMLExportService {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = filename
+    // Sanitize filename to avoid invalid characters
+    link.download = this.sanitizeFilename(filename)
     link.style.display = 'none'
     
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     
-    // 清理URL对象
-    window.URL.revokeObjectURL(url)
+    // 清理URL对象；延迟 revoke 可提高兼容性
+    setTimeout(() => {
+      try { window.URL.revokeObjectURL(url) } catch (e) { /* ignore */ }
+    }, 500)
+  }
+
+  /**
+   * 清理并限制下载文件名，去除文件系统/URI 中不允许的字符
+   * @param {string} filename 原始文件名
+   * @returns {string} 清理后的文件名
+   */
+  sanitizeFilename(filename) {
+    if (typeof filename !== 'string' || filename.trim() === '') return 'download'
+    // 移除控制字符、/ \ ? % * : | " < > 等并保留点和下划线
+    const cleaned = filename.replace(/[\\/:*?"<>|\u0000-\u001F]/g, '_')
+    // 限制长度（保守处理，保留扩展名）
+    if (cleaned.length <= 200) return cleaned
+    const parts = cleaned.split('.')
+    if (parts.length > 1) {
+      const ext = parts.pop()
+      const base = parts.join('.')
+      return base.slice(0, 180) + '.' + ext
+    }
+    return cleaned.slice(0, 200)
   }
 
   /**

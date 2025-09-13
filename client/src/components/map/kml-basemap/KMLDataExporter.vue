@@ -49,19 +49,19 @@
           
           <el-form-item label="导出格式" required>
             <el-radio-group v-model="exportFormat">
-              <el-radio label="csv">
+              <el-radio value="csv">
                 <div class="format-option">
                   <strong>CSV格式</strong>
                   <div class="format-desc">Excel兼容格式，适合数据分析</div>
                 </div>
               </el-radio>
-              <el-radio label="kml">
+              <el-radio value="kml">
                 <div class="format-option">
                   <strong>KML格式</strong>
                   <div class="format-desc">Google Earth兼容格式</div>
                 </div>
               </el-radio>
-              <el-radio label="json">
+              <el-radio value="json">
                 <div class="format-option">
                   <strong>JSON格式</strong>
                   <div class="format-desc">程序友好格式，便于数据处理</div>
