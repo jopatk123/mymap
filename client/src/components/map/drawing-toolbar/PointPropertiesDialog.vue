@@ -76,15 +76,21 @@
       <el-form-item label="坐标">
         <div class="coordinate-display">
           <el-input
-            :model-value="formData.latlng.lat.toFixed(6)"
-            readonly
+            v-model.number="formData.latlng.lat"
             style="margin-bottom: 8px"
+            type="number"
+            :step="0.000001"
+            :precision="6"
+            placeholder="请输入纬度"
           >
             <template #prepend>纬度</template>
           </el-input>
           <el-input
-            :model-value="formData.latlng.lng.toFixed(6)"
-            readonly
+            v-model.number="formData.latlng.lng"
+            type="number"
+            :step="0.000001"
+            :precision="6"
+            placeholder="请输入经度"
           >
             <template #prepend>经度</template>
           </el-input>
@@ -170,15 +176,19 @@ const colorPresets = [
 // 监听对话框显示状态
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
-  if (val && props.point) {
-    // 初始化表单数据
+  if (val) {
+    const p = props.point || {}
+    // 初始化表单数据，添加默认名称
+    const defaultName = p.name && String(p.name).trim() ? p.name : `点位${Date.now().toString().slice(-6)}`
+    const lat = Number(p?.latlng?.lat ?? 0)
+    const lng = Number(p?.latlng?.lng ?? 0)
     Object.assign(formData, {
-      name: props.point.name || '',
-      description: props.point.description || '',
-      icon: props.point.icon || '📍',
-      color: props.point.color || '#409eff',
-      size: props.point.size || 24,
-      latlng: { ...props.point.latlng }
+      name: defaultName,
+      description: p.description || '',
+      icon: p.icon || '📍',
+      color: p.color || '#409eff',
+      size: p.size || 24,
+      latlng: { lat: isFinite(lat) ? lat : 0, lng: isFinite(lng) ? lng : 0 }
     })
   }
 })

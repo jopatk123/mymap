@@ -152,8 +152,11 @@ const closePointContextMenu = () => {
 }
 
 const openPointProperties = () => {
+  // 保留当前选中的点位，避免在关闭弹窗/菜单时被置空
+  const current = selectedPoint.value
   closePointPopup()
   closePointContextMenu()
+  selectedPoint.value = current
   showPointPropertiesDialog.value = true
 }
 
@@ -195,21 +198,45 @@ const deletePoint = async () => {
 const savePointProperties = (updatedProperties) => {
   if (!selectedPoint.value) return
   
+  // 检查经纬度是否有效
+  if (updatedProperties.latlng) {
+    // 统一转数字
+    const lat = Number(updatedProperties.latlng.lat)
+    const lng = Number(updatedProperties.latlng.lng)
+    updatedProperties.latlng = { lat, lng }
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      ElMessage.error('请输入有效的经纬度坐标')
+      return
+    }
+  }
+  
+  // 检查坐标是否发生变化
+  const hasLocationChanged = updatedProperties.latlng && 
+    (Math.abs(selectedPoint.value.latlng.lat - updatedProperties.latlng.lat) > 0.000001 ||
+     Math.abs(selectedPoint.value.latlng.lng - updatedProperties.latlng.lng) > 0.000001)
+  
   // 更新点位数据
   Object.assign(selectedPoint.value, updatedProperties)
   
-  // 更新标记图标
+  // 更新标记位置和图标
   if (selectedPoint.value.marker) {
+    if (hasLocationChanged) {
+      // 更新标记位置
+      selectedPoint.value.marker.setLatLng([updatedProperties.latlng.lat, updatedProperties.latlng.lng])
+      // 地图视角跳转到新位置
+      props.mapInstance.setView([updatedProperties.latlng.lat, updatedProperties.latlng.lng], props.mapInstance.getZoom())
+    }
+    // 更新标记图标
     selectedPoint.value.marker.setIcon(createPointIcon(selectedPoint.value))
   }
   
   // 更新绘图数组中的数据
   const index = props.drawings.findIndex(d => d.id === selectedPoint.value.id)
   if (index !== -1) {
-    Object.assign(props.drawings[index], updatedProperties)
+    Object.assign(props.drawings[index], selectedPoint.value)
   }
   
-  ElMessage.success('点位属性已更新')
+  ElMessage.success(hasLocationChanged ? '点位属性和位置已更新' : '点位属性已更新')
 }
 
 // 线段方法
@@ -225,8 +252,11 @@ const closeLineContextMenu = () => {
 }
 
 const openLineProperties = () => {
+  // 保留当前选中的线段
+  const current = selectedLine.value
   closeLinePopup()
   closeLineContextMenu()
+  selectedLine.value = current
   showLinePropertiesDialog.value = true
 }
 
@@ -298,8 +328,11 @@ const closePolygonContextMenu = () => {
 }
 
 const openPolygonProperties = () => {
+  // 保留当前选中的多边形
+  const current = selectedPolygon.value
   closePolygonPopup()
   closePolygonContextMenu()
+  selectedPolygon.value = current
   showPolygonPropertiesDialog.value = true
 }
 

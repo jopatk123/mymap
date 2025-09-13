@@ -201,20 +201,22 @@ const dashOptions = [
 // 监听对话框显示状态
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
-  if (val && props.polygon) {
-    // 初始化表单数据
+  if (val) {
+    const g = props.polygon || {}
+    // 初始化表单数据，添加默认名称
+    const defaultName = g.name && String(g.name).trim() ? g.name : `多边形${Date.now().toString().slice(-6)}`
     Object.assign(formData, {
-      name: props.polygon.name || '',
-      description: props.polygon.description || '',
-      color: props.polygon.color || '#3388ff',
-      fillColor: props.polygon.fillColor || '#3388ff',
-      weight: props.polygon.weight || 3,
-      opacity: props.polygon.opacity || 1.0,
-      fillOpacity: props.polygon.fillOpacity || 0.2,
-      dashArray: props.polygon.dashArray || null,
-      area: props.polygon.area || 0,
-      perimeter: props.polygon.perimeter || 0,
-      latlngs: props.polygon.latlngs || []
+      name: defaultName,
+      description: g.description || '',
+      color: g.color || '#3388ff',
+      fillColor: g.fillColor || '#3388ff',
+      weight: g.weight || 3,
+      opacity: g.opacity || 1.0,
+      fillOpacity: g.fillOpacity || 0.2,
+      dashArray: g.dashArray || null,
+      area: g.area || 0,
+      perimeter: g.perimeter || 0,
+      latlngs: g.latlngs || []
     })
   }
 })

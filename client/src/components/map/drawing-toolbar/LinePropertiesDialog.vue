@@ -174,17 +174,19 @@ const dashOptions = [
 // 监听对话框显示状态
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
-  if (val && props.line) {
-    // 初始化表单数据
+  if (val) {
+    const l = props.line || {}
+    // 初始化表单数据，添加默认名称
+    const defaultName = l.name && String(l.name).trim() ? l.name : `线段${Date.now().toString().slice(-6)}`
     Object.assign(formData, {
-      name: props.line.name || '',
-      description: props.line.description || '',
-      color: props.line.color || '#3388ff',
-      weight: props.line.weight || 3,
-      opacity: props.line.opacity || 0.8,
-      dashArray: props.line.dashArray || null,
-      distance: props.line.distance || 0,
-      latlngs: props.line.latlngs || []
+      name: defaultName,
+      description: l.description || '',
+      color: l.color || '#3388ff',
+      weight: l.weight || 3,
+      opacity: l.opacity || 0.8,
+      dashArray: l.dashArray || null,
+      distance: l.distance || 0,
+      latlngs: l.latlngs || []
     })
   }
 })
