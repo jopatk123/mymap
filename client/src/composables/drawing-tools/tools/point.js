@@ -1,9 +1,12 @@
 import L from 'leaflet'
 import { dlog } from '../utils/debug.js'
 
-export function createPointTool(mapInstance, drawings, register) {
+export function createPointTool(mapInstance, drawings, register, onComplete) {
   dlog('设置添加点工具')
   
+  // register 返回一个 unregister 方法（在 setupTool 中实现）
+  let unregister = null
+
   const handleClick = (e) => {
     // 防止在点击已有标记时重复添加
     if (e.originalEvent && e.originalEvent.target && 
@@ -47,9 +50,28 @@ export function createPointTool(mapInstance, drawings, register) {
     drawings.value.push(pointData)
     
     dlog('点位已添加:', pointData)
+
+    // 添加完一个点后，取消注册事件并触发 onComplete（由 index.js 停用工具）
+    try {
+      if (typeof unregister === 'function') unregister()
+    } catch (e) {
+      dlog('注销添加点事件失败', e)
+    }
+
+    try {
+      if (typeof onComplete === 'function') onComplete()
+    } catch (e) {
+      dlog('onComplete 回调执行失败', e)
+    }
+  }
+  
+  // 在声明 handleClick 后再注册事件以获得正确的函数引用
+  try {
+    unregister = register({ click: handleClick })
+  } catch (e) {
+    dlog('register point handler failed', e)
   }
 
-  register({ click: handleClick })
 }
 
 // 创建点位图标

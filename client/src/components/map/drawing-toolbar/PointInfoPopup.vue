@@ -48,6 +48,7 @@
           >
             编辑属性
           </el-button>
+          <el-button type="text" size="small" class="copy-btn" @click="copyPointCoords(point)">复制经纬度</el-button>
           <el-button 
             type="danger" 
             size="small"
@@ -63,6 +64,7 @@
 
 <script setup>
 import { Close } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   visible: {
@@ -91,6 +93,35 @@ const formatDate = (date) => {
   if (!date) return ''
   const d = new Date(date)
   return d.toLocaleString('zh-CN')
+}
+
+const copyPointCoords = async (point) => {
+  const lat = Number(point?.latlng?.lat ?? point?.latitude ?? 0)
+  const lng = Number(point?.latlng?.lng ?? point?.longitude ?? 0)
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法复制')
+    return
+  }
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(formatted)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = formatted
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (!ok) throw new Error('execCommand failed')
+    }
+    ElMessage.success('坐标已复制：' + formatted)
+  } catch (e) {
+    console.error('复制失败', e)
+    ElMessage.error('复制失败，请手动复制：' + formatted)
+  }
 }
 </script>
 
@@ -138,6 +169,17 @@ const formatDate = (date) => {
       display: flex;
       gap: 8px;
       justify-content: flex-end;
+
+      .copy-btn {
+        background-color: #e6ffed !important; /* 浅绿色背景 */
+        color: #1f7a2f !important;
+        border-radius: 4px;
+        padding: 4px 8px;
+      }
+
+      .copy-btn:hover {
+        background-color: #d4f8d9 !important;
+      }
     }
   }
 }

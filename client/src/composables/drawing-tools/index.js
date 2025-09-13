@@ -107,6 +107,18 @@ export function useDrawingTools() {
     const register = (handlers) => {
       Object.assign(currentEventHandlers, handlers)
       Object.entries(handlers).forEach(([evt, fn]) => mapInstance.on(evt, fn))
+      // 返回注销函数，供工具在需要时移除自身注册的事件
+      const unregister = () => {
+        try {
+          Object.entries(handlers).forEach(([evt, fn]) => {
+            if (fn) mapInstance.off(evt, fn)
+            delete currentEventHandlers[evt]
+          })
+        } catch (e) {
+          console.warn('unregister handlers failed', e)
+        }
+      }
+      return unregister
     }
     const onCleanup = (fn) => cleanupCallbacks.push(fn)
 
@@ -115,7 +127,8 @@ export function useDrawingTools() {
         createMeasureTool(mapInstance, drawings, register)
         break
       case 'point':
-        createPointTool(mapInstance, drawings, register)
+        // 将 deactivateTool 作为 onComplete 回调传入，工具在完成一次添加后可调用以关闭自身
+        createPointTool(mapInstance, drawings, register, () => deactivateTool())
         break
       case 'line':
         createLineTool(mapInstance, drawings, register, onCleanup)

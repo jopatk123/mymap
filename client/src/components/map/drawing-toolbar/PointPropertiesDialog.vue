@@ -75,6 +75,11 @@
           >
             <template #prepend>经度</template>
           </el-input>
+
+          <!-- 复制经纬度按钮：复制格式为 经度,纬度，保留6位小数，经度在前 -->
+          <div class="coordinate-actions">
+            <el-button type="text" size="small" @click="copyLatLng">复制经纬度</el-button>
+          </div>
         </div>
       </el-form-item>
     </el-form>
@@ -90,6 +95,7 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   modelValue: {
@@ -199,6 +205,38 @@ const handleSave = async () => {
     handleClose()
   } catch (error) {
     console.error('表单验证失败:', error)
+  }
+}
+
+// 复制经纬度到剪贴板，格式：经度,纬度（经度在前，纬度在后），保留6位小数
+const copyLatLng = async () => {
+  const lat = Number(formData.latlng.lat ?? 0)
+  const lng = Number(formData.latlng.lng ?? 0)
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法复制')
+    return
+  }
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  // 首选 Clipboard API
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(formatted)
+    } else {
+      // 回退：使用临时 textarea
+      const ta = document.createElement('textarea')
+      ta.value = formatted
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      if (!ok) throw new Error('execCommand failed')
+    }
+    ElMessage.success('坐标已复制：' + formatted)
+  } catch (e) {
+    console.error('复制失败', e)
+    ElMessage.error('复制失败，请手动复制：' + formatted)
   }
 }
 </script>
