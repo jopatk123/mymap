@@ -24,7 +24,6 @@
       v-model="showPointPropertiesDialog"
       :point="selectedPoint"
       @save="handleSaveFromDialog"
-      @save-ref="handleSaveRefFromDialog"
     />
 
     <LineInfoPopup
@@ -123,15 +122,7 @@ const selectedPolygon = ref(null)
 
 const closePointPopup = () => { showPointPopup.value = false; selectedPoint.value = null; popupTriggerRef.value = null }
 const closePointContextMenu = () => { showPointContextMenu.value = false; selectedPoint.value = null }
-const openPointProperties = () => {
-  const current = selectedPoint.value
-  console.debug('[DEBUG] openPointProperties current before close:', current)
-  closePointPopup(); closePointContextMenu()
-  // restore selectedPoint quickly
-  selectedPoint.value = current
-  console.debug('[DEBUG] openPointProperties restored selectedPoint:', selectedPoint.value)
-  showPointPropertiesDialog.value = true
-}
+const openPointProperties = () => { const current = selectedPoint.value; closePointPopup(); closePointContextMenu(); selectedPoint.value = current; showPointPropertiesDialog.value = true }
 
 const deletePoint = async () => {
   if (!selectedPoint.value) return
@@ -145,9 +136,7 @@ const deletePoint = async () => {
 }
 
 const savePointProperties = (updatedProperties) => {
-  // debug: print incoming payload to help diagnose save failures
-  try { console.debug('[DEBUG] savePointProperties payload:', updatedProperties, 'selectedPoint.id=', selectedPoint.value && selectedPoint.value.id) } catch (e) {}
-  // validate and normalize latlng
+  // normalize and validate latlng if provided
   if (updatedProperties && updatedProperties.latlng) {
     const lat = Number(updatedProperties.latlng.lat)
     const lng = Number(updatedProperties.latlng.lng)
@@ -158,42 +147,17 @@ const savePointProperties = (updatedProperties) => {
     }
   }
 
-  // require id to find canonical drawing object
-    // resolve canonical drawing object: prefer id, fallback to selectedPoint reference or name+latlng
-    let idx = -1
-    if (updatedProperties && updatedProperties.pointRef) {
-      idx = props.drawings.findIndex(d => d === updatedProperties.pointRef)
-      console.debug('[DEBUG] drawings lookup by reference idx=', idx)
-      if (idx === -1 && updatedProperties.pointRef && updatedProperties.pointRef.id) {
-        idx = props.drawings.findIndex(d => d.id === updatedProperties.pointRef.id)
-      }
-    } else if (updatedProperties && updatedProperties.id) {
-      idx = props.drawings.findIndex(d => d.id === updatedProperties.id)
-      console.debug('[DEBUG] drawings lookup by id idx=', idx, 'drawings.length=', props.drawings.length)
-    } else if (selectedPoint.value) {
-      // try to find by reference first
-      idx = props.drawings.findIndex(d => d === selectedPoint.value)
-      if (idx === -1 && selectedPoint.value.id) {
-        idx = props.drawings.findIndex(d => d.id === selectedPoint.value.id)
-      }
-      // fallback to name+latlng match
-      if (idx === -1 && selectedPoint.value.name && selectedPoint.value.latlng) {
-        idx = props.drawings.findIndex(d => d.name === selectedPoint.value.name && d.latlng && d.latlng.lat === selectedPoint.value.latlng.lat && d.latlng.lng === selectedPoint.value.latlng.lng)
-      }
-      console.debug('[DEBUG] drawings lookup by selectedPoint fallback idx=', idx)
-    } else {
-      console.warn('[DEBUG] savePointProperties missing id and no selectedPoint: payload', updatedProperties)
-    }
+  // resolve target by id (primary) or selectedPoint (fallback)
+  let idx = -1
+  if (updatedProperties && updatedProperties.id) {
+    idx = props.drawings.findIndex(d => d.id === updatedProperties.id)
+  } else if (selectedPoint.value) {
+    idx = props.drawings.findIndex(d => d === selectedPoint.value || (selectedPoint.value.id && d.id === selectedPoint.value.id))
+  }
+  if (idx === -1) return
+  const target = props.drawings[idx]
 
-    if (idx === -1) {
-      console.warn('[DEBUG] savePointProperties could not resolve a target drawing for payload:', updatedProperties)
-      return
-    }
-
-    const target = props.drawings[idx]
-    try { console.debug('[DEBUG] savePointProperties resolved target id=', target && target.id, 'target.icon=', target && target.icon) } catch (e) {}
-
-  // detect previous state
+  // capture previous state before applying updates
   const prevIcon = target.icon
   const prevLatLng = target.latlng && { ...target.latlng }
 
@@ -220,10 +184,8 @@ const savePointProperties = (updatedProperties) => {
         const newMarker = L.marker(currentLatLng, { icon: createPointIcon(target), pointId: target.id, riseOnHover: true }).addTo(props.mapInstance.drawingLayerGroup)
         setupMarkerEvents(newMarker, target, props.drawings, props.mapInstance)
         target.marker = newMarker
-        try { const el = target.marker.getElement(); console.debug('[DEBUG] marker recreated, marker.innerHTML=', el && el.innerHTML) } catch(e) {}
       } else {
-        target.marker.setIcon(createPointIcon(target))
-        try { const el = target.marker.getElement(); console.debug('[DEBUG] marker setIcon called, marker.innerHTML=', el && el.innerHTML) } catch(e) {}
+        try { target.marker.setIcon(createPointIcon(target)) } catch (err) {}
       }
     } catch (e) {
       try { target.marker.setIcon(createPointIcon(target)) } catch (err) {}
@@ -235,15 +197,7 @@ const savePointProperties = (updatedProperties) => {
 
 const handleSaveFromDialog = (updatedProperties) => { try { savePointProperties(updatedProperties) } catch (e) { console.error('[InteractiveManager] savePointProperties threw error:', e) } }
 
-const handleSaveRefFromDialog = (pointRef, payload) => {
-  try {
-    console.debug('[DEBUG] handleSaveRefFromDialog received pointRef:', pointRef, 'payload:', payload)
-    // forward to savePointProperties with explicit pointRef
-    savePointProperties({ pointRef, ...payload })
-  } catch (e) {
-    console.error('[InteractiveManager] handleSaveRefFromDialog error:', e)
-  }
-}
+// Note: 'save-ref' event and handleSaveRefFromDialog were removed; keep code path minimal and id-based.
 
 const closeLinePopup = () => { showLinePopup.value = false; selectedLine.value = null; popupTriggerRef.value = null }
 const closeLineContextMenu = () => { showLineContextMenu.value = false; selectedLine.value = null }
@@ -261,11 +215,7 @@ const deletePolygon = async () => { if (!selectedPolygon.value) return; try { aw
 
 const savePolygonProperties = (updatedProperties) => { if (!selectedPolygon.value) return; Object.assign(selectedPolygon.value, updatedProperties); if (selectedPolygon.value.polygon) updatePolygonStyle(selectedPolygon.value.polygon, selectedPolygon.value); const index = props.drawings.findIndex(d => d.id === selectedPolygon.value.id); if (index !== -1) Object.assign(props.drawings[index], updatedProperties); ElMessage.success('面积属性已更新') }
 
-const handlePointClick = (e) => {
-  console.debug('[DEBUG] handlePointClick received event.point:', e.point)
-  selectedPoint.value = e.point
-  const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showPointPopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100)
-}
+const handlePointClick = (e) => { selectedPoint.value = e.point; const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showPointPopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100) }
 
 const handlePointContextMenu = (e) => { selectedPoint.value = e.point; contextMenuPosition.value = e.position; showPointContextMenu.value = true }
 const handleLineClick = (e) => { selectedLine.value = e.line; const triggerEl = document.createElement('div'); triggerEl.style.position = 'absolute'; triggerEl.style.left = e.containerPoint.x + 'px'; triggerEl.style.top = e.containerPoint.y + 'px'; triggerEl.style.width = '1px'; triggerEl.style.height = '1px'; triggerEl.style.pointerEvents = 'none'; props.mapInstance.getContainer().appendChild(triggerEl); popupTriggerRef.value = triggerEl; showLinePopup.value = true; setTimeout(() => { if (triggerEl.parentNode) triggerEl.parentNode.removeChild(triggerEl) }, 100) }

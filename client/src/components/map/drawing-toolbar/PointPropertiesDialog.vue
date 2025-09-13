@@ -102,7 +102,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'save', 'save-ref'])
+const emit = defineEmits(['update:modelValue', 'save'])
 
 const dialogVisible = ref(false)
 const formRef = ref(null)
@@ -145,7 +145,7 @@ const iconOptions = [
 watch(() => props.modelValue, (val) => {
   dialogVisible.value = val
   if (val) {
-    try { console.debug('[DEBUG] PointPropertiesDialog opened with props.point:', props.point) } catch (e) {}
+  // debug: PointPropertiesDialog opened (suppressed)
     const p = props.point || {}
     // 初始化表单数据，添加默认名称
     const defaultName = p.name && String(p.name).trim() ? p.name : `点位${Date.now().toString().slice(-6)}`
@@ -195,11 +195,6 @@ const handleSave = async () => {
     }
 
   // emit minimal save payload; parent will use selectedPoint or id to locate the drawing
-  try { console.debug('[DEBUG] PointPropertiesDialog emitting save-ref with pointRef and payload') } catch (e) {}
-  try { console.debug('[DEBUG] PointPropertiesDialog props.point before emit:', props.point) } catch (e) {}
-  // emit a separate event carrying the raw reference (point object) and the payload
-  emit('save-ref', props.point, { id: formData.id, ...formData })
-  try { console.debug('[DEBUG] PointPropertiesDialog emitting save with payload:', { id: props.point?.id, ...formData }) } catch (e) {}
   emit('save', { id: formData.id, ...formData })
     handleClose()
   } catch (error) {

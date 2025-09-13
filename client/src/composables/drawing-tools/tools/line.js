@@ -11,23 +11,22 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
     // 防止在点击已有线段时触发绘制
     if (e.originalEvent && e.originalEvent.target && 
         e.originalEvent.target.closest('.interactive-line')) {
-      console.log('[line] click blocked by existing interactive line')
+      dlog('[line] click blocked by existing interactive line')
       return
     }
 
-    console.log('[line] handleClick, isDrawing=', isDrawing, 'latlng=', e.latlng)
-    dlog('绘制线:', e.latlng)
+    dlog('[line] handleClick, isDrawing=', isDrawing, 'latlng=', e.latlng)
     if (!isDrawing) {
       isDrawing = true
       points = [e.latlng]
       polyline = L.polyline([e.latlng], { color: '#3388ff', weight: 3, opacity: 0.8 }).addTo(
         mapInstance.drawingLayerGroup
       )
-      console.log('[line] started drawing, temp polyline created')
+  dlog('[line] started drawing, temp polyline created')
     } else {
       points.push(e.latlng)
       polyline.addLatLng(e.latlng)
-      console.log('[line] added point, total points:', points.length)
+  dlog('[line] added point, total points:', points.length)
     }
   }
 
@@ -35,13 +34,12 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
     // 防止在点击已有线段时触发完成绘制
     if (e.originalEvent && e.originalEvent.target && 
         e.originalEvent.target.closest('.interactive-line')) {
-      console.log('[line] dblclick blocked by existing interactive line')
+      dlog('[line] dblclick blocked by existing interactive line')
       return
     }
-
-    console.log('[line] handleDoubleClick, isDrawing=', isDrawing, 'points.length=', points.length)
+    dlog('[line] handleDoubleClick, isDrawing=', isDrawing, 'points.length=', points.length)
     if (isDrawing && points.length >= 2) {
-      console.log('[line] finishing drawing with', points.length, 'points')
+      dlog('[line] finishing drawing with', points.length, 'points')
       dlog('线条绘制完成')
       isDrawing = false
       
@@ -84,7 +82,7 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
       
   // 存储polyline引用到线段数据中
   lineData.polyline = interactivePolyline
-  console.log('[line] interactive polyline created:', lineId)
+  dlog('[line] interactive polyline created:', lineId)
       
   // 设置线段事件
   setupLineEvents(interactivePolyline, lineData, drawings, mapInstance)
@@ -92,7 +90,7 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
       // 添加到绘图数组
       drawings.value.push(lineData)
       
-      dlog('线段已添加:', lineData)
+  dlog('线段已添加:', lineData)
       
       // 重置状态
       points = []
@@ -103,7 +101,7 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
   // 右键完成绘制
   const handleRightClick = (e) => {
     if (isDrawing && points.length >= 2) {
-      console.log('[line] right click to finish drawing')
+  dlog('[line] right click to finish drawing')
       // 调用完成绘制逻辑，复用 handleDoubleClick 的逻辑
       handleDoubleClick(e)
     }
@@ -112,7 +110,7 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
   // 完成当前绘制的函数（供外部调用）
   const finishCurrentDrawing = () => {
     if (isDrawing && points.length >= 2) {
-      console.log('[line] finishing current drawing due to tool switch')
+  dlog('[line] finishing current drawing due to tool switch')
       // 创建一个模拟事件来完成绘制
       handleDoubleClick({ originalEvent: null })
     }
@@ -143,8 +141,8 @@ function calculateDistance(latlngs) {
 function setupLineEvents(polyline, lineData, drawings, mapInstance) {
   // 左键点击事件 - 显示信息弹窗
   polyline.on('click', (e) => {
-    console.log('[line] click handler fired for:', lineData && lineData.name)
-    dlog('点击线段:', lineData.name)
+  dlog('[line] click handler fired for:', lineData && lineData.name)
+  dlog('点击线段:', lineData.name)
     L.DomEvent.stopPropagation(e)
     
     // 触发自定义事件，由DrawingToolbar组件监听
@@ -157,7 +155,7 @@ function setupLineEvents(polyline, lineData, drawings, mapInstance) {
   
   // 右键点击事件 - 显示上下文菜单
   polyline.on('contextmenu', (e) => {
-    console.log('[line] contextmenu handler fired for:', lineData && lineData.name)
+    dlog('[line] contextmenu handler fired for:', lineData && lineData.name)
     dlog('右键点击线段:', lineData.name)
     L.DomEvent.stopPropagation(e)
     L.DomEvent.preventDefault(e)

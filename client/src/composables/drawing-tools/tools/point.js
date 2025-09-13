@@ -73,7 +73,6 @@ function createPointIcon(pointData) {
 function setupMarkerEvents(marker, pointData, drawings, mapInstance) {
   // 左键点击事件 - 显示信息弹窗
   marker.on('click', (e) => {
-    console.log('[point] click handler fired for:', pointData && pointData.name)
     dlog('点击点位:', pointData.name)
     L.DomEvent.stopPropagation(e)
     
@@ -87,7 +86,6 @@ function setupMarkerEvents(marker, pointData, drawings, mapInstance) {
   
   // 右键点击事件 - 显示上下文菜单
   marker.on('contextmenu', (e) => {
-    console.log('[point] contextmenu handler fired for:', pointData && pointData.name)
     dlog('右键点击点位:', pointData.name)
     L.DomEvent.stopPropagation(e)
     L.DomEvent.preventDefault(e)

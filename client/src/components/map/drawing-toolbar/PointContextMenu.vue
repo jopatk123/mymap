@@ -47,7 +47,7 @@ watch(() => props.visible, async (visible) => {
   if (visible && dropdownRef.value) {
     await nextTick()
     // 获取下拉菜单的DOM元素并设置位置，增加空值检查以防止 runtime 错误
-    console.log('[PointContextMenu] visible, position=', props.position)
+  // debug: context menu visible at position (suppressed)
     const popperEl = dropdownRef.value?.popperRef?.contentRef
     const pos = props.position || { x: 0, y: 0 }
     if (popperEl && popperEl.style) {
