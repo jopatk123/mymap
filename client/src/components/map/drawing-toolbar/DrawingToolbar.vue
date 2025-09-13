@@ -18,14 +18,14 @@
         </div>
         <!-- 测距工具 -->
         <el-tooltip content="测距工具" placement="left">
-          <el-button
-            :type="activeTool === 'measure' ? 'primary' : 'default'"
-            :class="{ active: activeTool === 'measure' }"
-            @click="toggleTool('measure')"
-            circle
-          >
-            <el-icon><Compass /></el-icon>
-          </el-button>
+            <el-button
+              :type="activeTool === 'measure' ? 'primary' : 'default'"
+              :class="[{ active: activeTool === 'measure' }, 'btn-measure']"
+              @click="toggleTool('measure')"
+              circle
+            >
+              <el-icon><Compass /></el-icon>
+            </el-button>
         </el-tooltip>
 
         <!-- 添加点工具 -->
@@ -92,6 +92,7 @@
             @click="clearAll"
             :disabled="!hasDrawings"
             circle
+            class="btn-clear"
           >
             <el-icon><Delete /></el-icon>
           </el-button>
@@ -252,9 +253,9 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  background: white;
+  background: transparent;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: none; /* 移除阴影，因为透明背景不需要 */
   z-index: 1000;
   transition: all 0.3s ease;
   display: flex;
@@ -300,6 +301,7 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   cursor: pointer;
   border-radius: 8px;
   margin-bottom: 6px;
+  transform: translateX(-2px); /* 微微左移以与按钮视觉对齐 */
   box-shadow: 0 1px 4px rgba(64,158,255,0.15);
 
   .el-icon {
@@ -308,8 +310,11 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
 }
 
 .toolbar-content {
-  padding: 8px;
-  min-width: 56px;
+  padding: 6px 6px !important; /* 左右padding相等确保居中 */
+  min-width: 48px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .tool-buttons {
@@ -317,16 +322,31 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   flex-direction: column;
   gap: 6px;
   align-items: center;
+  width: 100%;
+}
+
+/* 确保所有按钮完全居中对齐 */
+.tool-buttons > * {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  align-self: center !important;
+}
+
+/* 特别处理内联切换按钮的对齐 */
+.toolbar-toggle-inline {
+  align-self: center !important;
+  transform: none !important; /* 移除之前的左移 */
 }
 
 .el-button {
   width: 36px;
   height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: 50%;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  margin: 0 !important; /* 确保没有额外margin */
   
   &.active {
     transform: scale(1.05);
