@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps } from 'vue'
+import { ref } from 'vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import PanoramaUploadArea from './PanoramaUploadArea.vue'
 import { usePanoramaProcessor } from '@/composables/use-file-processor'

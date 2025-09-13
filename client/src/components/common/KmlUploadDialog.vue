@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, defineEmits, defineProps } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import BaseUploadDialog from './BaseUploadDialog.vue'
 import KmlUploadArea from './KmlUploadArea.vue'

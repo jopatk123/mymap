@@ -39,7 +39,7 @@ import ToolbarButtons from './ToolbarButtons.vue'
 import InteractiveManager from './InteractiveManager.vue'
 
 // 调试开关与小工具（与 composable 保持一致）
-const DEBUG = false
+const DEBUG = true
 function dlog(...args) { if (DEBUG) console.log(...args) }
 
 // Props
@@ -105,11 +105,19 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   dlog('地图实例变化:', oldMap, '=>', newMap)
   if (newMap) {
     // 等待下一个tick确保地图完全渲染
+    // 等待 DOM / 子组件多次 tick，确保 interactiveManagerRef 被挂载
+    await nextTick()
     await nextTick()
     dlog('初始化绘图工具')
     initializeTools(newMap)
-    
-    // 设置事件监听
+
+    // 如果 interactiveManagerRef 还不可用，继续等待一次微任务再尝试
+    if (!interactiveManagerRef.value) {
+      dlog('interactiveManagerRef not ready, waiting another tick')
+      await nextTick()
+    }
+
+    // 设置事件监听（在 manager 可用后绑定）
     setupEventListeners(newMap)
   }
 }, { immediate: true })
@@ -121,16 +129,31 @@ const setupEventListeners = (map) => {
   const manager = interactiveManagerRef.value
   
   // 监听点位事件
-  map.on('point:click', manager.handlePointClick)
-  map.on('point:contextmenu', manager.handlePointContextMenu)
-  
+  if (manager.handlePointClick && manager.handlePointContextMenu) {
+    map.on('point:click', manager.handlePointClick)
+    map.on('point:contextmenu', manager.handlePointContextMenu)
+    dlog('bound point:click and point:contextmenu on map')
+  } else {
+    dlog('point handlers missing on manager:', !!manager.handlePointClick, !!manager.handlePointContextMenu)
+  }
+
   // 监听线段事件
-  map.on('line:click', manager.handleLineClick)
-  map.on('line:contextmenu', manager.handleLineContextMenu)
-  
-  // 监听面积事件
-  map.on('polygon:click', manager.handlePolygonClick)
-  map.on('polygon:contextmenu', manager.handlePolygonContextMenu)
+  if (manager.handleLineClick && manager.handleLineContextMenu) {
+    map.on('line:click', manager.handleLineClick)
+    map.on('line:contextmenu', manager.handleLineContextMenu)
+    dlog('bound line:click and line:contextmenu on map')
+  } else {
+    dlog('line handlers missing on manager:', !!manager.handleLineClick, !!manager.handleLineContextMenu)
+  }
+
+  // 监听面域事件
+  if (manager.handlePolygonClick && manager.handlePolygonContextMenu) {
+    map.on('polygon:click', manager.handlePolygonClick)
+    map.on('polygon:contextmenu', manager.handlePolygonContextMenu)
+    dlog('bound polygon:click and polygon:contextmenu on map')
+  } else {
+    dlog('polygon handlers missing on manager:', !!manager.handlePolygonClick, !!manager.handlePolygonContextMenu)
+  }
 }
 </script>
 

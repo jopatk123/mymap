@@ -46,13 +46,19 @@ const dropdownRef = ref(null)
 watch(() => props.visible, async (visible) => {
   if (visible && dropdownRef.value) {
     await nextTick()
-    // 获取下拉菜单的DOM元素并设置位置
+    // 获取下拉菜单的DOM元素并设置位置，增加空值检查以防止 runtime 错误
     const popperEl = dropdownRef.value?.popperRef?.contentRef
-    if (popperEl) {
-      popperEl.style.position = 'fixed'
-      popperEl.style.left = props.position.x + 'px'
-      popperEl.style.top = props.position.y + 'px'
-      popperEl.style.zIndex = '9999'
+    const pos = props.position || { x: 0, y: 0 }
+    if (popperEl && popperEl.style) {
+      try {
+        popperEl.style.position = 'fixed'
+        // 仅在 pos.x/pos.y 有效时设置 left/top
+        if (typeof pos.x === 'number') popperEl.style.left = pos.x + 'px'
+        if (typeof pos.y === 'number') popperEl.style.top = pos.y + 'px'
+        popperEl.style.zIndex = '9999'
+      } catch (err) {
+        console.warn('[PolygonContextMenu] 设置 context menu 位置失败', err)
+      }
     }
   }
 })

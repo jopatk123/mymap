@@ -70,3 +70,12 @@
   pointer-events: none;
   z-index: 1000;
 }
+
+/* 确保交互式线/面可以接收鼠标事件 */
+.interactive-line, .interactive-polygon {
+  pointer-events: visibleStroke; /* 使 stroke 可被点击（对线） */
+}
+
+.interactive-polygon {
+  pointer-events: visiblePainted; /* 使填充区域可接收事件（对面） */
+}

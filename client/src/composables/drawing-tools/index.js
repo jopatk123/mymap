@@ -118,10 +118,10 @@ export function useDrawingTools() {
         createPointTool(mapInstance, drawings, register)
         break
       case 'line':
-        createLineTool(mapInstance, drawings, register)
+        createLineTool(mapInstance, drawings, register, onCleanup)
         break
       case 'polygon':
-        createPolygonTool(mapInstance, drawings, register)
+        createPolygonTool(mapInstance, drawings, register, onCleanup)
         break
       case 'draw':
         createFreeDrawTool(mapInstance, drawings, register, onCleanup)

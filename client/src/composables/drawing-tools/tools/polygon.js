@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import { dlog } from '../utils/debug.js'
 
-export function createPolygonTool(mapInstance, drawings, register) {
+export function createPolygonTool(mapInstance, drawings, register, onCleanup) {
   dlog('设置添加面工具')
   let isDrawing = false
   let points = []
@@ -11,9 +11,11 @@ export function createPolygonTool(mapInstance, drawings, register) {
     // 防止在点击已有面积时触发绘制
     if (e.originalEvent && e.originalEvent.target && 
         e.originalEvent.target.closest('.interactive-polygon')) {
+      console.log('[polygon] click blocked by existing interactive polygon')
       return
     }
 
+    console.log('[polygon] handleClick, isDrawing=', isDrawing, 'latlng=', e.latlng)
     dlog('绘制多边形:', e.latlng)
     if (!isDrawing) {
       isDrawing = true
@@ -25,9 +27,11 @@ export function createPolygonTool(mapInstance, drawings, register) {
         fillColor: '#3388ff',
         fillOpacity: 0.2
       }).addTo(mapInstance.drawingLayerGroup)
+      console.log('[polygon] started drawing, temp polygon created')
     } else {
       points.push(e.latlng)
       polygon.setLatLngs([...points])
+      console.log('[polygon] added point, total points:', points.length)
     }
   }
 
@@ -35,10 +39,13 @@ export function createPolygonTool(mapInstance, drawings, register) {
     // 防止在点击已有面积时触发完成绘制
     if (e.originalEvent && e.originalEvent.target && 
         e.originalEvent.target.closest('.interactive-polygon')) {
+      console.log('[polygon] dblclick blocked by existing interactive polygon')
       return
     }
 
+    console.log('[polygon] handleDoubleClick, isDrawing=', isDrawing, 'points.length=', points.length)
     if (isDrawing && points.length >= 3) {
+      console.log('[polygon] finishing drawing with', points.length, 'points')
       dlog('多边形绘制完成')
       isDrawing = false
       
@@ -78,15 +85,19 @@ export function createPolygonTool(mapInstance, drawings, register) {
         weight: polygonData.weight,
         opacity: polygonData.opacity,
         fillOpacity: polygonData.fillOpacity,
+        // 确保可以接收鼠标事件并允许事件向上传播到 map
+        interactive: true,
+        bubblingMouseEvents: true,
         className: 'interactive-polygon',
         polygonId: polygonId
       }).addTo(mapInstance.drawingLayerGroup)
       
-      // 存储polygon引用到面积数据中
-      polygonData.polygon = interactivePolygon
+  // 存储polygon引用到面积数据中
+  polygonData.polygon = interactivePolygon
+  console.log('[polygon] interactive polygon created:', polygonId)
       
-      // 设置面积事件
-      setupPolygonEvents(interactivePolygon, polygonData, drawings, mapInstance)
+  // 设置面积事件
+  setupPolygonEvents(interactivePolygon, polygonData, drawings, mapInstance)
       
       // 添加到绘图数组
       drawings.value.push(polygonData)
@@ -99,7 +110,34 @@ export function createPolygonTool(mapInstance, drawings, register) {
     }
   }
 
-  register({ click: handleClick, dblclick: handleDoubleClick })
+  // 右键完成绘制
+  const handleRightClick = (e) => {
+    if (isDrawing && points.length >= 3) {
+      console.log('[polygon] right click to finish drawing')
+      // 调用完成绘制逻辑，复用 handleDoubleClick 的逻辑
+      handleDoubleClick(e)
+    }
+  }
+
+  // 完成当前绘制的函数（供外部调用）
+  const finishCurrentDrawing = () => {
+    if (isDrawing && points.length >= 3) {
+      console.log('[polygon] finishing current drawing due to tool switch')
+      // 创建一个模拟事件来完成绘制
+      handleDoubleClick({ originalEvent: null })
+    }
+  }
+
+  // 注册清理函数，在工具切换时完成当前绘制
+  if (onCleanup) {
+    onCleanup(finishCurrentDrawing)
+  }
+
+  register({ 
+    click: handleClick, 
+    dblclick: handleDoubleClick,
+    contextmenu: handleRightClick 
+  })
 }
 
 // 计算面积 (平方米)
@@ -138,6 +176,7 @@ function calculatePerimeter(latlngs) {
 function setupPolygonEvents(polygon, polygonData, drawings, mapInstance) {
   // 左键点击事件 - 显示信息弹窗
   polygon.on('click', (e) => {
+    console.log('[polygon] click handler fired for:', polygonData && polygonData.name)
     dlog('点击面积:', polygonData.name)
     L.DomEvent.stopPropagation(e)
     
@@ -151,6 +190,7 @@ function setupPolygonEvents(polygon, polygonData, drawings, mapInstance) {
   
   // 右键点击事件 - 显示上下文菜单
   polygon.on('contextmenu', (e) => {
+    console.log('[polygon] contextmenu handler fired for:', polygonData && polygonData.name)
     dlog('右键点击面积:', polygonData.name)
     L.DomEvent.stopPropagation(e)
     L.DomEvent.preventDefault(e)
