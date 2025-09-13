@@ -1,7 +1,7 @@
 <template>
   <div class="drawing-toolbar" :class="{ collapsed: isCollapsed }">
-    <!-- 工具栏切换按钮 -->
-    <div class="toolbar-toggle" @click="toggleCollapse">
+    <!-- 折叠时显示的外部切换按钮（保持可展开） -->
+    <div class="toolbar-toggle" v-show="isCollapsed" @click="toggleCollapse">
       <el-icon>
         <component :is="isCollapsed ? 'ArrowLeft' : 'ArrowRight'" />
       </el-icon>
@@ -9,9 +9,13 @@
 
     <!-- 工具按钮区域 -->
     <div class="toolbar-content" v-show="!isCollapsed">
-      <div class="toolbar-title">绘图工具</div>
-      
       <div class="tool-buttons">
+        <!-- 展开时内嵌的切换按钮（位于工具列顶部） -->
+        <div class="toolbar-toggle-inline" @click="toggleCollapse" role="button" tabindex="0">
+          <el-icon>
+            <component :is="isCollapsed ? 'ArrowLeft' : 'ArrowRight'" />
+          </el-icon>
+        </div>
         <!-- 测距工具 -->
         <el-tooltip content="测距工具" placement="left">
           <el-button
@@ -264,8 +268,8 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
 }
 
 .toolbar-toggle {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -274,55 +278,85 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   cursor: pointer;
   border-radius: 8px 0 0 8px;
   transition: background 0.3s;
+  flex-shrink: 0;
 
   &:hover {
     background: #337ecc;
   }
 
   .el-icon {
-    font-size: 16px;
+    font-size: 14px;
+  }
+}
+
+.toolbar-toggle-inline {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #409eff;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 4px rgba(64,158,255,0.15);
+
+  .el-icon {
+    font-size: 14px;
   }
 }
 
 .toolbar-content {
-  padding: 16px;
-  min-width: 80px;
-}
-
-.toolbar-title {
-  font-size: 12px;
-  color: #606266;
-  text-align: center;
-  margin-bottom: 12px;
-  font-weight: 500;
+  padding: 8px;
+  min-width: 56px;
 }
 
 .tool-buttons {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .el-button {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
   
   &.active {
-    transform: scale(1.1);
+    transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
   }
   
   .el-icon {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
 
 .divider {
-  width: 24px;
+  width: 20px;
   height: 1px;
   background: #dcdfe6;
-  margin: 4px 0;
+  margin: 2px 0;
+}
+
+/* 确保危险/成功按钮的圆形和其它按钮一致并垂直对齐 */
+.el-button[type="danger"],
+.el-button.is-danger,
+.el-button[type="success"],
+.el-button.is-success {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .export-options {
@@ -359,15 +393,24 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
     right: 10px;
     
     .toolbar-content {
-      padding: 12px;
+      padding: 6px;
     }
     
     .el-button {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       
       .el-icon {
-        font-size: 14px;
+        font-size: 12px;
+      }
+    }
+    
+    .toolbar-toggle {
+      width: 32px;
+      height: 32px;
+      
+      .el-icon {
+        font-size: 12px;
       }
     }
   }
