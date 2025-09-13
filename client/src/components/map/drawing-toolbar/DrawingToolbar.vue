@@ -112,115 +112,8 @@
       </div>
     </div>
 
-    <!-- 优化的导出对话框 -->
-    <el-dialog
-      v-model="showExportDialog"
-      title="导出绘图数据"
-      width="520px"
-      :close-on-click-modal="false"
-      :append-to-body="true"
-      :modal="true"
-      class="export-dialog"
-    >
-      <div class="export-content">
-        <!-- 数据预览区域 -->
-        <div class="data-preview">
-          <h4>绘图数据概览</h4>
-          <div class="preview-stats">
-            <el-row :gutter="12">
-              <el-col :span="6">
-                <div class="stat-item">
-                  <div class="stat-number">{{ drawingStats.points || 0 }}</div>
-                  <div class="stat-label">点位</div>
-                </div>
-              </el-col>
-              <el-col :span="6">
-                <div class="stat-item">
-                  <div class="stat-number">{{ drawingStats.lines || 0 }}</div>
-                  <div class="stat-label">线条</div>
-                </div>
-              </el-col>
-              <el-col :span="6">
-                <div class="stat-item">
-                  <div class="stat-number">{{ drawingStats.polygons || 0 }}</div>
-                  <div class="stat-label">区域</div>
-                </div>
-              </el-col>
-              <el-col :span="6">
-                <div class="stat-item">
-                  <div class="stat-number">{{ drawingStats.measurements || 0 }}</div>
-                  <div class="stat-label">测距</div>
-                </div>
-              </el-col>
-            </el-row>
-          </div>
-        </div>
-
-        <!-- 导出格式选择 -->
-        <div class="export-format">
-          <h4>导出格式</h4>
-          <el-radio-group v-model="exportFormat" class="format-options">
-            <el-radio label="kml" class="format-option">
-              <div class="format-info">
-                <div class="format-name">KML 格式</div>
-                <div class="format-desc">适用于 Google Earth 等地理信息软件</div>
-              </div>
-            </el-radio>
-            <el-radio label="csv" class="format-option">
-              <div class="format-info">
-                <div class="format-name">CSV 格式</div>
-                <div class="format-desc">适用于 Excel 等表格处理软件</div>
-              </div>
-            </el-radio>
-            <el-radio label="geojson" class="format-option">
-              <div class="format-info">
-                <div class="format-name">GeoJSON 格式</div>
-                <div class="format-desc">适用于 Web 地图应用和 GIS 软件</div>
-              </div>
-            </el-radio>
-          </el-radio-group>
-        </div>
-
-        <!-- 导出选项 -->
-        <div class="export-settings">
-          <h4>导出选项</h4>
-          <el-checkbox-group v-model="exportOptions">
-            <el-checkbox label="includeStyles">包含样式信息</el-checkbox>
-            <el-checkbox label="includeTimestamp">包含时间戳</el-checkbox>
-            <el-checkbox label="compressOutput">压缩输出文件</el-checkbox>
-          </el-checkbox-group>
-        </div>
-
-        <!-- 文件名设置 -->
-        <div class="filename-setting">
-          <h4>文件名</h4>
-          <el-input 
-            v-model="exportFilename" 
-            placeholder="请输入文件名"
-            :suffix-icon="Edit"
-          >
-            <template #prepend>绘图数据_</template>
-            <template #append>.{{ exportFormat }}</template>
-          </el-input>
-        </div>
-      </div>
-      
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="showExportDialog = false">取消</el-button>
-          <el-button @click="previewData" :disabled="!hasDrawings">预览</el-button>
-          <el-button 
-            type="primary" 
-            @click="exportData" 
-            :loading="exporting"
-            :disabled="!hasDrawings"
-          >
-            <el-icon><Download /></el-icon>
-            导出下载
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    <!-- 导出对话框（子组件） -->
+    <ExportDialog v-model="showExportDialog" />
   </div>
 </template>
 
@@ -233,12 +126,11 @@ import {
   Location, 
   Minus, 
   Operation, 
-  Edit, 
-  Delete, 
-  Download 
+  Delete
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useDrawingTools } from '@/composables/drawing-tools.js'
+import ExportDialog from './ExportDialog.vue'
 
 // Props
 const props = defineProps({
@@ -250,51 +142,13 @@ const props = defineProps({
 
 // 响应式状态
 const isCollapsed = ref(false)
+// 导出弹窗显隐
 const showExportDialog = ref(false)
-const exportFormat = ref('kml')
-const exporting = ref(false)
-
-// 新增的导出对话框相关状态
-const exportOptions = ref(['includeStyles', 'includeTimestamp'])
-const exportFilename = ref(`drawing_${new Date().toISOString().split('T')[0]}`)
-
-// 绘图数据统计
-const drawingStats = computed(() => {
-  const stats = {
-    points: 0,
-    lines: 0,
-    polygons: 0,
-    measurements: 0
-  }
-  
-  // 从 useDrawingTools 获取绘图数据并统计
-  if (drawings && drawings.value) {
-    drawings.value.forEach(item => {
-      switch (item.type) {
-        case 'point':
-          stats.points++
-          break
-        case 'line':
-          stats.lines++
-          break
-        case 'polygon':
-          stats.polygons++
-          break
-        case 'measure':
-          stats.measurements++
-          break
-      }
-    })
-  }
-  
-  return stats
-})
 
 // 使用绘图工具 composable
 const {
   activeTool,
   hasDrawings,
-  drawings,
   initializeTools,
   activateTool,
   deactivateTool,
@@ -330,69 +184,7 @@ const clearAll = async () => {
   }
 }
 
-// 预览数据方法
-const previewData = () => {
-  if (!hasDrawings.value) {
-    ElMessage.info('暂无绘图数据可预览')
-    return
-  }
-  
-  const stats = drawingStats.value
-  const totalItems = stats.points + stats.lines + stats.polygons + stats.measurements
-  
-  const details = []
-  if (stats.points > 0) details.push(`${stats.points}个点位`)
-  if (stats.lines > 0) details.push(`${stats.lines}条线段`)
-  if (stats.polygons > 0) details.push(`${stats.polygons}个面区域`)  
-  if (stats.measurements > 0) details.push(`${stats.measurements}个测距`)
-  
-  ElMessage({
-    type: 'info',
-    message: `当前绘图数据：共${totalItems}项 (${details.join('、')})`,
-    duration: 4000
-  })
-}
-
-// 优化的导出方法
-const exportData = async () => {
-  if (!hasDrawings.value) {
-    ElMessage.warning('暂无绘图数据可导出')
-    return
-  }
-  
-  try {
-    exporting.value = true
-    
-    // 构建导出配置
-    const exportConfig = {
-      format: exportFormat.value,
-      filename: exportFilename.value || `drawing_${new Date().toISOString().split('T')[0]}`,
-      options: {
-        includeStyles: exportOptions.value.includes('includeStyles'),
-        includeTimestamp: exportOptions.value.includes('includeTimestamp'), 
-        compressOutput: exportOptions.value.includes('compressOutput')
-      }
-    }
-    
-    await exportDrawings(exportConfig.format)
-    
-    ElMessage({
-      type: 'success',
-      message: `${exportFormat.value.toUpperCase()} 文件已成功导出`,
-      duration: 3000
-    })
-    
-    showExportDialog.value = false
-    
-    // 重置文件名为新的时间戳
-    exportFilename.value = `drawing_${new Date().toISOString().split('T')[0]}`
-    
-  } catch (error) {
-    ElMessage.error('导出失败: ' + error.message)
-  } finally {
-    exporting.value = false
-  }
-}
+// 删除导出相关逻辑，改由子组件处理
 
 // 监听地图实例变化
 import { watch, nextTick } from 'vue'
@@ -555,172 +347,7 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   justify-content: center;
 }
 
-/* 导出对话框样式 */
-.export-content {
-  padding: 0;
-  
-  .data-preview {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-    border: 1px solid #e9ecef;
-    
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      .el-icon {
-        color: #409eff;
-      }
-    }
-    
-    .preview-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-      
-      .stat-item {
-        background: white;
-        padding: 12px;
-        border-radius: 6px;
-        text-align: center;
-        border: 1px solid #ebeef5;
-        
-        .stat-value {
-          font-size: 18px;
-          font-weight: 600;
-          color: #409eff;
-          margin-bottom: 4px;
-        }
-        
-        .stat-label {
-          font-size: 12px;
-          color: #666;
-        }
-      }
-    }
-  }
-  
-  .export-format {
-    margin-bottom: 20px;
-    
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      .el-icon {
-        color: #67c23a;
-      }
-    }
-    
-    .el-radio-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      
-      .el-radio {
-        margin: 0;
-        
-        .el-radio__label {
-          font-size: 13px;
-          color: #666;
-        }
-        
-        &.is-checked .el-radio__label {
-          color: #409eff;
-        }
-      }
-    }
-  }
-  
-  .export-settings {
-    margin-bottom: 20px;
-    
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      .el-icon {
-        color: #e6a23c;
-      }
-    }
-    
-    .el-checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      
-      .el-checkbox {
-        margin: 0;
-        
-        .el-checkbox__label {
-          font-size: 13px;
-          color: #666;
-        }
-        
-        &.is-checked .el-checkbox__label {
-          color: #409eff;
-        }
-      }
-    }
-  }
-  
-  .filename-setting {
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      .el-icon {
-        color: #909399;
-      }
-    }
-    
-    .el-input {
-      .el-input__wrapper {
-        border-radius: 6px;
-        
-        &:hover {
-          box-shadow: 0 0 0 1px #c0c4cc inset;
-        }
-        
-        &.is-focus {
-          box-shadow: 0 0 0 1px #409eff inset;
-        }
-      }
-    }
-  }
-}
-
-.export-options {
-  padding: 16px 0;
-  
-  .el-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-}
+/* 移除导出对话框样式，已迁移到子组件 */
 
 // 画笔工具特殊状态样式
 .el-button.draw-tool-active {
@@ -769,17 +396,5 @@ watch(() => props.mapInstance, async (newMap, oldMap) => {
   }
 }
 
-/* 导出对话框全局样式 */
-:global(.export-dialog) {
-  z-index: 3000 !important; /* 确保对话框在最顶层 */
-}
-
-:global(.export-dialog .el-dialog) {
-  margin: 15vh auto !important;
-  max-width: 90vw !important;
-}
-
-:global(.export-dialog .el-overlay) {
-  z-index: 2999 !important;
-}
+/* 导出对话框全局样式移至子组件 */
 </style>
