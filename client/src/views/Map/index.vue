@@ -274,12 +274,16 @@ const handleLocate = ({ lat, lng, tip }) => {
 
 // 调试：监听 mapRef 和地图实例的变化
 import { watch } from 'vue'
+// 调试开关
+const DEBUG = false
+function dlog(...args) { if (DEBUG) console.log(...args) }
+
 watch(() => mapRef.value, (newMapRef) => {
-  console.log('主视图: mapRef 变化:', newMapRef)
+  dlog('主视图: mapRef 变化:', newMapRef)
 }, { immediate: true })
 
 watch(() => mapRef.value?.map, (newMap) => {
-  console.log('主视图: mapRef.map 变化:', newMap)
+  dlog('主视图: mapRef.map 变化:', newMap)
 }, { immediate: true })
 </script>
 

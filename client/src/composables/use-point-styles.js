@@ -2,6 +2,10 @@ import { ref } from 'vue'
 import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js'
 import styleManager from '@/utils/style-manager.js'
 
+// 文件局部调试开关
+const DEBUG = false
+const ddebug = (...args) => { if (DEBUG && console.debug) console.debug(...args) }
+
 export function usePointStyles() {
   const loading = ref(false)
   
@@ -76,9 +80,9 @@ export function usePointStyles() {
       const response = await videoPointStyleApi.getStyles()
       videoPointStyles.value = response.data
       
-      // 同步更新全局变量
-      window.videoPointStyles = { ...window.videoPointStyles, ...response.data }
-  console.debug && console.debug('🔄 已加载并同步视频点位样式:', response.data)
+    // 同步更新全局变量
+    window.videoPointStyles = { ...window.videoPointStyles, ...response.data }
+    ddebug('🔄 已加载并同步视频点位样式:', response.data)
       
       saveToLocalCache()
       return response.data
@@ -112,9 +116,9 @@ export function usePointStyles() {
       const response = await panoramaPointStyleApi.getStyles()
       panoramaPointStyles.value = response.data
       
-      // 同步更新全局变量
-      window.panoramaPointStyles = { ...window.panoramaPointStyles, ...response.data }
-  console.debug && console.debug('🔄 已加载并同步全景图点位样式:', response.data)
+    // 同步更新全局变量
+    window.panoramaPointStyles = { ...window.panoramaPointStyles, ...response.data }
+    ddebug('🔄 已加载并同步全景图点位样式:', response.data)
       
       saveToLocalCache()
       return response.data

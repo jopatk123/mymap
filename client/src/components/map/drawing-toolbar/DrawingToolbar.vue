@@ -126,11 +126,16 @@ import {
   Location, 
   Minus, 
   Operation, 
+  Edit,
+  Download,
   Delete
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useDrawingTools } from '@/composables/drawing-tools.js'
 import ExportDialog from './ExportDialog.vue'
+// 调试开关与小工具（与 composable 保持一致）
+const DEBUG = false
+function dlog(...args) { if (DEBUG) console.log(...args) }
 
 // Props
 const props = defineProps({
@@ -162,7 +167,7 @@ const toggleCollapse = () => {
 }
 
 const toggleTool = (toolType) => {
-  console.log('toggleTool called with:', toolType, 'mapInstance:', props.mapInstance)
+  dlog('toggleTool called with:', toolType, 'mapInstance:', props.mapInstance)
   
   if (activeTool.value === toolType) {
     deactivateTool()
@@ -189,11 +194,11 @@ const clearAll = async () => {
 // 监听地图实例变化
 import { watch, nextTick } from 'vue'
 watch(() => props.mapInstance, async (newMap, oldMap) => {
-  console.log('地图实例变化:', oldMap, '=>', newMap)
+  dlog('地图实例变化:', oldMap, '=>', newMap)
   if (newMap) {
     // 等待下一个tick确保地图完全渲染
     await nextTick()
-    console.log('初始化绘图工具')
+    dlog('初始化绘图工具')
     initializeTools(newMap)
   }
 }, { immediate: true })
