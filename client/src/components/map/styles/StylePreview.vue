@@ -66,8 +66,9 @@ const getPointColor = () => {
 // 点样式
 const pointStyle = computed(() => {
   const color = getPointColor()
-  const size = props.styleConfig.point_size || props.styleConfig.size || 8
-  const opacity = props.styleConfig.point_opacity || props.styleConfig.opacity || 1.0
+  // 强制为数字并提供默认值，避免字符串或 undefined 导致 NaN
+  const size = Number(props.styleConfig.point_size ?? props.styleConfig.size) || 8
+  const opacity = Number(props.styleConfig.point_opacity ?? props.styleConfig.opacity) || 1.0
   
   return {
     backgroundColor: color,

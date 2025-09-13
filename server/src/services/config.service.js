@@ -1,5 +1,6 @@
 const fs = require('fs').promises
 const path = require('path')
+const { logError } = require('../middleware/logger.middleware')
 
 class ConfigService {
   constructor() {
@@ -41,6 +42,7 @@ class ConfigService {
         await this.saveConfig(defaultConfig)
         return defaultConfig
       } else {
+        try { logError(error) } catch (e) {}
         return this.getDefaultConfig()
       }
     }
@@ -55,12 +57,53 @@ class ConfigService {
       } catch {
         await fs.mkdir(configDir, { recursive: true })
       }
-      
-      await fs.writeFile(this.configPath, JSON.stringify(newConfig, null, 2))
-      this.config = newConfig
-      this.lastModified = new Date()
-      return true
+      // 原子写入 + 重试策略：先写临时文件再重命名
+  // 使用包含 PID 和时间戳的唯一临时文件名，避免并发冲突
+  const tmpPath = `${this.configPath}.${process.pid}.${Date.now()}.tmp`
+      const payload = JSON.stringify(newConfig, null, 2)
+
+      const maxAttempts = 3
+      let attempt = 0
+      let lastErr = null
+
+      while (attempt < maxAttempts) {
+        try {
+          await fs.writeFile(tmpPath, payload, { encoding: 'utf8' })
+          // rename 是原子的（在同一文件系统上），用于替换目标文件
+          await fs.rename(tmpPath, this.configPath)
+          this.config = newConfig
+          this.lastModified = new Date()
+          return true
+        } catch (error) {
+          lastErr = error
+          attempt += 1
+          // 指数退避：50ms, 150ms
+          const delayMs = attempt === 1 ? 50 : 150
+          await new Promise((res) => setTimeout(res, delayMs))
+        }
+      }
+
+      // 所有尝试失败，记录详细堆栈到 error-debug.log 以便排查
+      try {
+        try { logError(lastErr) } catch (e) {}
+        // 修正日志目录：server/logs（相对于 server/src/services 是 ../../logs）
+        const logsDir = path.join(__dirname, '../../logs')
+        try {
+          await fs.access(logsDir)
+        } catch {
+          await fs.mkdir(logsDir, { recursive: true })
+        }
+        const errLogPath = path.join(logsDir, 'error-debug.log')
+        const entry = `[${new Date().toISOString()}] saveConfig failed for ${this.configPath} (attempts=${attempt}): ${lastErr && lastErr.stack ? lastErr.stack : String(lastErr)}\n`
+        await fs.appendFile(errLogPath, entry, { encoding: 'utf8' })
+      } catch (e) {
+        // 如果记录日志也失败，吞掉以免抛出二次错误
+      }
+      // 尝试清理残留的 tmp 文件（如果存在）以减少磁盘垃圾
+      try { await fs.unlink(tmpPath).catch(()=>{}) } catch(e) {}
+      return false
     } catch (error) {
+      try { logError(error) } catch (e) {}
       return false
     }
   }
@@ -99,7 +142,27 @@ class ConfigService {
     // 为向后兼容同步旧字段（不在前端暴露）
     merged.cluster_icon_color = merged.cluster_color
     config.kmlStyles[fileId] = merged
-    return await this.saveConfig(config)
+    const saved = await this.saveConfig(config)
+    if (!saved) {
+      // 记录更多上下文帮助排查 saveConfig 返回 false 的原因
+      try {
+        const fsSync = require('fs')
+        const fs = require('fs').promises
+        const path = require('path')
+        const logsDir = path.join(__dirname, '../../logs')
+        const errLogPath = path.join(logsDir, 'error-debug.log')
+        const configPath = this.configPath
+        let configStat = null
+        let configPreview = null
+        try { configStat = fsSync.statSync(configPath) } catch (e) { configStat = { error: e.message } }
+        try { const txt = await fs.readFile(configPath, 'utf8'); configPreview = txt.slice(0, 2000) } catch (e) { configPreview = `read error: ${e.message}` }
+        const entry = `\n[${new Date().toISOString()}] updateKmlStyles failed to save for fileId=${fileId}\nprocess.pid=${process.pid},uid=${process.getuid ? process.getuid() : 'n/a'},gid=${process.getgid ? process.getgid() : 'n/a'},cwd=${process.cwd()}\nconfigStat=${JSON.stringify(configStat)}\nconfigPreview=${configPreview}\nmerged=${JSON.stringify(merged).slice(0,2000)}\n`;
+        await fs.appendFile(errLogPath, entry, { encoding: 'utf8' })
+      } catch (e) {
+        try { /* swallow */ } catch (ee) {}
+      }
+    }
+    return saved
   }
 
   async deleteKmlStyles(fileId) {

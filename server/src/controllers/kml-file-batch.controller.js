@@ -29,7 +29,12 @@ class KmlFileBatchController {
 
       const affectedRows = await KmlFileModel.batchDelete(ids)
 
-      await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete)
+      // 事务性删除数据库记录后再删除物理文件，物理删除失败不应回滚数据库
+      try {
+        await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete)
+      } catch (fileErr) {
+        Logger.warn('批量物理文件删除部分失败（已忽略）:', fileErr)
+      }
 
       const ConfigService = require('../services/config.service')
       await ConfigService.batchDeleteKmlStyles(ids.map(id => id.toString()))

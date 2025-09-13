@@ -57,6 +57,92 @@ app.use(`/${config.upload.dir}`,
 app.set('trust proxy', true)
 
 // API路由
+  // 开发时：额外记录 GET/PUT /api/kml-files/:id/styles 的请求/响应，帮助复现前端 500 问题
+  if (config.server.env !== 'production') {
+    const responseDebugPath = path.join(__dirname, '../../server/logs/response-debug.log')
+    try {
+      // 确保目录存在
+      fs.mkdirSync(path.dirname(responseDebugPath), { recursive: true })
+    } catch (e) {
+      // ignore
+    }
+
+    app.use((req, res, next) => {
+      // 开发时：匹配并记录与 KML 文件相关的重要端点，方便复现前端 500
+      const isKmlListGet = (req.method === 'GET' && req.path === '/api/kml-files')
+      const isKmlStyles = (req.method === 'PUT' || req.method === 'GET') && /^\/api\/kml-files\/\d+\/styles$/.test(req.path)
+      const isAnyKmlFileOp = (req.method === 'GET' || req.method === 'PUT') && req.path.startsWith('/api/kml-files')
+
+      if (isKmlListGet || isKmlStyles || isAnyKmlFileOp) {
+        const start = Date.now()
+        // 捕获请求快照（包括 query、body 与额外头部以便对比）
+        const requestSnapshot = {
+          timestamp: new Date().toISOString(),
+          method: req.method,
+          path: req.path,
+          headers: {
+            'user-agent': req.get('user-agent') || '',
+            'host': req.get('host') || '',
+            'origin': req.get('origin') || '',
+            'referer': req.get('referer') || '',
+            'cookie': req.get('cookie') || '',
+            'authorization': req.get('authorization') || '',
+            'x-xsrf-token': req.get('x-xsrf-token') || req.get('x-xsrfheadername') || ''
+          },
+          query: req.query || {},
+          body: req.body || {}
+        }
+
+        // 捕获 response body：在 finish 时写入，避免丢失未通过 res.send 的情况
+        let chunks = []
+        const originalWrite = res.write.bind(res)
+        const originalEnd = res.end.bind(res)
+
+        try {
+          res.write = function (chunk) {
+            try {
+              if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+            } catch (e) {}
+            return originalWrite(chunk)
+          }
+          res.end = function (chunk) {
+            try {
+              if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+            } catch (e) {}
+            return originalEnd(chunk)
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        const writeDebug = () => {
+          try {
+            const bodyBuf = Buffer.concat(chunks || [])
+            let bodyStr = ''
+            if (bodyBuf && bodyBuf.length) {
+              bodyStr = bodyBuf.toString('utf8')
+            }
+            const entry = {
+              request: requestSnapshot,
+              response: {
+                status: res.statusCode,
+                body: bodyStr
+              },
+              durationMs: Date.now() - start
+            }
+            fs.appendFileSync(responseDebugPath, JSON.stringify(entry) + '\n')
+          } catch (err) {
+            // 不要影响正常响应
+          }
+        }
+
+        res.on('finish', writeDebug)
+        res.on('close', writeDebug)
+      }
+      next()
+    })
+  }
+
 app.use('/api', routes)
 
 // 静态文件服务（前端构建文件）

@@ -277,6 +277,9 @@ class KmlFileBaseController {
       const { transaction } = require('../../config/database')
 
       try {
+        // 只在事务中删除数据库相关记录（点位和文件元信息）。
+        // 把物理文件删除移到事务外，以避免物理文件系统错误导致数据库回滚，
+        // 从而产生不一致或前端看到 500 的情况。
         await transaction(async (db) => {
           // 删除点位
           await db.run('DELETE FROM kml_points WHERE kml_file_id = ?', [parseInt(id)])
@@ -286,17 +289,23 @@ class KmlFileBaseController {
           if (!delRes || delRes.changes === 0) {
             throw new Error('删除数据库记录失败')
           }
-
-          // 删除物理文件（KmlFileUtils 在失败时会抛出异常以触发回滚）
-          await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
         })
 
+        // 事务提交成功后再尝试删除物理文件；物理文件删除失败不应回滚 DB。
+        try {
+          await KmlFileUtils.deletePhysicalFile(kmlFile.file_url)
+        } catch (fileErr) {
+          // 记录但不将错误返回给客户端（避免部分外部文件系统问题导致 500）
+          Logger.warn('物理 KML 文件删除失败（已忽略）:', fileErr)
+        }
+
         const ConfigService = require('../../services/config.service')
+        // 删除样式配置（如果抛出异常，将会被外层 catch 捕获并返回 500）
         await ConfigService.deleteKmlStyles(id)
         res.json({ success: true, message: 'KML文件删除成功' })
       } catch (err) {
-        Logger.error('事务性删除KML文件失败:', err)
-        return res.status(500).json({ success: false, message: '删除KML文件失败，已回滚', error: err.message })
+        Logger.error('删除KML文件失败（事务或样式删除出错）:', err)
+        return res.status(500).json({ success: false, message: '删除KML文件失败', error: err.message })
       }
     } catch (error) {
       Logger.error('删除KML文件失败:', error)

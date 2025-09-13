@@ -43,10 +43,12 @@ export function createAMapTileLayer(type = 'normal') {
  * @returns {string} HTML字符串
  */
 function getIconShapeHtml(size, color, opacity) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
-    <path fill="${color}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${opacity}"/>
+  const safeSize = Number(size) || 8
+  const safeOpacity = Number(opacity) || 1.0
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize * 2}" height="${safeSize * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+    <path fill="${color}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${safeOpacity}"/>
     <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
-    <circle fill="${color}" cx="12.5" cy="12.5" r="3" opacity="${opacity}"/>
+    <circle fill="${color}" cx="12.5" cy="12.5" r="3" opacity="${safeOpacity}"/>
   </svg>`
 }
 

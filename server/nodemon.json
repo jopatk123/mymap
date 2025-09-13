@@ -1,0 +1,20 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ignore": [
+    "logs/**",
+    "server/logs/**",
+    "../server/logs/**",
+    "uploads/**",
+    "node_modules/**",
+    "build_context_extra/**",
+    "client/**",
+    "**/*.log",
+    "server/data/**",
+    "**/*.sqlite",
+    "**/*.db"
+  ],
+  "delay": "250ms",
+  "ext": "js,json"
+}

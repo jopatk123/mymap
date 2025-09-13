@@ -6,7 +6,7 @@
       <el-form label-width="100px" size="small" class="compact-form">
         <el-form-item label="标记颜色">
           <el-color-picker 
-            v-model="pickerColor"
+            v-model="localStyles.color"
             @change="handleChange"
             show-alpha
           />
@@ -104,6 +104,8 @@ const props = defineProps({
     type: Object,
     default: () => ({
       opacity: 1.0,
+      color: '#ff7800',
+      size: 8,
       labelSize: 0,
       labelColor: '#000000',
       clusterEnabled: false,
@@ -117,6 +119,8 @@ const emit = defineEmits(['update:modelValue', 'change'])
 // 本地样式状态
 const localStyles = reactive({
   opacity: 1.0,
+  color: '#ff7800',
+  size: 8,
   labelSize: 0,
   labelColor: '#000000',
   clusterEnabled: false,
@@ -129,7 +133,10 @@ watch(() => props.modelValue, (newValue) => {
     // 仅拷贝允许的字段，避免将 color/size 等旧字段再次引入
     const allowed = {
       opacity: newValue.opacity,
-      labelSize: newValue.labelSize,
+      color: newValue.color,
+      // 强制为数字，防止字符串导致后续计算出现 NaN
+      size: Number(newValue.size) || 8,
+      labelSize: Number(newValue.labelSize) || 0,
       labelColor: newValue.labelColor,
       clusterEnabled: newValue.clusterEnabled,
       clusterColor: newValue.clusterColor
@@ -142,10 +149,13 @@ watch(() => props.modelValue, (newValue) => {
 const handleChange = () => {
   // 发出仅包含允许字段的值，不包括 color/size
   emit('update:modelValue', {
-    opacity: localStyles.opacity,
-    labelSize: localStyles.labelSize,
+    opacity: Number(localStyles.opacity) || 1.0,
+    color: localStyles.color,
+    // 保证发送到父级的是数字类型
+    size: Number(localStyles.size) || 8,
+    labelSize: Number(localStyles.labelSize) || 0,
     labelColor: localStyles.labelColor,
-    clusterEnabled: localStyles.clusterEnabled,
+    clusterEnabled: !!localStyles.clusterEnabled,
     clusterColor: localStyles.clusterColor
   })
   emit('change')
@@ -154,22 +164,24 @@ const handleChange = () => {
 // 预览样式 - 固定使用marker形状
 const previewStyle = computed(() => {
   // 使用固定颜色和大小展示预览（颜色/大小不再是可配置项）
-  const FIXED_COLOR = '#ff7800'
-  const FIXED_SIZE = 8
+  // 使用当前配置的颜色和大小来实时预览
+  const previewColor = localStyles.color || '#ff7800'
+  // 强制为数字并使用默认值，避免字符串或 undefined 导致乘法出现 NaN
+  const previewSize = Number(localStyles.size) || 8
   return {
     backgroundColor: 'transparent',
     backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="${FIXED_SIZE * 2}" height="${FIXED_SIZE * 3.2}" viewBox="0 0 25 41">
-        <path fill="${FIXED_COLOR}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${localStyles.opacity}"/>
-        <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
-        <circle fill="${FIXED_COLOR}" cx="12.5" cy="12.5" r="3" opacity="${localStyles.opacity}"/>
+      <svg xmlns="http://www.w3.org/2000/svg" width="${previewSize * 2}" height="${previewSize * 3.2}" viewBox="0 0 25 41">
+        <path fill="${previewColor}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${localStyles.opacity}"/>
+        <circle fill="#fff" cx="12.5" cy="12.5" r="${Math.max(3, Math.floor(previewSize*0.75))}"/>
+        <circle fill="${previewColor}" cx="12.5" cy="12.5" r="${Math.max(2, Math.floor(previewSize*0.38))}" opacity="${localStyles.opacity}"/>
       </svg>
     `)}")`,
     backgroundSize: 'contain',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',
-    width: `${FIXED_SIZE * 2}px`,
-    height: `${FIXED_SIZE * 3.2}px`,
+  width: `${previewSize * 2}px`,
+  height: `${previewSize * 3.2}px`,
     position: 'relative',
     display: 'inline-block'
   }
