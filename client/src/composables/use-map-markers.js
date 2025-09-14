@@ -107,7 +107,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     if (!viewportState.enabled && points.length >= VIEWPORT_THRESHOLD) {
       try {
         // 控制台提示：启用视口裁剪渲染
-        console.info('[Map] 启用视口裁剪渲染:', {
+        void console.info('[Map] 启用视口裁剪渲染:', {
           totalPoints: points.length,
           threshold: VIEWPORT_THRESHOLD,
           bufferPad: viewportState.bufferPad,
@@ -309,7 +309,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       // 清除全局标记数组
       window.currentMarkers = [];
     } catch (error) {
-      console.warn('清除标记时出错:', error);
+      void console.warn('清除标记时出错:', error);
       // 强制清空数组，即使出错也要保证状态一致
       markers.value = [];
       window.currentMarkers = [];

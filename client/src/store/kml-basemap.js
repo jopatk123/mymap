@@ -247,7 +247,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
           .then(() => {
             updateVisiblePoints();
           })
-          .catch((err) => console.warn('loadAllKMLPoints failed', err));
+          .catch((err) => void console.warn('loadAllKMLPoints failed', err));
       }
       return;
     }
@@ -308,7 +308,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       /* visible points computed */
     } catch (e) {
-      console.warn('[kml-basemap] visiblePoints computation post-hook failed', e);
+      void console.warn('[kml-basemap] visiblePoints computation post-hook failed', e);
     }
 
     // 将选区内的KML点位合并到地图现有点位中
@@ -367,7 +367,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
               });
           }, 200);
         } catch (err) {
-          console.warn('[kml-basemap] schedule refresh failed', err);
+          void console.warn('[kml-basemap] schedule refresh failed', err);
         }
       }
     } catch (err) {

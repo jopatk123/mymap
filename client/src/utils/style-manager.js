@@ -120,7 +120,7 @@ class StyleManager {
       try {
         callback(type, styles);
       } catch (error) {
-        console.warn('样式更新回调执行失败:', error);
+        void console.warn('样式更新回调执行失败:', error);
       }
     });
   }
