@@ -40,10 +40,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'panorama-deleted']);
 
 // 使用组合式函数
-const {
-  handleClose: modalHandleClose,
-  copyCoordinate,
-} = usePanoramaModal();
+const { handleClose: modalHandleClose, copyCoordinate } = usePanoramaModal();
 
 const {
   viewerVisible,
