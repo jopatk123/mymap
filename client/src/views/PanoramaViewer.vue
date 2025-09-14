@@ -79,12 +79,12 @@ const loadPanorama = async () => {
         });
         autoRotating.value = true;
       } catch (err) {
-        console.error('初始化全景图查看器失败:', err);
+        void console.error('初始化全景图查看器失败:', err);
         error.value = '初始化全景图查看器失败';
       }
     }, 100);
   } catch (err) {
-    console.error('加载全景图失败:', err);
+    void console.error('加载全景图失败:', err);
     error.value = err.message;
   }
 

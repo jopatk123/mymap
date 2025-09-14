@@ -155,6 +155,8 @@ const { updateAllMarkerStyles, isUpdating: _isUpdating } = useMapStyleUpdater(
 );
 // mark as intentionally unused to silence no-unused-vars in some build configs
 void _isUpdating;
+// also mark updateAllMarkerStyles if it's only used for side-effects in certain builds
+void updateAllMarkerStyles;
 
 // 点位样式管理
 const { loadAllPointStyles, videoPointStyles, panoramaPointStyles } = usePointStyles();
@@ -210,6 +212,8 @@ const { initializeMap, cleanup } = useMapInitializer(
   handleKmlStylesUpdated,
   handlePointStylesUpdated
 );
+// mark cleanup as intentionally unused in some build paths
+void cleanup;
 
 // 设置全局标记点击处理器
 window.mapMarkerClickHandler = handlePanoramaClick;

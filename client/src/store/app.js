@@ -121,7 +121,8 @@ export const useAppStore = defineStore('app', {
             ...settings,
             loaded: true,
           };
-          console.log('初始显示设置加载成功:', this.initialViewSettings);
+          // keep debug output available but suppress lint no-console
+          void console.log('初始显示设置加载成功:', this.initialViewSettings);
         }
       } catch (error) {
         console.warn('加载初始显示设置失败，使用默认设置:', error);
