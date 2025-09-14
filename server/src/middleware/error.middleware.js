@@ -11,7 +11,6 @@ const notFoundHandler = (req, res, _next) => {
 /**
  * 全局错误处理中间件
  */
-/* eslint-disable-next-line no-unused-vars */
 const errorHandler = (err, req, res, next) => {
   Logger.error('全局错误:', err);
   void next;
