@@ -301,7 +301,7 @@ class FolderController {
         } catch (error) {
           Logger.error('获取全景图数据失败:', error);
           // 不要直接返回错误，而是记录错误并继续处理其他类型
-          console.error('全景图查询失败，跳过:', error.message);
+          Logger.error('全景图查询失败，跳过: %s', error.message);
         }
       }
 
@@ -318,7 +318,7 @@ class FolderController {
           allResults = allResults.concat(videosWithType);
         } catch (error) {
           Logger.error('获取视频点位数据失败:', error);
-          console.error('视频点位查询失败，跳过:', error.message);
+          Logger.error('视频点位查询失败，跳过: %s', error.message);
         }
       }
 
@@ -350,7 +350,7 @@ class FolderController {
           allResults = allResults.concat(kmlsWithType);
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error);
-          console.error('KML文件查询失败，跳过:', error.message);
+          Logger.error('KML文件查询失败，跳过: %s', error.message);
         }
       }
 
