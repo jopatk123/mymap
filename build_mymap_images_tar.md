@@ -1,0 +1,1 @@
+使用USE_LOCAL_CLIENT=1 ./build_mymap_images_tar.sh运行脚本构建镜像

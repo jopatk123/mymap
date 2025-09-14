@@ -83,12 +83,12 @@ COPY --from=server-deps /app/server/node_modules /app/server/node_modules
 COPY build_context_extra/server_node_modules /app/server/node_modules
 
 # Copy client build artifacts
-COPY --from=client-builder /app/client/dist /app/client/dist
+#COPY --from=client-builder /app/client/dist /app/client/dist
 
 # If the caller passed SKIP_CLIENT_BUILD=1 and provided client/dist in the build context,
 # copy it from the context to overwrite the built artifacts. This allows offline builds
 # where client/dist is prepared beforehand.
-ARG SKIP_CLIENT_BUILD=0
+ARG SKIP_CLIENT_BUILD=1
 COPY client/dist /app/client/dist
 
 # Prepare persistent directories
