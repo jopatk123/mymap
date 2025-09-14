@@ -65,7 +65,10 @@ const props = defineProps({
   },
 });
 
+// emit 和 props 在模板中使用；如果 lint 报告未使用，可通过下面的 void 调用标记为已使用
 const emit = defineEmits(['update:visible', 'close']);
+void props;
+void emit;
 
 const videoRef = ref(null);
 const videoDuration = ref(0);

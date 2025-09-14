@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 import { kmlApi } from '@/api/kml.js';
 import StyleRenderer from '@/services/style-renderer.js';
 
@@ -21,7 +21,7 @@ export function useKmlStyles() {
       kmlStyles.value.set(kmlFileId, styles);
       return styles;
     } catch (error) {
-      console.error(`加载KML文件 ${kmlFileId} 样式失败:`, error);
+      void console.error(`加载KML文件 ${kmlFileId} 样式失败:`, error);
       // 返回默认样式
       const defaultStyles = getDefaultStyles();
       kmlStyles.value.set(kmlFileId, defaultStyles);
@@ -43,7 +43,7 @@ export function useKmlStyles() {
       await Promise.all(promises);
       return kmlStyles.value;
     } catch (error) {
-      console.error('批量加载KML文件样式失败:', error);
+      void console.error('批量加载KML文件样式失败:', error);
       throw error;
     } finally {
       loading.value = false;

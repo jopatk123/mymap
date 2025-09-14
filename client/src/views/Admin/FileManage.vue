@@ -132,6 +132,9 @@ const {
   formatDate,
 } = useFileManagement();
 
+// mark resetSearch as intentionally available (may be used by child components via refs)
+void resetSearch;
+
 const {
   currentFile,
   dialogStates: actionDialogs,

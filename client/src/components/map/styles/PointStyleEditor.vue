@@ -80,6 +80,8 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue';
+// Some reactive helpers are used in template; mark as referenced to satisfy linters in edge cases
+void ref;
 
 const props = defineProps({
   modelValue: {

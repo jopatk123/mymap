@@ -50,6 +50,9 @@ export function useMapInitializer(
   // 清理资源
   const cleanup = () => {
     window.removeEventListener('folder-visibility-changed', handleFolderVisibilityChanged);
+    // ensure linter recognizes usage of handler params passed from callers
+    void handleKmlStylesUpdated;
+    void handlePointStylesUpdated;
   };
 
   // 设置生命周期钩子

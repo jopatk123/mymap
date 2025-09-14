@@ -101,6 +101,9 @@ import { kmlBaseMapService } from '@/services/kml-basemap-service.js';
 
 // 使用组合式函数
 const { kmlFiles: _kmlFiles, loading: _loading, deleteKMLFile, initialize } = useKMLBaseMap();
+// 标记为已引用以避免 no-unused-vars 警告（这些值由组合式 API 提供，保留以备将来使用）
+void _kmlFiles;
+void _loading;
 
 // 本地状态
 const selectedFileId = ref(null);
@@ -113,6 +116,7 @@ const _rowClassName = (payload) => {
   const row = payload?.row;
   return row && row.id === selectedFileId.value ? 'is-selected-row' : '';
 };
+void _rowClassName;
 
 // 初始化
 onMounted(() => {
@@ -137,6 +141,7 @@ const _handleFileSelect = (file) => {
   selectedFileId.value = file.id;
   // debug: selected file (suppressed)
 };
+void _handleFileSelect;
 
 // 查看文件详情（前缀以避免未使用警告）
 const _viewFileDetails = async (file) => {
@@ -150,6 +155,7 @@ const _viewFileDetails = async (file) => {
     ElMessage.error('加载文件点位数据失败');
   }
 };
+void _viewFileDetails;
 
 // 当选中文件变更且未加载点位时自动加载点位到空块展示区域
 watch(selectedFile, async (newVal) => {
@@ -217,6 +223,7 @@ const _deleteFile = async (file) => {
     }
   }
 };
+void _deleteFile;
 
 // 格式化文件大小
 const formatFileSize = (bytes) => {

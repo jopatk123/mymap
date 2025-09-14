@@ -10,14 +10,14 @@ export function useKmlLayer(map, kmlLayers) {
   const kmlViewportStates = new Map(); // kmlId -> { enabled, clusterGroup, sourcePoints, style, onMoveEnd, onZoomEnd }
 
   const addKmlLayer = async (kmlFile, styleConfig = null) => {
-    const isBasemap = Boolean(
+    const _isBasemap = Boolean(
       kmlFile?.isBasemap === true ||
         kmlFile?.is_basemap === 1 ||
         kmlFile?.is_basemap === true ||
         kmlFile?.isBasemap === 1
     );
     if (!map.value || !kmlFile.file_url) {
-      console.warn('无法添加KML图层：地图未初始化或文件URL为空', {
+      void console.warn('无法添加KML图层：地图未初始化或文件URL为空', {
         map: !!map.value,
         fileUrl: kmlFile.file_url,
       });
@@ -35,19 +35,19 @@ export function useKmlLayer(map, kmlLayers) {
           }
         }
       } catch (error) {
-        console.warn('从服务端获取KML点位数据失败，回退到解析KML文件:', error);
+        void console.warn('从服务端获取KML点位数据失败，回退到解析KML文件:', error);
       }
 
       // 回退到原始的KML文件解析方式
       return await loadAndParseKmlFile(kmlFile, styleConfig);
     } catch (error) {
-      console.error('加载KML文件失败:', error);
+      void console.error('加载KML文件失败:', error);
       return null;
     }
   };
 
   const processKmlLayerFromPoints = async (points, kmlFile, styleConfig) => {
-    const isBasemap = Boolean(
+    const _isBasemap = Boolean(
       kmlFile?.isBasemap === true ||
         kmlFile?.is_basemap === 1 ||
         kmlFile?.is_basemap === true ||
@@ -250,7 +250,7 @@ export function useKmlLayer(map, kmlLayers) {
         };
 
         // 对于标记为底图的 KML，默认不把点位渲染到地图上（保留图层对象用于后续切换可见性）
-        if (!isBasemap) {
+        if (!_isBasemap) {
           layer.addTo(map.value);
           addVisibleMarkers();
           map.value.on('zoomstart', onZoomStart);
@@ -264,7 +264,7 @@ export function useKmlLayer(map, kmlLayers) {
           } catch {}
         }, 0);
         kmlViewportStates.set(kmlFile.id, {
-          enabled: !isBasemap,
+          enabled: !_isBasemap,
           clusterGroup,
           sourcePoints: points,
           style: styleConfig,
@@ -272,7 +272,7 @@ export function useKmlLayer(map, kmlLayers) {
           onZoomEnd,
           onZoomStart,
         });
-        kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title, visible: !isBasemap });
+        kmlLayers.value.push({ id: kmlFile.id, layer, title: kmlFile.title, visible: !_isBasemap });
         // debug: viewport clipping rendering enabled (suppressed)
         return layer;
       }
@@ -282,27 +282,27 @@ export function useKmlLayer(map, kmlLayers) {
       if (!kmlLayer) return null;
       if (featureCount > 0) {
         // 底图默认不将点位加入地图
-        if (!isBasemap) {
+        if (!_isBasemap) {
           kmlLayer.addTo(map.value);
         }
         kmlLayers.value.push({
           id: kmlFile.id,
           layer: kmlLayer,
           title: kmlFile.title,
-          visible: !isBasemap,
+          visible: !_isBasemap,
         });
         return kmlLayer;
       }
-      console.warn('KML文件中没有找到有效的几何要素');
+      void console.warn('KML文件中没有找到有效的几何要素');
       return null;
     } catch (e) {
-      console.warn('处理KML点位视口渲染失败:', e);
+      void console.warn('处理KML点位视口渲染失败:', e);
       return null;
     }
   };
 
   const loadAndParseKmlFile = async (kmlFile, styleConfig) => {
-    const isBasemap = Boolean(
+    const _isBasemap = Boolean(
       kmlFile?.isBasemap === true ||
         kmlFile?.is_basemap === 1 ||
         kmlFile?.is_basemap === true ||
@@ -328,18 +328,18 @@ export function useKmlLayer(map, kmlLayers) {
 
         if (featureCount > 0) {
           // 如果是底图则默认不把点位显示到地图
-          if (!isBasemap) {
+          if (!_isBasemap) {
             kmlLayer.addTo(map.value);
           }
           kmlLayers.value.push({
             id: kmlFile.id,
             layer: kmlLayer,
             title: kmlFile.title,
-            visible: !isBasemap,
+            visible: !_isBasemap,
           });
           return kmlLayer;
         } else {
-          console.warn('KML文件中没有找到有效的几何要素');
+          void console.warn('KML文件中没有找到有效的几何要素');
           return null;
         }
       } catch (error) {

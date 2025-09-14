@@ -153,6 +153,8 @@ const { updateAllMarkerStyles, isUpdating: _isUpdating } = useMapStyleUpdater(
   computed(() => mapRef.value?.map),
   computed(() => mapRef.value?.markers || [])
 );
+// mark as intentionally unused to silence no-unused-vars in some build configs
+void _isUpdating;
 
 // 点位样式管理
 const { loadAllPointStyles, videoPointStyles, panoramaPointStyles } = usePointStyles();

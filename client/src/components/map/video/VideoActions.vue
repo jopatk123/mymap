@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { VideoPlay, CopyDocument, Link } from '@element-plus/icons-vue';
+import { VideoPlay, CopyDocument /* Link */ } from '@element-plus/icons-vue';
 
 defineProps({
   video: {
