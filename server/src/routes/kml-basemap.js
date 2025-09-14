@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
       fsSync.mkdirSync(uploadDir, { recursive: true });
     } catch (err) {
       // If creation fails, log a warning and let multer continue (it will error later)
-      console.warn('Failed to create upload directory:', err && err.message);
+      Logger.warn('Failed to create upload directory:', err && err.message);
     }
     cb(null, uploadDir);
   },
@@ -86,7 +86,7 @@ function parseKMLFile(kmlContent) {
 
     return points;
   } catch (error) {
-    console.error('解析KML文件失败:', error);
+    Logger.error('解析KML文件失败:', error);
     throw new Error('KML文件格式错误');
   }
 }
@@ -358,9 +358,9 @@ router.delete('/:fileId', async (req, res) => {
         } catch (err) {
           if (err && err.code === 'ENOENT') {
             // 文件已不存在，继续完成事务
-            console.warn('物理文件已不存在:', filePath);
+            Logger.warn('物理文件已不存在:', filePath);
           } else {
-            console.warn('删除物理文件失败:', err && err.message);
+            Logger.warn('删除物理文件失败:', err && err.message);
             throw err;
           }
         }
@@ -368,11 +368,11 @@ router.delete('/:fileId', async (req, res) => {
 
       return res.json({ success: true, message: 'KML文件删除成功' });
     } catch (err) {
-      console.error('事务性删除KML文件失败:', err);
+      Logger.error('事务性删除KML文件失败:', err);
       return res.status(500).json({ success: false, message: '删除失败，已回滚' });
     }
   } catch (error) {
-    console.error('删除KML文件失败:', error);
+    Logger.error('删除KML文件失败:', error);
     res.status(500).json({ success: false, message: '删除失败' });
   }
 });

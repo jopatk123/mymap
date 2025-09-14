@@ -219,7 +219,7 @@ class KmlFileBaseController {
       if (!updated) return res.status(404).json({ success: false, message: 'KML 文件不存在' });
       res.json({ success: true, data: updated });
     } catch (error) {
-      console.error('设置 KML 底图标志失败:', error);
+      Logger.error('设置 KML 底图标志失败:', error);
       res.status(500).json({ success: false, message: error.message });
     }
   }

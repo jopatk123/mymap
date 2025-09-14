@@ -60,7 +60,7 @@ class PanoramaModel {
         totalPages: Math.ceil(total / pageSize),
       };
     } catch (error) {
-      console.error('获取全景图列表失败:', error);
+      Logger.error('获取全景图列表失败:', error);
       throw error;
     }
   }
