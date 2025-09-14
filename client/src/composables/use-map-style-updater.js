@@ -42,7 +42,7 @@ export function useMapStyleUpdater(map, markers) {
           const pointData = pointsData.find((p) => p.id === markerInfo.id) || markerInfo.data;
 
           if (!pointData || !pointData.lat || !pointData.lng) {
-            console.warn('标记数据不完整，跳过重建:', markerInfo.id);
+            void console.warn('标记数据不完整，跳过重建:', markerInfo.id);
             return;
           }
 
@@ -61,7 +61,7 @@ export function useMapStyleUpdater(map, markers) {
 
           // 检查坐标是否有效
           if (displayLat == null || displayLng == null || isNaN(displayLat) || isNaN(displayLng)) {
-            console.warn('点位坐标无效，跳过重建:', pointData);
+            void console.warn('点位坐标无效，跳过重建:', pointData);
             return;
           }
 
@@ -92,7 +92,7 @@ export function useMapStyleUpdater(map, markers) {
             data: pointData,
           });
         } catch (error) {
-          console.warn('重建标记失败:', markerInfo.id, error);
+          void console.warn('重建标记失败:', markerInfo.id, error);
         }
       });
 
@@ -151,7 +151,7 @@ export function useMapStyleUpdater(map, markers) {
 
           // 检查坐标是否有效
           if (displayLat == null || displayLng == null || isNaN(displayLat) || isNaN(displayLng)) {
-            console.warn('点位坐标无效，跳过重建:', pointData);
+            void console.warn('点位坐标无效，跳过重建:', pointData);
             continue;
           }
 
@@ -180,7 +180,7 @@ export function useMapStyleUpdater(map, markers) {
             data: pointData,
           });
         } catch (error) {
-          console.warn('重建标记失败:', pointData.id, error);
+          void console.warn('重建标记失败:', pointData.id, error);
         }
       }
 

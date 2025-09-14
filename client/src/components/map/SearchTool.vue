@@ -213,15 +213,15 @@ const searchKMLPoints = async () => {
 
     if (response.success) {
       // debug: 打印返回结果，便于定位无结果问题
-      console.debug('[KML Search] response:', response);
+      void console.debug('[KML Search] response:', response);
       kmlResults.value = response.data || [];
     } else {
-      console.error('KML搜索失败:', response.message);
+      void console.error('KML搜索失败:', response.message);
       kmlResults.value = [];
       ElMessage.error(response.message || 'KML搜索失败');
     }
   } catch (error) {
-    console.error('KML搜索出错:', error);
+    void console.error('KML搜索出错:', error);
     kmlResults.value = [];
     ElMessage.error(error.message || 'KML搜索出错');
   } finally {
@@ -253,7 +253,7 @@ const searchAddresses = async () => {
 
     addressResults.value = tips;
   } catch (error) {
-    console.error('地址搜索出错:', error);
+    void console.error('地址搜索出错:', error);
     addressResults.value = [];
     ElMessage.error(error.message || '地址搜索出错');
   } finally {

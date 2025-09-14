@@ -141,7 +141,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       // area added hook - no-op but keep try for parity with earlier code
     } catch (e) {
-      console.warn('[kml-basemap] addArea hook failed', e);
+      void console.warn('[kml-basemap] addArea hook failed', e);
     }
     updateVisiblePoints();
   };
@@ -151,7 +151,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       // circle area pre-hook - no-op
     } catch (e) {
-      console.warn('[kml-basemap] addCircleArea pre-hook failed', e);
+      void console.warn('[kml-basemap] addCircleArea pre-hook failed', e);
     }
     addArea({
       type: 'circle',
@@ -166,7 +166,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       // custom area pre-hook - no-op
     } catch (e) {
-      console.warn('[kml-basemap] addCustomArea pre-hook failed', e);
+      void console.warn('[kml-basemap] addCustomArea pre-hook failed', e);
     }
     addArea({
       type: 'polygon',

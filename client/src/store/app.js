@@ -24,7 +24,6 @@ export const useAppStore = defineStore('app', {
       zoom: 12,
       loaded: false,
     },
-    // 应用状态
     isOnline: navigator.onLine,
     isMobile: false,
     screenWidth: window.innerWidth,
@@ -53,7 +52,6 @@ export const useAppStore = defineStore('app', {
 
       if (state.initialViewSettings.enabled && state.initialViewSettings.loaded) {
         // 转换坐标格式：从 WGS84 [lng, lat] 转为 Leaflet [lat, lng]
-        center = [state.initialViewSettings.center[1], state.initialViewSettings.center[0]];
         zoom = state.initialViewSettings.zoom;
       }
 

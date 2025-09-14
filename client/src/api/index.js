@@ -21,7 +21,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('请求错误:', error);
+    void console.error('请求错误:', error);
     return Promise.reject(error);
   }
 );
@@ -54,7 +54,7 @@ api.interceptors.response.use(
     return data;
   },
   (error) => {
-    console.error('响应错误:', error);
+    void console.error('响应错误:', error);
 
     // 处理不同的错误状态
     if (error.response) {
