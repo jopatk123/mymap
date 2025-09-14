@@ -37,7 +37,7 @@
       "polygon_stroke_color": "#ff7800",
       "polygon_stroke_width": 2,
       "polygon_stroke_style": "solid",
-      "cluster_enabled": true,
+      "cluster_enabled": false,
       "cluster_icon_color": "#00ff00",
       "cluster_text_color": "#000000",
       "cluster_color": "#00ff00",

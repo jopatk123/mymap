@@ -1,6 +1,7 @@
 const morgan = require('morgan')
 const fs = require('fs')
 const path = require('path')
+const rfs = require('rotating-file-stream')
 
 // 创建日志目录
 const logDir = path.join(__dirname, '../../logs')
@@ -8,11 +9,24 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true })
 }
 
-// 创建写入流
-const accessLogStream = fs.createWriteStream(
-  path.join(logDir, 'access.log'),
-  { flags: 'a' }
-)
+// 创建轮转写入流：按天命名 + 按大小切分，保留 14 天，gzip 压缩
+// 文件名示例：access-2025-09-14-001.log.gz
+const accessLogStream = rfs.createStream((time, index) => {
+  // 当没有时间（初始启动）时返回基础名
+  if (!time) return 'access.log'
+  const pad = (num) => String(num).padStart(2, '0')
+  const year = time.getFullYear()
+  const month = pad(time.getMonth() + 1)
+  const day = pad(time.getDate())
+  const idx = index ? `-${pad(index)}` : ''
+  return `access-${year}-${month}-${day}${idx}.log`
+}, {
+  size: '10M',      // 单文件达到 10MB 时切分
+  interval: '1d',   // 至少每日轮转一次
+  path: logDir,     // 存放目录
+  maxFiles: 14,     // 仅保留 14 个轮转文件
+  compress: 'gzip'  // 使用 gzip 压缩历史文件
+})
 
 // 自定义日志格式
 morgan.token('real-ip', (req) => {
