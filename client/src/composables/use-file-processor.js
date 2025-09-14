@@ -66,15 +66,60 @@ export function useVideoProcessor() {
 export function useKmlProcessor() {
   const validationResult = ref(null);
 
-  const processFile = async (file, form = null) => {
-    // 如果传入了 form 且没有标题，则自动提取文件名作为标题
-    if (form && !form.title && file.name) {
-      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-      form.title = nameWithoutExt;
-    }
+  // 读取文件内容为文本
+  const readFileAsText = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => reject(new Error('读取文件失败'));
+      reader.readAsText(file, 'utf-8');
+    });
+  };
 
-    // 验证KML文件
-    await validateKmlFile(file);
+  // 验证KML内容
+  const validateKmlContent = async (content) => {
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(content, 'text/xml');
+
+      const parseError = xmlDoc.getElementsByTagName('parsererror');
+      if (parseError.length > 0) {
+        return { valid: false, error: 'XML格式错误' };
+      }
+
+      const kmlElement = xmlDoc.getElementsByTagName('kml')[0];
+      if (!kmlElement) {
+        return { valid: false, error: '不是有效的KML文件' };
+      }
+
+      const placemarks = [];
+      const placemarkElements = xmlDoc.getElementsByTagName('Placemark');
+
+      for (let i = 0; i < placemarkElements.length; i++) {
+        const placemark = placemarkElements[i];
+        const name = placemark.getElementsByTagName('name')[0]?.textContent || `地标${i + 1}`;
+
+        const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent;
+        if (coordinates) {
+          const coords = coordinates.trim().split(/[\s,]+/);
+          if (coords.length >= 2) {
+            const lng = parseFloat(coords[0]);
+            const lat = parseFloat(coords[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              placemarks.push({ name, latitude: lat, longitude: lng, pointType: 'Point' });
+            }
+          }
+        }
+      }
+
+      return {
+        valid: true,
+        placemarkCount: placemarks.length,
+        placemarks: placemarks.slice(0, 10),
+      };
+    } catch (error) {
+      return { valid: false, error: '解析KML文件失败: ' + (error?.message || error) };
+    }
   };
 
   const validateKmlFile = async (file) => {
@@ -89,78 +134,24 @@ export function useKmlProcessor() {
       } else {
         ElMessage.error('KML文件格式错误: ' + validation.error);
       }
-    } catch (_e) {
-        // ...existing code...
-      }
-      validationResult.value = { valid: false, error: _error.message };
-    }
-  };
 
-  // 读取文件内容为文本
-  const readFileAsText = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.onerror = (e) => reject(new Error('读取文件失败'));
-      reader.readAsText(file, 'utf-8');
-    });
-  };
-
-  // 验证KML内容
-  const validateKmlContent = async (content) => {
-    try {
-      // 基本XML格式检查
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(content, 'text/xml');
-
-      // 检查是否有解析错误
-      const parseError = xmlDoc.getElementsByTagName('parsererror');
-      if (parseError.length > 0) {
-        return { valid: false, error: 'XML格式错误' };
-      }
-
-      // 检查是否是KML文件
-      const kmlElement = xmlDoc.getElementsByTagName('kml')[0];
-      if (!kmlElement) {
-        return { valid: false, error: '不是有效的KML文件' };
-      }
-
-      // 提取地标信息
-      const placemarks = [];
-      const placemarkElements = xmlDoc.getElementsByTagName('Placemark');
-
-      for (let i = 0; i < placemarkElements.length; i++) {
-        const placemark = placemarkElements[i];
-        const name = placemark.getElementsByTagName('name')[0]?.textContent || `地标${i + 1}`;
-
-        // 检查坐标
-        const coordinates = placemark.getElementsByTagName('coordinates')[0]?.textContent;
-        if (coordinates) {
-          const coords = coordinates.trim().split(/[\s,]+/);
-          if (coords.length >= 2) {
-            const lng = parseFloat(coords[0]);
-            const lat = parseFloat(coords[1]);
-
-            if (!isNaN(lat) && !isNaN(lng)) {
-              placemarks.push({
-                name,
-                latitude: lat,
-                longitude: lng,
-                pointType: 'Point', // 简化处理，都当作点
-              });
-            }
-          }
-        }
-      }
-
-      return {
-        valid: true,
-        placemarkCount: placemarks.length,
-        placemarks: placemarks.slice(0, 10), // 只返回前10个用于预览
-      };
+      return validation;
     } catch (error) {
-      return { valid: false, error: '解析KML文件失败: ' + error.message };
+      const msg = error?.message || error;
+      validationResult.value = { valid: false, error: msg };
+      ElMessage.error('解析KML文件失败: ' + msg);
+      return { valid: false, error: msg };
     }
+  };
+
+  const processFile = async (file, form = null) => {
+    if (form && !form.title && file?.name) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+      form.title = nameWithoutExt;
+    }
+
+    // 验证KML文件并返回结果
+    return await validateKmlFile(file);
   };
 
   const validateFile = (file) => {
