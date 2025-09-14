@@ -29,6 +29,7 @@
 
  - ✖ 119 problems (4 errors, 115 warnings)  — 最近本地 lint 运行结果
  - ✖ 98 problems (0 errors, 98 warnings)  — 本次微批次后最新本地 lint 运行结果
+ - ✖ 91 problems (0 errors, 91 warnings)  — 本次微批次 #2 后最新本地 lint 运行结果
 
  下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
@@ -40,6 +41,11 @@
  - Commit: chore(lint): P2 micro-batch - replace console with ElMessage; mark isUpdating as unused
  - Files changed: client/src/views/Admin/FileManage.vue, client/src/views/Map/index.vue
  - Purpose: Replace console.error with ElMessage.error to avoid no-console in UI code; mark unused isUpdating return as _isUpdating to avoid no-unused-vars without changing behavior.
+ 
+ 本次提交摘要（micro-batch #2）:
+ - Commit: chore(lint): P2 micro-batch #2 - mark unused locals and silence no-unused-vars
+ - Files changed: client/src/components/map/area-selector/AreaControls.vue, client/src/components/map/drawing-toolbar/DrawingToolbar.vue, client/src/components/map/drawing-toolbar/PolygonInfoPopup.vue, client/src/composables/area-selector/index.js, client/src/composables/use-kml-layer.js
+ - Purpose: Mark intentionally unused locals as referenced (void <var>), remove/replace unused imports, and rename certain callback params to align with no-unused-vars rule. No runtime behavior changes expected.
 - 对于需要设计决策（例如是否允许 v-html 或日志策略），我会在 TODO.md 记录选项并在变更前征求确认。
 
 最近已完成的具体变更（来自本次会话）：
