@@ -82,7 +82,7 @@ const handleFileChange = async (file, form) => {
   // 检查文件对象是否有效
   if (!file || typeof file !== 'object') {
     // 文件对象无效，记录为警告以便开发时查看
-    console.warn('UploadDialog: 文件对象无效!');
+    void console.warn('UploadDialog: 文件对象无效!');
     return;
   }
 
@@ -90,7 +90,7 @@ const handleFileChange = async (file, form) => {
     try {
       await processFile(file, form);
     } catch (error) {
-      console.warn('处理文件时出错:');
+      void console.warn('处理文件时出错:');
       // 即使处理出错，也要确保文件被设置到表单中，让用户可以继续上传
       if (!form.file) {
         form.file = file;
@@ -159,7 +159,7 @@ const handlePanoramaUpload = async (form, { setProgress, setProcessing }) => {
     const folderStore = useFolderStore();
     await folderStore.fetchFolders();
   } catch (error) {
-    console.warn('重新加载文件夹数据失败:', error);
+    void console.warn('重新加载文件夹数据失败:', error);
   }
 
   return newPanorama;

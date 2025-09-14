@@ -65,7 +65,7 @@ export const useFolderStore = defineStore('folder', {
 
         return response.data;
       } catch (error) {
-        console.error('获取文件夹失败:', error);
+        void console.error('获取文件夹失败:', error);
         throw error;
       } finally {
         this.loading = false;
@@ -79,7 +79,7 @@ export const useFolderStore = defineStore('folder', {
         await this.fetchFolders(); // 重新获取数据
         return response.data;
       } catch (error) {
-        console.error('创建文件夹失败:', error);
+        void console.error('创建文件夹失败:', error);
         throw error;
       }
     },
@@ -91,7 +91,7 @@ export const useFolderStore = defineStore('folder', {
         await this.fetchFolders(); // 重新获取数据
         return response.data;
       } catch (error) {
-        console.error('更新文件夹失败:', error);
+        void console.error('更新文件夹失败:', error);
         throw error;
       }
     },
@@ -102,7 +102,7 @@ export const useFolderStore = defineStore('folder', {
         await folderApi.deleteFolder(id);
         await this.fetchFolders(); // 重新获取数据
       } catch (error) {
-        console.error('删除文件夹失败:', error);
+        void console.error('删除文件夹失败:', error);
         throw error;
       }
     },
@@ -114,7 +114,7 @@ export const useFolderStore = defineStore('folder', {
         await this.fetchFolders(); // 重新获取数据
         return response.data;
       } catch (error) {
-        console.error('移动文件夹失败:', error);
+        void console.error('移动文件夹失败:', error);
         throw error;
       }
     },
@@ -126,7 +126,7 @@ export const useFolderStore = defineStore('folder', {
         await this.fetchFolders(); // 重新获取数据
         return response.data;
       } catch (error) {
-        console.error('更新文件夹可见性失败:', error);
+        void console.error('更新文件夹可见性失败:', error);
         throw error;
       }
     },
@@ -137,7 +137,7 @@ export const useFolderStore = defineStore('folder', {
         const response = await folderApi.getFolderPanoramas(folderId, { includeHidden });
         return response.data;
       } catch (error) {
-        console.error('获取文件夹全景图失败:', error);
+        void console.error('获取文件夹全景图失败:', error);
         throw error;
       }
     },
@@ -149,7 +149,7 @@ export const useFolderStore = defineStore('folder', {
         await this.fetchFolders(); // 重新获取数据以更新计数
         return response.data;
       } catch (error) {
-        console.error('移动全景图到文件夹失败:', error);
+        void console.error('移动全景图到文件夹失败:', error);
         throw error;
       }
     },

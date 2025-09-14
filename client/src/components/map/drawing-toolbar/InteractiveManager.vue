@@ -264,7 +264,7 @@ const handleSaveFromDialog = (updatedProperties) => {
   try {
     savePointProperties(updatedProperties);
   } catch (e) {
-    console.error('[InteractiveManager] savePointProperties threw error:', e);
+    void console.error('[InteractiveManager] savePointProperties threw error:', e);
   }
 };
 

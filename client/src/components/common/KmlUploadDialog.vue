@@ -140,7 +140,7 @@ const copyPlacemarkCoords = async (placemark) => {
     }
     ElMessage.success('坐标已复制：' + formatted);
   } catch (e) {
-    console.error('复制失败', e);
+    void console.error('复制失败', e);
     ElMessage.error('复制失败，请手动复制：' + formatted);
   }
 };
