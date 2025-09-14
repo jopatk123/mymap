@@ -58,6 +58,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { Plus, VideoPlay, Document, Setting, ArrowDown, Location } from '@element-plus/icons-vue';
 import KMLBaseMapButton from './KMLBaseMapButton.vue';
@@ -99,7 +100,8 @@ onUnmounted(() => {
 // 初始显示设置更新处理
 const handleInitialViewSettingsUpdated = () => {
   // 设置更新后的处理逻辑（如果需要）
-  console.log('初始显示设置已更新');
+  // 使用 ElMessage 代替 console.log 以符合 no-console 策略
+  ElMessage && ElMessage.success && ElMessage.success('初始显示设置已更新');
 };
 
 // 样式更新处理

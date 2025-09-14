@@ -151,7 +151,9 @@ import { ElMessage } from 'element-plus';
 import { Tools, Location, Compass, Crop, Delete, Download } from '@element-plus/icons-vue';
 import { useAreaSelector } from '@/composables/use-area-selector.js';
 import { useKMLExport } from '@/composables/use-kml-export.js';
-import { useKMLBaseMapStore as _useKMLBaseMapStore } from '@/store/kml-basemap.js';
+// intentionally not using kml base map store locally in this component
+// keep the import commented to avoid unused import warnings if needed later
+// import { useKMLBaseMapStore as _useKMLBaseMapStore } from '@/store/kml-basemap.js';
 import KMLDataExporter from './kml-basemap/KMLDataExporter.vue';
 import SearchTool from './SearchTool.vue';
 

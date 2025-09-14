@@ -60,6 +60,7 @@ const {
   activateTool,
   deactivateTool,
   clearAllDrawings,
+  // exportDrawings is intentionally not used directly in this component
   exportDrawings: _exportDrawings,
 } = useDrawingTools();
 

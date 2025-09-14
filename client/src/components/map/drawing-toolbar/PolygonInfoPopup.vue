@@ -73,6 +73,7 @@
 
 <script setup>
 import { Close } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   visible: {
@@ -90,6 +91,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'edit-properties', 'delete-polygon']);
+// emit is wired to template events; kept for clarity and future use
 
 // 格式化面积显示
 const formatArea = (area) => {

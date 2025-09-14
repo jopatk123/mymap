@@ -226,7 +226,7 @@ const getAreaDetail = (area) => {
   }
 };
 
-// 删除区域（当前模板/调用链未使用，保留为私有函数）
+// 删除区域函数已通过在模板中直接使用 removeArea 来调用；保留此适配器仅作兼容
 const _handleRemoveArea = (areaId, areaName) => {
   removeArea(areaId, areaName);
 };
