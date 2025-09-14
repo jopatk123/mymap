@@ -194,7 +194,10 @@ class ConfigService {
         try {
           /* swallow */
         } catch (ee) {
-          console.warn('[config.service] swallow failed', ee);
+          try {
+            const Logger = require('../utils/logger');
+            Logger.warn('[config.service] swallow failed', ee);
+          } catch (_) {}
         }
       }
     }

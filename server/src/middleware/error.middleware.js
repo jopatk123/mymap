@@ -1,17 +1,20 @@
 const { errorResponse } = require('../utils/response');
+const Logger = require('../utils/logger');
 
 /**
  * 404错误处理中间件
  */
-const notFoundHandler = (req, res, next) => {
+const notFoundHandler = (req, res, _next) => {
   res.status(404).json(errorResponse(`接口 ${req.originalUrl} 不存在`, 404));
 };
 
 /**
  * 全局错误处理中间件
  */
+/* eslint-disable-next-line no-unused-vars */
 const errorHandler = (err, req, res, next) => {
-  console.error('全局错误:', err);
+  Logger.error('全局错误:', err);
+  void next;
 
   // 简化错误日志记录
   try {

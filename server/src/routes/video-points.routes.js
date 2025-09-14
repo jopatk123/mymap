@@ -20,7 +20,7 @@ router.get('/stats', VideoPointController.getVideoPointStats);
 // 上传视频文件
 router.post('/upload', handleVideoUpload, (req, res) => {
   const { uploadedFile } = req;
-  const { title, description, lat, lng, folderId, duration } = req.body;
+  const { title, lat, lng } = req.body;
 
   // 验证必填字段
   if (!uploadedFile) {

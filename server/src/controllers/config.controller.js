@@ -1,4 +1,5 @@
 const ConfigService = require('../services/config.service');
+const Logger = require('../utils/logger');
 
 class ConfigController {
   // 获取完整配置
@@ -11,7 +12,8 @@ class ConfigController {
         message: '获取配置成功',
       });
     } catch (error) {
-      console.error('获取配置失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('获取配置失败:', error);
       res.status(500).json({
         success: false,
         message: '获取配置失败',
@@ -35,7 +37,7 @@ class ConfigController {
         throw new Error('保存配置失败');
       }
     } catch (error) {
-      console.error('更新配置失败:', error);
+      Logger.error('更新配置失败:', error);
       res.status(500).json({
         success: false,
         message: '更新配置失败',
@@ -54,7 +56,7 @@ class ConfigController {
         message: '获取点位样式配置成功',
       });
     } catch (error) {
-      console.error('获取点位样式配置失败:', error);
+      Logger.error('获取点位样式配置失败:', error);
       res.status(500).json({
         success: false,
         message: '获取点位样式配置失败',
@@ -80,7 +82,7 @@ class ConfigController {
         throw new Error('保存配置失败');
       }
     } catch (error) {
-      console.error('更新点位样式配置失败:', error);
+      Logger.error('更新点位样式配置失败:', error);
       res.status(500).json({
         success: false,
         message: '更新点位样式配置失败',
@@ -99,7 +101,7 @@ class ConfigController {
         message: '获取KML样式配置成功',
       });
     } catch (error) {
-      console.error('获取KML样式配置失败:', error);
+      Logger.error('获取KML样式配置失败:', error);
       res.status(500).json({
         success: false,
         message: '获取KML样式配置失败',
@@ -125,7 +127,7 @@ class ConfigController {
         throw new Error('保存配置失败');
       }
     } catch (error) {
-      console.error('更新KML样式配置失败:', error);
+      Logger.error('更新KML样式配置失败:', error);
       res.status(500).json({
         success: false,
         message: '更新KML样式配置失败',
@@ -144,7 +146,7 @@ class ConfigController {
         message: '获取地图设置成功',
       });
     } catch (error) {
-      console.error('获取地图设置失败:', error);
+      Logger.error('获取地图设置失败:', error);
       res.status(500).json({
         success: false,
         message: '获取地图设置失败',
@@ -170,7 +172,7 @@ class ConfigController {
         throw new Error('保存配置失败');
       }
     } catch (error) {
-      console.error('更新地图设置失败:', error);
+      Logger.error('更新地图设置失败:', error);
       res.status(500).json({
         success: false,
         message: '更新地图设置失败',
@@ -189,7 +191,7 @@ class ConfigController {
         message: '获取上传设置成功',
       });
     } catch (error) {
-      console.error('获取上传设置失败:', error);
+      Logger.error('获取上传设置失败:', error);
       res.status(500).json({
         success: false,
         message: '获取上传设置失败',
@@ -215,7 +217,7 @@ class ConfigController {
         throw new Error('保存配置失败');
       }
     } catch (error) {
-      console.error('更新上传设置失败:', error);
+      Logger.error('更新上传设置失败:', error);
       res.status(500).json({
         success: false,
         message: '更新上传设置失败',
@@ -240,7 +242,7 @@ class ConfigController {
         throw new Error('重置配置失败');
       }
     } catch (error) {
-      console.error('重置配置失败:', error);
+      Logger.error('重置配置失败:', error);
       res.status(500).json({
         success: false,
         message: '重置配置失败',

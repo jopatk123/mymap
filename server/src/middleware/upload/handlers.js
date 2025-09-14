@@ -11,7 +11,10 @@ const { errorResponse } = require('../../utils/response');
 const handleSingleUpload = (req, res, next) => {
   uploaders.single.single('file')(req, res, async (err) => {
     if (err) {
-      console.error('文件上传错误:', err);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('文件上传错误:', err);
+      } catch (_) {}
 
       if (err instanceof multer.MulterError) {
         switch (err.code) {
@@ -60,7 +63,10 @@ const handleSingleUpload = (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error('处理上传文件失败:', error);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理上传文件失败:', error);
+      } catch (_) {}
 
       // 清理已上传的文件
       await cleanupFiles(req.file.path);
@@ -76,7 +82,10 @@ const handleSingleUpload = (req, res, next) => {
 const handleVideoUpload = (req, res, next) => {
   uploaders.video.single('file')(req, res, async (err) => {
     if (err) {
-      console.error('视频文件上传错误:', err);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('视频文件上传错误:', err);
+      } catch (_) {}
 
       if (err instanceof multer.MulterError) {
         switch (err.code) {
@@ -114,7 +123,10 @@ const handleVideoUpload = (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error('处理视频文件失败:', error);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理视频文件失败:', error);
+      } catch (_) {}
 
       // 清理已上传的文件
       await cleanupFiles(req.file.path);
@@ -130,7 +142,10 @@ const handleVideoUpload = (req, res, next) => {
 const handleKmlUpload = (req, res, next) => {
   uploaders.kml.single('file')(req, res, async (err) => {
     if (err) {
-      console.error('KML文件上传错误:', err);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('KML文件上传错误:', err);
+      } catch (_) {}
 
       if (err instanceof multer.MulterError) {
         switch (err.code) {
@@ -168,7 +183,10 @@ const handleKmlUpload = (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error('处理KML文件失败:', error);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理KML文件失败:', error);
+      } catch (_) {}
 
       // 清理已上传的文件
       await cleanupFiles(req.file.path);
@@ -182,7 +200,10 @@ const handleKmlUpload = (req, res, next) => {
 const handleBasemapKmlUpload = (req, res, next) => {
   uploaders.basemapKml.single('file')(req, res, async (err) => {
     if (err) {
-      console.error('底图KML文件上传错误:', err);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('底图KML文件上传错误:', err);
+      } catch (_) {}
       if (err instanceof multer.MulterError) {
         switch (err.code) {
           case 'LIMIT_FILE_SIZE':
@@ -214,7 +235,10 @@ const handleBasemapKmlUpload = (req, res, next) => {
       req.body.isBasemap = '1';
       next();
     } catch (error) {
-      console.error('处理底图KML文件失败:', error);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理底图KML文件失败:', error);
+      } catch (_) {}
       await cleanupFiles(req.file.path);
       return res.status(500).json(errorResponse('处理底图KML文件失败'));
     }
@@ -227,7 +251,10 @@ const handleBasemapKmlUpload = (req, res, next) => {
 const handleBatchUpload = (req, res, next) => {
   uploaders.batch.array('files', 10)(req, res, async (err) => {
     if (err) {
-      console.error('批量文件上传错误:', err);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('批量文件上传错误:', err);
+      } catch (_) {}
 
       if (err instanceof multer.MulterError) {
         switch (err.code) {
@@ -276,7 +303,10 @@ const handleBatchUpload = (req, res, next) => {
       req.uploadedFiles = uploadedFiles;
       next();
     } catch (error) {
-      console.error('处理批量上传文件失败:', error);
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理批量上传文件失败:', error);
+      } catch (_) {}
 
       // 清理已上传的文件
       if (req.files) {

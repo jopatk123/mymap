@@ -20,7 +20,7 @@ router.get('/stats', KmlFileController.getKmlFileStats);
 // 上传KML文件
 router.post('/upload', handleKmlUpload, (req, res) => {
   const { uploadedFile } = req;
-  const { title, description, folderId } = req.body;
+  const { title } = req.body;
 
   // 验证必填字段
   if (!uploadedFile) {

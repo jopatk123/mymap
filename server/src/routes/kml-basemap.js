@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const { DOMParser } = require('xmldom');
 const router = express.Router();
+const Logger = require('../utils/logger');
 const KmlFileModel = require('../models/kml-file.model');
 const KmlPointModel = require('../models/kml-point.model');
 const { transaction } = require('../config/database');
@@ -110,7 +111,7 @@ const multerUploadWrapper = (req, res, next) => {
   } catch (e) {
     /* ignore */
   }
-  console.info('[KML BASEMAP] upload route hit:', req.ip, req.headers['user-agent']);
+  Logger.info('[KML BASEMAP] upload route hit', { ip: req.ip, ua: req.headers['user-agent'] });
   upload.any()(req, res, (err) => {
     if (err) {
       const errLog = `[${new Date().toISOString()}] [KML BASEMAP] multer upload error: ${
@@ -125,7 +126,7 @@ const multerUploadWrapper = (req, res, next) => {
       } catch (e) {
         /* ignore */
       }
-      console.error('[KML BASEMAP] multer upload error:', err);
+      Logger.error('[KML BASEMAP] multer upload error', err);
       // 把错误传递给全局错误处理器，同时在开发环境返回堆栈
       return next(err);
     }
@@ -228,13 +229,13 @@ router.post('/upload', multerUploadWrapper, async (req, res) => {
       } catch (e) {
         /* ignore */
       }
-      console.error('上传事务失败:', txErr);
+      Logger.error('上传事务失败:', txErr);
       return res
         .status(500)
         .json({ success: false, message: '上传失败（事务回滚）', error: txErr.message });
     }
   } catch (error) {
-    console.error('上传KML文件失败:', error);
+    Logger.error('上传KML文件失败:', error);
     const responseBody = {
       success: false,
       message: error.message || '上传失败',
@@ -274,7 +275,7 @@ router.get('/files', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('获取KML文件列表失败:', error);
+    Logger.error('获取KML文件列表失败:', error);
     res.status(500).json({ success: false, message: '获取文件列表失败' });
   }
 });
@@ -289,7 +290,7 @@ router.get('/:fileId/points', async (req, res) => {
     const points = await KmlPointModel.findByKmlFileId(fileId);
     res.json({ success: true, data: points });
   } catch (error) {
-    console.error('获取KML点位数据失败:', error);
+    Logger.error('获取KML点位数据失败:', error);
     res.status(500).json({ success: false, message: '获取点位数据失败' });
   }
 });
@@ -318,7 +319,7 @@ router.get('/:fileId/download', async (req, res) => {
     const downloadName = file.title || file.name || path.basename(filePath);
     res.download(filePath, downloadName);
   } catch (error) {
-    console.error('下载KML文件失败:', error);
+    Logger.error('下载KML文件失败:', error);
     res.status(500).json({ success: false, message: '下载失败' });
   }
 });
@@ -419,16 +420,9 @@ router.post('/export', (req, res) => {
       }
 
       case 'json': {
-        content = JSON.stringify(
-          {
-            exportTime: new Date().toISOString(),
-            totalCount: points.length,
-            points: points,
-          },
-          null,
-          2
-        );
-        mimeType = 'application/json';
+        // 导出为 JSON
+        content = JSON.stringify(points, null, 2);
+        mimeType = 'application/json;charset=utf-8';
         fileExtension = 'json';
         break;
       }
@@ -444,7 +438,7 @@ router.post('/export', (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}.${fileExtension}"`);
     res.send(content);
   } catch (error) {
-    console.error('导出数据失败:', error);
+    Logger.error('导出数据失败:', error);
     res.status(500).json({
       success: false,
       message: '导出失败',

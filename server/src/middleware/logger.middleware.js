@@ -60,7 +60,10 @@ const consoleLogger = morgan(devFormat);
 const loggerMiddleware = (req, res, next) => {
   // write to file
   fileLogger(req, res, (err) => {
-    if (err) console.error('fileLogger error:', err);
+    if (err) {
+      const Logger = require('../utils/logger');
+      Logger.error('fileLogger error:', err);
+    }
   });
   // write to console in development
   if (process.env.NODE_ENV !== 'production') {
@@ -95,8 +98,10 @@ const logError = (error, req = null) => {
 
   const errorLogPath = path.join(logDir, 'error.log');
   fs.appendFileSync(errorLogPath, JSON.stringify(errorLog) + '\n');
-
-  console.error('Error logged:', errorLog);
+  try {
+    const Logger = require('../utils/logger');
+    Logger.error('Error logged:', errorLog);
+  } catch (_) {}
 };
 
 // 操作日志记录器

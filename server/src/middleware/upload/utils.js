@@ -1,7 +1,6 @@
 const sharp = require('sharp');
 const fs = require('fs').promises;
-const path = require('path');
-const { uploadDir } = require('./config');
+// path and uploadDir intentionally not used in this module but kept for future references
 
 /**
  * 生成缩略图
@@ -12,6 +11,7 @@ const { uploadDir } = require('./config');
  */
 const generateThumbnail = async (inputPath, outputPath, width = 300, height = 150) => {
   try {
+    // inputPath is expected to be used; keep behavior unchanged
     await sharp(inputPath)
       .resize(width, height, {
         fit: 'cover',

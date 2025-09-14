@@ -3,6 +3,7 @@ const { open } = require('sqlite');
 const path = require('path');
 const fs = require('fs');
 const config = require('./index');
+const Logger = require('../utils/logger');
 
 let db = null;
 
@@ -47,7 +48,7 @@ const testConnection = async () => {
     await database.get('SELECT 1');
     return true;
   } catch (error) {
-    console.error('数据库连接失败:', error.message);
+    Logger.error('数据库连接失败:', error.message);
     return false;
   }
 };
@@ -248,10 +249,10 @@ const initTables = async () => {
       const { initDefaultFolder } = require('../init/init-default-folder');
       await initDefaultFolder();
     } catch (error) {
-      console.warn('初始化默认文件夹失败:', error.message);
+      Logger.warn('初始化默认文件夹失败:', error.message);
     }
   } catch (error) {
-    console.error('数据库表初始化失败:', error.message);
+    Logger.error('数据库表初始化失败:', error.message);
     throw error;
   }
 };
@@ -269,7 +270,7 @@ const query = async (sql, params = []) => {
       return result;
     }
   } catch (error) {
-    console.error('数据库查询错误:', error.message);
+    Logger.error('数据库查询错误:', error.message);
     throw error;
   }
 };
@@ -297,7 +298,7 @@ const closeDatabase = async () => {
       db = null;
     }
   } catch (error) {
-    console.error('关闭数据库连接失败:', error.message);
+    Logger.error('关闭数据库连接失败:', error.message);
   }
 };
 

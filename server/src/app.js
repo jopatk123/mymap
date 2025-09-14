@@ -50,7 +50,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(
   `/${config.upload.dir}`,
   express.static(path.join(__dirname, '../', config.upload.dir), {
-    setHeaders: (res, path) => {
+    setHeaders: (res, _path) => {
       res.set('Access-Control-Allow-Origin', '*');
       res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.set('Access-Control-Allow-Headers', 'Content-Type');
@@ -157,7 +157,7 @@ app.use('/api', routes);
 const distDir = path.join(__dirname, '../../client/dist');
 app.use(
   express.static(distDir, {
-    setHeaders: (res, filePath) => {
+    setHeaders: (res, _filePath) => {
       res.set('Access-Control-Allow-Origin', '*');
     },
   })

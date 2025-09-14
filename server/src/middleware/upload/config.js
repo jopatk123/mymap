@@ -17,7 +17,10 @@ const ensureUploadDir = async () => {
     await fs.mkdir(kmlDir, { recursive: true });
     await fs.mkdir(videoDir, { recursive: true });
   } catch (error) {
-    console.error('创建上传目录失败:', error);
+    try {
+      const Logger = require('../../utils/logger');
+      Logger.error('创建上传目录失败:', error);
+    } catch (_) {}
   }
 };
 

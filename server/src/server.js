@@ -17,8 +17,9 @@ const startServer = async () => {
     // 初始化数据库表
     await initTables();
 
-    // 初始化默认文件夹
-    const defaultFolderId = await initDefaultFolder();
+    // 初始化默认文件夹（返回值当前未使用）
+    const _defaultFolderId = await initDefaultFolder();
+    void _defaultFolderId;
 
     // 启动HTTP服务器
     const server = app.listen(config.server.port, () => {
@@ -38,7 +39,7 @@ const startServer = async () => {
     });
 
     // 优雅关闭处理
-    const gracefulShutdown = (signal) => {
+    const gracefulShutdown = (_signal) => {
       server.close(async () => {
         // 关闭数据库连接
         await closeDatabase();
