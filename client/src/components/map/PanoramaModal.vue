@@ -41,7 +41,7 @@ const emit = defineEmits(['update:modelValue', 'panorama-deleted']);
 
 // 使用组合式函数
 const {
-  visible,
+  visible: _visible,
   handleClose: modalHandleClose,
   copyCoordinate,
   deletePanorama,
