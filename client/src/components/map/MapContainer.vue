@@ -421,6 +421,8 @@ defineExpose({
   clearSearchMarker,
   // 将底层地图实例暴露给父组件（例如 MapView -> 上层页面）
   map,
+  _locateUser,
+  _fitAllMarkers,
 });
 </script>
 
