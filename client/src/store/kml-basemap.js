@@ -514,19 +514,17 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       }
 
       // table output is useful during debugging but suppressed here to satisfy linter rules
-      void console.table &&
-        void console.table(
-          results.map((r) => ({
-            pointId: r.pointId,
-            title: r.title,
-            matched: r.matched,
-            isInAny: r.isInAny,
-            isNearBoundary: r.isNearBoundary || false,
-          }))
-        );
+      // expose results to window for interactive debugging instead of logging
+      try {
+        if (typeof window !== 'undefined') window.debugPointCheckResults = results;
+      } catch (e) {
+        /* ignore */
+      }
       return results;
     } catch (err) {
-      void console.error('debugPointChecks error', err);
+      try {
+        if (typeof window !== 'undefined') window.debugPointChecksError = err;
+      } catch (e) {}
       return [];
     }
   };
