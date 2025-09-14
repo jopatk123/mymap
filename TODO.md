@@ -27,8 +27,8 @@
  
  当前 ESLint 快照（本次运行）：
 
- - Errors: 0
- - Warnings: 123
+- Errors: 0
+- Warnings: 120
 
  下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
