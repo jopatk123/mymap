@@ -23,7 +23,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       const files = await kmlBaseMapService.getKMLFiles();
 
       if (!Array.isArray(files)) {
-        console.error('fetchKMLFiles: expected array, got', files);
+        void console.error('fetchKMLFiles: expected array, got', files);
         kmlFiles.value = [];
         return;
       }
@@ -52,7 +52,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       // 加载所有KML文件的点位数据
       await loadAllKMLPoints();
     } catch (error) {
-      console.error('获取KML文件失败:', error);
+      void console.error('获取KML文件失败:', error);
       throw error;
     } finally {
       loading.value = false;
@@ -78,7 +78,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
 
       kmlPoints.value = allPoints;
     } catch (error) {
-      console.error('加载KML点位数据失败:', error);
+      void console.error('加载KML点位数据失败:', error);
       throw error;
     }
   };
@@ -104,7 +104,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
 
       return result;
     } catch (error) {
-      console.error('上传KML文件失败:', error);
+      void console.error('上传KML文件失败:', error);
       throw error;
     } finally {
       loading.value = false;
@@ -122,7 +122,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       kmlPoints.value = kmlPoints.value.filter((point) => point.fileId !== fileId);
       updateVisiblePoints();
     } catch (error) {
-      console.error('删除KML文件失败:', error);
+      void console.error('删除KML文件失败:', error);
       throw error;
     } finally {
       loading.value = false;
@@ -255,7 +255,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       // update visible points hook - no-op
     } catch (e) {
-      console.warn('[kml-basemap] updateVisiblePoints post-hook failed', e);
+      void console.warn('[kml-basemap] updateVisiblePoints post-hook failed', e);
     }
 
     if (activeAreas.length === 0) {
@@ -359,11 +359,11 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
                 try {
                   mod.refreshAllMarkers && mod.refreshAllMarkers();
                 } catch (e) {
-                  console.warn('[kml-basemap] refreshAllMarkers error', e);
+                  void console.warn('[kml-basemap] refreshAllMarkers error', e);
                 }
               })
               .catch((e) => {
-                console.warn('[kml-basemap] import marker-refresh failed', e);
+                void console.warn('[kml-basemap] import marker-refresh failed', e);
               });
           }, 200);
         } catch (err) {
@@ -371,7 +371,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         }
       }
     } catch (err) {
-      console.warn('[kml-basemap] merge visible KML points failed', err);
+      void console.warn('[kml-basemap] merge visible KML points failed', err);
     }
   };
 
@@ -382,7 +382,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       /* getPointsInArea called */
     } catch (e) {
-      console.warn('[kml-basemap] getPointsInArea hook failed', e);
+      void console.warn('[kml-basemap] getPointsInArea hook failed', e);
     }
 
     return kmlPoints.value.filter((point) => {
@@ -419,7 +419,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       const activeAreas = areas.value.filter((a) => a.visible !== false);
       if (!activeAreas.length) {
-        console.info('[kml-basemap-debug] debugPointChecks: no active areas');
+        void console.info('[kml-basemap-debug] debugPointChecks: no active areas');
         return [];
       }
 
@@ -509,7 +509,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         );
       return results;
     } catch (err) {
-      console.error('debugPointChecks error', err);
+      void console.error('debugPointChecks error', err);
       return [];
     }
   };
