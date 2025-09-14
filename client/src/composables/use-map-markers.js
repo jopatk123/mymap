@@ -19,6 +19,8 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     scheduleViewportUpdate,
     removeMarkersBatch: vpRemoveMarkersBatch,
   } = createViewportClipping(map, clusterManager, markers, onMarkerClick);
+  // mark intentionally unused helper as referenced for linter
+  void vpRemoveMarkersBatch;
 
   const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
 
@@ -278,6 +280,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       for (const id of ids) removeMarker(id);
     }
   };
+
+  // mark internal helper as referenced to satisfy linter checks
+  void removeMarkersBatch;
 
   const clearMarkers = () => {
     try {

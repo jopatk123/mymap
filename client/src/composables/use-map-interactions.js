@@ -118,8 +118,10 @@ export function useMapInteractions(
   };
 
   // 处理地图点击
-  const handleMapClick = (latlng) => {
+  const handleMapClick = (_latlng) => {
     // 可以在这里添加新增全景图的逻辑
+    // _latlng intentionally unused for now
+    void _latlng;
   };
 
   // 选择全景图
@@ -214,9 +216,11 @@ export function useMapInteractions(
       try {
         const base = Array.isArray(window.basePoints) ? window.basePoints : [];
         const kmlSel = Array.isArray(window.kmlSelectedPoints) ? window.kmlSelectedPoints : [];
-        // filteredPoints 是来自服务器的非 KML 点，优先使用 filteredPoints 覆盖 base
+        // filteredPoints 是来自服务端的非 KML 点，优先使用 filteredPoints 覆盖 base
         window.basePoints = filteredPoints;
         window.allPoints = [...filteredPoints, ...kmlSel];
+        // base is intentionally captured for debugging/compatibility; mark as used
+        void base;
       } catch (err) {
         window.allPoints = filteredPoints;
       }

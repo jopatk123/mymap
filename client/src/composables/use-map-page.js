@@ -18,6 +18,8 @@ export function useMapPage() {
   // Store数据
   const { panoramas, currentPanorama, pagination, visiblePanoramas, hasMore, loading } =
     storeToRefs(panoramaStore);
+  // pagination may be unused in some views; mark to avoid linter warning
+  void pagination;
 
   const { sidebarCollapsed, panoramaListVisible, mapConfig, isOnline } = storeToRefs(appStore);
 

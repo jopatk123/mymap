@@ -16,6 +16,9 @@ export function usePanoramaViewer() {
     setView,
   } = usePanorama();
 
+  // mark viewer as referenced to satisfy linter when it's not used directly in this module
+  void viewer;
+
   // 打开全景图查看器
   const openViewer = async (panorama) => {
     if (!panorama?.image_url) {

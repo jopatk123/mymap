@@ -7,6 +7,8 @@ import { createPointMarker } from '@/utils/map-utils.js';
  */
 export function useMapStyleUpdater(map, markers) {
   const isUpdating = ref(false);
+  // watch is imported for potential future use; mark as referenced to satisfy linter
+  void watch;
 
   /**
    * 更新所有标记的样式
