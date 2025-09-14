@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { kmlBaseMapService } from '@/services/kml-basemap-service.js';
 import { areaCalculationService } from '@/services/area-calculation-service.js';
+import { generateUUID } from '@/utils/uuid.js';
 
 export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   // 状态
@@ -132,7 +133,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   // 添加区域
   const addArea = (area) => {
     areas.value.push({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...area,
       // 默认新建区域为可见，toggleAreaVisibility 会切换此字段
       visible: area.visible !== undefined ? area.visible : true,

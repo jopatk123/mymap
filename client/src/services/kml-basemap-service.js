@@ -1,3 +1,5 @@
+import { generateUUID } from '@/utils/uuid.js';
+
 /**
  * KML底图服务
  * 负责KML底图文件的管理和点位数据的处理
@@ -160,7 +162,7 @@ export class KMLBaseMapService {
         const [lng, lat, alt] = coordinates.split(',').map(Number);
         if (!isNaN(lng) && !isNaN(lat)) {
           points.push({
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             name,
             description,
             latitude: lat,
