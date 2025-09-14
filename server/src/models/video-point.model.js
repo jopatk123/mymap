@@ -1,4 +1,5 @@
 const SQLiteAdapter = require('../utils/sqlite-adapter');
+const Logger = require('../utils/logger');
 const { wgs84ToGcj02 } = require('../utils/coordinate');
 const QueryBuilder = require('../utils/QueryBuilder');
 
@@ -44,7 +45,7 @@ class VideoPointModel {
       );
       return await this.findById(result.insertId);
     } catch (error) {
-      console.error('创建视频点位失败:', error);
+      Logger.error('创建视频点位失败:', error);
       throw error;
     }
   }
@@ -60,7 +61,7 @@ class VideoPointModel {
       );
       return rows[0] || null;
     } catch (error) {
-      console.error('查找视频点位失败:', error);
+      Logger.error('查找视频点位失败:', error);
       throw error;
     }
   }
@@ -124,7 +125,7 @@ class VideoPointModel {
         totalPages: Math.ceil(total / pageSize),
       };
     } catch (error) {
-      console.error('获取视频点位列表失败:', error);
+      Logger.error('获取视频点位列表失败:', error);
       throw error;
     }
   }
@@ -149,7 +150,7 @@ class VideoPointModel {
       );
       return rows;
     } catch (error) {
-      console.error('根据文件夹查找视频点位失败:', error);
+      Logger.error('根据文件夹查找视频点位失败:', error);
       throw error;
     }
   }
@@ -191,7 +192,7 @@ class VideoPointModel {
       );
       return rows;
     } catch (error) {
-      console.error('根据边界查找视频点位失败:', error);
+      Logger.error('根据边界查找视频点位失败:', error);
       throw error;
     }
   }
@@ -237,7 +238,7 @@ class VideoPointModel {
       );
       return await this.findById(id);
     } catch (error) {
-      console.error('更新视频点位失败:', error);
+      Logger.error('更新视频点位失败:', error);
       throw error;
     }
   }
@@ -247,7 +248,7 @@ class VideoPointModel {
       const [result] = await SQLiteAdapter.execute('DELETE FROM video_points WHERE id = ?', [id]);
       return result.affectedRows > 0;
     } catch (error) {
-      console.error('删除视频点位失败:', error);
+      Logger.error('删除视频点位失败:', error);
       throw error;
     }
   }
@@ -264,7 +265,7 @@ class VideoPointModel {
       );
       return result.affectedRows;
     } catch (error) {
-      console.error('批量删除视频点位失败:', error);
+      Logger.error('批量删除视频点位失败:', error);
       throw error;
     }
   }
@@ -281,7 +282,7 @@ class VideoPointModel {
       );
       return result.affectedRows;
     } catch (error) {
-      console.error('批量更新视频点位可见性失败:', error);
+      Logger.error('批量更新视频点位可见性失败:', error);
       throw error;
     }
   }
@@ -298,7 +299,7 @@ class VideoPointModel {
       );
       return result.affectedRows;
     } catch (error) {
-      console.error('批量移动视频点位到文件夹失败:', error);
+      Logger.error('批量移动视频点位到文件夹失败:', error);
       throw error;
     }
   }
@@ -314,7 +315,7 @@ class VideoPointModel {
       `);
       return rows[0];
     } catch (error) {
-      console.error('获取视频点位统计失败:', error);
+      Logger.error('获取视频点位统计失败:', error);
       throw error;
     }
   }

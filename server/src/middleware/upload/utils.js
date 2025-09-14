@@ -22,7 +22,8 @@ const generateThumbnail = async (inputPath, outputPath, width = 300, height = 15
 
     return true;
   } catch (error) {
-    console.error('生成缩略图失败:', error);
+    const Logger = require('../../utils/logger');
+    Logger.error('生成缩略图失败:', error);
     return false;
   }
 };
@@ -36,7 +37,8 @@ const deleteFile = async (filePath) => {
     await fs.unlink(filePath);
     return true;
   } catch (error) {
-    console.error('删除文件失败:', error);
+    const Logger = require('../../utils/logger');
+    Logger.error('删除文件失败:', error);
     return false;
   }
 };
@@ -54,7 +56,8 @@ const getFileInfo = async (filePath) => {
       modified: stats.mtime,
     };
   } catch (error) {
-    console.error('获取文件信息失败:', error);
+    const Logger = require('../../utils/logger');
+    Logger.error('获取文件信息失败:', error);
     return null;
   }
 };
@@ -82,7 +85,8 @@ const cleanupFiles = async (filePaths) => {
       try {
         await fs.unlink(filePath);
       } catch (error) {
-        console.error('清理文件失败:', error);
+        const Logger = require('../../utils/logger');
+        Logger.error('清理文件失败:', error);
       }
     })
   );

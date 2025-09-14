@@ -116,7 +116,8 @@ router.post('/batch-upload', handleBatchUpload, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('批量上传处理失败:', error);
+    const Logger = require('../utils/logger');
+    Logger.error('批量上传处理失败:', error);
     res.status(500).json({
       code: 500,
       success: false,

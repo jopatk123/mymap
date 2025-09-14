@@ -36,7 +36,8 @@ class KmlPointModel {
       );
       return await this.findById(result.insertId);
     } catch (error) {
-      console.error('创建KML点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('创建KML点位失败:', error);
       throw error;
     }
   }
@@ -72,7 +73,8 @@ class KmlPointModel {
       const result = await SQLiteAdapter.all(sql, params);
       return result.affectedRows;
     } catch (error) {
-      console.error('批量创建KML点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('批量创建KML点位失败:', error);
       throw error;
     }
   }
@@ -92,7 +94,8 @@ class KmlPointModel {
       }
       return rows[0] || null;
     } catch (error) {
-      console.error('查找KML点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('查找KML点位失败:', error);
       throw error;
     }
   }
@@ -113,7 +116,8 @@ class KmlPointModel {
         style_data: JSON.parse(row.style_data || '{}'),
       }));
     } catch (error) {
-      console.error('根据KML文件ID查找点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('根据KML文件ID查找点位失败:', error);
       throw error;
     }
   }
@@ -136,7 +140,8 @@ class KmlPointModel {
         style_data: JSON.parse(row.style_data || '{}'),
       }));
     } catch (error) {
-      console.error('根据边界查找KML点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('根据边界查找KML点位失败:', error);
       throw error;
     }
   }
@@ -148,7 +153,8 @@ class KmlPointModel {
       ]);
       return result.affectedRows;
     } catch (error) {
-      console.error('删除KML文件点位失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('删除KML文件点位失败:', error);
       throw error;
     }
   }
@@ -169,7 +175,8 @@ class KmlPointModel {
       );
       return rows[0];
     } catch (error) {
-      console.error('获取KML点位统计失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('获取KML点位统计失败:', error);
       throw error;
     }
   }
@@ -188,7 +195,8 @@ class KmlPointModel {
       `);
       return rows[0];
     } catch (error) {
-      console.error('获取KML点位统计失败:', error);
+      const Logger = require('../utils/logger');
+      Logger.error('获取KML点位统计失败:', error);
       throw error;
     }
   }
