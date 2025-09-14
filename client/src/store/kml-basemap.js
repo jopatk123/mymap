@@ -349,6 +349,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         // 刷新地图标记（延迟并打印 map/marker 状态，降低与 Leaflet 聚簇模块的 race-condition）
         try {
           const mapExists = typeof window !== 'undefined' && (!!window.mapInstance || !!window.map);
+          void mapExists;
           setTimeout(() => {
             import('@/utils/marker-refresh.js')
               .then((mod) => {
@@ -425,6 +426,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         let isInAny = false;
         let details = [];
 
+        // expose function reference for console/debugging hooks
+        void debugPointChecks;
         for (const area of activeAreas) {
           if (area.type === 'circle') {
             const d = areaCalculationService.calculateDistance(

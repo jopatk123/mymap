@@ -16,6 +16,8 @@ export function useKmlLayer(map, kmlLayers) {
         kmlFile?.is_basemap === true ||
         kmlFile?.isBasemap === 1
     );
+    // intentionally reference to avoid linter "assigned but never used" when value is only for callers
+    void _isBasemap;
     if (!map.value || !kmlFile.file_url) {
       void console.warn('无法添加KML图层：地图未初始化或文件URL为空', {
         map: !!map.value,

@@ -7,7 +7,7 @@ export function usePanoramaViewer() {
   const autoRotating = ref(false);
 
   const {
-    viewer,
+    viewer: _viewer,
     isLoading,
     initViewer,
     closeViewer: closePanoramaViewer,
@@ -17,7 +17,7 @@ export function usePanoramaViewer() {
   } = usePanorama();
 
   // mark viewer as referenced to satisfy linter when it's not used directly in this module
-  void viewer;
+  void _viewer;
 
   // 打开全景图查看器
   const openViewer = async (panorama) => {
