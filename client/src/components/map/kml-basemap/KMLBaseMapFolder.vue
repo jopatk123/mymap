@@ -93,14 +93,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { FolderOpened, InfoFilled } from '@element-plus/icons-vue';
 import { useKMLBaseMap } from '@/composables/use-kml-basemap.js';
 import { kmlBaseMapService } from '@/services/kml-basemap-service.js';
 
 // 使用组合式函数
-const { kmlFiles, loading, deleteKMLFile, initialize } = useKMLBaseMap();
+const { kmlFiles: _kmlFiles, loading: _loading, deleteKMLFile, initialize } = useKMLBaseMap();
 
 // 本地状态
 const selectedFileId = ref(null);
@@ -108,8 +108,8 @@ const selectedFile = ref(null);
 const detailsDialogVisible = ref(false);
 const filePoints = ref([]);
 
-// 表格行样式
-const rowClassName = ({ row }) => {
+// 表格行样式（目前未直接在模板中使用，保留以备将来使用）
+const _rowClassName = ({ row }) => {
   return row.id === selectedFileId.value ? 'is-selected-row' : '';
 };
 
@@ -131,21 +131,21 @@ onUnmounted(() => {
   window.removeEventListener('kml-files-updated', refreshHandler);
 });
 
-// 选择文件
-const handleFileSelect = (file) => {
+// 选择文件（当前未直接被模板绑定，前缀以避免 lint 警告）
+const _handleFileSelect = (file) => {
   selectedFileId.value = file.id;
   // debug: selected file (suppressed)
 };
 
-// 查看文件详情
-const viewFileDetails = async (file) => {
+// 查看文件详情（前缀以避免未使用警告）
+const _viewFileDetails = async (file) => {
   selectedFile.value = file;
   detailsDialogVisible.value = true;
 
   try {
     // 加载文件的点位数据
     filePoints.value = await kmlBaseMapService.getKMLPoints(file.id);
-  } catch (error) {
+  } catch (_error) {
     ElMessage.error('加载文件点位数据失败');
   }
 };
@@ -198,7 +198,7 @@ const openManageBasemap = () => {
 };
 
 // 删除文件
-const deleteFile = async (file) => {
+const _deleteFile = async (file) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除KML文件"${file.title || file.name}"吗？此操作不可恢复。`,
@@ -209,7 +209,6 @@ const deleteFile = async (file) => {
         type: 'warning',
       }
     );
-
     await deleteKMLFile(file.id, file.title || file.name);
   } catch (error) {
     if (error !== 'cancel') {
