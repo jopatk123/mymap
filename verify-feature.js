@@ -13,9 +13,9 @@ async function verifyFeature() {
     const testSettings = {
       enabled: true,
       center: [121.4944, 31.2415], // 上海陆家嘴
-      zoom: 13
+      zoom: 13,
     };
-    
+
     const updateResponse = await fetch(`${API_BASE}/initial-view`, {
       method: 'PUT',
       headers: {
@@ -31,7 +31,7 @@ async function verifyFeature() {
     const getResponse = await fetch(`${API_BASE}/initial-view`);
     const currentSettings = await getResponse.json();
     const savedSettings = currentSettings.data;
-    
+
     console.log('📍 当前保存的设置:');
     console.log(`   启用状态: ${savedSettings.enabled ? '✅ 启用' : '❌ 禁用'}`);
     console.log(`   中心点: [${savedSettings.center[0]}, ${savedSettings.center[1]}] (经度, 纬度)`);
@@ -42,9 +42,9 @@ async function verifyFeature() {
     const beijingSettings = {
       enabled: true,
       center: [116.4074, 39.9042], // 北京天安门
-      zoom: 12
+      zoom: 12,
     };
-    
+
     await fetch(`${API_BASE}/initial-view`, {
       method: 'PUT',
       headers: {
@@ -59,9 +59,9 @@ async function verifyFeature() {
     const disabledSettings = {
       enabled: false,
       center: [116.4074, 39.9042],
-      zoom: 12
+      zoom: 12,
     };
-    
+
     await fetch(`${API_BASE}/initial-view`, {
       method: 'PUT',
       headers: {
@@ -76,9 +76,9 @@ async function verifyFeature() {
     const finalSettings = {
       enabled: true,
       center: [113.3191, 23.1092], // 广州塔
-      zoom: 14
+      zoom: 14,
     };
-    
+
     await fetch(`${API_BASE}/initial-view`, {
       method: 'PUT',
       headers: {
@@ -86,7 +86,7 @@ async function verifyFeature() {
       },
       body: JSON.stringify(finalSettings),
     });
-    
+
     const finalResponse = await fetch(`${API_BASE}/initial-view`);
     const finalResult = await finalResponse.json();
     console.log('✅ 最终配置:', JSON.stringify(finalResult.data, null, 2));
@@ -98,7 +98,6 @@ async function verifyFeature() {
     console.log('3. 在对话框中修改设置');
     console.log('4. 访问地图页面: http://localhost:3000');
     console.log('5. 检查地图是否按设置初始化');
-
   } catch (error) {
     console.error('❌ 验证失败:', error.message);
     process.exit(1);

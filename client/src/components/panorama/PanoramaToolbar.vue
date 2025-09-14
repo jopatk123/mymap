@@ -7,19 +7,19 @@
       </span>
     </div>
     <div class="toolbar-right">
-      <el-button @click="$emit('toggle-auto-rotate')" type="info" size="small">
+      <el-button type="info" size="small" @click="$emit('toggle-auto-rotate')">
         <el-icon><Refresh /></el-icon>
         {{ autoRotating ? '停止旋转' : '自动旋转' }}
       </el-button>
-      <el-button @click="$emit('toggle-fullscreen')" type="success" size="small">
+      <el-button type="success" size="small" @click="$emit('toggle-fullscreen')">
         <el-icon><FullScreen /></el-icon>
         全屏
       </el-button>
-      <el-button @click="$emit('reset-view')" type="warning" size="small">
+      <el-button type="warning" size="small" @click="$emit('reset-view')">
         <el-icon><RefreshLeft /></el-icon>
         重置视角
       </el-button>
-      <el-button @click="$emit('go-back')" type="primary" size="small">
+      <el-button type="primary" size="small" @click="$emit('go-back')">
         <el-icon><Back /></el-icon>
         返回
       </el-button>
@@ -28,18 +28,18 @@
 </template>
 
 <script setup>
-import { Refresh, FullScreen, RefreshLeft, Back } from '@element-plus/icons-vue'
+import { Refresh, FullScreen, RefreshLeft, Back } from '@element-plus/icons-vue';
 
 defineProps({
   panorama: {
     type: Object,
-    default: null
+    default: null,
   },
   autoRotating: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits(['toggle-auto-rotate', 'toggle-fullscreen', 'reset-view', 'go-back'])
+defineEmits(['toggle-auto-rotate', 'toggle-fullscreen', 'reset-view', 'go-back']);
 </script>

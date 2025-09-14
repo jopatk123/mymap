@@ -1,7 +1,7 @@
-const sharp = require('sharp')
-const fs = require('fs').promises
-const path = require('path')
-const { uploadDir } = require('./config')
+const sharp = require('sharp');
+const fs = require('fs').promises;
+const path = require('path');
+const { uploadDir } = require('./config');
 
 /**
  * 生成缩略图
@@ -15,17 +15,17 @@ const generateThumbnail = async (inputPath, outputPath, width = 300, height = 15
     await sharp(inputPath)
       .resize(width, height, {
         fit: 'cover',
-        position: 'center'
+        position: 'center',
       })
       .jpeg({ quality: 80 })
-      .toFile(outputPath)
-    
-    return true
+      .toFile(outputPath);
+
+    return true;
   } catch (error) {
-    console.error('生成缩略图失败:', error)
-    return false
+    console.error('生成缩略图失败:', error);
+    return false;
   }
-}
+};
 
 /**
  * 删除文件
@@ -33,13 +33,13 @@ const generateThumbnail = async (inputPath, outputPath, width = 300, height = 15
  */
 const deleteFile = async (filePath) => {
   try {
-    await fs.unlink(filePath)
-    return true
+    await fs.unlink(filePath);
+    return true;
   } catch (error) {
-    console.error('删除文件失败:', error)
-    return false
+    console.error('删除文件失败:', error);
+    return false;
   }
-}
+};
 
 /**
  * 获取文件信息
@@ -47,17 +47,17 @@ const deleteFile = async (filePath) => {
  */
 const getFileInfo = async (filePath) => {
   try {
-    const stats = await fs.stat(filePath)
+    const stats = await fs.stat(filePath);
     return {
       size: stats.size,
       created: stats.birthtime,
-      modified: stats.mtime
-    }
+      modified: stats.mtime,
+    };
   } catch (error) {
-    console.error('获取文件信息失败:', error)
-    return null
+    console.error('获取文件信息失败:', error);
+    return null;
   }
-}
+};
 
 /**
  * 构建文件URL
@@ -67,31 +67,31 @@ const getFileInfo = async (filePath) => {
 const buildFileUrl = (req, filePath) => {
   // 使用相对路径，避免反向代理场景下 Host 端口缺失导致的访问失败
   // 统一以 "/uploads/..." 的站内绝对路径返回，前端以当前来源加载
-  return `/${filePath}`
-}
+  return `/${filePath}`;
+};
 
 /**
  * 清理上传的文件
  * @param {Array|string} filePaths 文件路径数组或单个路径
  */
 const cleanupFiles = async (filePaths) => {
-  const paths = Array.isArray(filePaths) ? filePaths : [filePaths]
-  
+  const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
+
   await Promise.all(
     paths.map(async (filePath) => {
       try {
-        await fs.unlink(filePath)
+        await fs.unlink(filePath);
       } catch (error) {
-        console.error('清理文件失败:', error)
+        console.error('清理文件失败:', error);
       }
     })
-  )
-}
+  );
+};
 
 module.exports = {
   generateThumbnail,
   deleteFile,
   getFileInfo,
   buildFileUrl,
-  cleanupFiles
-}
+  cleanupFiles,
+};

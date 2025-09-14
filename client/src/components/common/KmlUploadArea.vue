@@ -18,33 +18,21 @@
           <p class="upload-hint">支持 .kml 格式，最大 10MB</p>
         </div>
       </div>
-      
+
       <div v-else class="upload-preview">
         <div class="file-info">
           <el-icon><Document /></el-icon>
           <span class="file-name">{{ file.name }}</span>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            circle
-            size="small"
-            @click.stop="handleRemove"
-          />
+          <el-button type="danger" :icon="Delete" circle size="small" @click.stop="handleRemove" />
         </div>
-        
+
         <!-- 验证结果 -->
         <div v-if="validationResult" class="validation-result">
-          <div 
-            v-if="validationResult.valid"
-            class="validation-success"
-          >
+          <div v-if="validationResult.valid" class="validation-success">
             <el-icon><CircleCheckFilled /></el-icon>
             <span>KML文件验证成功，包含 {{ validationResult.placemarkCount }} 个地标</span>
           </div>
-          <div 
-            v-else
-            class="validation-error"
-          >
+          <div v-else class="validation-error">
             <el-icon><CircleCloseFilled /></el-icon>
             <span>验证失败: {{ validationResult.error }}</span>
           </div>
@@ -55,86 +43,94 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Document, Delete, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed } from 'vue';
+import { Document, Delete, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: File,
-  validationResult: Object,
+  validationResult: {
+    type: Object,
+    default: null,
+  },
   accept: {
     type: String,
-    default: '.kml'
-  }
-})
+    default: '.kml',
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'update:validationResult', 'file-change', 'file-remove'])
+const emit = defineEmits([
+  'update:modelValue',
+  'update:validationResult',
+  'file-change',
+  'file-remove',
+]);
 
-const uploadRef = ref(null)
+const uploadRef = ref(null);
 
 const file = computed({
   get: () => props.modelValue,
   set: (value) => {
-    emit('update:modelValue', value)
-  }
-})
+    emit('update:modelValue', value);
+  },
+});
 
 const validationResult = computed({
   get: () => props.validationResult,
-  set: (value) => emit('update:validationResult', value)
-})
+  set: (value) => emit('update:validationResult', value),
+});
 
 const handleFileChange = async (file) => {
-  const rawFile = file.raw
-  
+  const rawFile = file.raw;
+
   // 验证文件
-  const isKml = rawFile.name.toLowerCase().endsWith('.kml')
-  const isLt10M = rawFile.size / 1024 / 1024 < 10
-  
+  const isKml = rawFile.name.toLowerCase().endsWith('.kml');
+  const isLt10M = rawFile.size / 1024 / 1024 < 10;
+
   if (!isKml) {
-    ElMessage.error('只能上传KML格式文件!')
-    return false
+    ElMessage.error('只能上传KML格式文件!');
+    return false;
   }
-  
+
   if (!isLt10M) {
-    ElMessage.error('文件大小不能超过 10MB!')
-    return false
+    ElMessage.error('文件大小不能超过 10MB!');
+    return false;
   }
-  
+
   // 直接调用emit，不通过computed setter
-  emit('update:modelValue', rawFile)
-  
+  emit('update:modelValue', rawFile);
+
   // 发送file-change事件
-  emit('file-change', rawFile)
-  
-  return true
-}
+  emit('file-change', rawFile);
+
+  return true;
+};
 
 const handleFileRemove = () => {
   // 同样直接调用emit
-  emit('update:modelValue', null)
-  emit('update:validationResult', null)
-  emit('file-remove')
-}
+  emit('update:modelValue', null);
+  emit('update:validationResult', null);
+  emit('file-remove');
+};
 
 const handleRemove = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 // 清理方法
 const clearFiles = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 defineExpose({
-  clearFiles
-})
+  clearFiles,
+});
 </script>
 
 <style scoped>

@@ -2,16 +2,12 @@
   <div class="polygon-style-editor">
     <div class="style-section">
       <h4>填充样式</h4>
-      
+
       <el-form label-width="100px" size="small">
         <el-form-item label="填充颜色">
-          <el-color-picker 
-            v-model="fillColorPicker"
-            @change="handleChange"
-            show-alpha
-          />
+          <el-color-picker v-model="fillColorPicker" show-alpha @change="handleChange" />
         </el-form-item>
-        
+
         <el-form-item label="填充透明度">
           <el-slider
             v-model="localStyles.fillOpacity"
@@ -24,19 +20,15 @@
         </el-form-item>
       </el-form>
     </div>
-    
+
     <div class="style-section">
       <h4>边框样式</h4>
-      
+
       <el-form label-width="100px" size="small">
         <el-form-item label="边框颜色">
-          <el-color-picker 
-            v-model="strokeColorPicker"
-            @change="handleChange"
-            show-alpha
-          />
+          <el-color-picker v-model="strokeColorPicker" show-alpha @change="handleChange" />
         </el-form-item>
-        
+
         <el-form-item label="边框宽度">
           <el-slider
             v-model="localStyles.strokeWidth"
@@ -47,13 +39,9 @@
             @change="handleChange"
           />
         </el-form-item>
-        
+
         <el-form-item label="边框样式">
-          <el-select 
-            v-model="localStyles.strokeStyle"
-            @change="handleChange"
-            style="width: 100%"
-          >
+          <el-select v-model="localStyles.strokeStyle" style="width: 100%" @change="handleChange">
             <el-option label="实线" value="solid" />
             <el-option label="虚线" value="dashed" />
             <el-option label="点线" value="dotted" />
@@ -61,7 +49,7 @@
         </el-form-item>
       </el-form>
     </div>
-    
+
     <div class="preview-section">
       <h4>预览效果</h4>
       <div class="polygon-preview">
@@ -82,8 +70,8 @@
 </template>
 
 <script setup>
-import { reactive, watch, computed } from 'vue'
-import { hexToRgba, rgbaToHex } from '@/utils/color-utils.js'
+import { reactive, watch, computed } from 'vue';
+import { hexToRgba, rgbaToHex } from '@/utils/color-utils.js';
 
 const props = defineProps({
   modelValue: {
@@ -93,12 +81,12 @@ const props = defineProps({
       fillOpacity: 0.3,
       strokeColor: '#ff7800',
       strokeWidth: 2,
-      strokeStyle: 'solid'
-    })
-  }
-})
+      strokeStyle: 'solid',
+    }),
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue', 'change']);
 
 // 本地样式状态
 const localStyles = reactive({
@@ -106,51 +94,59 @@ const localStyles = reactive({
   fillOpacity: 0.3,
   strokeColor: '#ff7800',
   strokeWidth: 2,
-  strokeStyle: 'solid'
-})
+  strokeStyle: 'solid',
+});
 
 // 填充颜色的计算属性
 const fillColorPicker = computed({
   get() {
-    return localStyles.fillColor.startsWith('rgba') ? localStyles.fillColor : hexToRgba(localStyles.fillColor)
+    return localStyles.fillColor.startsWith('rgba')
+      ? localStyles.fillColor
+      : hexToRgba(localStyles.fillColor);
   },
   set(newValue) {
-    localStyles.fillColor = rgbaToHex(newValue)
-  }
-})
+    localStyles.fillColor = rgbaToHex(newValue);
+  },
+});
 
 // 边框颜色的计算属性
 const strokeColorPicker = computed({
   get() {
-    return localStyles.strokeColor.startsWith('rgba') ? localStyles.strokeColor : hexToRgba(localStyles.strokeColor)
+    return localStyles.strokeColor.startsWith('rgba')
+      ? localStyles.strokeColor
+      : hexToRgba(localStyles.strokeColor);
   },
   set(newValue) {
-    localStyles.strokeColor = rgbaToHex(newValue)
-  }
-})
+    localStyles.strokeColor = rgbaToHex(newValue);
+  },
+});
 
 // 监听props变化
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    Object.assign(localStyles, newValue)
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      Object.assign(localStyles, newValue);
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 // 处理样式变化
 const handleChange = () => {
-  emit('update:modelValue', { ...localStyles })
-  emit('change')
-}
+  emit('update:modelValue', { ...localStyles });
+  emit('change');
+};
 
 // 获取虚线样式
 const getDashArray = (style) => {
   const dashPatterns = {
     solid: 'none',
     dashed: '8,4',
-    dotted: '2,2'
-  }
-  return dashPatterns[style] || 'none'
-}
+    dotted: '2,2',
+  };
+  return dashPatterns[style] || 'none';
+};
 </script>
 
 <style lang="scss" scoped>
@@ -159,11 +155,11 @@ const getDashArray = (style) => {
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid #e4e7ed;
-    
+
     &:last-child {
       border-bottom: none;
     }
-    
+
     h4 {
       margin: 0 0 16px 0;
       font-size: 14px;
@@ -171,7 +167,7 @@ const getDashArray = (style) => {
       color: #303133;
     }
   }
-  
+
   .preview-section {
     h4 {
       margin: 0 0 16px 0;
@@ -179,7 +175,7 @@ const getDashArray = (style) => {
       font-weight: 600;
       color: #303133;
     }
-    
+
     .polygon-preview {
       background-color: #f5f7fa;
       border-radius: 6px;

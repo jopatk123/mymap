@@ -4,9 +4,9 @@
     :title="panorama?.title || '全景图'"
     width="80%"
     class="panorama-modal"
+    destroy-on-close
     @update:model-value="$emit('update:visible', $event)"
     @close="$emit('close')"
-    destroy-on-close
   >
     <div class="panorama-content">
       <PanoramaInfo :panorama="panorama" />
@@ -21,30 +21,25 @@
 </template>
 
 <script setup>
-import PanoramaInfo from './PanoramaInfo.vue'
-import PanoramaActions from './PanoramaActions.vue'
+import PanoramaInfo from './PanoramaInfo.vue';
+import PanoramaActions from './PanoramaActions.vue';
 
 defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   panorama: {
     type: Object,
-    default: null
+    default: null,
   },
   loading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits([
-  'update:visible',
-  'close',
-  'play',
-  'copy-coordinate'
-])
+defineEmits(['update:visible', 'close', 'play', 'copy-coordinate']);
 </script>
 
 <style lang="scss" scoped>

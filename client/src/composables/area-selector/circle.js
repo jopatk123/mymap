@@ -1,123 +1,135 @@
 // 圆形绘制相关逻辑
-import { ElMessage } from 'element-plus'
-import { gcj02ToWgs84, wgs84ToGcj02 } from '@/utils/coordinate-transform.js'
+import { ElMessage } from 'element-plus';
+import { gcj02ToWgs84, wgs84ToGcj02 } from '@/utils/coordinate-transform.js';
 
 export function createCircleActions(context) {
-  const { currentMode, circleRadius, isDrawingCircle, mapInstance, tempLayers, store } = context
+  const { currentMode, circleRadius, isDrawingCircle, mapInstance, tempLayers, store } = context;
 
   const setMapCursor = (cursor) => {
     try {
-      if (!mapInstance.value) return
-      const container = mapInstance.value.getContainer?.() || mapInstance.value._container
-      if (container) container.style.cursor = cursor || ''
+      if (!mapInstance.value) return;
+      const container = mapInstance.value.getContainer?.() || mapInstance.value._container;
+      if (container) container.style.cursor = cursor || '';
     } catch (_) {}
-  }
+  };
 
   const setMapInstance = (map) => {
     try {
       if (!map) {
-        mapInstance.value = null
-        console.warn('[useAreaSelector] setMapInstance: received null/undefined')
-        return
+        mapInstance.value = null;
+        console.warn('[useAreaSelector] setMapInstance: received null/undefined');
+        return;
       }
       if (map.clearMarkers && map.addPointMarkers) {
-        const maybeMap = map.map || map.mapInstance || map._map || map.leafletMap
-        mapInstance.value = (maybeMap && (maybeMap.on || maybeMap.getContainer)) ? maybeMap : map
-        return
+        const maybeMap = map.map || map.mapInstance || map._map || map.leafletMap;
+        mapInstance.value = maybeMap && (maybeMap.on || maybeMap.getContainer) ? maybeMap : map;
+        return;
       }
       if (map.value !== undefined) {
-        const candidate = map.value?.map ?? map.value
-        mapInstance.value = (candidate && (candidate.on || candidate.getContainer)) ? candidate : candidate
-        return
+        const candidate = map.value?.map ?? map.value;
+        mapInstance.value =
+          candidate && (candidate.on || candidate.getContainer) ? candidate : candidate;
+        return;
       }
-      mapInstance.value = map
+      mapInstance.value = map;
     } catch (err) {
-      console.error('[useAreaSelector] setMapInstance error:', err)
-      mapInstance.value = map
+      console.error('[useAreaSelector] setMapInstance error:', err);
+      mapInstance.value = map;
     }
-  }
+  };
 
   const startCircleSelection = () => {
     if (!mapInstance.value && typeof window !== 'undefined' && window.mapInstance) {
-      mapInstance.value = window.mapInstance
+      mapInstance.value = window.mapInstance;
     }
     if (!mapInstance.value) {
-      ElMessage.error('地图未初始化')
-      return
+      ElMessage.error('地图未初始化');
+      return;
     }
-    currentMode.value = 'circle'
-    isDrawingCircle.value = true
-    ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`)
+    currentMode.value = 'circle';
+    isDrawingCircle.value = true;
+    ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`);
     try {
       if (mapInstance.value.on) {
-        mapInstance.value.on('click', handleCircleClick)
+        mapInstance.value.on('click', handleCircleClick);
       } else {
-        console.warn('[useAreaSelector] startCircleSelection: mapInstance has no .on method', mapInstance.value)
-        ElMessage.error('地图对象不具备事件绑定方法 (on)，绘制功能可能不可用')
+        console.warn(
+          '[useAreaSelector] startCircleSelection: mapInstance has no .on method',
+          mapInstance.value
+        );
+        ElMessage.error('地图对象不具备事件绑定方法 (on)，绘制功能可能不可用');
       }
     } catch (err) {
-      console.error('[useAreaSelector] startCircleSelection bind error:', err)
-      ElMessage.error('绑定地图点击事件失败')
+      console.error('[useAreaSelector] startCircleSelection bind error:', err);
+      ElMessage.error('绑定地图点击事件失败');
     }
-    setMapCursor('crosshair')
-  }
+    setMapCursor('crosshair');
+  };
 
   const handleCircleClick = (e) => {
-    if (!isDrawingCircle.value) return
-    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat)
-    const center = { latitude: wgsLat, longitude: wgsLng }
-    store.addCircleArea(center, circleRadius.value)
+    if (!isDrawingCircle.value) return;
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+    const center = { latitude: wgsLat, longitude: wgsLng };
+    store.addCircleArea(center, circleRadius.value);
     try {
       if (window.L && mapInstance.value) {
         try {
-          const [gcjLng, gcjLat] = wgs84ToGcj02(center.longitude, center.latitude)
+          const [gcjLng, gcjLat] = wgs84ToGcj02(center.longitude, center.latitude);
           const circleLayer = window.L.circle([gcjLat, gcjLng], {
             radius: circleRadius.value,
             color: 'blue',
             weight: 2,
             opacity: 0.6,
-            fill: false
-          }).addTo(mapInstance.value)
-          tempLayers.value.push(circleLayer)
+            fill: false,
+          }).addTo(mapInstance.value);
+          tempLayers.value.push(circleLayer);
         } catch (err) {
           const circleLayer = window.L.circle([center.latitude, center.longitude], {
             radius: circleRadius.value,
             color: 'blue',
             weight: 2,
             opacity: 0.6,
-            fill: false
-          }).addTo(mapInstance.value)
-          tempLayers.value.push(circleLayer)
+            fill: false,
+          }).addTo(mapInstance.value);
+          tempLayers.value.push(circleLayer);
         }
       }
     } catch (err) {
-      console.warn('[useAreaSelector] failed to draw preview circle:', err)
+      console.warn('[useAreaSelector] failed to draw preview circle:', err);
     }
-    completeCircleDrawing()
-    ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`)
-  }
+    completeCircleDrawing();
+    ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`);
+  };
 
   const completeCircleDrawing = () => {
-    isDrawingCircle.value = false
-    currentMode.value = null
+    isDrawingCircle.value = false;
+    currentMode.value = null;
     if (mapInstance.value) {
-      try { mapInstance.value.off('click', handleCircleClick) } catch (_) {}
-      setMapCursor('')
+      try {
+        mapInstance.value.off('click', handleCircleClick);
+      } catch (_) {}
+      setMapCursor('');
     }
-  }
+  };
 
   const clearTempLayers = () => {
     try {
       if (mapInstance.value && tempLayers.value && tempLayers.value.length > 0) {
-        tempLayers.value.forEach(layer => { try { mapInstance.value.removeLayer(layer) } catch (_) {} })
-        tempLayers.value = []
+        tempLayers.value.forEach((layer) => {
+          try {
+            mapInstance.value.removeLayer(layer);
+          } catch (_) {}
+        });
+        tempLayers.value = [];
       }
     } catch (err) {
-      console.warn('[useAreaSelector] clearTempLayers (circle) failed', err)
+      console.warn('[useAreaSelector] clearTempLayers (circle) failed', err);
     }
-  }
+  };
 
-  const setCircleRadius = (radius) => { if (radius > 0) circleRadius.value = radius }
+  const setCircleRadius = (radius) => {
+    if (radius > 0) circleRadius.value = radius;
+  };
 
   return {
     setMapInstance,
@@ -125,6 +137,6 @@ export function createCircleActions(context) {
     handleCircleClick,
     completeCircleDrawing,
     setCircleRadius,
-    clearTempLayers
-  }
+    clearTempLayers,
+  };
 }

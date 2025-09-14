@@ -1,8 +1,8 @@
 <template>
   <div class="search-section">
-    <el-form :model="searchForm" inline>
+    <el-form :model="localForm" inline>
       <el-form-item label="文件类型">
-        <el-select v-model="searchForm.fileType" @change="$emit('search')">
+        <el-select v-model="localForm.fileType" @change="$emit('search')">
           <el-option label="全部" value="all" />
           <el-option label="全景图" value="panorama" />
           <el-option label="视频点位" value="video" />
@@ -11,63 +11,59 @@
       </el-form-item>
       <el-form-item label="关键词">
         <el-input
-          v-model="searchForm.keyword"
+          v-model="localForm.keyword"
           placeholder="搜索标题或描述"
-          @keyup.enter="$emit('search')"
           clearable
+          @keyup.enter="$emit('search')"
         />
       </el-form-item>
       <el-form-item label="显示隐藏">
         <el-switch
-          v-model="searchForm.includeHidden"
+          v-model="localForm.includeHidden"
           active-text="是"
           inactive-text="否"
           @change="$emit('search')"
         />
       </el-form-item>
       <el-form-item>
-        <el-button @click="$emit('search')" type="primary">搜索</el-button>
+        <el-button type="primary" @click="$emit('search')">搜索</el-button>
         <el-button @click="$emit('refresh')">刷新</el-button>
-        <el-button 
-          @click="$emit('batch-delete')" 
-          type="danger" 
+        <el-button
+          type="danger"
           :disabled="selectedCount === 0"
           :loading="loading"
+          @click="$emit('batch-delete')"
         >
           <el-icon><Delete /></el-icon>
           删除{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
         </el-button>
-        <el-button 
-          @click="$emit('batch-hide')" 
-          :disabled="selectedCount === 0"
-          :loading="loading"
-        >
+        <el-button :disabled="selectedCount === 0" :loading="loading" @click="$emit('batch-hide')">
           <el-icon><Hide /></el-icon>
           隐藏{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
         </el-button>
-        <el-button 
-          @click="$emit('batch-show')" 
+        <el-button
           type="success"
           :disabled="selectedCount === 0"
           :loading="loading"
+          @click="$emit('batch-show')"
         >
           <el-icon><View /></el-icon>
           显示{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
         </el-button>
-        <el-button 
-          @click="$emit('batch-move')" 
+        <el-button
           type="primary"
           :disabled="selectedCount === 0"
           :loading="loading"
+          @click="$emit('batch-move')"
         >
           <el-icon><FolderOpened /></el-icon>
           移动
         </el-button>
-        <el-button 
-          @click="$emit('batch-download')" 
+        <el-button
           type="info"
           :disabled="selectedCount === 0"
           :loading="downloading"
+          @click="$emit('batch-download')"
         >
           <el-icon><Download /></el-icon>
           下载{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
@@ -78,28 +74,59 @@
 </template>
 
 <script setup>
-import { Delete, Hide, FolderOpened, View, Download } from '@element-plus/icons-vue'
+import { Delete, Hide, FolderOpened, View, Download } from '@element-plus/icons-vue';
+import { reactive, watch } from 'vue';
 
 const props = defineProps({
   searchForm: {
     type: Object,
-    required: true
+    required: true,
   },
   selectedCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   downloading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits(['search', 'refresh', 'batch-delete', 'batch-hide', 'batch-show', 'batch-move', 'batch-download'])
+const emit = defineEmits([
+  'search',
+  'refresh',
+  'batch-delete',
+  'batch-hide',
+  'batch-show',
+  'batch-move',
+  'batch-download',
+  'update:searchForm',
+]);
+
+// Use a local reactive copy to avoid mutating the incoming prop directly.
+const localForm = reactive({ ...props.searchForm });
+
+// Sync prop -> local when parent updates
+watch(
+  () => props.searchForm,
+  (v) => {
+    if (v) Object.assign(localForm, v);
+  },
+  { deep: true }
+);
+
+// Emit updates when localForm changes so parent can stay in sync if it listens
+watch(
+  localForm,
+  (v) => {
+    emit('update:searchForm', { ...v });
+  },
+  { deep: true }
+);
 </script>
 
 <style lang="scss" scoped>
@@ -113,7 +140,7 @@ defineEmits(['search', 'refresh', 'batch-delete', 'batch-hide', 'batch-show', 'b
   .search-section {
     .el-form {
       flex-direction: column;
-      
+
       .el-form-item {
         margin-right: 0;
         margin-bottom: 16px;

@@ -14,24 +14,24 @@
 </template>
 
 <script setup>
-import { Location, Calendar } from '@element-plus/icons-vue'
+import { Location, Calendar } from '@element-plus/icons-vue';
 
 defineProps({
   panorama: {
     type: Object,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
 // 格式化坐标
 const formatCoordinate = (lat, lng) => {
-  if (!lat || !lng) return '未知'
-  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-}
+  if (!lat || !lng) return '未知';
+  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+};
 
 // 格式化日期
 const formatDate = (dateString) => {
-  if (!dateString) return '未知'
-  return new Date(dateString).toLocaleString('zh-CN')
-}
+  if (!dateString) return '未知';
+  return new Date(dateString).toLocaleString('zh-CN');
+};
 </script>

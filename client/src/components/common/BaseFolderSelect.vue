@@ -18,29 +18,29 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   modelValue: {
     type: [Number, String],
-    default: null  // 默认为null，由父组件设置具体的默认文件夹ID
+    default: null, // 默认为null，由父组件设置具体的默认文件夹ID
   },
   folders: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   disabled: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue']);
 
 const value = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
+  set: (value) => emit('update:modelValue', value),
+});
 </script>
 
 <style scoped>

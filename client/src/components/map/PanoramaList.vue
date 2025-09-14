@@ -11,9 +11,9 @@
         <div v-if="panorama.type === 'video'" class="video-thumbnail-placeholder">
           <el-icon><VideoCamera /></el-icon>
         </div>
-        <img 
+        <img
           v-else
-          :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'" 
+          :src="panorama.thumbnailUrl || panorama.imageUrl || '/default-panorama.jpg'"
           :alt="panorama.title"
           @error="handleImageError"
         />
@@ -31,113 +31,98 @@
         </div>
       </div>
       <div class="panorama-actions">
-        <el-button 
-          @click.stop="viewPanorama(panorama)" 
-          type="primary" 
-          size="small"
-          circle
-        >
+        <el-button type="primary" size="small" circle @click.stop="viewPanorama(panorama)">
           <el-icon><View /></el-icon>
         </el-button>
-        <el-button 
-          @click.stop="locatePanorama(panorama)" 
-          type="info" 
-          size="small"
-          circle
-        >
+        <el-button type="info" size="small" circle @click.stop="locatePanorama(panorama)">
           <el-icon><Location /></el-icon>
         </el-button>
       </div>
     </div>
-    
+
     <!-- 加载更多 -->
-    <div class="load-more" v-if="hasMore">
-      <el-button 
-        @click="loadMore" 
-        :loading="loading" 
-        link
-        style="width: 100%"
-      >
+    <div v-if="hasMore" class="load-more">
+      <el-button :loading="loading" link style="width: 100%" @click="loadMore">
         加载更多
       </el-button>
     </div>
-    
+
     <!-- 空状态 -->
-    <div class="empty-state" v-if="!loading && panoramas.length === 0">
+    <div v-if="!loading && panoramas.length === 0" class="empty-state">
       <el-empty description="暂无点位数据" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { View, Location, VideoCamera } from '@element-plus/icons-vue'
+import { View, Location, VideoCamera } from '@element-plus/icons-vue';
 
-const props = defineProps({
+defineProps({
   panoramas: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   currentPanorama: {
     type: Object,
-    default: null
+    default: null,
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   hasMore: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
 const emit = defineEmits([
   'select-panorama',
   'view-panorama',
   'view-video',
   'locate-panorama',
-  'load-more'
-])
+  'load-more',
+]);
 
 const selectPanorama = (panorama) => {
   // 清理数据结构，确保格式正确
   // 如果是标记对象结构，提取实际的点位数据
-  const cleanPanorama = panorama.marker && panorama.data ? panorama.data : panorama
-  emit('select-panorama', cleanPanorama)
-}
+  const cleanPanorama = panorama.marker && panorama.data ? panorama.data : panorama;
+  emit('select-panorama', cleanPanorama);
+};
 
 const viewPanorama = (panorama) => {
   // 根据点位类型发出不同的事件
   if (panorama.type === 'video' || panorama.video_url) {
     // 视频点位 - 发出视频查看事件
-    emit('view-video', panorama)
+    emit('view-video', panorama);
   } else {
     // 全景图点位 - 发出全景图查看事件
-    emit('view-panorama', panorama)
+    emit('view-panorama', panorama);
   }
-}
+};
 
 const locatePanorama = (panorama) => {
-  emit('locate-panorama', panorama)
-}
+  emit('locate-panorama', panorama);
+};
 
 const loadMore = () => {
-  emit('load-more')
-}
+  emit('load-more');
+};
 
 const handleImageError = (event) => {
-  event.target.src = '/default-panorama.jpg'
-}
+  event.target.src = '/default-panorama.jpg';
+};
 
 const formatCoordinate = (lat, lng) => {
-  if (lat == null || lng == null) return '未知位置'
-  return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
-}
+  if (lat == null || lng == null) return '未知位置';
+  return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+};
 
 const formatDate = (dateString) => {
-  if (!dateString) return '未知时间'
-  return new Date(dateString).toLocaleDateString('zh-CN')
-}
+  if (!dateString) return '未知时间';
+  return new Date(dateString).toLocaleDateString('zh-CN');
+};
 </script>
 
 <style lang="scss" scoped>
@@ -145,7 +130,7 @@ const formatDate = (dateString) => {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
-  
+
   .panorama-item {
     display: flex;
     align-items: center;
@@ -155,17 +140,17 @@ const formatDate = (dateString) => {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    
+
     &:hover {
       border-color: #409eff;
       box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
     }
-    
+
     &.active {
       border-color: #409eff;
       background: rgba(64, 158, 255, 0.05);
     }
-    
+
     .panorama-thumbnail {
       width: 60px;
       height: 60px;
@@ -177,7 +162,7 @@ const formatDate = (dateString) => {
       align-items: center;
       justify-content: center;
       background-color: #f0f2f5;
-      
+
       img {
         width: 100%;
         height: 100%;
@@ -197,11 +182,11 @@ const formatDate = (dateString) => {
         }
       }
     }
-    
+
     .panorama-info {
       flex: 1;
       min-width: 0;
-      
+
       h4 {
         margin: 0 0 4px;
         font-size: 14px;
@@ -211,7 +196,7 @@ const formatDate = (dateString) => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      
+
       .description {
         margin: 0 0 8px;
         font-size: 12px;
@@ -220,19 +205,19 @@ const formatDate = (dateString) => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      
+
       .meta {
         display: flex;
         flex-direction: column;
         gap: 2px;
-        
+
         span {
           font-size: 11px;
           color: #c0c4cc;
         }
       }
     }
-    
+
     .panorama-actions {
       display: flex;
       flex-direction: column;
@@ -240,12 +225,12 @@ const formatDate = (dateString) => {
       margin-left: 8px;
     }
   }
-  
+
   .load-more {
     padding: 16px;
     text-align: center;
   }
-  
+
   .empty-state {
     padding: 40px 16px;
     text-align: center;

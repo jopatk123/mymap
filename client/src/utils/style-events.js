@@ -4,8 +4,8 @@
  */
 
 // 存储事件监听器
-const styleListeners = new Set()
-const refreshListeners = new Set()
+const styleListeners = new Set();
+const refreshListeners = new Set();
 
 /**
  * 添加样式更新监听器
@@ -13,7 +13,7 @@ const refreshListeners = new Set()
  */
 export function addStyleListener(listener) {
   if (typeof listener === 'function') {
-    styleListeners.add(listener)
+    styleListeners.add(listener);
   }
 }
 
@@ -22,7 +22,7 @@ export function addStyleListener(listener) {
  * @param {Function} listener 监听器函数
  */
 export function removeStyleListener(listener) {
-  styleListeners.delete(listener)
+  styleListeners.delete(listener);
 }
 
 /**
@@ -31,7 +31,7 @@ export function removeStyleListener(listener) {
  */
 export function addRefreshListener(listener) {
   if (typeof listener === 'function') {
-    refreshListeners.add(listener)
+    refreshListeners.add(listener);
   }
 }
 
@@ -40,7 +40,7 @@ export function addRefreshListener(listener) {
  * @param {Function} listener 监听器函数
  */
 export function removeRefreshListener(listener) {
-  refreshListeners.delete(listener)
+  refreshListeners.delete(listener);
 }
 
 /**
@@ -49,13 +49,13 @@ export function removeRefreshListener(listener) {
  * @param {Object} styles 新的样式配置
  */
 export function notifyPointStyleUpdate(type, styles) {
-  styleListeners.forEach(listener => {
+  styleListeners.forEach((listener) => {
     try {
-      listener(type, styles)
+      listener(type, styles);
     } catch (error) {
-      console.warn('样式监听器执行失败:', error)
+      console.warn('样式监听器执行失败:', error);
     }
-  })
+  });
 }
 
 /**
@@ -63,21 +63,21 @@ export function notifyPointStyleUpdate(type, styles) {
  * @param {Object} options 刷新选项
  */
 export function notifyMarkersRefresh(options = {}) {
-  refreshListeners.forEach(listener => {
+  refreshListeners.forEach((listener) => {
     try {
-      listener(options)
+      listener(options);
     } catch (error) {
-      console.warn('刷新监听器执行失败:', error)
+      console.warn('刷新监听器执行失败:', error);
     }
-  })
+  });
 }
 
 /**
  * 清除所有监听器
  */
 export function clearAllListeners() {
-  styleListeners.clear()
-  refreshListeners.clear()
+  styleListeners.clear();
+  refreshListeners.clear();
 }
 
 /**
@@ -87,6 +87,6 @@ export function clearAllListeners() {
 export function getListenerStats() {
   return {
     styleListeners: styleListeners.size,
-    refreshListeners: refreshListeners.size
-  }
+    refreshListeners: refreshListeners.size,
+  };
 }

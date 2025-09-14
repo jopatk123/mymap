@@ -8,7 +8,7 @@
       @panorama-click="handlePanoramaClick"
       @map-click="handleMapClick"
     />
-    
+
     <!-- 侧边栏 -->
     <MapSidebar
       :sidebar-collapsed="sidebarCollapsed"
@@ -22,14 +22,13 @@
       @update:search-params="Object.assign(searchParams, $event)"
       @search="handleSearch"
       @locate="handleLocate"
-
       @select-panorama="selectPanorama"
       @view-panorama="viewPanorama"
       @view-video="viewVideo"
       @locate-panorama="locatePanorama"
       @load-more="loadMore"
     />
-    
+
     <!-- 地图控件 -->
     <MapControls
       :panorama-list-visible="panoramaListVisible"
@@ -40,34 +39,29 @@
       :map-instance="mapRef?.map"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
-
       @show-kml-settings="showKmlSettings = true"
       @show-point-settings="showPointSettings = true"
       @locate-kml-point="handleLocateKMLPoint"
       @locate-address="handleLocateAddress"
     />
-    
+
     <!-- 绘图工具栏 -->
-    <DrawingToolbar
-      :map-instance="mapRef?.map"
-    />
-    
+    <DrawingToolbar :map-instance="mapRef?.map" />
+
     <!-- 对话框组 -->
     <MapDialogs
       :show-panorama-modal="showPanoramaModal"
       :selected-panorama="selectedPanorama"
       :show-upload-dialog="showUploadDialog"
       :show-batch-upload-dialog="showBatchUploadDialog"
-
       @update:show-panorama-modal="showPanoramaModal = $event"
       @update:show-upload-dialog="showUploadDialog = $event"
-      @update:showBatchUploadDialog="showBatchUploadDialog = $event"
-
+      @update:show-batch-upload-dialog="showBatchUploadDialog = $event"
       @panorama-deleted="handlePanoramaDeleted"
       @upload-success="handleUploadSuccess"
       @open-batch-upload="openBatchUploadFromSingle()"
     />
-    
+
     <!-- 视频模态框 -->
     <VideoModal
       v-model="showVideoModal"
@@ -75,7 +69,7 @@
       :loading="loading"
       @close="handleVideoModalClose"
     />
-    
+
     <!-- 全景图查看器 -->
     <PanoramaViewer
       v-model:visible="showPanoramaViewer"
@@ -88,39 +82,32 @@
     />
 
     <!-- KML样式设置对话框 -->
-    <KmlStyleDialog
-      v-model="showKmlSettings"
-      @styles-updated="handleKmlStylesUpdated"
-    />
+    <KmlStyleDialog v-model="showKmlSettings" @styles-updated="handleKmlStylesUpdated" />
 
     <!-- 点位样式设置对话框 -->
-    <PointStyleDialog
-      v-model="showPointSettings"
-      @styles-updated="handlePointStylesUpdated"
-    />
-    
+    <PointStyleDialog v-model="showPointSettings" @styles-updated="handlePointStylesUpdated" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useMapPage } from '@/composables/use-map-page'
-import { useMapInteractions } from '@/composables/use-map-interactions'
-import { usePanoramaViewer } from '@/composables/use-panorama-viewer'
-import { usePointStyles } from '@/composables/use-point-styles'
-import { useMapStyleUpdater } from '@/composables/use-map-style-updater'
-import { useMapEventHandlers } from './composables/map-event-handlers'
-import { useMapInitializer } from './composables/map-initializer'
+import { computed, onMounted, onUnmounted } from 'vue';
+import { useMapPage } from '@/composables/use-map-page';
+import { useMapInteractions } from '@/composables/use-map-interactions';
+import { usePanoramaViewer } from '@/composables/use-panorama-viewer';
+import { usePointStyles } from '@/composables/use-point-styles';
+import { useMapStyleUpdater } from '@/composables/use-map-style-updater';
+import { useMapEventHandlers } from './composables/map-event-handlers';
+import { useMapInitializer } from './composables/map-initializer';
 
-import MapView from './components/MapView.vue'
-import MapSidebar from '@/components/map/MapSidebar.vue'
-import MapControls from '@/components/map/MapControls.vue'
-import DrawingToolbar from '@/components/map/drawing-toolbar/DrawingToolbar.vue'
-import MapDialogs from './components/MapDialogs.vue'
-import VideoModal from '@/components/map/VideoModal.vue'
-import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue'
-import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
-import PointStyleDialog from '@/components/map/PointStyleDialog.vue'
+import MapView from './components/MapView.vue';
+import MapSidebar from '@/components/map/MapSidebar.vue';
+import MapControls from '@/components/map/MapControls.vue';
+import DrawingToolbar from '@/components/map/drawing-toolbar/DrawingToolbar.vue';
+import MapDialogs from './components/MapDialogs.vue';
+import VideoModal from '@/components/map/VideoModal.vue';
+import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue';
+import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue';
+import PointStyleDialog from '@/components/map/PointStyleDialog.vue';
 
 // 使用组合式函数
 const {
@@ -135,7 +122,7 @@ const {
   mapConfig,
   isOnline,
   totalCount,
-  
+
   // 组件状态
   mapRef,
   searchParams,
@@ -143,8 +130,8 @@ const {
   selectedVideo,
   showPanoramaModal,
   showVideoModal,
-    showUploadDialog,
-    showBatchUploadDialog,
+  showUploadDialog,
+  showBatchUploadDialog,
 
   showPanoramaViewer,
   panoramaViewerLoading,
@@ -152,36 +139,27 @@ const {
   kmlLayersVisible,
   showKmlSettings,
   showPointSettings,
-  
+
   // 方法
   initializePage,
   loadInitialData,
   loadMore,
   toggleKmlLayers,
-  openBatchUploadFromSingle
-} = useMapPage()
+  openBatchUploadFromSingle,
+} = useMapPage();
 
 // 样式更新器
 const { updateAllMarkerStyles, isUpdating } = useMapStyleUpdater(
   computed(() => mapRef.value?.map),
   computed(() => mapRef.value?.markers || [])
-)
+);
 
 // 点位样式管理
-const {
-  loadAllPointStyles,
-  videoPointStyles,
-  panoramaPointStyles
-} = usePointStyles()
+const { loadAllPointStyles, videoPointStyles, panoramaPointStyles } = usePointStyles();
 
 // 全景图查看器相关方法
-const {
-  openViewer,
-  closeViewer,
-  toggleAutoRotate,
-  toggleFullscreen,
-  resetView
-} = usePanoramaViewer()
+const { openViewer, closeViewer, toggleAutoRotate, toggleFullscreen, resetView } =
+  usePanoramaViewer();
 
 const {
   handlePanoramaClick,
@@ -195,7 +173,7 @@ const {
   toggleSidebar,
   togglePanoramaList,
   handleUploadSuccess,
-  handlePanoramaDeleted
+  handlePanoramaDeleted,
 } = useMapInteractions(
   mapRef,
   selectedPanorama,
@@ -206,21 +184,18 @@ const {
   showVideoModal,
   showPanoramaViewer,
   openViewer
-)
+);
 
 // 事件处理器
-const {
-  handleFolderVisibilityChanged,
-  handleKmlStylesUpdated,
-  handlePointStylesUpdated
-} = useMapEventHandlers(
-  mapRef,
-  kmlLayersVisible,
-  loadAllPointStyles,
-  videoPointStyles,
-  panoramaPointStyles,
-  loadInitialData
-)
+const { handleFolderVisibilityChanged, handleKmlStylesUpdated, handlePointStylesUpdated } =
+  useMapEventHandlers(
+    mapRef,
+    kmlLayersVisible,
+    loadAllPointStyles,
+    videoPointStyles,
+    panoramaPointStyles,
+    loadInitialData
+  );
 
 // 初始化器
 const { initializeMap, cleanup } = useMapInitializer(
@@ -232,75 +207,83 @@ const { initializeMap, cleanup } = useMapInitializer(
   handleFolderVisibilityChanged,
   handleKmlStylesUpdated,
   handlePointStylesUpdated
-)
+);
 
 // 设置全局标记点击处理器
-window.mapMarkerClickHandler = handlePanoramaClick
+window.mapMarkerClickHandler = handlePanoramaClick;
 
 // 视频模态框关闭处理
 const handleVideoModalClose = () => {
-  selectedVideo.value = null
-  showVideoModal.value = false
-}
+  selectedVideo.value = null;
+  showVideoModal.value = false;
+};
 
 // 关闭全景图查看器
 const closePanoramaViewer = () => {
-  closeViewer()
-  showPanoramaViewer.value = false
-  autoRotating.value = false
-}
+  closeViewer();
+  showPanoramaViewer.value = false;
+  autoRotating.value = false;
+};
 
 // 初始化生命周期
-initializeMap()
+initializeMap();
 
 // 监听全局事件以便从侧栏快捷入口打开 KML 设置
 onMounted(() => {
   window.addEventListener('show-kml-settings', () => {
-    showKmlSettings.value = true
-  })
-})
+    showKmlSettings.value = true;
+  });
+});
 
 onUnmounted(() => {
   window.removeEventListener('show-kml-settings', () => {
-    showKmlSettings.value = true
-  })
-})
+    showKmlSettings.value = true;
+  });
+});
 
 // 处理地址定位
 const handleLocate = ({ lat, lng, tip }) => {
   // 标记并居中
-  mapRef.value?.setCenter(lat, lng, 16)
-  const label = tip?.name || '搜索位置'
-  mapRef.value?.setSearchMarker?.(lat, lng, label)
-}
+  mapRef.value?.setCenter(lat, lng, 16);
+  const label = tip?.name || '搜索位置';
+  mapRef.value?.setSearchMarker?.(lat, lng, label);
+};
 
 // 处理KML点位定位
 const handleLocateKMLPoint = ({ lat, lng, point }) => {
   // 标记并居中到KML点位
-  mapRef.value?.setCenter(lat, lng, 16)
+  mapRef.value?.setCenter(lat, lng, 16);
   // 将完整 point 对象传给 setSearchMarker，以便渲染丰富弹窗
-  mapRef.value?.setSearchMarker?.(lat, lng, point)
-}
+  mapRef.value?.setSearchMarker?.(lat, lng, point);
+};
 
 // 处理地址定位（从搜索工具）
 const handleLocateAddress = ({ lat, lng, tip }) => {
   // 标记并居中到地址
-  mapRef.value?.setCenter(lat, lng, 16)
-  const label = tip?.name || '搜索地址'
-  mapRef.value?.setSearchMarker?.(lat, lng, label)
-}
+  mapRef.value?.setCenter(lat, lng, 16);
+  const label = tip?.name || '搜索地址';
+  mapRef.value?.setSearchMarker?.(lat, lng, label);
+};
 
 // 调试：监听 mapRef 和地图实例的变化（使用共享 dlog）
-import { watch } from 'vue'
-import { dlog } from '@/composables/drawing-tools/utils/debug.js'
+import { watch } from 'vue';
+import { dlog } from '@/composables/drawing-tools/utils/debug.js';
 
-watch(() => mapRef.value, (newMapRef) => {
-  dlog('主视图: mapRef 变化:', newMapRef)
-}, { immediate: true })
+watch(
+  () => mapRef.value,
+  (newMapRef) => {
+    dlog('主视图: mapRef 变化:', newMapRef);
+  },
+  { immediate: true }
+);
 
-watch(() => mapRef.value?.map, (newMap) => {
-  dlog('主视图: mapRef.map 变化:', newMap)
-}, { immediate: true })
+watch(
+  () => mapRef.value?.map,
+  (newMap) => {
+    dlog('主视图: mapRef.map 变化:', newMap);
+  },
+  { immediate: true }
+);
 </script>
 
 <style lang="scss" scoped>

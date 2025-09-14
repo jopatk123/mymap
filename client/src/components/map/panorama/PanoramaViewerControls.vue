@@ -1,14 +1,14 @@
 <template>
   <div class="viewer-controls">
-    <el-button @click="$emit('toggle-auto-rotate')" type="info">
+    <el-button type="info" @click="$emit('toggle-auto-rotate')">
       <el-icon><Refresh /></el-icon>
       {{ autoRotating ? '停止旋转' : '自动旋转' }}
     </el-button>
-    <el-button @click="$emit('toggle-fullscreen')" type="success">
+    <el-button type="success" @click="$emit('toggle-fullscreen')">
       <el-icon><FullScreen /></el-icon>
       全屏
     </el-button>
-    <el-button @click="$emit('reset-view')" type="warning">
+    <el-button type="warning" @click="$emit('reset-view')">
       <el-icon><RefreshLeft /></el-icon>
       重置视角
     </el-button>
@@ -17,16 +17,16 @@
 </template>
 
 <script setup>
-import { Refresh, FullScreen, RefreshLeft } from '@element-plus/icons-vue'
+import { Refresh, FullScreen, RefreshLeft } from '@element-plus/icons-vue';
 
 defineProps({
   autoRotating: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits(['toggle-auto-rotate', 'toggle-fullscreen', 'reset-view', 'close'])
+defineEmits(['toggle-auto-rotate', 'toggle-fullscreen', 'reset-view', 'close']);
 </script>
 
 <style lang="scss" scoped>
@@ -40,7 +40,7 @@ defineEmits(['toggle-auto-rotate', 'toggle-fullscreen', 'reset-view', 'close'])
 @media (max-width: 768px) {
   .viewer-controls {
     flex-direction: column;
-    
+
     .el-button {
       width: 100%;
     }

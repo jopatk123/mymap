@@ -1,18 +1,18 @@
 // useAreaSelector 入口 - 聚合拆分后的模块，保持原有 API
-import { computed } from 'vue'
-import { createAreaSelectorContext } from './context.js'
-import { createMapSync } from './map-sync.js'
-import { createCircleActions } from './circle.js'
-import { createPolygonActions } from './polygon.js'
-import { createManageActions } from './manage.js'
+import { computed } from 'vue';
+import { createAreaSelectorContext } from './context.js';
+import { createMapSync } from './map-sync.js';
+import { createCircleActions } from './circle.js';
+import { createPolygonActions } from './polygon.js';
+import { createManageActions } from './manage.js';
 
 export function useAreaSelector() {
-  const context = createAreaSelectorContext()
+  const context = createAreaSelectorContext();
   // 子模块
-  const mapSync = createMapSync(context) // eslint-disable-line no-unused-vars
-  const circle = createCircleActions(context)
-  const polygon = createPolygonActions(context)
-  const manage = createManageActions(context, circle, polygon)
+  const mapSync = createMapSync(context); // eslint-disable-line no-unused-vars
+  const circle = createCircleActions(context);
+  const polygon = createPolygonActions(context);
+  const manage = createManageActions(context, circle, polygon);
 
   // 暴露与旧版一致的 API
   return {
@@ -36,6 +36,6 @@ export function useAreaSelector() {
     cancelDrawing: manage.cancelDrawing,
     clearAllAreas: manage.clearAllAreas,
     removeArea: manage.removeArea,
-    setCircleRadius: circle.setCircleRadius
-  }
+    setCircleRadius: circle.setCircleRadius,
+  };
 }

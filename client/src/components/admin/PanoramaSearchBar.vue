@@ -5,8 +5,8 @@
         <el-input
           v-model="searchForm.keyword"
           placeholder="搜索标题或描述"
-          @keyup.enter="handleSearch"
           clearable
+          @keyup.enter="handleSearch"
         />
       </el-form-item>
       <el-form-item label="显示隐藏">
@@ -18,13 +18,13 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button @click="handleSearch" type="primary">搜索</el-button>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="resetSearch">重置</el-button>
-        <el-button 
-          @click="$emit('batch-delete')" 
-          type="danger" 
+        <el-button
+          type="danger"
           :disabled="selectedCount === 0"
           :loading="loading"
+          @click="$emit('batch-delete')"
         >
           <el-icon><Delete /></el-icon>
           删除{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
@@ -35,36 +35,36 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { Delete } from '@element-plus/icons-vue'
+import { reactive } from 'vue';
+import { Delete } from '@element-plus/icons-vue';
 
-const props = defineProps({
+defineProps({
   selectedCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   loading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-const emit = defineEmits(['search', 'reset', 'batch-delete'])
+const emit = defineEmits(['search', 'reset', 'batch-delete']);
 
 const searchForm = reactive({
   keyword: '',
-  includeHidden: false
-})
+  includeHidden: false,
+});
 
 const handleSearch = () => {
-  emit('search', { ...searchForm })
-}
+  emit('search', { ...searchForm });
+};
 
 const resetSearch = () => {
-  searchForm.keyword = ''
-  searchForm.includeHidden = false
-  emit('reset')
-}
+  searchForm.keyword = '';
+  searchForm.includeHidden = false;
+  emit('reset');
+};
 </script>
 
 <style lang="scss" scoped>
@@ -78,7 +78,7 @@ const resetSearch = () => {
   .search-section {
     .el-form {
       flex-direction: column;
-      
+
       .el-form-item {
         margin-right: 0;
         margin-bottom: 16px;

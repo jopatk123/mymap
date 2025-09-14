@@ -1,0 +1,14 @@
+# Ignore build artifacts and third-party vendor folders
+build_context_extra/
+node_modules/
+client/dist/
+server/node_modules/
+**/server_node_modules/
+*.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.git
+.vscode
+*.min.js
+*.map

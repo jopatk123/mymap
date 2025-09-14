@@ -1,3 +1,1 @@
-export { MapService } from './mapService.js'
-
-
+export { MapService } from './mapService.js';

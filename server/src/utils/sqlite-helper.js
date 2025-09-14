@@ -9,7 +9,7 @@
  * @returns {boolean} JavaScript boolean值
  */
 function sqliteToBoolean(value) {
-  return value === 1
+  return value === 1;
 }
 
 /**
@@ -18,7 +18,7 @@ function sqliteToBoolean(value) {
  * @returns {number} SQLite INTEGER值 (0或1)
  */
 function booleanToSqlite(value) {
-  return value ? 1 : 0
+  return value ? 1 : 0;
 }
 
 /**
@@ -28,27 +28,27 @@ function booleanToSqlite(value) {
  * @returns {Array|Object} 转换后的结果
  */
 function convertBooleanFields(data, booleanFields = ['is_visible']) {
-  if (!data) return data
-  
+  if (!data) return data;
+
   const convert = (item) => {
-    const converted = { ...item }
-    booleanFields.forEach(field => {
+    const converted = { ...item };
+    booleanFields.forEach((field) => {
       if (field in converted) {
-        converted[field] = sqliteToBoolean(converted[field])
+        converted[field] = sqliteToBoolean(converted[field]);
       }
-    })
-    return converted
-  }
-  
+    });
+    return converted;
+  };
+
   if (Array.isArray(data)) {
-    return data.map(convert)
+    return data.map(convert);
   } else {
-    return convert(data)
+    return convert(data);
   }
 }
 
 module.exports = {
   sqliteToBoolean,
   booleanToSqlite,
-  convertBooleanFields
-}
+  convertBooleanFields,
+};

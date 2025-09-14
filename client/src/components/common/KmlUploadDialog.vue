@@ -1,12 +1,12 @@
 <template>
   <BaseUploadDialog
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     title="添加KML文件"
     title-placeholder="请输入KML文件标题"
     description-placeholder="请输入KML文件描述"
     :submit-handler="handleKmlUpload"
     :external-can-submit="kmlCanSubmit"
+    @update:model-value="$emit('update:modelValue', $event)"
     @success="$emit('success')"
   >
     <template #file-upload="{ form, uploadRef }">
@@ -17,7 +17,7 @@
           <span>KML文件使用WGS-84坐标系，系统将自动转换为适合地图显示的坐标</span>
         </div>
       </el-form-item>
-      
+
       <KmlUploadArea
         :ref="uploadRef"
         v-model="form.file"
@@ -27,13 +27,13 @@
       />
 
       <!-- 作为底图 选项 -->
-      <el-form-item label="作为底图" v-if="form">
+      <el-form-item v-if="form" label="作为底图">
         <el-checkbox v-model="form.isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
       </el-form-item>
-      
+
       <!-- 地标预览 -->
-      <el-form-item 
-        v-if="validationResult?.valid && validationResult.placemarks?.length > 0" 
+      <el-form-item
+        v-if="validationResult?.valid && validationResult.placemarks?.length > 0"
         label="地标预览"
       >
         <div class="placemarks-preview">
@@ -41,8 +41,8 @@
             <span>前 {{ Math.min(5, validationResult.placemarks.length) }} 个地标：</span>
           </div>
           <div class="placemark-list">
-            <div 
-              v-for="(placemark, index) in validationResult.placemarks.slice(0, 5)" 
+            <div
+              v-for="(placemark, index) in validationResult.placemarks.slice(0, 5)"
               :key="index"
               class="placemark-item"
             >
@@ -52,7 +52,9 @@
                 <span class="placemark-coords">
                   {{ placemark.latitude?.toFixed(4) }}, {{ placemark.longitude?.toFixed(4) }}
                 </span>
-                <el-button type="text" size="small" @click="copyPlacemarkCoords(placemark)">复制经纬度</el-button>
+                <el-button type="text" size="small" @click="copyPlacemarkCoords(placemark)"
+                  >复制经纬度</el-button
+                >
               </div>
             </div>
           </div>
@@ -63,121 +65,121 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
-import BaseUploadDialog from './BaseUploadDialog.vue'
-import KmlUploadArea from './KmlUploadArea.vue'
-import { useKmlProcessor } from '@/composables/use-file-processor'
-import { kmlApi } from '@/api/kml.js'
+import { computed } from 'vue';
+import { ElMessage } from 'element-plus';
+import { InfoFilled } from '@element-plus/icons-vue';
+import BaseUploadDialog from './BaseUploadDialog.vue';
+import KmlUploadArea from './KmlUploadArea.vue';
+import { useKmlProcessor } from '@/composables/use-file-processor';
+import { kmlApi } from '@/api/kml.js';
 
-const props = defineProps({
-  modelValue: Boolean
-})
+defineProps({
+  modelValue: Boolean,
+});
 
-defineEmits(['update:modelValue', 'success'])
+defineEmits(['update:modelValue', 'success']);
 
-const { validationResult, processFile, validateFile } = useKmlProcessor()
+const { validationResult, processFile, validateFile } = useKmlProcessor();
 
 // 添加KML特定的提交检查
 const kmlCanSubmit = computed(() => {
-  const isValid = validationResult.value?.valid === true
-  return isValid
-})
+  const isValid = validationResult.value?.valid === true;
+  return isValid;
+});
 
 const handleFileChange = async (file, form) => {
   // 设置文件到表单
   if (form) {
-    form.file = file
+    form.file = file;
     // 若标题为空，则自动使用文件名（去除扩展名）作为标题
     if (!form.title && file && file.name) {
-      const baseName = file.name.replace(/\.[^.]+$/, '')
-      form.title = baseName
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      form.title = baseName;
     }
   }
-  
+
   if (validateFile(file)) {
-    await processFile(file)
+    await processFile(file);
   }
-}
+};
 
 const handleFileRemove = () => {
-  validationResult.value = null
-}
+  validationResult.value = null;
+};
 
 const getPlacemarkTypeText = (type) => {
   const typeMap = {
-    'Point': '点',
-    'LineString': '线',
-    'Polygon': '面'
-  }
-  return typeMap[type] || type
-}
+    Point: '点',
+    LineString: '线',
+    Polygon: '面',
+  };
+  return typeMap[type] || type;
+};
 
 const copyPlacemarkCoords = async (placemark) => {
-  const lat = Number(placemark.latitude)
-  const lng = Number(placemark.longitude)
+  const lat = Number(placemark.latitude);
+  const lng = Number(placemark.longitude);
   if (!isFinite(lat) || !isFinite(lng)) {
-    ElMessage.error('无效的坐标，无法复制')
-    return
+    ElMessage.error('无效的坐标，无法复制');
+    return;
   }
-  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`;
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(formatted)
+      await navigator.clipboard.writeText(formatted);
     } else {
-      const ta = document.createElement('textarea')
-      ta.value = formatted
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      const ok = document.execCommand('copy')
-      document.body.removeChild(ta)
-      if (!ok) throw new Error('execCommand failed')
+      const ta = document.createElement('textarea');
+      ta.value = formatted;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (!ok) throw new Error('execCommand failed');
     }
-    ElMessage.success('坐标已复制：' + formatted)
+    ElMessage.success('坐标已复制：' + formatted);
   } catch (e) {
-    console.error('复制失败', e)
-    ElMessage.error('复制失败，请手动复制：' + formatted)
+    console.error('复制失败', e);
+    ElMessage.error('复制失败，请手动复制：' + formatted);
   }
-}
+};
 
 const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
   if (!validationResult.value?.valid) {
-    throw new Error('请先上传有效的KML文件')
+    throw new Error('请先上传有效的KML文件');
   }
-  
+
   // 使用form.file而不是selectedFile
   if (!form.file) {
-    throw new Error('请选择文件')
+    throw new Error('请选择文件');
   }
-  
-  setProcessing(true, '正在处理KML文件...')
-  
-  const formData = new FormData()
-  formData.append('file', form.file)  // ★ 使用form.file
-  formData.append('title', form.title)
-  formData.append('description', form.description)
+
+  setProcessing(true, '正在处理KML文件...');
+
+  const formData = new FormData();
+  formData.append('file', form.file); // ★ 使用form.file
+  formData.append('title', form.title);
+  formData.append('description', form.description);
   if (form.isBasemap) {
-    formData.append('isBasemap', '1')
+    formData.append('isBasemap', '1');
   }
   if (form.folderId !== undefined && form.folderId !== null) {
-    formData.append('folderId', form.folderId)
+    formData.append('folderId', form.folderId);
   }
-  
+
   const res = await kmlApi.uploadKmlFile(formData, (progressEvent) => {
     if (progressEvent.lengthComputable) {
-      setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total))
+      setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
     }
-  })
-  
+  });
+
   if (!res.success) {
-    throw new Error(res.message || '上传失败')
+    throw new Error(res.message || '上传失败');
   }
-  
-  return res
-}
+
+  return res;
+};
 </script>
 
 <style scoped>
@@ -187,7 +189,7 @@ const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
   gap: 8px;
   color: #909399;
   font-size: 14px;
-  
+
   .el-icon {
     font-size: 16px;
   }
@@ -198,35 +200,35 @@ const handleKmlUpload = async (form, { setProgress, setProcessing }) => {
   border-radius: 4px;
   padding: 12px;
   background-color: #fafafa;
-  
+
   .preview-header {
     font-size: 14px;
     font-weight: 500;
     color: #303133;
     margin-bottom: 8px;
   }
-  
+
   .placemark-list {
     .placemark-item {
       padding: 8px 0;
       border-bottom: 1px solid #ebeef5;
-      
+
       &:last-child {
         border-bottom: none;
       }
-      
+
       .placemark-name {
         font-weight: 500;
         color: #303133;
         margin-bottom: 4px;
       }
-      
+
       .placemark-info {
         display: flex;
         gap: 12px;
         font-size: 12px;
         color: #909399;
-        
+
         .placemark-type {
           background-color: #e4e7ed;
           padding: 2px 6px;

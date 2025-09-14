@@ -1,6 +1,6 @@
-const SQLiteAdapter = require('../utils/sqlite-adapter')
-const QueryBuilder = require('../utils/QueryBuilder')
-const Logger = require('../utils/logger')
+const SQLiteAdapter = require('../utils/sqlite-adapter');
+const QueryBuilder = require('../utils/QueryBuilder');
+const Logger = require('../utils/logger');
 
 class PanoramaModel {
   // 获取全景图列表
@@ -14,9 +14,9 @@ class PanoramaModel {
       bounds = null,
       folderId = null,
       includeHidden = false,
-      visibleFolderIds = null
-    } = options
-    
+      visibleFolderIds = null,
+    } = options;
+
     try {
       // 使用QueryBuilder构建查询条件
       const { conditions, params } = QueryBuilder.buildPanoramaConditions({
@@ -24,102 +24,104 @@ class PanoramaModel {
         folderId,
         keyword,
         bounds,
-        visibleFolderIds
-      })
-      
-      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-      
+        visibleFolderIds,
+      });
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
       // 获取总数
-      const countSql = `SELECT COUNT(*) as total FROM panoramas p ${whereClause}`
-      const [countResult] = await SQLiteAdapter.execute(countSql, params)
-      const total = countResult[0].total
-      
+      const countSql = `SELECT COUNT(*) as total FROM panoramas p ${whereClause}`;
+      const [countResult] = await SQLiteAdapter.execute(countSql, params);
+      const total = countResult[0].total;
+
       // 获取数据
-      const offset = (parseInt(page) - 1) * parseInt(pageSize)
+      const offset = (parseInt(page) - 1) * parseInt(pageSize);
       const dataSql = `
         SELECT p.*, f.name as folder_name 
         FROM panoramas p 
         LEFT JOIN folders f ON p.folder_id = f.id 
         ${whereClause}
-        ${QueryBuilder.buildOrderClause(sortBy, sortOrder, ['created_at', 'title', 'latitude', 'longitude', 'sort_order'], 'p')}
+        ${QueryBuilder.buildOrderClause(
+          sortBy,
+          sortOrder,
+          ['created_at', 'title', 'latitude', 'longitude', 'sort_order'],
+          'p'
+        )}
         LIMIT ${parseInt(pageSize)} OFFSET ${offset}
-      `
-      
-      const [rows] = await SQLiteAdapter.execute(dataSql, params)
-      
+      `;
+
+      const [rows] = await SQLiteAdapter.execute(dataSql, params);
+
       return {
         data: rows,
         total: parseInt(total),
         page: parseInt(page),
         pageSize: parseInt(pageSize),
-        totalPages: Math.ceil(total / pageSize)
-      }
+        totalPages: Math.ceil(total / pageSize),
+      };
     } catch (error) {
-      console.error('获取全景图列表失败:', error)
-      throw error
+      console.error('获取全景图列表失败:', error);
+      throw error;
     }
   }
-  
+
   // 根据ID获取全景图
   static async findById(id) {
-    const sql = 'SELECT * FROM panoramas WHERE id = ?'
-    const [rows] = await SQLiteAdapter.execute(sql, [id])
-    return rows[0] || null
+    const sql = 'SELECT * FROM panoramas WHERE id = ?';
+    const [rows] = await SQLiteAdapter.execute(sql, [id]);
+    return rows[0] || null;
   }
-  
+
   // 根据边界获取全景图
   static async findByBounds(bounds) {
-    const { north, south, east, west, includeHidden = false, visibleFolderIds = null } = bounds
-    
-    let conditions = [
-      'latitude BETWEEN ? AND ?',
-      'longitude BETWEEN ? AND ?'
-    ]
-    let params = [south, north, west, east]
-    
+    const { north, south, east, west, includeHidden = false, visibleFolderIds = null } = bounds;
+
+    let conditions = ['latitude BETWEEN ? AND ?', 'longitude BETWEEN ? AND ?'];
+    let params = [south, north, west, east];
+
     // 添加可见性条件
     if (!includeHidden) {
-      conditions.push('is_visible = TRUE')
+      conditions.push('is_visible = TRUE');
     }
-    
+
     // 添加文件夹可见性条件
     if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
       if (visibleFolderIds.length === 0) {
         // 如果没有可见文件夹，只返回根目录下的项目
-        conditions.push('folder_id IS NULL')
+        conditions.push('folder_id IS NULL');
       } else {
         // 包含可见文件夹和根目录
-        const placeholders = visibleFolderIds.map(() => '?').join(',')
-        conditions.push(`(folder_id IS NULL OR folder_id IN (${placeholders}))`)
-        params.push(...visibleFolderIds)
+        const placeholders = visibleFolderIds.map(() => '?').join(',');
+        conditions.push(`(folder_id IS NULL OR folder_id IN (${placeholders}))`);
+        params.push(...visibleFolderIds);
       }
     }
-    
+
     const sql = `
       SELECT * FROM panoramas 
       WHERE ${conditions.join(' AND ')}
       ORDER BY created_at DESC
-    `
-    
-    const [rows] = await SQLiteAdapter.execute(sql, params)
-    return rows
+    `;
+
+    const [rows] = await SQLiteAdapter.execute(sql, params);
+    return rows;
   }
-  
+
   // 获取附近的全景图
   static async findNearby(lat, lng, radius = 1000) {
-    const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
-    
+    const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius);
+
     const sql = `
       SELECT *, ${nearbyQuery.selectDistance}
       FROM panoramas
       HAVING ${nearbyQuery.havingCondition}
       ORDER BY distance ASC
-    `
-    
-    const [rows] = await SQLiteAdapter.execute(sql, [...nearbyQuery.params, radius])
-    return rows
+    `;
+
+    const [rows] = await SQLiteAdapter.execute(sql, [...nearbyQuery.params, radius]);
+    return rows;
   }
-  
+
   // 创建全景图
   static async create(panoramaData) {
     const {
@@ -135,17 +137,17 @@ class PanoramaModel {
       fileType,
       folderId,
       isVisible = true,
-      sortOrder = 0
-    } = panoramaData
-    
+      sortOrder = 0,
+    } = panoramaData;
+
     const sql = `
       INSERT INTO panoramas (
         title, description, image_url, thumbnail_url,
         latitude, longitude, gcj02_lat, gcj02_lng,
         file_size, file_type, folder_id, is_visible, sort_order
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-    
+    `;
+
     const params = [
       title,
       description || null,
@@ -159,129 +161,164 @@ class PanoramaModel {
       fileType || null,
       folderId || null,
       isVisible,
-      sortOrder
-    ]
-    
-    const [result] = await SQLiteAdapter.execute(sql, params)
-    return await this.findById(result.insertId)
+      sortOrder,
+    ];
+
+    const [result] = await SQLiteAdapter.execute(sql, params);
+    return await this.findById(result.insertId);
   }
-  
+
   // 更新全景图
   static async update(id, panoramaData) {
     // 调试：更新前记录
-    const before = await this.findById(id)
-    if (!before) return null
+    const before = await this.findById(id);
+    if (!before) return null;
 
-    const updates = []
-    const params = []
+    const updates = [];
+    const params = [];
 
     // 简单字段
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'title')) {
-      updates.push('title = ?')
-      params.push(panoramaData.title)
+      updates.push('title = ?');
+      params.push(panoramaData.title);
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'description')) {
-      updates.push('description = ?')
-      params.push(panoramaData.description || null)
+      updates.push('description = ?');
+      params.push(panoramaData.description || null);
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'imageUrl')) {
-      updates.push('image_url = ?')
-      params.push(panoramaData.imageUrl)
+      updates.push('image_url = ?');
+      params.push(panoramaData.imageUrl);
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'thumbnailUrl')) {
-      updates.push('thumbnail_url = ?')
-      params.push(panoramaData.thumbnailUrl || null)
+      updates.push('thumbnail_url = ?');
+      params.push(panoramaData.thumbnailUrl || null);
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'folderId')) {
       // 仅当提供的 folderId 非 null/undefined 时才更新，避免误将归属清空
       if (panoramaData.folderId !== null && panoramaData.folderId !== undefined) {
-        updates.push('folder_id = ?')
-        params.push(panoramaData.folderId)
+        updates.push('folder_id = ?');
+        params.push(panoramaData.folderId);
       }
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'isVisible')) {
-      updates.push('is_visible = ?')
-      params.push(Boolean(panoramaData.isVisible))
+      updates.push('is_visible = ?');
+      params.push(Boolean(panoramaData.isVisible));
     }
     if (Object.prototype.hasOwnProperty.call(panoramaData, 'sortOrder')) {
-      updates.push('sort_order = ?')
-      params.push(parseInt(panoramaData.sortOrder) || 0)
+      updates.push('sort_order = ?');
+      params.push(parseInt(panoramaData.sortOrder) || 0);
     }
 
     // 坐标相关：若提供lat或lng，需更新latitude/longitude及gcj02
-    const hasLat = Object.prototype.hasOwnProperty.call(panoramaData, 'latitude') || Object.prototype.hasOwnProperty.call(panoramaData, 'lat')
-    const hasLng = Object.prototype.hasOwnProperty.call(panoramaData, 'longitude') || Object.prototype.hasOwnProperty.call(panoramaData, 'lng')
+    const hasLat =
+      Object.prototype.hasOwnProperty.call(panoramaData, 'latitude') ||
+      Object.prototype.hasOwnProperty.call(panoramaData, 'lat');
+    const hasLng =
+      Object.prototype.hasOwnProperty.call(panoramaData, 'longitude') ||
+      Object.prototype.hasOwnProperty.call(panoramaData, 'lng');
     if (hasLat || hasLng) {
       // 读取当前以补全缺失一侧
-      const current = await this.findById(id)
-      if (!current) return null
+      const current = await this.findById(id);
+      if (!current) return null;
 
       const latitude = Object.prototype.hasOwnProperty.call(panoramaData, 'latitude')
         ? panoramaData.latitude
-        : (Object.prototype.hasOwnProperty.call(panoramaData, 'lat') ? panoramaData.lat : current.latitude)
+        : Object.prototype.hasOwnProperty.call(panoramaData, 'lat')
+        ? panoramaData.lat
+        : current.latitude;
       const longitude = Object.prototype.hasOwnProperty.call(panoramaData, 'longitude')
         ? panoramaData.longitude
-        : (Object.prototype.hasOwnProperty.call(panoramaData, 'lng') ? panoramaData.lng : current.longitude)
+        : Object.prototype.hasOwnProperty.call(panoramaData, 'lng')
+        ? panoramaData.lng
+        : current.longitude;
 
-      updates.push('latitude = ?')
-      params.push(latitude)
-      updates.push('longitude = ?')
-      params.push(longitude)
+      updates.push('latitude = ?');
+      params.push(latitude);
+      updates.push('longitude = ?');
+      params.push(longitude);
 
       try {
-        const { wgs84ToGcj02 } = require('../utils/coordinate')
-        const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude)
-        updates.push('gcj02_lat = ?')
-        params.push(gcj02Lat || null)
-        updates.push('gcj02_lng = ?')
-        params.push(gcj02Lng || null)
+        const { wgs84ToGcj02 } = require('../utils/coordinate');
+        const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude);
+        updates.push('gcj02_lat = ?');
+        params.push(gcj02Lat || null);
+        updates.push('gcj02_lng = ?');
+        params.push(gcj02Lng || null);
       } catch (e) {
         // 如果转换失败，保持为NULL
-        updates.push('gcj02_lat = ?')
-        params.push(null)
-        updates.push('gcj02_lng = ?')
-        params.push(null)
+        updates.push('gcj02_lat = ?');
+        params.push(null);
+        updates.push('gcj02_lng = ?');
+        params.push(null);
       }
     }
 
     if (updates.length === 0) {
       // 无更新字段，直接返回当前
-      return await this.findById(id)
+      return await this.findById(id);
     }
 
-    const sql = `UPDATE panoramas SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
-    params.push(id)
-    await SQLiteAdapter.execute(sql, params)
-    const after = await this.findById(id)
-      try {
-        const keys = ['id','folder_id','title','description','image_url','thumbnail_url','latitude','longitude','gcj02_lat','gcj02_lng','is_visible','sort_order','updated_at']
-        const pick = (obj) => { const out = {}; keys.forEach(k => out[k] = obj ? obj[k] : undefined); return out }
-        const beforePicked = pick(before)
-        const afterPicked = pick(after)
-        const changed = {}
-        keys.forEach(k => { if (beforePicked[k] !== afterPicked[k]) changed[k] = { before: beforePicked[k], after: afterPicked[k] } })
-        Logger.debug('[PanoramaModel.update] id=%s changedKeys=%o diff=%o', { id, changedKeys: Object.keys(changed), diff: changed })
-      } catch (_) {}
-    return after
+    const sql = `UPDATE panoramas SET ${updates.join(
+      ', '
+    )}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
+    params.push(id);
+    await SQLiteAdapter.execute(sql, params);
+    const after = await this.findById(id);
+    try {
+      const keys = [
+        'id',
+        'folder_id',
+        'title',
+        'description',
+        'image_url',
+        'thumbnail_url',
+        'latitude',
+        'longitude',
+        'gcj02_lat',
+        'gcj02_lng',
+        'is_visible',
+        'sort_order',
+        'updated_at',
+      ];
+      const pick = (obj) => {
+        const out = {};
+        keys.forEach((k) => (out[k] = obj ? obj[k] : undefined));
+        return out;
+      };
+      const beforePicked = pick(before);
+      const afterPicked = pick(after);
+      const changed = {};
+      keys.forEach((k) => {
+        if (beforePicked[k] !== afterPicked[k])
+          changed[k] = { before: beforePicked[k], after: afterPicked[k] };
+      });
+      Logger.debug('[PanoramaModel.update] id=%s changedKeys=%o diff=%o', {
+        id,
+        changedKeys: Object.keys(changed),
+        diff: changed,
+      });
+    } catch (_) {}
+    return after;
   }
-  
+
   // 删除全景图
   static async delete(id) {
-    const sql = 'DELETE FROM panoramas WHERE id = ?'
-    const [result] = await SQLiteAdapter.execute(sql, [id])
-    return result.affectedRows > 0
+    const sql = 'DELETE FROM panoramas WHERE id = ?';
+    const [result] = await SQLiteAdapter.execute(sql, [id]);
+    return result.affectedRows > 0;
   }
-  
+
   // 批量删除全景图
   static async batchDelete(ids) {
-    if (!ids || ids.length === 0) return 0
-    
-    const { clause, params } = QueryBuilder.buildInClause(ids)
-    const sql = `DELETE FROM panoramas WHERE id ${clause}`
-    const [result] = await SQLiteAdapter.execute(sql, params)
-    return result.affectedRows
+    if (!ids || ids.length === 0) return 0;
+
+    const { clause, params } = QueryBuilder.buildInClause(ids);
+    const sql = `DELETE FROM panoramas WHERE id ${clause}`;
+    const [result] = await SQLiteAdapter.execute(sql, params);
+    return result.affectedRows;
   }
-  
+
   // 搜索全景图
   static async search(searchParams) {
     const {
@@ -292,145 +329,142 @@ class PanoramaModel {
       dateFrom = null,
       dateTo = null,
       page = 1,
-      pageSize = 20
-    } = searchParams
-    
+      pageSize = 20,
+    } = searchParams;
+
     // 使用QueryBuilder构建查询条件
     const { conditions, params } = QueryBuilder.buildPanoramaConditions({
       keyword,
       dateFrom,
       dateTo,
-      includeHidden: true // 搜索时包含隐藏项
-    })
-    
-    let sql = 'SELECT * FROM panoramas'
-    let finalParams = [...params]
-    
+      includeHidden: true, // 搜索时包含隐藏项
+    });
+
+    let sql = 'SELECT * FROM panoramas';
+    let finalParams = [...params];
+
     // 处理位置搜索
     if (lat && lng && radius) {
-      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
-      sql = `SELECT *, ${nearbyQuery.selectDistance} FROM panoramas`
-      finalParams = [...nearbyQuery.params, ...finalParams]
-      
+      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius);
+      sql = `SELECT *, ${nearbyQuery.selectDistance} FROM panoramas`;
+      finalParams = [...nearbyQuery.params, ...finalParams];
+
       if (conditions.length > 0) {
-        sql += ` WHERE ${conditions.join(' AND ')} HAVING ${nearbyQuery.havingCondition}`
-        finalParams.push(radius)
+        sql += ` WHERE ${conditions.join(' AND ')} HAVING ${nearbyQuery.havingCondition}`;
+        finalParams.push(radius);
       } else {
-        sql += ` HAVING ${nearbyQuery.havingCondition}`
-        finalParams.push(radius)
+        sql += ` HAVING ${nearbyQuery.havingCondition}`;
+        finalParams.push(radius);
       }
-      sql += ' ORDER BY distance ASC'
+      sql += ' ORDER BY distance ASC';
     } else {
       if (conditions.length > 0) {
-        sql += ` WHERE ${conditions.join(' AND ')}`
+        sql += ` WHERE ${conditions.join(' AND ')}`;
       }
-      sql += ' ORDER BY created_at DESC'
+      sql += ' ORDER BY created_at DESC';
     }
-    
-    sql += ` ${QueryBuilder.buildLimitClause(page, pageSize)}`
-    
-    const [rows] = await SQLiteAdapter.execute(sql, finalParams)
-    
+
+    sql += ` ${QueryBuilder.buildLimitClause(page, pageSize)}`;
+
+    const [rows] = await SQLiteAdapter.execute(sql, finalParams);
+
     // 构建计数查询
-    let countSql = 'SELECT COUNT(*) as total FROM panoramas'
-    let countParams = [...params]
-    
+    let countSql = 'SELECT COUNT(*) as total FROM panoramas';
+    let countParams = [...params];
+
     if (lat && lng && radius) {
-      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius)
+      const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius);
       countSql = `SELECT COUNT(*) as total FROM (
         SELECT *, ${nearbyQuery.selectDistance} FROM panoramas
         ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''}
         HAVING ${nearbyQuery.havingCondition}
-      ) as filtered`
-      countParams = [...nearbyQuery.params, ...countParams, radius]
+      ) as filtered`;
+      countParams = [...nearbyQuery.params, ...countParams, radius];
     } else if (conditions.length > 0) {
-      countSql += ` WHERE ${conditions.join(' AND ')}`
+      countSql += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
-    const [countResult] = await SQLiteAdapter.execute(countSql, countParams)
-    const total = countResult[0].total
-    
+
+    const [countResult] = await SQLiteAdapter.execute(countSql, countParams);
+    const total = countResult[0].total;
+
     return {
       data: rows,
       total: parseInt(total),
       page: parseInt(page),
       pageSize: parseInt(pageSize),
-      totalPages: Math.ceil(total / pageSize)
-    }
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
-  
+
   // 获取统计信息
   static async getStats() {
-    const totalSql = 'SELECT COUNT(*) as total FROM panoramas'
-    const recentSql = 'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
-    
-    const [totalResult] = await SQLiteAdapter.execute(totalSql)
-    const [recentResult] = await SQLiteAdapter.execute(recentSql)
-    
+    const totalSql = 'SELECT COUNT(*) as total FROM panoramas';
+    const recentSql =
+      'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+
+    const [totalResult] = await SQLiteAdapter.execute(totalSql);
+    const [recentResult] = await SQLiteAdapter.execute(recentSql);
+
     return {
       total: totalResult[0].total,
-      recentWeek: recentResult[0].recent
-    }
+      recentWeek: recentResult[0].recent,
+    };
   }
-  
+
   // 移动全景图到文件夹
   static async moveToFolder(id, folderId) {
-    const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await SQLiteAdapter.execute(sql, [folderId, id])
-    return await this.findById(id)
+    const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    await SQLiteAdapter.execute(sql, [folderId, id]);
+    return await this.findById(id);
   }
 
   // 批量移动全景图到文件夹
   static async batchMoveToFolder(ids, folderId) {
-    if (!ids || ids.length === 0) return 0
-    
-    const { clause, params } = QueryBuilder.buildInClause(ids)
-    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const [result] = await SQLiteAdapter.execute(sql, [folderId, ...params])
-    return result.affectedRows
+    if (!ids || ids.length === 0) return 0;
+
+    const { clause, params } = QueryBuilder.buildInClause(ids);
+    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+    const [result] = await SQLiteAdapter.execute(sql, [folderId, ...params]);
+    return result.affectedRows;
   }
 
   // 更新可见性
   static async updateVisibility(id, isVisible) {
-    const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    await SQLiteAdapter.execute(sql, [isVisible, id])
-    return await this.findById(id)
+    const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    await SQLiteAdapter.execute(sql, [isVisible, id]);
+    return await this.findById(id);
   }
 
   // 批量更新可见性
   static async batchUpdateVisibility(ids, isVisible) {
-    if (!ids || ids.length === 0) return 0
-    
-    const { clause, params } = QueryBuilder.buildInClause(ids)
-    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`
-    const [result] = await SQLiteAdapter.execute(sql, [isVisible, ...params])
-    return result.affectedRows
+    if (!ids || ids.length === 0) return 0;
+
+    const { clause, params } = QueryBuilder.buildInClause(ids);
+    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+    const [result] = await SQLiteAdapter.execute(sql, [isVisible, ...params]);
+    return result.affectedRows;
   }
 
   // 根据文件夹获取全景图
   static async findByFolder(folderId, options = {}) {
-    const {
-      includeHidden = false,
-      sortBy = 'sort_order',
-      sortOrder = 'ASC'
-    } = options
-    
-    const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'p')
-    let sql = `SELECT p.* FROM panoramas p WHERE ${folderCondition.conditions.join(' AND ')}`
-    const params = folderCondition.params
-    
+    const { includeHidden = false, sortBy = 'sort_order', sortOrder = 'ASC' } = options;
+
+    const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'p');
+    let sql = `SELECT p.* FROM panoramas p WHERE ${folderCondition.conditions.join(' AND ')}`;
+    const params = folderCondition.params;
+
     if (!includeHidden) {
-      sql += ' AND p.is_visible = TRUE'
+      sql += ' AND p.is_visible = TRUE';
     }
-    
-    const allowedSortFields = ['created_at', 'title', 'sort_order']
-    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'sort_order'
-    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-    sql += ` ORDER BY ${sortField} ${order}`
-    
-    const [rows] = await SQLiteAdapter.execute(sql, params)
-    return rows
+
+    const allowedSortFields = ['created_at', 'title', 'sort_order'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'sort_order';
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    sql += ` ORDER BY ${sortField} ${order}`;
+
+    const [rows] = await SQLiteAdapter.execute(sql, params);
+    return rows;
   }
 }
 
-module.exports = PanoramaModel
+module.exports = PanoramaModel;

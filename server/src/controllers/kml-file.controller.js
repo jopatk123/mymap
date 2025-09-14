@@ -1,8 +1,8 @@
 // 统一导出所有KML相关控制器，保持向后兼容
-const KmlFileBaseController = require('./kml-file/base.controller')
-const KmlFileBatchController = require('./kml-file-batch.controller')
-const KmlFileStyleController = require('./kml-file-style.controller')
-const KmlPointQueryController = require('./kml-point-query.controller')
+const KmlFileBaseController = require('./kml-file/base.controller');
+const KmlFileBatchController = require('./kml-file-batch.controller');
+const KmlFileStyleController = require('./kml-file-style.controller');
+const KmlPointQueryController = require('./kml-point-query.controller');
 
 const KmlFileController = {
   // 基础CRUD
@@ -29,11 +29,8 @@ const KmlFileController = {
 
   // 点位查询
   getKmlFilePoints: KmlPointQueryController.getKmlFilePoints,
-  getKmlPointsByBounds: KmlPointQueryController.getKmlPointsByBounds
-  ,
-  setBasemapFlag: KmlFileBaseController.setBasemapFlag
-}
+  getKmlPointsByBounds: KmlPointQueryController.getKmlPointsByBounds,
+  setBasemapFlag: KmlFileBaseController.setBasemapFlag,
+};
 
-module.exports = KmlFileController
-
-
+module.exports = KmlFileController;

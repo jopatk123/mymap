@@ -8,10 +8,9 @@
       <div class="search-input">
         <el-input
           v-model="searchKeyword"
-          :placeholder="searchMode === 'point' ? '搜索点位...' : '搜索地址（高德）...'
-          "
-          @input="handleInput"
+          :placeholder="searchMode === 'point' ? '搜索点位...' : '搜索地址（高德）...'"
           clearable
+          @input="handleInput"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -36,70 +35,76 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { Search } from '@element-plus/icons-vue'
-import { debounce } from 'lodash-es'
-import { amapApi } from '@/api/amap.js'
+import { ref, watch } from 'vue';
+import { Search } from '@element-plus/icons-vue';
+import { debounce } from 'lodash-es';
+import { amapApi } from '@/api/amap.js';
 
 const props = defineProps({
   modelValue: {
     type: Object,
     default: () => ({
-      keyword: ''
-    })
-  }
-})
+      keyword: '',
+    }),
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'search', 'locate'])
+const emit = defineEmits(['update:modelValue', 'search', 'locate']);
 
-const searchKeyword = ref(props.modelValue.keyword || '')
-const searchMode = ref('point')
-const tips = ref([])
-
+const searchKeyword = ref(props.modelValue.keyword || '');
+const searchMode = ref('point');
+const tips = ref([]);
 
 // 监听props变化
-watch(() => props.modelValue, (newValue) => {
-  searchKeyword.value = newValue.keyword || ''
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    searchKeyword.value = newValue.keyword || '';
+  },
+  { deep: true }
+);
 
 const runPointSearch = () => {
-  const searchParams = { keyword: searchKeyword.value.trim() }
-  emit('update:modelValue', searchParams)
-  emit('search', searchParams)
-}
+  const searchParams = { keyword: searchKeyword.value.trim() };
+  emit('update:modelValue', searchParams);
+  emit('search', searchParams);
+};
 
 const runAddressTips = async () => {
-  const keyword = searchKeyword.value.trim()
-  if (!keyword) { tips.value = []; return }
-  try {
-    const { tips: result } = await amapApi.inputTips(keyword)
-    // 仅保留带坐标或有 location 的项
-    tips.value = (result || []).filter(t => t.location || (t.location && t.location.split(',').length === 2))
-  } catch (e) {
-    tips.value = []
+  const keyword = searchKeyword.value.trim();
+  if (!keyword) {
+    tips.value = [];
+    return;
   }
-}
+  try {
+    const { tips: result } = await amapApi.inputTips(keyword);
+    // 仅保留带坐标或有 location 的项
+    tips.value = (result || []).filter(
+      (t) => t.location || (t.location && t.location.split(',').length === 2)
+    );
+  } catch (e) {
+    tips.value = [];
+  }
+};
 
 const handleInput = debounce(() => {
   if (searchMode.value === 'point') {
-    runPointSearch()
+    runPointSearch();
   } else {
-    runAddressTips()
+    runAddressTips();
   }
-}, 300)
+}, 300);
 
 const selectTip = (tip) => {
   // tip.location 为 "lng,lat"
-  if (!tip?.location) return
-  const [lngStr, latStr] = tip.location.split(',')
-  const lng = parseFloat(lngStr)
-  const lat = parseFloat(latStr)
-  if (isNaN(lng) || isNaN(lat)) return
-  emit('locate', { lat, lng, tip })
-  tips.value = []
-}
-
-
+  if (!tip?.location) return;
+  const [lngStr, latStr] = tip.location.split(',');
+  const lng = parseFloat(lngStr);
+  const lat = parseFloat(latStr);
+  if (isNaN(lng) || isNaN(lat)) return;
+  emit('locate', { lat, lng, tip });
+  tips.value = [];
+};
 </script>
 
 <style lang="scss" scoped>
@@ -123,8 +128,15 @@ const selectTip = (tip) => {
   .tip-item {
     padding: 8px 12px;
     cursor: pointer;
-    .title { font-weight: 500; color: #303133; }
-    .desc { font-size: 12px; color: #909399; margin-top: 2px; }
+    .title {
+      font-weight: 500;
+      color: #303133;
+    }
+    .desc {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 2px;
+    }
   }
   .tip-item:hover {
     background: #f5f7fa;

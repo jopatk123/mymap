@@ -15,13 +15,9 @@
       label-position="left"
     >
       <el-form-item label="名称" prop="name">
-        <el-input
-          v-model="formData.name"
-          placeholder="请输入线段名称"
-          clearable
-        />
+        <el-input v-model="formData.name" placeholder="请输入线段名称" clearable />
       </el-form-item>
-      
+
       <el-form-item label="描述" prop="description">
         <el-input
           v-model="formData.description"
@@ -31,15 +27,11 @@
           clearable
         />
       </el-form-item>
-      
+
       <el-form-item label="颜色">
-        <el-color-picker 
-          v-model="formData.color" 
-          :predefine="colorPresets"
-          show-alpha
-        />
+        <el-color-picker v-model="formData.color" :predefine="colorPresets" show-alpha />
       </el-form-item>
-      
+
       <el-form-item label="粗细">
         <el-slider
           v-model="formData.weight"
@@ -51,7 +43,7 @@
           input-size="small"
         />
       </el-form-item>
-      
+
       <el-form-item label="透明度">
         <el-slider
           v-model="formData.opacity"
@@ -64,7 +56,7 @@
           input-size="small"
         />
       </el-form-item>
-      
+
       <el-form-item label="线型">
         <el-select v-model="formData.dashArray" placeholder="选择线型">
           <el-option
@@ -74,11 +66,11 @@
             :value="dash.value"
           >
             <div class="dash-option">
-              <div 
-                class="dash-preview" 
-                :style="{ 
+              <div
+                class="dash-preview"
+                :style="{
                   borderTop: `2px ${dash.value ? 'dashed' : 'solid'} #606266`,
-                  borderTopColor: formData.color || '#3388ff'
+                  borderTopColor: formData.color || '#3388ff',
                 }"
               ></div>
               <span>{{ dash.label }}</span>
@@ -86,7 +78,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="统计信息">
         <div class="stats-display">
           <el-descriptions :column="2" size="small">
@@ -100,7 +92,7 @@
         </div>
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
@@ -111,23 +103,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch } from 'vue';
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: false
+    default: false,
   },
   line: {
     type: Object,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'save'])
+const emit = defineEmits(['update:modelValue', 'save']);
 
-const dialogVisible = ref(false)
-const formRef = ref(null)
+const dialogVisible = ref(false);
+const formRef = ref(null);
 
 // 表单数据
 const formData = reactive({
@@ -138,15 +130,13 @@ const formData = reactive({
   opacity: 0.8,
   dashArray: null,
   distance: 0,
-  latlngs: []
-})
+  latlngs: [],
+});
 
 // 表单验证规则
 const formRules = {
-  name: [
-    { required: true, message: '请输入线段名称', trigger: 'blur' }
-  ]
-}
+  name: [{ required: true, message: '请输入线段名称', trigger: 'blur' }],
+};
 
 // 颜色预设
 const colorPresets = [
@@ -159,8 +149,8 @@ const colorPresets = [
   '#2ecc71',
   '#9b59b6',
   '#34495e',
-  '#95a5a6'
-]
+  '#95a5a6',
+];
 
 // 线型选项
 const dashOptions = [
@@ -168,70 +158,74 @@ const dashOptions = [
   { value: '5, 5', label: '短划线' },
   { value: '10, 10', label: '长划线' },
   { value: '5, 5, 1, 5', label: '点划线' },
-  { value: '10, 5, 1, 5', label: '长点划线' }
-]
+  { value: '10, 5, 1, 5', label: '长点划线' },
+];
 
 // 监听对话框显示状态
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    const l = props.line || {}
-    // 初始化表单数据，添加默认名称
-    const defaultName = l.name && String(l.name).trim() ? l.name : `线段${Date.now().toString().slice(-6)}`
-    Object.assign(formData, {
-      name: defaultName,
-      description: l.description || '',
-      color: l.color || '#3388ff',
-      weight: l.weight || 3,
-      opacity: l.opacity || 0.8,
-      dashArray: l.dashArray || null,
-      distance: l.distance || 0,
-      latlngs: l.latlngs || []
-    })
+watch(
+  () => props.modelValue,
+  (val) => {
+    dialogVisible.value = val;
+    if (val) {
+      const l = props.line || {};
+      // 初始化表单数据，添加默认名称
+      const defaultName =
+        l.name && String(l.name).trim() ? l.name : `线段${Date.now().toString().slice(-6)}`;
+      Object.assign(formData, {
+        name: defaultName,
+        description: l.description || '',
+        color: l.color || '#3388ff',
+        weight: l.weight || 3,
+        opacity: l.opacity || 0.8,
+        dashArray: l.dashArray || null,
+        distance: l.distance || 0,
+        latlngs: l.latlngs || [],
+      });
+    }
   }
-})
+);
 
 watch(dialogVisible, (val) => {
-  emit('update:modelValue', val)
-})
+  emit('update:modelValue', val);
+});
 
 // 格式化透明度提示
 const formatOpacityTooltip = (val) => {
-  return `${Math.round(val * 100)}%`
-}
+  return `${Math.round(val * 100)}%`;
+};
 
 // 格式化距离显示
 const formatDistance = (distance) => {
-  if (!distance) return '0 米'
+  if (!distance) return '0 米';
   if (distance < 1000) {
-    return `${distance.toFixed(2)} 米`
+    return `${distance.toFixed(2)} 米`;
   } else {
-    return `${(distance / 1000).toFixed(2)} 公里`
+    return `${(distance / 1000).toFixed(2)} 公里`;
   }
-}
+};
 
 // 处理关闭
 const handleClose = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 
 // 处理保存
 const handleSave = async () => {
   try {
-    await formRef.value?.validate()
-    emit('save', { ...formData })
-    handleClose()
+    await formRef.value?.validate();
+    emit('save', { ...formData });
+    handleClose();
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('表单验证失败:', error);
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
 .dash-option {
   display: flex;
   align-items: center;
-  
+
   .dash-preview {
     width: 40px;
     height: 1px;
@@ -241,7 +235,7 @@ const handleSave = async () => {
 
 .stats-display {
   width: 100%;
-  
+
   :deep(.el-descriptions__body) {
     background: var(--el-fill-color-light);
     border-radius: 4px;

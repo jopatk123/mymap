@@ -15,7 +15,6 @@ export function useMapInstance(containerId) {
       // 暂时不使用自定义CRS，使用标准配置
     };
 
-
     // 禁用一些动画以避免在缩放动画与图层移除并发时访问已为 null 的内部字段
     const animationSafeDefaults = {
       zoomAnimation: false,
@@ -70,7 +69,7 @@ export function useMapInstance(containerId) {
       map.value.remove();
       map.value = null;
     }
-    
+
     // 清除全局地图实例
     window.mapInstance = null;
     window.currentMarkers = [];

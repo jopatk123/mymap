@@ -18,29 +18,18 @@
           <p class="upload-hint">支持 JPG、PNG、WebP 等格式，最大 50MB</p>
         </div>
       </div>
-      
+
       <div v-else class="upload-preview">
         <div class="image-preview">
-          <img
-            v-if="previewUrl"
-            :src="previewUrl"
-            alt="全景图预览"
-            class="preview-image"
-          />
+          <img v-if="previewUrl" :src="previewUrl" alt="全景图预览" class="preview-image" />
         </div>
-        
+
         <div class="file-info">
           <el-icon><Picture /></el-icon>
           <span class="file-name">{{ file.name }}</span>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            circle
-            size="small"
-            @click.stop="handleRemove"
-          />
+          <el-button type="danger" :icon="Delete" circle size="small" @click.stop="handleRemove" />
         </div>
-        
+
         <!-- GPS 信息显示 -->
         <div v-if="showGpsInfo && gpsInfo" class="gps-info">
           <el-icon><Location /></el-icon>
@@ -52,106 +41,118 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Picture, Delete, Location } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed } from 'vue';
+import { Picture, Delete, Location } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: File,
-  previewUrl: String,
-  gpsInfo: Object,
+  previewUrl: {
+    type: String,
+    default: '',
+  },
+  gpsInfo: {
+    type: Object,
+    default: null,
+  },
   showGpsInfo: {
     type: Boolean,
-    default: true
+    default: true,
   },
   accept: {
     type: String,
-    default: 'image/*'
-  }
-})
+    default: 'image/*',
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'update:previewUrl', 'update:gpsInfo', 'file-change', 'file-remove'])
+const emit = defineEmits([
+  'update:modelValue',
+  'update:previewUrl',
+  'update:gpsInfo',
+  'file-change',
+  'file-remove',
+]);
 
-const uploadRef = ref(null)
+const uploadRef = ref(null);
 
 const file = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
+  set: (value) => emit('update:modelValue', value),
+});
 
 const previewUrl = computed({
   get: () => props.previewUrl,
-  set: (value) => emit('update:previewUrl', value)
-})
+  set: (value) => emit('update:previewUrl', value),
+});
 
 const gpsInfo = computed({
   get: () => props.gpsInfo,
-  set: (value) => emit('update:gpsInfo', value)
-})
+  set: (value) => emit('update:gpsInfo', value),
+});
 
 const handleFileChange = async (file) => {
   // 检查文件对象是否有效
   if (!file || !file.raw) {
-    ElMessage.error('文件对象无效!')
-    return false
+    ElMessage.error('文件对象无效!');
+    return false;
   }
-  
-  const rawFile = file.raw
-  
+
+  const rawFile = file.raw;
+
   // 检查原始文件对象
   if (!rawFile || !rawFile.type || !rawFile.size) {
-    ElMessage.error('文件信息不完整!')
-    return false
+    ElMessage.error('文件信息不完整!');
+    return false;
   }
-  
+
   // 验证文件
-  const isImage = rawFile.type.startsWith('image/')
-  const isLt50M = rawFile.size / 1024 / 1024 < 50
-  
+  const isImage = rawFile.type.startsWith('image/');
+  const isLt50M = rawFile.size / 1024 / 1024 < 50;
+
   if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
-    return false
+    ElMessage.error('只能上传图片文件!');
+    return false;
   }
-  
+
   if (!isLt50M) {
-    ElMessage.error('图片大小不能超过 50MB!')
-    return false
+    ElMessage.error('图片大小不能超过 50MB!');
+    return false;
   }
-  
-  file.value = rawFile
-  emit('file-change', rawFile)
-  
-  return true
-}
+
+  file.value = rawFile;
+  emit('file-change', rawFile);
+
+  return true;
+};
 
 const handleFileRemove = () => {
-  file.value = null
+  file.value = null;
   if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = ''
+    URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = '';
   }
-  gpsInfo.value = null
-  emit('file-remove')
-}
+  gpsInfo.value = null;
+  emit('file-remove');
+};
 
 const handleRemove = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 // 清理方法
 const clearFiles = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 defineExpose({
-  clearFiles
-})
+  clearFiles,
+});
 </script>
 
 <style scoped>

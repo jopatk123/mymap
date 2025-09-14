@@ -1,173 +1,171 @@
-const KmlFileModel = require('../models/kml-file.model')
-const KmlFileUtils = require('../utils/kml-file-utils')
-const Logger = require('../utils/logger')
+const KmlFileModel = require('../models/kml-file.model');
+const KmlFileUtils = require('../utils/kml-file-utils');
+const Logger = require('../utils/logger');
 
 class KmlFileBatchController {
   static async batchDeleteKmlFiles(req, res) {
     try {
-      const { ids } = req.body
+      const { ids } = req.body;
 
-      const validation = KmlFileUtils.validateIdList(ids)
+      const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
         return res.status(400).json({
           success: false,
-          message: validation.message
-        })
+          message: validation.message,
+        });
       }
 
-      const kmlFilesToDelete = []
+      const kmlFilesToDelete = [];
       for (const id of ids) {
         try {
-          const kmlFile = await KmlFileModel.findById(parseInt(id))
+          const kmlFile = await KmlFileModel.findById(parseInt(id));
           if (kmlFile) {
-            kmlFilesToDelete.push(kmlFile)
+            kmlFilesToDelete.push(kmlFile);
           }
         } catch (error) {
-          Logger.warn(`获取KML文件信息失败 (ID: ${id})`, error)
+          Logger.warn(`获取KML文件信息失败 (ID: ${id})`, error);
         }
       }
 
-      const affectedRows = await KmlFileModel.batchDelete(ids)
+      const affectedRows = await KmlFileModel.batchDelete(ids);
 
       // 事务性删除数据库记录后再删除物理文件，物理删除失败不应回滚数据库
       try {
-        await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete)
+        await KmlFileUtils.batchDeletePhysicalFiles(kmlFilesToDelete);
       } catch (fileErr) {
-        Logger.warn('批量物理文件删除部分失败（已忽略）:', fileErr)
+        Logger.warn('批量物理文件删除部分失败（已忽略）:', fileErr);
       }
 
-      const ConfigService = require('../services/config.service')
-      await ConfigService.batchDeleteKmlStyles(ids.map(id => id.toString()))
+      const ConfigService = require('../services/config.service');
+      await ConfigService.batchDeleteKmlStyles(ids.map((id) => id.toString()));
 
       res.json({
         success: true,
-        message: `成功删除 ${affectedRows} 个KML文件`
-      })
+        message: `成功删除 ${affectedRows} 个KML文件`,
+      });
     } catch (error) {
-      Logger.error('批量删除KML文件失败:', error)
+      Logger.error('批量删除KML文件失败:', error);
       res.status(500).json({
         success: false,
         message: '批量删除KML文件失败',
-        error: error.message
-      })
+        error: error.message,
+      });
     }
   }
 
   static async batchUpdateKmlFileVisibility(req, res) {
     try {
-      const { ids, isVisible } = req.body
+      const { ids, isVisible } = req.body;
 
-      const validation = KmlFileUtils.validateIdList(ids)
+      const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
         return res.status(400).json({
           success: false,
-          message: validation.message
-        })
+          message: validation.message,
+        });
       }
 
-      const affectedRows = await KmlFileModel.batchUpdateVisibility(ids, isVisible)
+      const affectedRows = await KmlFileModel.batchUpdateVisibility(ids, isVisible);
 
       res.json({
         success: true,
-        message: `成功更新 ${affectedRows} 个KML文件的可见性`
-      })
+        message: `成功更新 ${affectedRows} 个KML文件的可见性`,
+      });
     } catch (error) {
-      Logger.error('批量更新KML文件可见性失败:', error)
+      Logger.error('批量更新KML文件可见性失败:', error);
       res.status(500).json({
         success: false,
         message: '批量更新KML文件可见性失败',
-        error: error.message
-      })
+        error: error.message,
+      });
     }
   }
 
   static async batchMoveKmlFilesToFolder(req, res) {
     try {
-      const { ids, folderId } = req.body
+      const { ids, folderId } = req.body;
 
-      const validation = KmlFileUtils.validateIdList(ids)
+      const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
         return res.status(400).json({
           success: false,
-          message: validation.message
-        })
+          message: validation.message,
+        });
       }
 
-      const affectedRows = await KmlFileModel.batchMoveToFolder(ids, folderId)
+      const affectedRows = await KmlFileModel.batchMoveToFolder(ids, folderId);
 
       res.json({
         success: true,
-        message: `成功移动 ${affectedRows} 个KML文件到文件夹`
-      })
+        message: `成功移动 ${affectedRows} 个KML文件到文件夹`,
+      });
     } catch (error) {
-      Logger.error('批量移动KML文件到文件夹失败:', error)
+      Logger.error('批量移动KML文件到文件夹失败:', error);
       res.status(500).json({
         success: false,
         message: '批量移动KML文件到文件夹失败',
-        error: error.message
-      })
+        error: error.message,
+      });
     }
   }
 
   static async updateKmlFileVisibility(req, res) {
     try {
-      const { id } = req.params
-      const { isVisible } = req.body
+      const { id } = req.params;
+      const { isVisible } = req.body;
 
-      const kmlFile = await KmlFileModel.update(parseInt(id), { is_visible: isVisible })
+      const kmlFile = await KmlFileModel.update(parseInt(id), { is_visible: isVisible });
 
       if (!kmlFile) {
         return res.status(404).json({
           success: false,
-          message: 'KML文件不存在'
-        })
+          message: 'KML文件不存在',
+        });
       }
 
       res.json({
         success: true,
         message: 'KML文件可见性更新成功',
-        data: kmlFile
-      })
+        data: kmlFile,
+      });
     } catch (error) {
-      Logger.error('更新KML文件可见性失败:', error)
+      Logger.error('更新KML文件可见性失败:', error);
       res.status(500).json({
         success: false,
         message: '更新KML文件可见性失败',
-        error: error.message
-      })
+        error: error.message,
+      });
     }
   }
 
   static async moveKmlFileToFolder(req, res) {
     try {
-      const { id } = req.params
-      const { folderId } = req.body
+      const { id } = req.params;
+      const { folderId } = req.body;
 
-      const kmlFile = await KmlFileModel.update(parseInt(id), { folder_id: folderId })
+      const kmlFile = await KmlFileModel.update(parseInt(id), { folder_id: folderId });
 
       if (!kmlFile) {
         return res.status(404).json({
           success: false,
-          message: 'KML文件不存在'
-        })
+          message: 'KML文件不存在',
+        });
       }
 
       res.json({
         success: true,
         message: 'KML文件移动成功',
-        data: kmlFile
-      })
+        data: kmlFile,
+      });
     } catch (error) {
-      Logger.error('移动KML文件到文件夹失败:', error)
+      Logger.error('移动KML文件到文件夹失败:', error);
       res.status(500).json({
         success: false,
         message: '移动KML文件到文件夹失败',
-        error: error.message
-      })
+        error: error.message,
+      });
     }
   }
 }
 
-module.exports = KmlFileBatchController
-
-
+module.exports = KmlFileBatchController;

@@ -48,7 +48,7 @@
       <div v-if="items.length" class="file-list">
         <div class="list-header">
           <span>已选择 {{ items.length }} 个文件</span>
-          <el-button size="small" @click="clearAll" type="warning" plain>清空</el-button>
+          <el-button size="small" type="warning" plain @click="clearAll">清空</el-button>
         </div>
         <el-scrollbar height="260px">
           <div v-for="(item, idx) in items" :key="item.id" class="file-row">
@@ -82,183 +82,180 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button
-          type="primary"
-          :disabled="!canSubmit"
-          :loading="uploading"
-          @click="handleSubmit"
-        >开始上传</el-button>
+        <el-button type="primary" :disabled="!canSubmit" :loading="uploading" @click="handleSubmit"
+          >开始上传</el-button
+        >
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { Picture, Delete } from '@element-plus/icons-vue'
-import BaseFolderSelect from './BaseFolderSelect.vue'
-import BaseProcessingStatus from './BaseProcessingStatus.vue'
-import { ImageProcessor } from '@/services/image-processor.js'
-import { uploadPanoramaImage } from '@/api/panorama.js'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, computed, onMounted } from 'vue';
+import { Picture, Delete } from '@element-plus/icons-vue';
+import BaseFolderSelect from './BaseFolderSelect.vue';
+import BaseProcessingStatus from './BaseProcessingStatus.vue';
+import { ImageProcessor } from '@/services/image-processor.js';
+import { uploadPanoramaImage } from '@/api/panorama.js';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
-  modelValue: Boolean
-})
+  modelValue: Boolean,
+});
 
-const emit = defineEmits(['update:modelValue', 'success'])
+const emit = defineEmits(['update:modelValue', 'success']);
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v)
-})
+  set: (v) => emit('update:modelValue', v),
+});
 
 // folders
-const folders = ref([])
-const folderId = ref(null)
+const folders = ref([]);
+const folderId = ref(null);
 const loadFolders = async () => {
   try {
-    const { folderApi } = await import('@/api/folder.js')
-    const resp = await folderApi.getFoldersFlat()
-    folders.value = Array.isArray(resp?.data) ? resp.data : []
+    const { folderApi } = await import('@/api/folder.js');
+    const resp = await folderApi.getFoldersFlat();
+    folders.value = Array.isArray(resp?.data) ? resp.data : [];
     if (folders.value.length > 0 && folderId.value == null) {
-      const defaultFolder = folders.value.find(f => f.name === '默认文件夹')
-      folderId.value = defaultFolder ? defaultFolder.id : folders.value[0].id
+      const defaultFolder = folders.value.find((f) => f.name === '默认文件夹');
+      folderId.value = defaultFolder ? defaultFolder.id : folders.value[0].id;
     }
   } catch (e) {
-    folders.value = []
+    folders.value = [];
   }
-}
+};
 
 // state
-const items = reactive([]) // {id, file, title, lat, lng, previewUrl}
-const batchDescription = ref('')
+const items = reactive([]); // {id, file, title, lat, lng, previewUrl}
+const batchDescription = ref('');
 
-const processing = ref(false)
-const processingText = ref('')
-const uploading = ref(false)
-const uploadProgress = ref(0)
+const processing = ref(false);
+const processingText = ref('');
+const uploading = ref(false);
+const uploadProgress = ref(0);
 
-const onElUploadChange = async (uploadFile, uploadFiles) => {
-  if (!uploadFile?.raw) return
-  await addFiles([uploadFile.raw])
-}
+const onElUploadChange = async (uploadFile, _uploadFiles) => {
+  if (!uploadFile?.raw) return;
+  await addFiles([uploadFile.raw]);
+};
 
 const addFiles = async (fileList) => {
   for (const raw of fileList) {
-    const processor = new ImageProcessor()
+    const processor = new ImageProcessor();
     try {
-      processing.value = true
-      processingText.value = '正在处理文件...'
-      const result = await processor.processFile(raw)
+      processing.value = true;
+      processingText.value = '正在处理文件...';
+      const result = await processor.processFile(raw);
       items.push({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         file: result.file,
         title: result.title || raw.name.replace(/\.[^/.]+$/, ''),
         lat: result.gpsData?.lat ?? null,
         lng: result.gpsData?.lng ?? null,
-        previewUrl: result.previewUrl || ''
-      })
+        previewUrl: result.previewUrl || '',
+      });
     } catch (e) {
-      ElMessage.error(e?.message || '处理文件失败')
+      ElMessage.error(e?.message || '处理文件失败');
     } finally {
-      processing.value = false
-      processingText.value = ''
+      processing.value = false;
+      processingText.value = '';
     }
   }
-}
+};
 
 const removeAt = (idx) => {
-  items.splice(idx, 1)
-}
+  items.splice(idx, 1);
+};
 
 const clearAll = () => {
-  items.splice(0, items.length)
-}
+  items.splice(0, items.length);
+};
 
 const allItemsValid = computed(() => {
-  if (!items.length) return false
-  return items.every(it => {
-    const hasBasics = it.file && it.title && it.lat != null && it.lng != null
-    if (!hasBasics) return false
-    const lat = parseFloat(it.lat)
-    const lng = parseFloat(it.lng)
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return false
-    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-  })
-})
+  if (!items.length) return false;
+  return items.every((it) => {
+    const hasBasics = it.file && it.title && it.lat != null && it.lng != null;
+    if (!hasBasics) return false;
+    const lat = parseFloat(it.lat);
+    const lng = parseFloat(it.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return false;
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  });
+});
 
 const canSubmit = computed(() => {
-  return allItemsValid.value && !processing.value && !uploading.value && folderId.value != null
-})
+  return allItemsValid.value && !processing.value && !uploading.value && folderId.value != null;
+});
 
 const handleSubmit = async () => {
   if (!canSubmit.value) {
-    ElMessage.warning('请先选择文件并确保所有文件均包含GPS坐标')
-    return
+    ElMessage.warning('请先选择文件并确保所有文件均包含GPS坐标');
+    return;
   }
 
-  uploading.value = true
-  uploadProgress.value = 0
+  uploading.value = true;
+  uploadProgress.value = 0;
   try {
     // 压缩并逐个上传
-    const total = items.length
-    let completed = 0
+    const total = items.length;
+    let completed = 0;
 
     // 延迟加载压缩器
-    let imageProcessorModule = await import('@/services/image-processor.js')
-    const singleton = imageProcessorModule.imageProcessor
+    let imageProcessorModule = await import('@/services/image-processor.js');
+    const singleton = imageProcessorModule.imageProcessor;
 
     for (const it of items) {
-      processing.value = true
-      processingText.value = '正在处理图片...'
-      const compressionResult = await singleton.compressImageIfNeeded(it.file)
-      const fileToUpload = compressionResult.file
+      processing.value = true;
+      processingText.value = '正在处理图片...';
+      const compressionResult = await singleton.compressImageIfNeeded(it.file);
+      const fileToUpload = compressionResult.file;
 
-      const formData = new FormData()
-      formData.append('file', fileToUpload)
-      formData.append('title', it.title)
-      formData.append('description', batchDescription.value || '')
-      formData.append('lat', it.lat)
-      formData.append('lng', it.lng)
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('title', it.title);
+      formData.append('description', batchDescription.value || '');
+      formData.append('lat', it.lat);
+      formData.append('lng', it.lng);
       if (folderId.value !== undefined && folderId.value !== null) {
-        formData.append('folderId', folderId.value)
+        formData.append('folderId', folderId.value);
       }
 
-      await uploadPanoramaImage(formData)
-      completed += 1
-      uploadProgress.value = Math.round((completed * 100) / total)
+      await uploadPanoramaImage(formData);
+      completed += 1;
+      uploadProgress.value = Math.round((completed * 100) / total);
     }
 
     // 刷新文件夹计数
     try {
-      const { useFolderStore } = await import('@/store/folder.js')
-      const folderStore = useFolderStore()
-      await folderStore.fetchFolders()
+      const { useFolderStore } = await import('@/store/folder.js');
+      const folderStore = useFolderStore();
+      await folderStore.fetchFolders();
     } catch (e) {}
 
-    ElMessage.success('批量上传完成')
-    emit('success')
-    handleClose()
+    ElMessage.success('批量上传完成');
+    emit('success');
+    handleClose();
   } catch (e) {
-    ElMessage.error(e?.message || '上传失败')
+    ElMessage.error(e?.message || '上传失败');
   } finally {
-    uploading.value = false
-    processing.value = false
-    processingText.value = ''
+    uploading.value = false;
+    processing.value = false;
+    processingText.value = '';
   }
-}
+};
 
 const handleClose = () => {
-  visible.value = false
+  visible.value = false;
   // reset
-  batchDescription.value = ''
-  clearAll()
-}
+  batchDescription.value = '';
+  clearAll();
+};
 
 onMounted(() => {
-  loadFolders()
-})
+  loadFolders();
+});
 </script>
 
 <style scoped>
@@ -329,12 +326,11 @@ onMounted(() => {
   gap: 8px;
   flex-wrap: wrap;
 }
-.actions { }
+.actions {
+}
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 </style>
-
-

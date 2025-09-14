@@ -15,13 +15,9 @@
       label-position="left"
     >
       <el-form-item label="名称" prop="name">
-        <el-input
-          v-model="formData.name"
-          placeholder="请输入点位名称"
-          clearable
-        />
+        <el-input v-model="formData.name" placeholder="请输入点位名称" clearable />
       </el-form-item>
-      
+
       <el-form-item label="描述" prop="description">
         <el-input
           v-model="formData.description"
@@ -31,7 +27,7 @@
           clearable
         />
       </el-form-item>
-      
+
       <el-form-item label="图标">
         <div class="icon-selector">
           <div class="current-icon">
@@ -39,7 +35,7 @@
             <span class="icon-name">{{ getIconName(formData.icon) }}</span>
           </div>
           <div class="icon-options">
-            <div 
+            <div
               v-for="icon in iconOptions"
               :key="icon.value"
               class="icon-option"
@@ -52,8 +48,7 @@
           </div>
         </div>
       </el-form-item>
-      
-      
+
       <el-form-item label="坐标">
         <div class="coordinate-display">
           <el-input
@@ -83,7 +78,7 @@
         </div>
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
@@ -94,24 +89,24 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, watch } from 'vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: false
+    default: false,
   },
   point: {
     type: Object,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'save'])
+const emit = defineEmits(['update:modelValue', 'save']);
 
-const dialogVisible = ref(false)
-const formRef = ref(null)
+const dialogVisible = ref(false);
+const formRef = ref(null);
 
 // 表单数据
 const formData = reactive({
@@ -119,15 +114,13 @@ const formData = reactive({
   description: '',
   icon: '📍',
   id: undefined,
-  latlng: { lat: 0, lng: 0 }
-})
+  latlng: { lat: 0, lng: 0 },
+});
 
 // 表单验证规则
 const formRules = {
-  name: [
-    { required: true, message: '请输入点位名称', trigger: 'blur' }
-  ]
-}
+  name: [{ required: true, message: '请输入点位名称', trigger: 'blur' }],
+};
 
 // 图标选项
 const iconOptions = [
@@ -142,103 +135,96 @@ const iconOptions = [
   { value: '🟢', name: '绿点' },
   { value: '🟡', name: '黄点' },
   { value: '🚩', name: '旗帜' },
-  { value: '📡', name: '信号' }
-]
+  { value: '📡', name: '信号' },
+];
 
 // 颜色相关已移除（由上层样式统一管理）
 
 // 监听对话框显示状态
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-  // debug: PointPropertiesDialog opened (suppressed)
-    const p = props.point || {}
-    // 初始化表单数据，添加默认名称
-    const defaultName = p.name && String(p.name).trim() ? p.name : `点位${Date.now().toString().slice(-6)}`
-    const lat = Number(p?.latlng?.lat ?? 0)
-    const lng = Number(p?.latlng?.lng ?? 0)
-    Object.assign(formData, {
-      id: p.id,
-      name: defaultName,
-      description: p.description || '',
-      icon: p.icon || '📍',
-      latlng: { lat: isFinite(lat) ? lat : 0, lng: isFinite(lng) ? lng : 0 }
-    })
+watch(
+  () => props.modelValue,
+  (val) => {
+    dialogVisible.value = val;
+    if (val) {
+      // debug: PointPropertiesDialog opened (suppressed)
+      const p = props.point || {};
+      // 初始化表单数据，添加默认名称
+      const defaultName =
+        p.name && String(p.name).trim() ? p.name : `点位${Date.now().toString().slice(-6)}`;
+      const lat = Number(p?.latlng?.lat ?? 0);
+      const lng = Number(p?.latlng?.lng ?? 0);
+      Object.assign(formData, {
+        id: p.id,
+        name: defaultName,
+        description: p.description || '',
+        icon: p.icon || '📍',
+        latlng: { lat: isFinite(lat) ? lat : 0, lng: isFinite(lng) ? lng : 0 },
+      });
+    }
   }
-})
+);
 
 watch(dialogVisible, (val) => {
-  emit('update:modelValue', val)
-})
+  emit('update:modelValue', val);
+});
 
 // 获取图标名称
 const getIconName = (iconValue) => {
-  const icon = iconOptions.find(item => item.value === iconValue)
-  return icon ? icon.name : '未知'
-}
+  const icon = iconOptions.find((item) => item.value === iconValue);
+  return icon ? icon.name : '未知';
+};
 
 // 处理关闭
 const handleClose = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 
 // 处理保存
 const handleSave = async () => {
   try {
-    await formRef.value?.validate()
-    // 如果父组件传入了 point 对象引用，先直接写回，以确保父侧引用同步
-    try {
-      if (props.point && typeof props.point === 'object') {
-        // 只写入允许的字段，避免覆盖其它元数据
-        props.point.name = formData.name
-        props.point.description = formData.description
-        props.point.icon = formData.icon
-        props.point.latlng = { ...formData.latlng }
-  // wrote to props.point for parent-side sync
-      }
-    } catch (e) {
-      console.warn('[PointPropertiesDialog] failed to write to props.point:', e)
-    }
+    await formRef.value?.validate();
+    // 不再直接修改 props.point（会触发 vue/no-mutating-props）。
+    // 父组件通过监听 'save' 事件接收更新并负责把变更写入其状态。
 
-  // emit minimal save payload; parent will use selectedPoint or id to locate the drawing
-  emit('save', { id: formData.id, ...formData })
-    handleClose()
+    // emit minimal save payload; parent will use selectedPoint or id to locate the drawing
+    emit('save', { id: formData.id, ...formData });
+    handleClose();
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('表单验证失败:', error);
   }
-}
+};
 
 // 复制经纬度到剪贴板，格式：经度,纬度（经度在前，纬度在后），保留6位小数
 const copyLatLng = async () => {
-  const lat = Number(formData.latlng.lat ?? 0)
-  const lng = Number(formData.latlng.lng ?? 0)
+  const lat = Number(formData.latlng.lat ?? 0);
+  const lng = Number(formData.latlng.lng ?? 0);
   if (!isFinite(lat) || !isFinite(lng)) {
-    ElMessage.error('无效的坐标，无法复制')
-    return
+    ElMessage.error('无效的坐标，无法复制');
+    return;
   }
-  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`
+  const formatted = `${lng.toFixed(6)},${lat.toFixed(6)}`;
   // 首选 Clipboard API
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(formatted)
+      await navigator.clipboard.writeText(formatted);
     } else {
       // 回退：使用临时 textarea
-      const ta = document.createElement('textarea')
-      ta.value = formatted
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      const ok = document.execCommand('copy')
-      document.body.removeChild(ta)
-      if (!ok) throw new Error('execCommand failed')
+      const ta = document.createElement('textarea');
+      ta.value = formatted;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (!ok) throw new Error('execCommand failed');
     }
-    ElMessage.success('坐标已复制：' + formatted)
+    ElMessage.success('坐标已复制：' + formatted);
   } catch (e) {
-    console.error('复制失败', e)
-    ElMessage.error('复制失败，请手动复制：' + formatted)
+    console.error('复制失败', e);
+    ElMessage.error('复制失败，请手动复制：' + formatted);
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -250,25 +236,25 @@ const copyLatLng = async () => {
     padding: 8px 12px;
     background: var(--el-fill-color-light);
     border-radius: 4px;
-    
+
     .icon-display {
       font-size: 20px;
       margin-right: 8px;
     }
-    
+
     .icon-name {
       font-size: 14px;
       color: var(--el-text-color-regular);
     }
   }
-  
+
   .icon-options {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     max-height: 200px;
     overflow-y: auto;
-    
+
     .icon-option {
       display: flex;
       flex-direction: column;
@@ -278,22 +264,22 @@ const copyLatLng = async () => {
       border-radius: 4px;
       cursor: pointer;
       transition: all 0.2s;
-      
+
       &:hover {
         border-color: var(--el-color-primary);
         background: var(--el-color-primary-light-9);
       }
-      
+
       &.active {
         border-color: var(--el-color-primary);
         background: var(--el-color-primary-light-8);
       }
-      
+
       .icon {
         font-size: 18px;
         margin-bottom: 4px;
       }
-      
+
       .name {
         font-size: 12px;
         color: var(--el-text-color-regular);

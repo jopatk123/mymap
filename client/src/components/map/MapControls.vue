@@ -3,51 +3,51 @@
     <!-- 工具栏 -->
     <div class="toolbar">
       <el-button-group>
-        <el-button 
-          @click="togglePanoramaList" 
+        <el-button
           type="primary"
           :title="panoramaListVisible ? '隐藏点位列表' : '显示点位列表'"
+          @click="togglePanoramaList"
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
 
-        <el-button 
-          @click="toggleKmlLayers" 
+        <el-button
           type="warning"
           :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
+          @click="toggleKmlLayers"
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
         </el-button>
 
         <!-- 新增的4个按钮 -->
         <el-button
-          @click="handleCircleAreaClick"
           class="btn-circle-area"
           type="success"
           :disabled="isDrawing"
           :loading="isDrawingCircle"
           title="选择圆形区域"
+          @click="handleCircleAreaClick"
         >
           <el-icon><Compass /></el-icon>
           圆形区域
         </el-button>
 
         <el-button
-          @click="handleCustomAreaClick"
           type="success"
           :disabled="isDrawing"
           :loading="isDrawingPolygon"
           title="选择自定义区域"
+          @click="handleCustomAreaClick"
         >
           <el-icon><Crop /></el-icon>
           自定义区域
         </el-button>
 
         <el-button
-          @click="handleClearAreas"
           type="danger"
           :disabled="areasCount === 0"
           title="清除所有区域"
+          @click="handleClearAreas"
         >
           <el-icon><Delete /></el-icon>
           清除
@@ -55,49 +55,47 @@
 
         <el-button
           v-if="isDrawing"
-          @click="handleFinishDrawing"
           type="primary"
           title="完成当前绘制"
+          @click="handleFinishDrawing"
         >
           完成
         </el-button>
 
         <el-button
-          @click="handleExport"
           type="warning"
           :disabled="!hasExportableData"
           :loading="exporting"
           title="导出选中点位数据"
+          @click="handleExport"
         >
           <el-icon><Download /></el-icon>
           导出
         </el-button>
 
-
-
-        <el-button @click="showKmlSettings" type="success">
+        <el-button type="success" @click="showKmlSettings">
           <el-icon><Tools /></el-icon>
           KML设置
         </el-button>
 
-        <el-button @click="showPointSettings" type="primary">
+        <el-button type="primary" @click="showPointSettings">
           <el-icon><Location /></el-icon>
           点位图标
         </el-button>
 
         <!-- 搜索工具 -->
-        <SearchTool 
+        <SearchTool
           @locate-kml-point="handleLocateKMLPoint"
           @locate-address="handleLocateAddress"
         />
       </el-button-group>
     </div>
-    
-  <!-- 状态栏（已移除：显示信息由其他组件或页面顶部状态替代） -->
-    
+
+    <!-- 状态栏（已移除：显示信息由其他组件或页面顶部状态替代） -->
+
     <!-- KML数据导出对话框 -->
     <KMLDataExporter />
-    
+
     <!-- 圆形半径设置对话框 -->
     <el-dialog
       v-model="radiusDialogVisible"
@@ -119,15 +117,15 @@
             <span style="margin-left: 8px">米</span>
           </el-form-item>
         </el-form>
-        
+
         <div class="radius-presets">
           <span class="preset-label">常用半径:</span>
           <el-button-group size="small">
             <el-button
               v-for="preset in radiusPresets"
               :key="preset"
-              @click="tempRadius = preset"
               :type="tempRadius === preset ? 'primary' : ''"
+              @click="tempRadius = preset"
             >
               {{ preset }}m
             </el-button>
@@ -148,44 +146,41 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { 
-  Tools, Location,
-  Compass, Crop, Delete, Download
-} from '@element-plus/icons-vue'
-import { useAreaSelector } from '@/composables/use-area-selector.js'
-import { useKMLExport } from '@/composables/use-kml-export.js'
-import { useKMLBaseMapStore } from '@/store/kml-basemap.js'
-import KMLDataExporter from './kml-basemap/KMLDataExporter.vue'
-import SearchTool from './SearchTool.vue'
+import { ref, watch } from 'vue';
+import { ElMessage } from 'element-plus';
+import { Tools, Location, Compass, Crop, Delete, Download } from '@element-plus/icons-vue';
+import { useAreaSelector } from '@/composables/use-area-selector.js';
+import { useKMLExport } from '@/composables/use-kml-export.js';
+import { useKMLBaseMapStore } from '@/store/kml-basemap.js';
+import KMLDataExporter from './kml-basemap/KMLDataExporter.vue';
+import SearchTool from './SearchTool.vue';
 
 const props = defineProps({
   panoramaListVisible: {
     type: Boolean,
-    default: true
+    default: true,
   },
   kmlLayersVisible: {
     type: Boolean,
-    default: true
+    default: true,
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   totalCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   isOnline: {
     type: Boolean,
-    default: true
+    default: true,
   },
   mapInstance: {
     type: Object,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
 const emit = defineEmits([
   'toggle-panorama-list',
@@ -193,8 +188,8 @@ const emit = defineEmits([
   'show-kml-settings',
   'show-point-settings',
   'locate-kml-point',
-  'locate-address'
-])
+  'locate-address',
+]);
 
 // 使用组合式函数
 const {
@@ -209,96 +204,94 @@ const {
   startPolygonSelection,
   finishDrawing,
   clearAllAreas,
-  setCircleRadius
-} = useAreaSelector()
+  setCircleRadius,
+} = useAreaSelector();
 
-const {
-  exporting,
-  hasExportableData,
-  openExportDialog
-} = useKMLExport()
+const { exporting, hasExportableData, openExportDialog } = useKMLExport();
 
-const store = useKMLBaseMapStore()
+const store = useKMLBaseMapStore();
 
 // 本地状态
-const radiusDialogVisible = ref(false)
-const tempRadius = ref(1000)
-const radiusPresets = [500, 1000, 2000, 5000, 10000]
+const radiusDialogVisible = ref(false);
+const tempRadius = ref(1000);
+const radiusPresets = [500, 1000, 2000, 5000, 10000];
 
-// 计算属性
-const visiblePointsCount = computed(() => store.visiblePointsCount)
+// 计算属性（保留占位以备将来使用）
+// const visiblePointsCount = computed(() => store.visiblePointsCount);
 
 // 监听地图实例变化
-watch(() => props.mapInstance, (mapInstance) => {
-  if (mapInstance) {
-    setMapInstance(mapInstance)
-  }
-}, { immediate: true })
+watch(
+  () => props.mapInstance,
+  (mapInstance) => {
+    if (mapInstance) {
+      setMapInstance(mapInstance);
+    }
+  },
+  { immediate: true }
+);
 
 // 处理圆形区域点击
 const handleCircleAreaClick = () => {
-  tempRadius.value = circleRadius.value
-  radiusDialogVisible.value = true
-}
+  tempRadius.value = circleRadius.value;
+  radiusDialogVisible.value = true;
+};
 
 // 确认半径并开始绘制
 const confirmRadiusAndStartDrawing = () => {
   if (tempRadius.value < 50 || tempRadius.value > 50000) {
-    ElMessage.error('半径应在50-50000米之间')
-    return
+    ElMessage.error('半径应在50-50000米之间');
+    return;
   }
-  
-  setCircleRadius(tempRadius.value)
-  radiusDialogVisible.value = false
-  startCircleSelection()
-}
+
+  setCircleRadius(tempRadius.value);
+  radiusDialogVisible.value = false;
+  startCircleSelection();
+};
 
 // 处理自定义区域点击
 const handleCustomAreaClick = () => {
-  startPolygonSelection()
-}
+  startPolygonSelection();
+};
 
 // 处理清除区域
 const handleClearAreas = () => {
-  clearAllAreas()
-}
+  clearAllAreas();
+};
 
 const handleFinishDrawing = async () => {
-  await finishDrawing()
-}
+  await finishDrawing();
+};
 
 // 处理导出
 const handleExport = () => {
-  openExportDialog()
-}
+  openExportDialog();
+};
 
 const togglePanoramaList = () => {
-  emit('toggle-panorama-list')
-}
+  emit('toggle-panorama-list');
+};
 
 const toggleKmlLayers = () => {
-  emit('toggle-kml-layers')
-}
-
-
+  emit('toggle-kml-layers');
+};
 
 const showKmlSettings = () => {
-  emit('show-kml-settings')
-}
+  emit('show-kml-settings');
+};
 
 const showPointSettings = () => {
-  emit('show-point-settings')
-}
+  emit('show-point-settings');
+};
 
 // 处理KML点位定位
 const handleLocateKMLPoint = (data) => {
-  emit('locate-kml-point', data)
-}
+  emit('locate-kml-point', data);
+};
 
 // 处理地址定位
 const handleLocateAddress = (data) => {
-  emit('locate-address', data)
-}
+  emit('locate-address', data);
+};
 </script>
 
 <style lang="scss" scoped>
@@ -306,29 +299,29 @@ const handleLocateAddress = (data) => {
   .toolbar {
     position: absolute;
     top: 20px;
-  /* 进一步向左移动以避免遮挡，调整为更大的 right 值 */
-  right: 170px;
+    /* 进一步向左移动以避免遮挡，调整为更大的 right 值 */
+    right: 170px;
     z-index: 1000;
 
     display: flex;
-  gap: 6px;
-  /* 再次缩小内边距，使白色区域更紧凑 */
-  padding: 4px 4px;
-  background: transparent; /* 修改为完全透明 */
-  border-radius: 4px;
-  box-shadow: none; /* 移除阴影 */
+    gap: 6px;
+    /* 再次缩小内边距，使白色区域更紧凑 */
+    padding: 4px 4px;
+    background: transparent; /* 修改为完全透明 */
+    border-radius: 4px;
+    box-shadow: none; /* 移除阴影 */
     backdrop-filter: none; /* 移除模糊效果 */
-    
+
     /* 为工具栏中的所有按钮添加圆角 */
     .el-button {
       border-radius: 8px !important; /* 添加圆角 */
       transition: all 0.3s ease; /* 平滑过渡效果 */
-      
+
       &:hover {
         transform: translateY(-1px); /* 悬停时轻微上移效果 */
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 悬停阴影 */
       }
-      
+
       &:active {
         transform: translateY(0); /* 点击时恢复位置 */
       }
@@ -339,7 +332,7 @@ const handleLocateAddress = (data) => {
       background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%) !important;
       border-color: #8e44ad !important;
       color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(142,68,173,0.2);
+      box-shadow: 0 2px 6px rgba(142, 68, 173, 0.2);
     }
 
     .el-button.btn-circle-area:hover {
@@ -358,21 +351,21 @@ const handleLocateAddress = (data) => {
   }
 
   /* 状态栏样式已移除 */
-  
+
   .radius-setting {
     .radius-presets {
       margin-top: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
-      
+
       .preset-label {
         color: #606266;
         font-size: 14px;
       }
     }
   }
-  
+
   .dialog-footer {
     display: flex;
     justify-content: flex-end;
@@ -384,13 +377,13 @@ const handleLocateAddress = (data) => {
 @media (max-width: 768px) {
   .map-controls {
     .toolbar {
-  top: 10px;
-  /* 移动端适当左移，但保持可触达 */
-  right: 40px;
-      
+      top: 10px;
+      /* 移动端适当左移，但保持可触达 */
+      right: 40px;
+
       .el-button-group {
         flex-direction: column;
-        
+
         .el-button {
           margin: 0 0 4px 0;
         }

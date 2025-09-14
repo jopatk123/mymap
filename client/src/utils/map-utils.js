@@ -1,12 +1,12 @@
-import L from 'leaflet'
-import 'leaflet.markercluster'
-import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate-transform.js'
+import L from 'leaflet';
+import 'leaflet.markercluster';
+import { wgs84ToGcj02, gcj02ToWgs84 } from './coordinate-transform.js';
 
 // 创建GCJ02坐标参考系统
 export const GCJ02CRS = L.extend({}, L.CRS.EPSG3857, {
   code: 'GCJ02',
   // 保持与EPSG3857相同的投影和变换，只是标识为GCJ02
-})
+});
 
 /**
  * 创建高德地图瓦片层
@@ -18,21 +18,22 @@ export function createAMapTileLayer(type = 'normal') {
   if (type === 'test') {
     return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 18
-    })
+      maxZoom: 18,
+    });
   }
-  
+
   const urls = {
-    normal: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+    normal:
+      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
     satellite: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
-    roadnet: 'https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}'
-  }
+    roadnet: 'https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}',
+  };
 
   return L.tileLayer(urls[type], {
     subdomains: ['1', '2', '3', '4'],
     attribution: '© 高德地图',
-    maxZoom: 18
-  })
+    maxZoom: 18,
+  });
 }
 
 /**
@@ -43,13 +44,15 @@ export function createAMapTileLayer(type = 'normal') {
  * @returns {string} HTML字符串
  */
 function getIconShapeHtml(size, color, opacity) {
-  const safeSize = Number(size) || 8
-  const safeOpacity = Number(opacity) || 1.0
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize * 2}" height="${safeSize * 3.2}" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+  const safeSize = Number(size) || 8;
+  const safeOpacity = Number(opacity) || 1.0;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${safeSize * 2}" height="${
+    safeSize * 3.2
+  }" viewBox="0 0 25 41" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
     <path fill="${color}" stroke="#fff" stroke-width="2" d="M12.5,0C5.6,0,0,5.6,0,12.5c0,6.9,12.5,28.5,12.5,28.5s12.5-21.6,12.5-28.5C25,5.6,19.4,0,12.5,0z" opacity="${safeOpacity}"/>
     <circle fill="#fff" cx="12.5" cy="12.5" r="6"/>
     <circle fill="${color}" cx="12.5" cy="12.5" r="3" opacity="${safeOpacity}"/>
-  </svg>`
+  </svg>`;
 }
 
 /**
@@ -67,36 +70,32 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
       point_opacity: 1.0,
       point_icon_type: 'marker',
       point_label_size: 12,
-      point_label_color: '#000000'
-    }
+      point_label_color: '#000000',
+    };
   }
 
-  const styles = styleConfig ?? window.panoramaPointStyles
-  const labelText = options.title || '全景图'
-  const labelSize = Number(styles.point_label_size ?? 12)
+  const styles = styleConfig ?? window.panoramaPointStyles;
+  const labelText = options.title || '全景图';
+  const labelSize = Number(styles.point_label_size ?? 12);
 
   if (labelSize === 0) {
-    const iconHtml = getIconShapeHtml(
-      styles.point_size,
-      styles.point_color,
-      styles.point_opacity
-    )
+    const iconHtml = getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity);
     const iconSize = [styles.point_size * 2, styles.point_size * 3.2];
     const iconAnchor = [styles.point_size, styles.point_size * 3.2];
     const icon = L.divIcon({
       className: 'panorama-marker',
       html: iconHtml,
       iconSize: iconSize,
-      iconAnchor: iconAnchor
-    })
-    return L.marker(latlng, { icon, updateWhenZoom: false, ...options })
+      iconAnchor: iconAnchor,
+    });
+    return L.marker(latlng, { icon, updateWhenZoom: false, ...options });
   }
 
   const getLabelPosition = (size, labelSize) => {
-    return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' }
-  }
+    return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' };
+  };
 
-  const labelPosition = getLabelPosition(styles.point_size, labelSize)
+  const labelPosition = getLabelPosition(styles.point_size, labelSize);
   const iconHtml = `
     <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
       <div style="
@@ -124,7 +123,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
       </div>
       ${getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity)}
     </div>
-  `
+  `;
 
   const iconHeight = styles.point_size * 3.2;
   const totalHeight = iconHeight + labelSize + 8;
@@ -136,10 +135,10 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
     className: 'panorama-marker',
     html: iconHtml,
     iconSize: iconSize,
-    iconAnchor: iconAnchor
-  })
+    iconAnchor: iconAnchor,
+  });
 
-  return L.marker(latlng, { icon, updateWhenZoom: false, ...options })
+  return L.marker(latlng, { icon, updateWhenZoom: false, ...options });
 }
 
 /**
@@ -157,36 +156,32 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
       point_opacity: 1.0,
       point_icon_type: 'marker',
       point_label_size: 14,
-      point_label_color: '#000000'
-    }
+      point_label_color: '#000000',
+    };
   }
 
-  const styles = styleConfig ?? window.videoPointStyles
-  const labelText = options.title || '视频点位'
-  const labelSize = Number(styles.point_label_size ?? 14)
+  const styles = styleConfig ?? window.videoPointStyles;
+  const labelText = options.title || '视频点位';
+  const labelSize = Number(styles.point_label_size ?? 14);
 
   if (labelSize === 0) {
-    const iconHtml = getIconShapeHtml(
-      styles.point_size,
-      styles.point_color,
-      styles.point_opacity
-    )
-    const iconSize = [styles.point_size * 2, styles.point_size * 3.2]
-    const iconAnchor = [styles.point_size, styles.point_size * 3.2]
+    const iconHtml = getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity);
+    const iconSize = [styles.point_size * 2, styles.point_size * 3.2];
+    const iconAnchor = [styles.point_size, styles.point_size * 3.2];
     const icon = L.divIcon({
       className: 'video-marker',
       html: iconHtml,
       iconSize: iconSize,
-      iconAnchor: iconAnchor
-    })
-    return L.marker(latlng, { icon, ...options })
+      iconAnchor: iconAnchor,
+    });
+    return L.marker(latlng, { icon, ...options });
   }
 
   const getLabelPosition = (size, labelSize) => {
-    return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' }
-  }
+    return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' };
+  };
 
-  const labelPosition = getLabelPosition(styles.point_size, labelSize)
+  const labelPosition = getLabelPosition(styles.point_size, labelSize);
   const iconHtml = `
     <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
       <div style="
@@ -214,23 +209,23 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
       </div>
       ${getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity)}
     </div>
-  `
+  `;
 
-  const iconHeight = styles.point_size * 3.2
-  const totalHeight = iconHeight + labelSize + 8
-  const iconSize = [styles.point_size * 2, totalHeight]
+  const iconHeight = styles.point_size * 3.2;
+  const totalHeight = iconHeight + labelSize + 8;
+  const iconSize = [styles.point_size * 2, totalHeight];
 
-  const anchorY = iconHeight + labelSize + 4
-  const iconAnchor = [styles.point_size, anchorY]
+  const anchorY = iconHeight + labelSize + 4;
+  const iconAnchor = [styles.point_size, anchorY];
 
   const icon = L.divIcon({
     className: 'video-marker',
     html: iconHtml,
     iconSize: iconSize,
-    iconAnchor: iconAnchor
-  })
+    iconAnchor: iconAnchor,
+  });
 
-  return L.marker(latlng, { icon, ...options })
+  return L.marker(latlng, { icon, ...options });
 }
 
 /**
@@ -244,10 +239,10 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
 export function createPointMarker(latlng, type, options = {}, styleConfig = null) {
   switch (type) {
     case 'video':
-      return createVideoMarker(latlng, options, styleConfig)
+      return createVideoMarker(latlng, options, styleConfig);
     case 'panorama':
     default:
-      return createPanoramaMarker(latlng, options, styleConfig)
+      return createPanoramaMarker(latlng, options, styleConfig);
   }
 }
 
@@ -259,7 +254,7 @@ export function createPointMarker(latlng, type, options = {}, styleConfig = null
  */
 export function createClusterIcon(color, count) {
   // 自动选择对比文字颜色
-  const textColor = getContrastColor(color)
+  const textColor = getContrastColor(color);
   const html = `
     <div style="
       background:${color};
@@ -270,30 +265,41 @@ export function createClusterIcon(color, count) {
       font-weight:600;
       border:2px solid #fff;
     ">${count}</div>
-  `
+  `;
   return L.divIcon({
     html,
     className: 'custom-cluster-icon',
-    iconSize: [30, 30]
-  })
+    iconSize: [30, 30],
+  });
 }
 
 function getContrastColor(bg) {
   // 解析 #rrggbb 或 rgba(r,g,b,a)
-  let r = 0, g = 0, b = 0
+  let r = 0,
+    g = 0,
+    b = 0;
   if (typeof bg === 'string' && bg.startsWith('#')) {
-    const hex = bg.replace('#', '')
-    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex
-    r = parseInt(full.slice(0, 2), 16)
-    g = parseInt(full.slice(2, 4), 16)
-    b = parseInt(full.slice(4, 6), 16)
+    const hex = bg.replace('#', '');
+    const full =
+      hex.length === 3
+        ? hex
+            .split('')
+            .map((c) => c + c)
+            .join('')
+        : hex;
+    r = parseInt(full.slice(0, 2), 16);
+    g = parseInt(full.slice(2, 4), 16);
+    b = parseInt(full.slice(4, 6), 16);
   } else if (typeof bg === 'string' && bg.startsWith('rgb')) {
-    const nums = bg.replace(/rgba?\(|\)/g, '').split(',').map(n => parseFloat(n.trim()))
-    ;[r, g, b] = nums
+    const nums = bg
+      .replace(/rgba?\(|\)/g, '')
+      .split(',')
+      .map((n) => parseFloat(n.trim()));
+    [r, g, b] = nums;
   }
   // YIQ 计算
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000
-  return yiq >= 128 ? '#000' : '#fff'
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? '#000' : '#fff';
 }
 
 /**
@@ -309,8 +315,8 @@ export class CoordinateConverter {
   static wgs84ToAMap(lat, lng) {
     // 对于高德瓦片，我们需要使用GCJ02坐标系
     // 但Leaflet使用WGS84，所以这里做一个近似转换
-    const [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat)
-    return [gcjLat, gcjLng]
+    const [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat);
+    return [gcjLat, gcjLng];
   }
 
   /**
@@ -320,8 +326,8 @@ export class CoordinateConverter {
    * @returns {Array} [lat, lng]
    */
   static aMapToWgs84(lat, lng) {
-    const [wgsLng, wgsLat] = gcj02ToWgs84(lng, lat)
-    return [wgsLat, wgsLng]
+    const [wgsLng, wgsLat] = gcj02ToWgs84(lng, lat);
+    return [wgsLat, wgsLng];
   }
 }
 
@@ -332,19 +338,22 @@ export class CoordinateConverter {
  * @returns {number} 距离（米）
  */
 export function calculateDistance(point1, point2) {
-  const [lat1, lng1] = point1
-  const [lat2, lng2] = point2
+  const [lat1, lng1] = point1;
+  const [lat2, lng2] = point2;
 
-  const R = 6371000 // 地球半径（米）
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
+  const R = 6371000; // 地球半径（米）
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 /**
@@ -354,6 +363,6 @@ export function calculateDistance(point1, point2) {
  * @returns {Array} 边界内的点
  */
 export function getPointsInBounds(map, points) {
-  const bounds = map.getBounds()
-  return points.filter(point => bounds.contains([point.lat, point.lng]))
+  const bounds = map.getBounds();
+  return points.filter((point) => bounds.contains([point.lat, point.lng]));
 }

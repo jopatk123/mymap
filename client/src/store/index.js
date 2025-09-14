@@ -1,9 +1,9 @@
-import { createPinia } from 'pinia'
+import { createPinia } from 'pinia';
 
-const pinia = createPinia()
+const pinia = createPinia();
 
-export default pinia
+export default pinia;
 
 // 导出所有store
-export { usePanoramaStore } from './panorama.js'
-export { useAppStore } from './app.js'
+export { usePanoramaStore } from './panorama.js';
+export { useAppStore } from './app.js';

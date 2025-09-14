@@ -1,6 +1,6 @@
-const SQLiteAdapter = require('../utils/sqlite-adapter')
-const QueryBuilder = require('../utils/QueryBuilder')
-const Logger = require('../utils/logger')
+const SQLiteAdapter = require('../utils/sqlite-adapter');
+const QueryBuilder = require('../utils/QueryBuilder');
+const Logger = require('../utils/logger');
 
 class KmlFileModel {
   static async create({
@@ -8,10 +8,10 @@ class KmlFileModel {
     description,
     fileUrl,
     fileSize,
-  folderId = null,
-  isVisible = true,
-  sortOrder = 0,
-  isBasemap = 0
+    folderId = null,
+    isVisible = true,
+    sortOrder = 0,
+    isBasemap = 0,
   }) {
     try {
       const [result] = await SQLiteAdapter.execute(
@@ -19,21 +19,12 @@ class KmlFileModel {
           title, description, file_url, file_size, 
       folder_id, is_visible, sort_order, is_basemap
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          title,
-          description,
-          fileUrl,
-          fileSize,
-      folderId,
-      isVisible,
-      sortOrder,
-      isBasemap
-        ]
-      )
-      return await this.findById(result.insertId)
+        [title, description, fileUrl, fileSize, folderId, isVisible, sortOrder, isBasemap]
+      );
+      return await this.findById(result.insertId);
     } catch (error) {
-      Logger.error('创建KML文件记录失败:', error)
-      throw error
+      Logger.error('创建KML文件记录失败:', error);
+      throw error;
     }
   }
 
@@ -45,11 +36,11 @@ class KmlFileModel {
          LEFT JOIN folders f ON kf.folder_id = f.id 
          WHERE kf.id = ?`,
         [id]
-      )
-      return rows[0] || null
+      );
+      return rows[0] || null;
     } catch (error) {
-      Logger.error('查找KML文件失败:', error)
-      throw error
+      Logger.error('查找KML文件失败:', error);
+      throw error;
     }
   }
 
@@ -61,59 +52,58 @@ class KmlFileModel {
     includeHidden = false,
     visibleFolderIds = null,
     includeBasemap = false,
-    basemapOnly = false
+    basemapOnly = false,
   } = {}) {
     try {
-      let whereConditions = []
-      let params = []
+      let whereConditions = [];
+      let params = [];
 
       if (keyword) {
-        whereConditions.push('(kf.title LIKE ? OR kf.description LIKE ?)')
-        params.push(`%${keyword}%`, `%${keyword}%`)
+        whereConditions.push('(kf.title LIKE ? OR kf.description LIKE ?)');
+        params.push(`%${keyword}%`, `%${keyword}%`);
       }
 
-      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf')
-      whereConditions = whereConditions.concat(folderCondition.conditions)
-      params = params.concat(folderCondition.params)
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf');
+      whereConditions = whereConditions.concat(folderCondition.conditions);
+      params = params.concat(folderCondition.params);
 
       if (visibleFolderIds && Array.isArray(visibleFolderIds)) {
         if (visibleFolderIds.length === 0) {
-          whereConditions.push('kf.folder_id IS NULL')
+          whereConditions.push('kf.folder_id IS NULL');
         } else {
-          const placeholders = visibleFolderIds.map(() => '?').join(',')
-          whereConditions.push(`(kf.folder_id IS NULL OR kf.folder_id IN (${placeholders}))`)
-          params.push(...visibleFolderIds)
+          const placeholders = visibleFolderIds.map(() => '?').join(',');
+          whereConditions.push(`(kf.folder_id IS NULL OR kf.folder_id IN (${placeholders}))`);
+          params.push(...visibleFolderIds);
         }
       }
 
       if (!includeHidden) {
-        whereConditions.push('kf.is_visible = TRUE')
+        whereConditions.push('kf.is_visible = TRUE');
       }
 
       // 底图过滤逻辑
       if (basemapOnly) {
         // 只显示底图文件
-        whereConditions.push('kf.is_basemap = 1')
+        whereConditions.push('kf.is_basemap = 1');
       } else if (!includeBasemap) {
         // 默认不包含底图文件，只显示普通文件
-        whereConditions.push('(kf.is_basemap = 0 OR kf.is_basemap IS NULL)')
+        whereConditions.push('(kf.is_basemap = 0 OR kf.is_basemap IS NULL)');
       }
       // 如果includeBasemap=true且basemapOnly=false，则显示所有文件
 
-      const whereClause = whereConditions.length > 0 
-        ? 'WHERE ' + whereConditions.join(' AND ')
-        : ''
+      const whereClause =
+        whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
 
       const [countResult] = await SQLiteAdapter.execute(
         `SELECT COUNT(*) as total 
          FROM kml_files kf 
          ${whereClause}`,
         params
-      )
-      const total = countResult[0].total
+      );
+      const total = countResult[0].total;
 
-      const limit = Number.parseInt(pageSize, 10) || 20
-      const offset = (Number.parseInt(page, 10) - 1) * limit
+      const limit = Number.parseInt(pageSize, 10) || 20;
+      const offset = (Number.parseInt(page, 10) - 1) * limit;
       const sql = `
         SELECT kf.*, f.name as folder_name,
         (SELECT COUNT(*) FROM kml_points kp WHERE kp.kml_file_id = kf.id) as point_count
@@ -122,30 +112,30 @@ class KmlFileModel {
         ${whereClause}
         ORDER BY kf.sort_order ASC, kf.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
-      `
-      const [rows] = await SQLiteAdapter.execute(sql, params)
+      `;
+      const [rows] = await SQLiteAdapter.execute(sql, params);
 
       return {
         data: rows,
         total: parseInt(total),
         page: parseInt(page),
         pageSize: parseInt(pageSize),
-        totalPages: Math.ceil(total / pageSize)
-      }
+        totalPages: Math.ceil(total / pageSize),
+      };
     } catch (error) {
-      Logger.error('获取KML文件列表失败:', error)
-      throw error
+      Logger.error('获取KML文件列表失败:', error);
+      throw error;
     }
   }
 
   static async findByFolder(folderId, { includeHidden = false } = {}) {
     try {
-      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf')
-      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`
-      let params = folderCondition.params
+      const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf');
+      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`;
+      let params = folderCondition.params;
 
       if (!includeHidden) {
-        whereClause += ' AND kf.is_visible = TRUE'
+        whereClause += ' AND kf.is_visible = TRUE';
       }
 
       const [rows] = await SQLiteAdapter.execute(
@@ -156,111 +146,117 @@ class KmlFileModel {
          ${whereClause}
          ORDER BY kf.sort_order ASC, kf.created_at DESC`,
         params
-      )
+      );
 
-      return rows
+      return rows;
     } catch (error) {
-      Logger.error('根据文件夹查找KML文件失败:', error)
-      throw error
+      Logger.error('根据文件夹查找KML文件失败:', error);
+      throw error;
     }
   }
 
   static async update(id, updateData) {
     try {
       const allowedFields = [
-        'title', 'description', 'folder_id', 'is_visible', 'sort_order', 'is_basemap', 'isBasemap'
-      ]
+        'title',
+        'description',
+        'folder_id',
+        'is_visible',
+        'sort_order',
+        'is_basemap',
+        'isBasemap',
+      ];
 
-      const updates = []
-      const params = []
+      const updates = [];
+      const params = [];
 
       for (const [key, value] of Object.entries(updateData)) {
         if (allowedFields.includes(key) && value !== undefined) {
           // normalize camelCase isBasemap => is_basemap
-          const column = key === 'isBasemap' ? 'is_basemap' : key
-          updates.push(`${column} = ?`)
-          params.push(value)
+          const column = key === 'isBasemap' ? 'is_basemap' : key;
+          updates.push(`${column} = ?`);
+          params.push(value);
         }
       }
 
       if (updates.length === 0) {
-        throw new Error('没有有效的更新字段')
+        throw new Error('没有有效的更新字段');
       }
 
-      params.push(id)
+      params.push(id);
 
       await SQLiteAdapter.execute(
         `UPDATE kml_files SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         params
-      )
+      );
 
-      return await this.findById(id)
+      return await this.findById(id);
     } catch (error) {
-      Logger.error('更新KML文件失败:', error)
-      throw error
+      Logger.error('更新KML文件失败:', error);
+      throw error;
     }
   }
 
   static async delete(id) {
     try {
-      const [result] = await SQLiteAdapter.execute('DELETE FROM kml_files WHERE id = ?', [id])
-      return result.affectedRows > 0
+      const [result] = await SQLiteAdapter.execute('DELETE FROM kml_files WHERE id = ?', [id]);
+      return result.affectedRows > 0;
     } catch (error) {
-      Logger.error('删除KML文件失败:', error)
-      throw error
+      Logger.error('删除KML文件失败:', error);
+      throw error;
     }
   }
 
   static async batchDelete(ids) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
-        throw new Error('无效的ID列表')
+        throw new Error('无效的ID列表');
       }
 
-      const placeholders = ids.map(() => '?').join(',')
+      const placeholders = ids.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `DELETE FROM kml_files WHERE id IN (${placeholders})`,
         ids
-      )
-      return result.affectedRows
+      );
+      return result.affectedRows;
     } catch (error) {
-      Logger.error('批量删除KML文件失败:', error)
-      throw error
+      Logger.error('批量删除KML文件失败:', error);
+      throw error;
     }
   }
 
   static async batchUpdateVisibility(ids, isVisible) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
-        throw new Error('无效的ID列表')
+        throw new Error('无效的ID列表');
       }
 
-      const placeholders = ids.map(() => '?').join(',')
+      const placeholders = ids.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [isVisible, ...ids]
-      )
-      return result.affectedRows
+      );
+      return result.affectedRows;
     } catch (error) {
-      Logger.error('批量更新KML文件可见性失败:', error)
-      throw error
+      Logger.error('批量更新KML文件可见性失败:', error);
+      throw error;
     }
   }
 
   static async batchMoveToFolder(ids, folderId) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
-        throw new Error('无效的ID列表')
+        throw new Error('无效的ID列表');
       }
-      const placeholders = ids.map(() => '?').join(',')
+      const placeholders = ids.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
         [folderId, ...ids]
-      )
-      return result.affectedRows
+      );
+      return result.affectedRows;
     } catch (error) {
-      Logger.error('批量移动KML文件到文件夹失败:', error)
-      throw error
+      Logger.error('批量移动KML文件到文件夹失败:', error);
+      throw error;
     }
   }
 
@@ -273,15 +269,13 @@ class KmlFileModel {
           COUNT(CASE WHEN is_visible = FALSE THEN 1 END) as hidden,
           (SELECT COUNT(*) FROM kml_points) as total_points
         FROM kml_files
-      `)
-      return rows[0]
+      `);
+      return rows[0];
     } catch (error) {
-      Logger.error('获取KML文件统计失败:', error)
-      throw error
+      Logger.error('获取KML文件统计失败:', error);
+      throw error;
     }
   }
 }
 
-module.exports = KmlFileModel
-
-
+module.exports = KmlFileModel;

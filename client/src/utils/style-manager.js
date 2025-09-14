@@ -3,7 +3,7 @@
  */
 class StyleManager {
   constructor() {
-    this.initialized = false
+    this.initialized = false;
     this.styles = {
       video: {
         point_color: '#ff4757',
@@ -13,7 +13,7 @@ class StyleManager {
         point_label_size: 14,
         point_label_color: '#000000',
         cluster_enabled: false,
-        cluster_color: '#ff4757'
+        cluster_color: '#ff4757',
       },
       panorama: {
         point_color: '#2ed573',
@@ -23,27 +23,27 @@ class StyleManager {
         point_label_size: 12,
         point_label_color: '#000000',
         cluster_enabled: false,
-        cluster_color: '#2ed573'
-      }
-    }
-    this.updateCallbacks = new Set()
+        cluster_color: '#2ed573',
+      },
+    };
+    this.updateCallbacks = new Set();
   }
 
   /**
    * 初始化样式管理器
    */
   initialize() {
-    if (this.initialized) return
+    if (this.initialized) return;
 
     // 从全局变量获取样式配置
     if (window.videoPointStyles) {
-      this.styles.video = { ...window.videoPointStyles }
+      this.styles.video = { ...window.videoPointStyles };
     }
     if (window.panoramaPointStyles) {
-      this.styles.panorama = { ...window.panoramaPointStyles }
+      this.styles.panorama = { ...window.panoramaPointStyles };
     }
 
-    this.initialized = true
+    this.initialized = true;
   }
 
   /**
@@ -52,8 +52,8 @@ class StyleManager {
    * @returns {Object} 样式配置
    */
   getStyles(type) {
-    this.initialize()
-    return this.styles[type] || this.styles.panorama
+    this.initialize();
+    return this.styles[type] || this.styles.panorama;
   }
 
   /**
@@ -62,18 +62,18 @@ class StyleManager {
    * @param {Object} newStyles 新的样式配置
    */
   updateStyles(type, newStyles) {
-    this.initialize()
-    this.styles[type] = { ...newStyles }
-    
+    this.initialize();
+    this.styles[type] = { ...newStyles };
+
     // 同步到全局变量
     if (type === 'video') {
-      window.videoPointStyles = { ...newStyles }
+      window.videoPointStyles = { ...newStyles };
     } else if (type === 'panorama') {
-      window.panoramaPointStyles = { ...newStyles }
+      window.panoramaPointStyles = { ...newStyles };
     }
 
     // 触发更新回调
-    this.notifyUpdate(type, newStyles)
+    this.notifyUpdate(type, newStyles);
   }
 
   /**
@@ -81,20 +81,20 @@ class StyleManager {
    * @param {Object} allStyles 包含所有类型样式的对象
    */
   updateAllStyles(allStyles) {
-    this.initialize()
-    
+    this.initialize();
+
     if (allStyles.video) {
-      this.styles.video = { ...allStyles.video }
-      window.videoPointStyles = { ...allStyles.video }
+      this.styles.video = { ...allStyles.video };
+      window.videoPointStyles = { ...allStyles.video };
     }
-    
+
     if (allStyles.panorama) {
-      this.styles.panorama = { ...allStyles.panorama }
-      window.panoramaPointStyles = { ...allStyles.panorama }
+      this.styles.panorama = { ...allStyles.panorama };
+      window.panoramaPointStyles = { ...allStyles.panorama };
     }
 
     // 触发更新回调
-    this.notifyUpdate('all', allStyles)
+    this.notifyUpdate('all', allStyles);
   }
 
   /**
@@ -102,12 +102,12 @@ class StyleManager {
    * @param {Function} callback 回调函数
    */
   onStyleUpdate(callback) {
-    this.updateCallbacks.add(callback)
-    
+    this.updateCallbacks.add(callback);
+
     // 返回取消注册的函数
     return () => {
-      this.updateCallbacks.delete(callback)
-    }
+      this.updateCallbacks.delete(callback);
+    };
   }
 
   /**
@@ -116,13 +116,13 @@ class StyleManager {
    * @param {Object} styles 新的样式配置
    */
   notifyUpdate(type, styles) {
-    this.updateCallbacks.forEach(callback => {
+    this.updateCallbacks.forEach((callback) => {
       try {
-        callback(type, styles)
+        callback(type, styles);
       } catch (error) {
-        console.warn('样式更新回调执行失败:', error)
+        console.warn('样式更新回调执行失败:', error);
       }
-    })
+    });
   }
 
   /**
@@ -130,17 +130,17 @@ class StyleManager {
    */
   refresh() {
     if (window.videoPointStyles) {
-      this.styles.video = { ...window.videoPointStyles }
+      this.styles.video = { ...window.videoPointStyles };
     }
     if (window.panoramaPointStyles) {
-      this.styles.panorama = { ...window.panoramaPointStyles }
+      this.styles.panorama = { ...window.panoramaPointStyles };
     }
-    
-    this.notifyUpdate('refresh', this.styles)
+
+    this.notifyUpdate('refresh', this.styles);
   }
 }
 
 // 创建全局实例
-const styleManager = new StyleManager()
+const styleManager = new StyleManager();
 
-export default styleManager
+export default styleManager;

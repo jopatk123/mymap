@@ -2,7 +2,7 @@
   <div class="batch-actions">
     <span>已选择 {{ selectedCount }} 项</span>
     <div class="batch-buttons">
-      <el-dropdown @command="$emit('batch-action', $event)" trigger="click">
+      <el-dropdown trigger="click" @command="$emit('batch-action', $event)">
         <el-button type="primary" size="small">
           批量操作
           <el-icon><ArrowDown /></el-icon>
@@ -33,16 +33,16 @@
 </template>
 
 <script setup>
-import { ArrowDown, FolderOpened, View, Hide, Delete } from '@element-plus/icons-vue'
+import { ArrowDown, FolderOpened, View, Hide, Delete } from '@element-plus/icons-vue';
 
 defineProps({
   selectedCount: {
     type: Number,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-defineEmits(['batch-action'])
+defineEmits(['batch-action']);
 </script>
 
 <style lang="scss" scoped>
@@ -54,12 +54,12 @@ defineEmits(['batch-action'])
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   span {
     color: #606266;
     font-size: 14px;
   }
-  
+
   .batch-buttons {
     display: flex;
     gap: 8px;
@@ -71,7 +71,7 @@ defineEmits(['batch-action'])
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-    
+
     .batch-buttons {
       width: 100%;
     }

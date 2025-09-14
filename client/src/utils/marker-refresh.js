@@ -1,52 +1,116 @@
 /**
- * 标记刷新工具 - 简化版本
+ * marker-refresh.js
  *
- * 说明：此模块负责在全局 `window.allPoints` 改变时刷新地图上的标记。
- * 它通过 `setMapInstance` 注册一个包含 `clearMarkers` 和 `addPointMarkers` 的对象，
- * 并在 `refreshAllMarkers` 中调用这些方法。
+ * 改进点：
+ * - 避免对全局 `window.allPoints` 的强依赖，支持将点数组通过参数传入
+ * - 去掉固定的 setTimeout 时序 hack，支持同步或异步的 addPointMarkers
+ * - 保持向后兼容：仍会在 window 上暴露实例与方法（但不依赖它们）
  */
 
-let mapInstanceData = null
+let mapInstanceData = null;
 
+/**
+ * 注册地图实例（应该包含 clearMarkers 和 addPointMarkers 方法）
+ * 保持向后兼容：会尝试写入 window._markerRefreshMapInstance
+ */
 export function setMapInstance(data) {
-  mapInstanceData = data
-  try { if (typeof window !== 'undefined') { window._markerRefreshMapInstance = mapInstanceData } } catch(e){}
+  mapInstanceData = data;
+  try {
+    if (typeof window !== 'undefined') {
+      window._markerRefreshMapInstance = mapInstanceData;
+    }
+  } catch (e) {
+    // noop
+  }
 }
 
-export function setMarkersData(markers) {
-  // 保持兼容性，但不做复杂验证
+/**
+ * 占位：保留原 API（可扩展）
+ */
+export function setMarkersData(/* markers */) {
+  // intentionally no-op; prefer passing points into refreshAllMarkers
 }
 
-export function refreshAllMarkers() {
-  if (!mapInstanceData || !mapInstanceData.clearMarkers || !mapInstanceData.addPointMarkers) {
-    return false
+/**
+ * 刷新所有标注
+ * @param {Array} [points] - 可选的点数组，若未提供将回退到 window.allPoints（向后兼容）
+ * @param {Object} [options]
+ * @param {boolean} [options.exposeGlobal=true] - 是否在 window 上暴露 refreshAllMarkers（兼容旧代码）
+ * @returns {Promise<boolean>} 成功返回 true，失败返回 false
+ */
+export async function refreshAllMarkers(points = null, options = {}) {
+  const { exposeGlobal = true } = options;
+
+  if (
+    !mapInstanceData ||
+    typeof mapInstanceData.clearMarkers !== 'function' ||
+    typeof mapInstanceData.addPointMarkers !== 'function'
+  ) {
+    return false;
   }
 
   try {
-    // 先清除现有标记（无论 currentPoints 是否为空，都要清理遗留标记）
-    mapInstanceData.clearMarkers()
+    mapInstanceData.clearMarkers();
   } catch (err) {
-    // 不要因为清除失败阻塞后续操作
-    try { console.warn('[marker-refresh] clearMarkers failed', err) } catch(e){}
+    try {
+      console.warn('[marker-refresh] clearMarkers failed', err);
+    } catch (e) {
+      /* noop */
+    }
   }
 
-  const currentPoints = window.allPoints || []
+  // 优先使用显式提供的 points，未提供时回退到 window.allPoints（兼容旧代码）
+  let currentPoints = Array.isArray(points) ? points : null;
+  if (!currentPoints) {
+    if (typeof window !== 'undefined' && Array.isArray(window.allPoints)) {
+      currentPoints = window.allPoints;
+    } else {
+      currentPoints = [];
+    }
+  }
 
-  // 没有点时仅完成清除工作
   if (currentPoints.length === 0) {
-    try { console.debug && console.debug('[marker-refresh] refreshAllMarkers: no points to add, cleared existing markers') } catch(e){}
-    return true
+    try {
+      console.debug &&
+        console.debug(
+          '[marker-refresh] refreshAllMarkers: no points to add, cleared existing markers'
+        );
+    } catch (e) {
+      /* noop */
+    }
+    return true;
   }
 
-  // 重新添加标记
-  setTimeout(() => {
-    try { mapInstanceData.addPointMarkers(currentPoints) } catch (err) { try { console.warn('[marker-refresh] addPointMarkers failed', err) } catch(e){} }
-  }, 100)
-
-  return true
+  try {
+    // 支持同步或返回 Promise 的 addPointMarkers
+    const maybePromise = mapInstanceData.addPointMarkers(currentPoints);
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      await maybePromise;
+    }
+    return true;
+  } catch (err) {
+    try {
+      console.warn('[marker-refresh] addPointMarkers failed', err);
+    } catch (e) {
+      /* noop */
+    }
+    return false;
+  } finally {
+    if (exposeGlobal && typeof window !== 'undefined') {
+      try {
+        window.refreshAllMarkers = refreshAllMarkers;
+      } catch (e) {
+        /* noop */
+      }
+    }
+  }
 }
 
-// 兼容性：暴露到window
+// 向后兼容：默认将方法暴露到 window（可以通过 options.exposeGlobal 取消）
 if (typeof window !== 'undefined') {
-  window.refreshAllMarkers = refreshAllMarkers
+  try {
+    window.refreshAllMarkers = refreshAllMarkers;
+  } catch (e) {
+    /* noop */
+  }
 }

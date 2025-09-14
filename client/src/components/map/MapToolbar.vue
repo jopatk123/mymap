@@ -1,24 +1,24 @@
 <template>
   <div class="toolbar">
     <el-button-group>
-      <el-button 
-        @click="$emit('toggle-panorama-list')" 
+      <el-button
         type="primary"
         :icon="panoramaListVisible ? Hide : View"
         :title="panoramaListVisible ? '隐藏全景图列表' : '显示全景图列表'"
+        @click="$emit('toggle-panorama-list')"
       >
         {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
       </el-button>
-      <el-button @click="$emit('show-upload')" type="success">
+      <el-button type="success" @click="$emit('show-upload')">
         <el-icon><Plus /></el-icon>
         添加
       </el-button>
 
-      <el-button @click="$emit('show-kml-settings')" type="warning">
+      <el-button type="warning" @click="$emit('show-kml-settings')">
         <el-icon><Tools /></el-icon>
         KML设置
       </el-button>
-      <el-button @click="$emit('show-point-settings')" type="info">
+      <el-button type="info" @click="$emit('show-point-settings')">
         <el-icon><Location /></el-icon>
         点位图标
       </el-button>
@@ -27,25 +27,20 @@
 </template>
 
 <script setup>
-import { Plus, View, Hide, Tools, Location } from '@element-plus/icons-vue'
+import { Plus, View, Hide, Tools, Location } from '@element-plus/icons-vue';
 
 defineProps({
   panoramaListVisible: {
     type: Boolean,
-    default: true
+    default: true,
   },
   loading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits([
-  'toggle-panorama-list',
-  'show-upload',
-  'show-kml-settings',
-  'show-point-settings'
-])
+defineEmits(['toggle-panorama-list', 'show-upload', 'show-kml-settings', 'show-point-settings']);
 </script>
 
 <style lang="scss" scoped>
@@ -61,10 +56,10 @@ defineEmits([
   .toolbar {
     top: 10px;
     right: 10px;
-    
+
     .el-button-group {
       flex-direction: column;
-      
+
       .el-button {
         margin: 0 0 4px 0;
       }

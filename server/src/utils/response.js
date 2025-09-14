@@ -15,8 +15,8 @@ function successResponse(data = null, message = '操作成功', code = 200) {
     success: true,
     message,
     data,
-    timestamp: new Date().toISOString()
-  }
+    timestamp: new Date().toISOString(),
+  };
 }
 
 /**
@@ -32,8 +32,8 @@ function errorResponse(message = '操作失败', code = 500, data = null) {
     success: false,
     message,
     data,
-    timestamp: new Date().toISOString()
-  }
+    timestamp: new Date().toISOString(),
+  };
 }
 
 /**
@@ -44,10 +44,13 @@ function errorResponse(message = '操作失败', code = 500, data = null) {
  * @returns {Object}
  */
 function paginatedResponse(data, pagination, message = '获取数据成功') {
-  return successResponse({
-    list: data,
-    pagination
-  }, message)
+  return successResponse(
+    {
+      list: data,
+      pagination,
+    },
+    message
+  );
 }
 
 /**
@@ -57,13 +60,13 @@ function paginatedResponse(data, pagination, message = '获取数据成功') {
  */
 function validationErrorResponse(errors) {
   return errorResponse('参数验证失败', 400, {
-    errors
-  })
+    errors,
+  });
 }
 
 module.exports = {
   successResponse,
   errorResponse,
   paginatedResponse,
-  validationErrorResponse
-}
+  validationErrorResponse,
+};

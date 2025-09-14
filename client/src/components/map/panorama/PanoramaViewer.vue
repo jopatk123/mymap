@@ -4,20 +4,20 @@
     title="全景图查看"
     width="90%"
     class="panorama-viewer-modal"
-    @update:model-value="$emit('update:visible', $event)"
-    @close="handleClose"
     destroy-on-close
     append-to-body
+    @update:model-value="$emit('update:visible', $event)"
+    @close="handleClose"
   >
     <div
-      class="viewer-container"
       v-loading="loading"
+      class="viewer-container"
       element-loading-text="全景图加载中..."
       element-loading-background="rgba(0, 0, 0, 0.7)"
     >
       <div id="panorama-viewer" class="panorama-viewer"></div>
     </div>
-    
+
     <template #footer>
       <PanoramaViewerControls
         :auto-rotating="autoRotating"
@@ -31,34 +31,34 @@
 </template>
 
 <script setup>
-import PanoramaViewerControls from './PanoramaViewerControls.vue'
+import PanoramaViewerControls from './PanoramaViewerControls.vue';
 
 defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   autoRotating: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
 const emit = defineEmits([
   'update:visible',
   'close',
   'toggle-auto-rotate',
   'toggle-fullscreen',
-  'reset-view'
-])
+  'reset-view',
+]);
 
 const handleClose = () => {
-  emit('close')
-}
+  emit('close');
+};
 </script>
 
 <style lang="scss" scoped>
@@ -67,12 +67,12 @@ const handleClose = () => {
     padding: 0;
     height: 70vh;
   }
-  
+
   .viewer-container {
     position: relative;
     width: 100%;
     height: 100%;
-    
+
     .panorama-viewer {
       width: 100%;
       height: 100%;
@@ -87,7 +87,7 @@ const handleClose = () => {
       width: 98% !important;
       margin: 1vh auto;
     }
-    
+
     :deep(.el-dialog__body) {
       height: 60vh;
     }

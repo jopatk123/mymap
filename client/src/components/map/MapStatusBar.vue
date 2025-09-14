@@ -9,13 +9,13 @@
 defineProps({
   totalCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   isOnline: {
     type: Boolean,
-    default: true
-  }
-})
+    default: true,
+  },
+});
 </script>
 
 <style lang="scss" scoped>
@@ -34,7 +34,7 @@ defineProps({
   font-size: 12px;
   color: #666;
   z-index: 1000;
-  
+
   .offline-indicator {
     color: #e6a23c;
     font-weight: 500;

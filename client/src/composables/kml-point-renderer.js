@@ -9,8 +9,8 @@ import { processCoordinates } from './kml-data-processor.js';
 export function createPointRenderer(kmlFile, effectiveStyle) {
   const styleRenderer = new StyleRenderer();
 
-  const useCluster = Boolean(effectiveStyle?.cluster_enabled)
-  const clusterColor = effectiveStyle?.cluster_color || effectiveStyle?.point_color || '#3388ff'
+  const useCluster = Boolean(effectiveStyle?.cluster_enabled);
+  const clusterColor = effectiveStyle?.cluster_color || effectiveStyle?.point_color || '#3388ff';
   const clusterGroup = useCluster
     ? L.markerClusterGroup({
         iconCreateFunction: (cluster) => createClusterIcon(clusterColor, cluster.getChildCount()),
@@ -23,7 +23,7 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         animate: false,
         pane: 'kmlPane',
       })
-    : null
+    : null;
 
   // 按是否聚合分别配置 geojson 选项
   const geoJsonOptions = {
@@ -44,11 +44,12 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         layer.bindPopup(popupContent);
       }
     },
-  }
+  };
 
   if (useCluster) {
     // 聚合时由我们手动创建点，不让 geojson 生成点图层
-    geoJsonOptions.filter = (feature) => (feature.geometry?.type?.toLowerCase?.() || '') !== 'point'
+    geoJsonOptions.filter = (feature) =>
+      (feature.geometry?.type?.toLowerCase?.() || '') !== 'point';
   } else {
     // 非聚合时，交给 geojson 的 pointToLayer 生成 marker
     geoJsonOptions.pointToLayer = (feature, latlng) => {
@@ -67,32 +68,36 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
         feature.properties.name
       );
       return L.marker(latlng, { icon: L.divIcon(iconOptions), pane: 'kmlPane' });
-    }
+    };
   }
 
-  const featureGeoJson = L.geoJSON(null, geoJsonOptions)
+  const featureGeoJson = L.geoJSON(null, geoJsonOptions);
 
-  const layer = useCluster && clusterGroup ? L.layerGroup([featureGeoJson, clusterGroup]) : featureGeoJson
+  const layer =
+    useCluster && clusterGroup ? L.layerGroup([featureGeoJson, clusterGroup]) : featureGeoJson;
   return { layer, featureGeoJson, useCluster, clusterGroup };
 }
 
 export function processKmlPoints(points, kmlFile, styleConfig) {
   try {
     const effectiveStyle = styleConfig || {};
-    const { layer, featureGeoJson, useCluster, clusterGroup } = createPointRenderer(kmlFile, effectiveStyle);
+    const { layer, featureGeoJson, useCluster, clusterGroup } = createPointRenderer(
+      kmlFile,
+      effectiveStyle
+    );
 
     let featureCount = 0;
 
     // 批量快速添加
-    const batchMarkers = []
+    const batchMarkers = [];
     for (const point of points) {
       const processedFeature = processPointData(point);
       if (!processedFeature) continue;
 
-      const geometryType = processedFeature.geometry?.type?.toLowerCase?.() || ''
+      const geometryType = processedFeature.geometry?.type?.toLowerCase?.() || '';
       if (useCluster && clusterGroup && geometryType === 'point') {
-        const coords = processedFeature.geometry.coordinates
-        const latlng = L.latLng(coords[1], coords[0])
+        const coords = processedFeature.geometry.coordinates;
+        const latlng = L.latLng(coords[1], coords[0]);
         const pointSize = effectiveStyle.point_size;
         const labelSize = Number(effectiveStyle.point_label_size);
         const pointColor = effectiveStyle.point_color;
@@ -106,12 +111,16 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
           labelColor,
           processedFeature.properties?.name
         );
-        const marker = L.marker(latlng, { icon: L.divIcon(iconOptions), updateWhenZoom: false, pane: 'kmlPane' })
+        const marker = L.marker(latlng, {
+          icon: L.divIcon(iconOptions),
+          updateWhenZoom: false,
+          pane: 'kmlPane',
+        });
         try {
-          const popupContent = createPopupContent(processedFeature, kmlFile)
-          marker.bindPopup(popupContent)
+          const popupContent = createPopupContent(processedFeature, kmlFile);
+          marker.bindPopup(popupContent);
         } catch {}
-        batchMarkers.push(marker)
+        batchMarkers.push(marker);
       } else {
         // 非点要素在任何情况下都应直接添加到 geojson 图层；
         // 非聚合模式下点要素也直接添加
@@ -120,7 +129,7 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
       featureCount++;
     }
     if (useCluster && clusterGroup && batchMarkers.length) {
-      clusterGroup.addLayers(batchMarkers)
+      clusterGroup.addLayers(batchMarkers);
     }
 
     return { kmlLayer: layer, featureCount };
@@ -139,16 +148,21 @@ function processPointData(point) {
       type: 'Feature',
       properties: {
         name: point.name || '未命名地标',
-        description: point.description || ''
+        description: point.description || '',
       },
       geometry: {
         type: 'Point',
-        coordinates: [coords.lng, coords.lat]
-      }
+        coordinates: [coords.lng, coords.lat],
+      },
     };
 
     // 如果服务端提供原始WGS84坐标，附带到属性中用于弹窗展示
-    if (point.latitude != null && point.longitude != null && !isNaN(point.latitude) && !isNaN(point.longitude)) {
+    if (
+      point.latitude != null &&
+      point.longitude != null &&
+      !isNaN(point.latitude) &&
+      !isNaN(point.longitude)
+    ) {
       feature.properties.wgs84_lat = Number(point.latitude);
       feature.properties.wgs84_lng = Number(point.longitude);
     }
@@ -162,12 +176,12 @@ function processPointData(point) {
       type: 'Feature',
       properties: {
         name: point.name || '未命名线条',
-        description: point.description || ''
+        description: point.description || '',
       },
       geometry: {
         type: 'LineString',
-        coordinates: lineCoords
-      }
+        coordinates: lineCoords,
+      },
     };
   } else if (point.point_type === 'Polygon' && point.coordinates && point.coordinates.outer) {
     const polygonCoords = processCoordinates(point.coordinates.outer);
@@ -177,12 +191,12 @@ function processPointData(point) {
       type: 'Feature',
       properties: {
         name: point.name || '未命名多边形',
-        description: point.description || ''
+        description: point.description || '',
       },
       geometry: {
         type: 'Polygon',
-        coordinates: [polygonCoords]
-      }
+        coordinates: [polygonCoords],
+      },
     };
   }
 
@@ -203,28 +217,55 @@ export function createPopupContent(feature, kmlFile) {
   // 计算外链URL
   let wgsLat = feature?.properties?.wgs84_lat;
   let wgsLng = feature?.properties?.wgs84_lng;
-  let amapLng = null, amapLat = null, bmapLng = null, bmapLat = null;
+  let amapLng = null,
+    amapLat = null,
+    bmapLng = null,
+    bmapLat = null;
   if (typeof wgsLat === 'number' && typeof wgsLng === 'number') {
     const [gcjLng, gcjLat] = wgs84ToGcj02(wgsLng, wgsLat);
     [amapLng, amapLat] = [gcjLng, gcjLat];
     [bmapLng, bmapLat] = gcj02ToBd09(gcjLng, gcjLat);
   }
-  const amapUrl = (amapLng && amapLat)
-    ? `https://uri.amap.com/marker?position=${amapLng.toFixed(6)},${amapLat.toFixed(6)}&name=${encodeURIComponent(feature.properties.name || '')}`
-    : '';
-  const bmapUrl = (bmapLng && bmapLat)
-    ? `https://api.map.baidu.com/marker?location=${bmapLat.toFixed(6)},${bmapLng.toFixed(6)}&title=${encodeURIComponent(feature.properties.name || '')}&content=${encodeURIComponent(kmlFile.title || '')}&coord_type=bd09ll&output=html`
-    : '';
+  const amapUrl =
+    amapLng && amapLat
+      ? `https://uri.amap.com/marker?position=${amapLng.toFixed(6)},${amapLat.toFixed(
+          6
+        )}&name=${encodeURIComponent(feature.properties.name || '')}`
+      : '';
+  const bmapUrl =
+    bmapLng && bmapLat
+      ? `https://api.map.baidu.com/marker?location=${bmapLat.toFixed(6)},${bmapLng.toFixed(
+          6
+        )}&title=${encodeURIComponent(feature.properties.name || '')}&content=${encodeURIComponent(
+          kmlFile.title || ''
+        )}&coord_type=bd09ll&output=html`
+      : '';
   return `
     <div style="max-width: 240px;">
       ${feature.properties.name ? `<h4 class="popup-title">${feature.properties.name}</h4>` : ''}
-      ${feature.properties.description ? `<p class="popup-meta">${feature.properties.description}</p>` : ''}
+      ${
+        feature.properties.description
+          ? `<p class="popup-meta">${feature.properties.description}</p>`
+          : ''
+      }
       ${wgs84Text ? `<p class="popup-meta">经纬度(WGS84): ${wgs84Text}</p>` : ''}
       ${kmlFile?.description ? `<div class="popup-meta">备注：${kmlFile.description}</div>` : ''}
-      ${(amapUrl || bmapUrl) ? `<div class="popup-actions">\
-        ${amapUrl ? `<a class="map-btn gaode" href="${amapUrl}" target="_blank" rel="noopener">在高德地图打开</a>` : ''}\
-        ${bmapUrl ? `<a class="map-btn baidu" href="${bmapUrl}" target="_blank" rel="noopener">在百度地图打开</a>` : ''}
-      </div>` : ''}
+      ${
+        amapUrl || bmapUrl
+          ? `<div class="popup-actions">\
+        ${
+          amapUrl
+            ? `<a class="map-btn gaode" href="${amapUrl}" target="_blank" rel="noopener">在高德地图打开</a>`
+            : ''
+        }\
+        ${
+          bmapUrl
+            ? `<a class="map-btn baidu" href="${bmapUrl}" target="_blank" rel="noopener">在百度地图打开</a>`
+            : ''
+        }
+      </div>`
+          : ''
+      }
     </div>
   `;
 }

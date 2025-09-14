@@ -4,9 +4,9 @@
     :title="video?.title || '视频点位'"
     width="80%"
     class="video-modal"
+    destroy-on-close
     @update:model-value="$emit('update:visible', $event)"
     @close="$emit('close')"
-    destroy-on-close
   >
     <div class="video-content">
       <VideoInfo :video="video" />
@@ -21,30 +21,25 @@
 </template>
 
 <script setup>
-import VideoInfo from './VideoInfo.vue'
-import VideoActions from './VideoActions.vue'
+import VideoInfo from './VideoInfo.vue';
+import VideoActions from './VideoActions.vue';
 
 defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   video: {
     type: Object,
-    default: null
+    default: null,
   },
   loading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits([
-  'update:visible',
-  'close',
-  'play',
-  'copy-coordinate'
-])
+defineEmits(['update:visible', 'close', 'play', 'copy-coordinate']);
 </script>
 
 <style lang="scss" scoped>

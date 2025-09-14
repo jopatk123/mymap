@@ -12,14 +12,17 @@
 ## 我们采用的方案（已验证有效）
 
 1. 在本地完整构建：
+
    - 在项目根目录执行 `npm ci --omit=dev`（在 `server` 目录）以生成完整的 `server/node_modules`。
    - 如果本地机器可联网，也在 `client` 目录正常构建 `npx vite build` 生成 `client/dist`。
 
 2. 为了把本地 `node_modules` 包含进镜像，而不修改 `.dockerignore`，我们采用临时构建上下文目录：
+
    - 将 `server/node_modules` 复制到 `build_context_extra/server_node_modules`（该目录不会被 `.dockerignore` 忽略）。
    - 修改 `docker/Dockerfile`（runtime 阶段）添加 `COPY build_context_extra/server_node_modules /app/server/node_modules`，优先使用上下文中提供的依赖目录覆盖镜像内的依赖。
 
 3. 使用脚本打包镜像为单文件归档：
+
    - 运行 `USE_LOCAL_CLIENT=1 ./build_mymap_images_tar.sh`（脚本已调整支持单文件归档和使用本地 client/dist）。
    - 脚本会构建 `mymap:latest` 并将 `mymap:latest` 与 `nginx:1.25-alpine` 一起保存为 `images/mymap_images.tar.gz`。
 
@@ -46,6 +49,5 @@
   - 可在本机上把 `server/node_modules` 包含进构建上下文（手动或脚本扩展）。
 - 修改：`docker/Dockerfile`：
   - 在 runtime 阶段添加 `COPY build_context_extra/server_node_modules /app/server/node_modules`，支持使用本地依赖进行离线构建。
-
 
 ---

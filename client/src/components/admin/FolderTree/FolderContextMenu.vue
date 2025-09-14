@@ -28,48 +28,42 @@
 </template>
 
 <script setup>
-import { 
-  FolderAdd, 
-  Edit, 
-  Delete, 
-  View, 
-  Hide 
-} from '@element-plus/icons-vue'
+import { FolderAdd, Edit, Delete, View, Hide } from '@element-plus/icons-vue';
 
 defineProps({
   contextMenu: {
     type: Object,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
 const emit = defineEmits([
   'create-sub-folder',
   'edit-folder',
   'toggle-visibility',
   'delete-folder',
-  'hide'
-])
+  'hide',
+]);
 
 const handleCreateSubFolder = () => {
-  emit('create-sub-folder')
-  emit('hide')
-}
+  emit('create-sub-folder');
+  emit('hide');
+};
 
 const handleEditFolder = () => {
-  emit('edit-folder')
-  emit('hide')
-}
+  emit('edit-folder');
+  emit('hide');
+};
 
 const handleToggleVisibility = () => {
-  emit('toggle-visibility')
-  emit('hide')
-}
+  emit('toggle-visibility');
+  emit('hide');
+};
 
 const handleDeleteFolder = () => {
-  emit('delete-folder')
-  emit('hide')
-}
+  emit('delete-folder');
+  emit('hide');
+};
 </script>
 
 <style lang="scss" scoped>
@@ -81,31 +75,31 @@ const handleDeleteFolder = () => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   min-width: 120px;
-  
+
   .menu-item {
     display: flex;
     align-items: center;
     padding: 8px 12px;
     cursor: pointer;
     font-size: 14px;
-    
+
     &:hover {
       background: #f5f7fa;
     }
-    
+
     &.danger {
       color: #f56c6c;
-      
+
       &:hover {
         background: #fef0f0;
       }
     }
-    
+
     .el-icon {
       margin-right: 8px;
     }
   }
-  
+
   .menu-divider {
     height: 1px;
     background: #eee;

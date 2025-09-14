@@ -1,26 +1,34 @@
 /**
  * KML底图功能集成脚本
- * 确保所有必要的路由和中间件正确集成到主应用中
+ *
+ * 说明：此脚本不应在模块加载时直接访问或修改未定义的全局应用实例（例如直接使用 `app`）。
+ * 为了避免在被 lint 扫描时触发未定义变量错误，这里改为导出一个注册函数，由主应用在启动时调用并传入 app。
  */
 
-// 在 server/src/server.js 中添加以下代码
+const { ensureUploadDirectories } = require('../utils/init-directories');
+const kmlBaseMapRoutes = require('../routes/kml-basemap');
+const Logger = require('../utils/logger');
 
-// 1. 导入必要的模块
-const { ensureUploadDirectories } = require('./utils/init-directories')
-const kmlBaseMapRoutes = require('./routes/kml-basemap')
+function registerKmlBasemap(app) {
+  if (!app || typeof app.use !== 'function') {
+    throw new Error('registerKmlBasemap: 必须传入 Express 的 app 实例');
+  }
 
-// 2. 在应用启动前初始化目录
-ensureUploadDirectories()
+  // 在应用启动前初始化上传目录
+  try {
+    ensureUploadDirectories();
+  } catch (e) {
+    // 初始化目录失败不应阻塞主应用启动，记录日志并继续
+    Logger.warn('初始化上传目录失败:', e && e.message);
+  }
 
-// 3. 注册KML底图路由（在其他路由之前）
-app.use('/api/kml-basemap', kmlBaseMapRoutes)
-
-// 错误处理应在 app.js 中集中处理，避免在集成脚本中直接操作 app 或未定义的依赖。
-const Logger = require('../utils/logger')
-Logger.info('KML底图模块加载（integration script）。')
+  // 注册路由
+  app.use('/api/kml-basemap', kmlBaseMapRoutes);
+  Logger.info('KML底图模块已通过 registerKmlBasemap 注册。');
+}
 
 module.exports = {
-  // 导出必要的功能供其他模块使用
+  registerKmlBasemap,
   ensureUploadDirectories,
-  kmlBaseMapRoutes
-}
+  kmlBaseMapRoutes,
+};

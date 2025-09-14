@@ -8,10 +8,10 @@ export const convertFromApiFormat = (apiData) => {
     labelColor: apiData.point_label_color,
     // 聚合
     clusterEnabled: Boolean(apiData.cluster_enabled),
-    clusterColor: apiData.cluster_color || apiData.cluster_icon_color || apiData.point_color
-  }
-  return converted
-}
+    clusterColor: apiData.cluster_color || apiData.cluster_icon_color || apiData.point_color,
+  };
+  return converted;
+};
 
 // 转换组件格式到API格式
 export const convertToApiFormat = (componentData) => {
@@ -24,7 +24,7 @@ export const convertToApiFormat = (componentData) => {
     point_label_color: componentData.labelColor,
     // 聚合
     cluster_enabled: Boolean(componentData.clusterEnabled),
-    cluster_color: componentData.clusterColor || componentData.color
-  }
-  return converted
-}
+    cluster_color: componentData.clusterColor || componentData.color,
+  };
+  return converted;
+};

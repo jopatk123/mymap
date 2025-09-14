@@ -1,43 +1,43 @@
-const express = require('express')
-const router = express.Router()
-const PanoramaController = require('../controllers/panorama.controller')
-const { 
+const express = require('express');
+const router = express.Router();
+const PanoramaController = require('../controllers/panorama.controller');
+const {
   validatePanoramaData,
   validateUpdatePanoramaData,
   validateSearchParams,
   validateBoundsParams,
   validateId,
   validateBatchIds,
-  validateBatchMoveParams
-} = require('../middleware/validator.middleware')
-const { handleSingleUpload, handleBatchUpload } = require('../middleware/upload.middleware')
+  validateBatchMoveParams,
+} = require('../middleware/validator.middleware');
+const { handleSingleUpload, handleBatchUpload } = require('../middleware/upload.middleware');
 
 // 获取全景图列表
-router.get('/', PanoramaController.getPanoramas)
+router.get('/', PanoramaController.getPanoramas);
 
 // 根据地图边界获取全景图
-router.get('/bounds', validateBoundsParams, PanoramaController.getPanoramasByBounds)
+router.get('/bounds', validateBoundsParams, PanoramaController.getPanoramasByBounds);
 
 // 获取附近的全景图
-router.get('/nearby', PanoramaController.getNearbyPanoramas)
+router.get('/nearby', PanoramaController.getNearbyPanoramas);
 
 // 搜索全景图
-router.get('/search', validateSearchParams, PanoramaController.searchPanoramas)
+router.get('/search', validateSearchParams, PanoramaController.searchPanoramas);
 
 // 获取统计信息
-router.get('/stats', PanoramaController.getStats)
+router.get('/stats', PanoramaController.getStats);
 
 // 坐标转换
-router.get('/convert-coordinate', PanoramaController.convertCoordinate)
+router.get('/convert-coordinate', PanoramaController.convertCoordinate);
 
 // 创建全景图
-router.post('/', validatePanoramaData, PanoramaController.createPanorama)
+router.post('/', validatePanoramaData, PanoramaController.createPanorama);
 
 // 单文件上传
 router.post('/upload', handleSingleUpload, (req, res) => {
-  const { uploadedFile } = req
-  const { title, description, lat, lng, folderId } = req.body
-  
+  const { uploadedFile } = req;
+  const { title, description, lat, lng, folderId } = req.body;
+
   // 构建全景图数据
   const panoramaData = {
     title: title || '未命名全景图',
@@ -48,23 +48,28 @@ router.post('/upload', handleSingleUpload, (req, res) => {
     thumbnailUrl: uploadedFile.thumbnailUrl,
     fileSize: uploadedFile.size,
     fileType: uploadedFile.mimetype,
-    folderId: folderId !== undefined && folderId !== null ? (folderId === 0 ? null : parseInt(folderId)) : null
-  }
-  
+    folderId:
+      folderId !== undefined && folderId !== null
+        ? folderId === 0
+          ? null
+          : parseInt(folderId)
+        : null,
+  };
+
   // 将数据添加到请求体中，然后调用创建控制器
-  req.body = panoramaData
-  PanoramaController.createPanorama(req, res)
-})
+  req.body = panoramaData;
+  PanoramaController.createPanorama(req, res);
+});
 
 // 批量文件上传
 router.post('/batch-upload', handleBatchUpload, async (req, res) => {
   try {
-    const { uploadedFiles } = req
-    const results = []
-    
+    const { uploadedFiles } = req;
+    const results = [];
+
     // 为每个文件创建全景图记录
     for (let i = 0; i < uploadedFiles.length; i++) {
-      const file = uploadedFiles[i]
+      const file = uploadedFiles[i];
       const panoramaData = {
         title: `全景图 ${i + 1}`,
         description: `批量上传的全景图 - ${file.originalName}`,
@@ -73,79 +78,81 @@ router.post('/batch-upload', handleBatchUpload, async (req, res) => {
         imageUrl: file.imageUrl,
         thumbnailUrl: file.thumbnailUrl,
         fileSize: file.size,
-        fileType: file.mimetype
-      }
-      
+        fileType: file.mimetype,
+      };
+
       try {
         // 创建临时请求对象
-        const tempReq = { body: panoramaData }
+        const tempReq = { body: panoramaData };
         const tempRes = {
           status: () => tempRes,
-          json: (data) => data
-        }
-        
-        const result = await PanoramaController.createPanorama(tempReq, tempRes)
+          json: (data) => data,
+        };
+
+        const result = await PanoramaController.createPanorama(tempReq, tempRes);
         results.push({
           success: true,
           file: file.originalName,
-          data: result
-        })
+          data: result,
+        });
       } catch (error) {
         results.push({
           success: false,
           file: file.originalName,
-          error: error.message
-        })
+          error: error.message,
+        });
       }
     }
-    
+
     res.json({
       code: 200,
       success: true,
       message: '批量上传完成',
       data: {
         total: uploadedFiles.length,
-        successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length,
-        results
-      }
-    })
+        successful: results.filter((r) => r.success).length,
+        failed: results.filter((r) => !r.success).length,
+        results,
+      },
+    });
   } catch (error) {
-    console.error('批量上传处理失败:', error)
+    console.error('批量上传处理失败:', error);
     res.status(500).json({
       code: 500,
       success: false,
       message: '批量上传处理失败',
-      data: null
-    })
+      data: null,
+    });
   }
-})
+});
 
 // 批量操作路由 - 这些需要在具体ID路由之前定义
 // 批量移动全景图到文件夹
-router.patch('/batch/move', validateBatchMoveParams, PanoramaController.batchMovePanoramasToFolder)
+router.patch('/batch/move', validateBatchMoveParams, PanoramaController.batchMovePanoramasToFolder);
 
 // 批量删除全景图
-router.delete('/', validateBatchIds, PanoramaController.batchDeletePanoramas)
+router.delete('/', validateBatchIds, PanoramaController.batchDeletePanoramas);
 
 // 批量更新全景图可见性
-router.patch('/batch/visibility', validateBatchIds, PanoramaController.batchUpdatePanoramaVisibility)
+router.patch(
+  '/batch/visibility',
+  validateBatchIds,
+  PanoramaController.batchUpdatePanoramaVisibility
+);
 
 // 根据ID获取全景图详情
-router.get('/:id', validateId, PanoramaController.getPanoramaById)
+router.get('/:id', validateId, PanoramaController.getPanoramaById);
 
 // 更新全景图
-router.put('/:id', validateId, validateUpdatePanoramaData, PanoramaController.updatePanorama)
+router.put('/:id', validateId, validateUpdatePanoramaData, PanoramaController.updatePanorama);
 
 // 删除全景图
-router.delete('/:id', validateId, PanoramaController.deletePanorama)
+router.delete('/:id', validateId, PanoramaController.deletePanorama);
 
 // 移动全景图到文件夹
-router.patch('/:id/move', validateId, PanoramaController.movePanoramaToFolder)
+router.patch('/:id/move', validateId, PanoramaController.movePanoramaToFolder);
 
 // 更新全景图可见性
-router.patch('/:id/visibility', validateId, PanoramaController.updatePanoramaVisibility)
+router.patch('/:id/visibility', validateId, PanoramaController.updatePanoramaVisibility);
 
-module.exports = router
-
-
+module.exports = router;

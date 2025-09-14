@@ -4,182 +4,181 @@ import {
   extractGPSFromImage,
   compressImage,
   getImageDimensions,
-  isImageFile
-} from '@/utils/image-utils.js'
+  isImageFile,
+} from '@/utils/image-utils.js';
 
 export class ImageProcessor {
   constructor() {
-    this.processing = false
-    this.processingText = ''
+    this.processing = false;
+    this.processingText = '';
     this.callbacks = {
       onProcessingChange: null,
       onTextChange: null,
       onError: null,
-      onSuccess: null
-    }
+      onSuccess: null,
+    };
   }
 
   // 设置回调函数
   setCallbacks(callbacks) {
-    this.callbacks = { ...this.callbacks, ...callbacks }
+    this.callbacks = { ...this.callbacks, ...callbacks };
   }
 
   // 更新处理状态
   updateProcessing(processing, text = '') {
-    this.processing = processing
-    this.processingText = text
+    this.processing = processing;
+    this.processingText = text;
 
     if (this.callbacks.onProcessingChange) {
-      this.callbacks.onProcessingChange(processing)
+      this.callbacks.onProcessingChange(processing);
     }
     if (this.callbacks.onTextChange) {
-      this.callbacks.onTextChange(text)
+      this.callbacks.onTextChange(text);
     }
   }
 
   // 处理文件
   async processFile(file) {
-    this.updateProcessing(true, '正在检查文件...')
+    this.updateProcessing(true, '正在检查文件...');
 
     try {
       // 检查是否为图片文件
       if (!isImageFile(file)) {
-        throw new Error('请选择图片文件！')
+        throw new Error('请选择图片文件！');
       }
 
-      this.updateProcessing(true, '正在验证全景图格式...')
+      this.updateProcessing(true, '正在验证全景图格式...');
 
       // 检查是否为全景图
-      const isPanorama = await isPanoramaImage(file)
+      const isPanorama = await isPanoramaImage(file);
       if (!isPanorama) {
-        throw new Error('请选择全景图！全景图的宽高比应该约为2:1，且尺寸不小于1000x500')
+        throw new Error('请选择全景图！全景图的宽高比应该约为2:1，且尺寸不小于1000x500');
       }
 
       // 自动设置标题为文件名（不含扩展名）
-      const title = extractTitleFromFilename(file.name)
+      const title = extractTitleFromFilename(file.name);
 
-      this.updateProcessing(true, '正在提取GPS坐标...')
+      this.updateProcessing(true, '正在提取GPS坐标...');
 
       // 尝试从图片中提取GPS坐标
-      let gpsData = null
+      let gpsData = null;
       try {
-        gpsData = await extractGPSFromImage(file)
+        gpsData = await extractGPSFromImage(file);
       } catch (error) {
-        console.warn('提取GPS坐标失败:', error)
+        console.warn('提取GPS坐标失败:', error);
       }
 
-      this.updateProcessing(true, '正在生成预览...')
+      this.updateProcessing(true, '正在生成预览...');
 
       // 生成预览URL
-      const previewUrl = await this.generatePreview(file)
+      const previewUrl = await this.generatePreview(file);
 
       const result = {
         file,
         title,
         gpsData,
-        previewUrl
-      }
+        previewUrl,
+      };
 
-      this.updateProcessing(false)
+      this.updateProcessing(false);
 
       if (this.callbacks.onSuccess) {
-        this.callbacks.onSuccess(result)
+        this.callbacks.onSuccess(result);
       }
 
-      return result
-
+      return result;
     } catch (error) {
-      this.updateProcessing(false)
+      this.updateProcessing(false);
 
       if (this.callbacks.onError) {
-        this.callbacks.onError(error)
+        this.callbacks.onError(error);
       }
 
-      throw error
+      throw error;
     }
   }
 
   // 生成预览
   generatePreview(file) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => resolve(e.target.result)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   // 压缩图片
   async compressImageIfNeeded(file, maxWidth = 8000, maxHeight = 4000, quality = 0.9) {
     try {
-      const dimensions = await getImageDimensions(file)
+      const dimensions = await getImageDimensions(file);
 
       if (dimensions.width > maxWidth || dimensions.height > maxHeight) {
-        const compressedFile = await compressImage(file, maxWidth, maxHeight, quality)
+        const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
         return {
           file: compressedFile,
           compressed: true,
           originalDimensions: dimensions,
-          newDimensions: { width: maxWidth, height: maxHeight }
-        }
+          newDimensions: { width: maxWidth, height: maxHeight },
+        };
       }
 
       return {
         file,
         compressed: false,
-        originalDimensions: dimensions
-      }
+        originalDimensions: dimensions,
+      };
     } catch (error) {
-      console.error('压缩图片失败:', error)
+      console.error('压缩图片失败:', error);
       return {
         file,
         compressed: false,
-        error: error.message
-      }
+        error: error.message,
+      };
     }
   }
 
   // 验证文件
   async validateFile(file) {
-    const errors = []
+    const errors = [];
 
     // 检查文件类型
     if (!isImageFile(file)) {
-      errors.push('文件类型不正确，请选择图片文件')
+      errors.push('文件类型不正确，请选择图片文件');
     }
 
     // 检查文件大小
-    const maxSize = 50 * 1024 * 1024 // 50MB
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      errors.push('文件大小不能超过50MB')
+      errors.push('文件大小不能超过50MB');
     }
 
     // 检查是否为全景图
     try {
-      const isPanorama = await isPanoramaImage(file)
+      const isPanorama = await isPanoramaImage(file);
       if (!isPanorama) {
-        errors.push('请选择全景图，宽高比应约为2:1')
+        errors.push('请选择全景图，宽高比应约为2:1');
       }
     } catch (error) {
-      errors.push('无法验证图片格式')
+      errors.push('无法验证图片格式');
     }
 
     return {
       valid: errors.length === 0,
-      errors
-    }
+      errors,
+    };
   }
 
   // 获取处理状态
   getProcessingStatus() {
     return {
       processing: this.processing,
-      processingText: this.processingText
-    }
+      processingText: this.processingText,
+    };
   }
 }
 
 // 创建单例实例
-export const imageProcessor = new ImageProcessor()
+export const imageProcessor = new ImageProcessor();
 
-export default ImageProcessor
+export default ImageProcessor;

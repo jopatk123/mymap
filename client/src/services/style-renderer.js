@@ -6,7 +6,7 @@ import { defaultStyles } from '@/constants/map.js';
  */
 class StyleRenderer {
   constructor() {
-    this.styleCache = new Map()
+    this.styleCache = new Map();
   }
 
   /**
@@ -16,10 +16,10 @@ class StyleRenderer {
    * @returns {Object} Leaflet样式对象
    */
   renderLineStyle(line, styleConfig) {
-    const cacheKey = `line_${JSON.stringify(styleConfig)}`
-    
+    const cacheKey = `line_${JSON.stringify(styleConfig)}`;
+
     if (this.styleCache.has(cacheKey)) {
-      return this.styleCache.get(cacheKey)
+      return this.styleCache.get(cacheKey);
     }
 
     const style = {
@@ -27,28 +27,28 @@ class StyleRenderer {
       weight: styleConfig.line_width || defaultStyles.line_width,
       opacity: styleConfig.line_opacity || defaultStyles.line_opacity,
       lineCap: 'round',
-      lineJoin: 'round'
-    }
+      lineJoin: 'round',
+    };
 
     // 设置线条样式
     switch (styleConfig.line_style) {
       case 'dashed':
-        style.dashArray = '10,5'
-        break
+        style.dashArray = '10,5';
+        break;
       case 'dotted':
-        style.dashArray = '2,3'
-        break
+        style.dashArray = '2,3';
+        break;
       case 'dash-dot':
-        style.dashArray = '10,5,2,5'
-        break
+        style.dashArray = '10,5,2,5';
+        break;
       case 'solid':
       default:
-        style.dashArray = null
-        break
+        style.dashArray = null;
+        break;
     }
 
-    this.styleCache.set(cacheKey, style)
-    return style
+    this.styleCache.set(cacheKey, style);
+    return style;
   }
 
   /**
@@ -58,10 +58,10 @@ class StyleRenderer {
    * @returns {Object} Leaflet样式对象
    */
   renderPolygonStyle(polygon, styleConfig) {
-    const cacheKey = `polygon_${JSON.stringify(styleConfig)}`
-    
+    const cacheKey = `polygon_${JSON.stringify(styleConfig)}`;
+
     if (this.styleCache.has(cacheKey)) {
-      return this.styleCache.get(cacheKey)
+      return this.styleCache.get(cacheKey);
     }
 
     const style = {
@@ -69,25 +69,25 @@ class StyleRenderer {
       fillOpacity: styleConfig.polygon_fill_opacity || defaultStyles.polygon_fill_opacity,
       color: styleConfig.polygon_stroke_color || defaultStyles.polygon_stroke_color,
       weight: styleConfig.polygon_stroke_width || defaultStyles.polygon_stroke_width,
-      opacity: 1
-    }
+      opacity: 1,
+    };
 
     // 设置边框样式
     switch (styleConfig.polygon_stroke_style) {
       case 'dashed':
-        style.dashArray = '8,4'
-        break
+        style.dashArray = '8,4';
+        break;
       case 'dotted':
-        style.dashArray = '2,2'
-        break
+        style.dashArray = '2,2';
+        break;
       case 'solid':
       default:
-        style.dashArray = null
-        break
+        style.dashArray = null;
+        break;
     }
 
-    this.styleCache.set(cacheKey, style)
-    return style
+    this.styleCache.set(cacheKey, style);
+    return style;
   }
 
   /**
@@ -97,33 +97,32 @@ class StyleRenderer {
    * @returns {Object} 点样式配置
    */
   renderPointStyle(point, styleConfig) {
-    const cacheKey = `point_${JSON.stringify(styleConfig)}`
-    
+    const cacheKey = `point_${JSON.stringify(styleConfig)}`;
+
     if (this.styleCache.has(cacheKey)) {
-      return this.styleCache.get(cacheKey)
+      return this.styleCache.get(cacheKey);
     }
 
-    const pointSize = styleConfig.point_size || defaultStyles.point_size
-    const pointColor = styleConfig.point_color || defaultStyles.point_color
-    const pointOpacity = styleConfig.point_opacity || defaultStyles.point_opacity
+    const pointSize = styleConfig.point_size || defaultStyles.point_size;
+    const pointColor = styleConfig.point_color || defaultStyles.point_color;
+    const pointOpacity = styleConfig.point_opacity || defaultStyles.point_opacity;
     // 固定使用marker形状
 
     const style = {
       size: pointSize,
       color: pointColor,
-      opacity: pointOpacity
-    }
+      opacity: pointOpacity,
+    };
 
-    this.styleCache.set(cacheKey, style)
-    return style
+    this.styleCache.set(cacheKey, style);
+    return style;
   }
-
 
   /**
    * 清除样式缓存
    */
   clearCache() {
-    this.styleCache.clear()
+    this.styleCache.clear();
   }
 
   /**
@@ -133,9 +132,9 @@ class StyleRenderer {
   getCacheStats() {
     return {
       size: this.styleCache.size,
-      keys: Array.from(this.styleCache.keys())
-    }
+      keys: Array.from(this.styleCache.keys()),
+    };
   }
 }
 
-export default StyleRenderer
+export default StyleRenderer;

@@ -18,7 +18,7 @@
           <p class="upload-hint">支持 MP4, WebM, OGG 等格式，最大 500MB</p>
         </div>
       </div>
-      
+
       <div v-else class="upload-preview">
         <video
           v-if="previewUrl"
@@ -30,13 +30,7 @@
         <div class="file-info">
           <el-icon><VideoPlay /></el-icon>
           <span class="file-name">{{ file.name }}</span>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            circle
-            size="small"
-            @click.stop="handleRemove"
-          />
+          <el-button type="danger" :icon="Delete" circle size="small" @click.stop="handleRemove" />
         </div>
       </div>
     </el-upload>
@@ -44,100 +38,103 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { VideoPlay, Delete } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed } from 'vue';
+import { VideoPlay, Delete } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: File,
-  previewUrl: String,
+  previewUrl: {
+    type: String,
+    default: '',
+  },
   accept: {
     type: String,
-    default: 'video/*'
-  }
-})
+    default: 'video/*',
+  },
+});
 
-const emit = defineEmits(['update:modelValue', 'update:previewUrl', 'file-change', 'file-remove'])
+const emit = defineEmits(['update:modelValue', 'update:previewUrl', 'file-change', 'file-remove']);
 
-const uploadRef = ref(null)
+const uploadRef = ref(null);
 
 const file = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
+  set: (value) => emit('update:modelValue', value),
+});
 
 const previewUrl = computed({
   get: () => props.previewUrl,
-  set: (value) => emit('update:previewUrl', value)
-})
+  set: (value) => emit('update:previewUrl', value),
+});
 
 const handleFileChange = (file) => {
   // 检查文件对象是否有效
   if (!file || !file.raw) {
-    ElMessage.error('文件对象无效!')
-    return false
+    ElMessage.error('文件对象无效!');
+    return false;
   }
-  
-  const rawFile = file.raw
-  
+
+  const rawFile = file.raw;
+
   // 检查原始文件对象
   if (!rawFile || !rawFile.type || !rawFile.size) {
-    ElMessage.error('文件信息不完整!')
-    return false
+    ElMessage.error('文件信息不完整!');
+    return false;
   }
-  
+
   // 验证文件
-  const isVideo = rawFile.type.startsWith('video/')
-  const isLt500M = rawFile.size / 1024 / 1024 < 500
-  
+  const isVideo = rawFile.type.startsWith('video/');
+  const isLt500M = rawFile.size / 1024 / 1024 < 500;
+
   if (!isVideo) {
-    ElMessage.error('只能上传视频文件!')
-    return false
+    ElMessage.error('只能上传视频文件!');
+    return false;
   }
-  
+
   if (!isLt500M) {
-    ElMessage.error('视频大小不能超过 500MB!')
-    return false
+    ElMessage.error('视频大小不能超过 500MB!');
+    return false;
   }
-  
+
   // 创建预览URL
   if (rawFile) {
-    previewUrl.value = URL.createObjectURL(rawFile)
+    previewUrl.value = URL.createObjectURL(rawFile);
   }
-  
-  file.value = rawFile
-  emit('file-change', file)
-  
-  return true
-}
+
+  file.value = rawFile;
+  emit('file-change', file);
+
+  return true;
+};
 
 const handleFileRemove = () => {
-  file.value = null
+  file.value = null;
   if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = ''
+    URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = '';
   }
-  emit('file-remove')
-}
+  emit('file-remove');
+};
 
 const handleRemove = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 // 清理方法
 const clearFiles = () => {
   if (uploadRef.value) {
-    uploadRef.value.clearFiles()
+    uploadRef.value.clearFiles();
   }
-  handleFileRemove()
-}
+  handleFileRemove();
+};
 
 defineExpose({
-  clearFiles
-})
+  clearFiles,
+});
 </script>
 
 <style scoped>

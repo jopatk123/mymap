@@ -12,7 +12,8 @@ export function createClusterManager(map) {
   const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
 
   const ensureClusterGroup = (type) => {
-    const styles = type === 'video' ? (window.videoPointStyles || {}) : (window.panoramaPointStyles || {});
+    const styles =
+      type === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
     const color = styles.cluster_color || styles.point_color || '#3388ff';
     const iconCreateFunction = (cluster) => createClusterIcon(color, cluster.getChildCount());
 
@@ -79,7 +80,8 @@ export function createClusterManager(map) {
     if (map.value && onZoomStart && onZoomEnd) {
       map.value.off('zoomstart', onZoomStart);
       map.value.off('zoomend', onZoomEnd);
-      onZoomStart = null; onZoomEnd = null;
+      onZoomStart = null;
+      onZoomEnd = null;
     }
   };
 
@@ -93,7 +95,11 @@ export function createClusterManager(map) {
     ensureZoomGuards,
     clearAll,
     removeBatches,
-    get videoClusterGroup() { return videoClusterGroup; },
-    get panoramaClusterGroup() { return panoramaClusterGroup; },
+    get videoClusterGroup() {
+      return videoClusterGroup;
+    },
+    get panoramaClusterGroup() {
+      return panoramaClusterGroup;
+    },
   };
 }

@@ -1,15 +1,15 @@
 <template>
   <div class="panorama-actions">
-    <el-button 
-      @click="$emit('play')" 
-      type="primary" 
+    <el-button
+      type="primary"
       :loading="loading"
       :disabled="!panorama?.imageUrl"
+      @click="$emit('play')"
     >
       <el-icon><View /></el-icon>
       全屏播放
     </el-button>
-    <el-button @click="$emit('copy-coordinate')" type="info">
+    <el-button type="info" @click="$emit('copy-coordinate')">
       <el-icon><CopyDocument /></el-icon>
       复制坐标
     </el-button>
@@ -17,20 +17,20 @@
 </template>
 
 <script setup>
-import { View, CopyDocument } from '@element-plus/icons-vue'
+import { View, CopyDocument } from '@element-plus/icons-vue';
 
 defineProps({
   panorama: {
     type: Object,
-    default: null
+    default: null,
   },
   loading: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits(['play', 'copy-coordinate'])
+defineEmits(['play', 'copy-coordinate']);
 </script>
 
 <style lang="scss" scoped>
@@ -43,7 +43,7 @@ defineEmits(['play', 'copy-coordinate'])
 @media (max-width: 768px) {
   .panorama-actions {
     flex-direction: column;
-    
+
     .el-button {
       width: 100%;
     }

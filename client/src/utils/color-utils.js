@@ -34,14 +34,14 @@ export function rgbaToHex(rgba) {
   }
 
   const parts = rgba.substring(rgba.indexOf('(') + 1, rgba.lastIndexOf(')')).split(/,\s*/);
-  
+
   const r = parseInt(parts[0], 10);
   const g = parseInt(parts[1], 10);
   const b = parseInt(parts[2], 10);
   const a = parts.length === 4 ? parseFloat(parts[3]) : 1;
 
   const toHex = (c) => ('0' + c.toString(16)).slice(-2);
-  
+
   const alphaHex = toHex(Math.round(a * 255));
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}${alphaHex}`;

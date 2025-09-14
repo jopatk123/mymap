@@ -2,7 +2,7 @@
 <template>
   <div class="tool-buttons">
     <!-- 展开时内嵌的切换按钮（位于工具列顶部） -->
-    <div class="toolbar-toggle-inline" @click="$emit('toggle-collapse')" role="button" tabindex="0">
+    <div class="toolbar-toggle-inline" role="button" tabindex="0" @click="$emit('toggle-collapse')">
       <el-icon>
         <component :is="isCollapsed ? 'ArrowLeft' : 'ArrowRight'" />
       </el-icon>
@@ -13,8 +13,8 @@
       <el-button
         :type="activeTool === 'measure' ? 'primary' : 'default'"
         :class="[{ active: activeTool === 'measure' }, 'btn-measure']"
-        @click="$emit('toggle-tool', 'measure')"
         circle
+        @click="$emit('toggle-tool', 'measure')"
       >
         <el-icon><Compass /></el-icon>
       </el-button>
@@ -25,8 +25,8 @@
       <el-button
         :type="activeTool === 'point' ? 'primary' : 'default'"
         :class="{ active: activeTool === 'point' }"
-        @click="$emit('toggle-tool', 'point')"
         circle
+        @click="$emit('toggle-tool', 'point')"
       >
         <el-icon><Location /></el-icon>
       </el-button>
@@ -37,8 +37,8 @@
       <el-button
         :type="activeTool === 'line' ? 'primary' : 'default'"
         :class="{ active: activeTool === 'line' }"
-        @click="$emit('toggle-tool', 'line')"
         circle
+        @click="$emit('toggle-tool', 'line')"
       >
         <el-icon><Minus /></el-icon>
       </el-button>
@@ -49,26 +49,26 @@
       <el-button
         :type="activeTool === 'polygon' ? 'primary' : 'default'"
         :class="{ active: activeTool === 'polygon' }"
-        @click="$emit('toggle-tool', 'polygon')"
         circle
+        @click="$emit('toggle-tool', 'polygon')"
       >
         <el-icon><Operation /></el-icon>
       </el-button>
     </el-tooltip>
 
     <!-- 画笔工具 -->
-    <el-tooltip 
-      :content="activeTool === 'draw' ? '画笔工具 (地图拖拽已禁用)' : '画笔工具'" 
+    <el-tooltip
+      :content="activeTool === 'draw' ? '画笔工具 (地图拖拽已禁用)' : '画笔工具'"
       placement="left"
     >
       <el-button
         :type="activeTool === 'draw' ? 'primary' : 'default'"
-        :class="{ 
+        :class="{
           active: activeTool === 'draw',
-          'draw-tool-active': activeTool === 'draw'
+          'draw-tool-active': activeTool === 'draw',
         }"
-        @click="$emit('toggle-tool', 'draw')"
         circle
+        @click="$emit('toggle-tool', 'draw')"
       >
         <el-icon><Edit /></el-icon>
       </el-button>
@@ -81,10 +81,10 @@
     <el-tooltip content="清除所有" placement="left">
       <el-button
         type="danger"
-        @click="$emit('clear-all')"
         :disabled="!hasDrawings"
         circle
         class="btn-clear"
+        @click="$emit('clear-all')"
       >
         <el-icon><Delete /></el-icon>
       </el-button>
@@ -92,12 +92,7 @@
 
     <!-- 保存工具 -->
     <el-tooltip content="导出保存" placement="left">
-      <el-button
-        type="success"
-        @click="$emit('show-export')"
-        :disabled="!hasDrawings"
-        circle
-      >
+      <el-button type="success" :disabled="!hasDrawings" circle @click="$emit('show-export')">
         <el-icon><Download /></el-icon>
       </el-button>
     </el-tooltip>
@@ -105,39 +100,34 @@
 </template>
 
 <script setup>
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Compass, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Compass,
   Location,
-  Minus, 
-  Operation, 
+  Minus,
+  Operation,
   Edit,
   Download,
-  Delete
-} from '@element-plus/icons-vue'
+  Delete,
+} from '@element-plus/icons-vue';
 
 defineProps({
   activeTool: {
     type: String,
-    default: null
+    default: null,
   },
   hasDrawings: {
     type: Boolean,
-    default: false
+    default: false,
   },
   isCollapsed: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-defineEmits([
-  'toggle-collapse',
-  'toggle-tool',
-  'clear-all', 
-  'show-export'
-])
+defineEmits(['toggle-collapse', 'toggle-tool', 'clear-all', 'show-export']);
 </script>
 
 <style lang="scss" scoped>
@@ -168,7 +158,7 @@ defineEmits([
   cursor: pointer;
   border-radius: 8px;
   margin-bottom: 6px;
-  box-shadow: 0 1px 4px rgba(64,158,255,0.15);
+  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.15);
   align-self: center !important;
 
   .el-icon {
@@ -185,12 +175,12 @@ defineEmits([
   padding: 0 !important;
   border-radius: 50% !important;
   margin: 0 !important; /* 确保没有额外margin */
-  
+
   &.active {
     transform: scale(1.05);
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
   }
-  
+
   .el-icon {
     font-size: 14px;
   }
@@ -204,9 +194,9 @@ defineEmits([
 }
 
 /* 确保危险/成功按钮的圆形和其它按钮一致并垂直对齐 */
-.el-button[type="danger"],
+.el-button[type='danger'],
 .el-button.is-danger,
-.el-button[type="success"],
+.el-button[type='success'],
 .el-button.is-success {
   width: 36px;
   height: 36px;
@@ -220,7 +210,7 @@ defineEmits([
 // 画笔工具特殊状态样式
 .el-button.draw-tool-active {
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -240,16 +230,16 @@ defineEmits([
   .el-button {
     width: 32px;
     height: 32px;
-    
+
     .el-icon {
       font-size: 12px;
     }
   }
-  
+
   .toolbar-toggle-inline {
     width: 32px;
     height: 32px;
-    
+
     .el-icon {
       font-size: 12px;
     }

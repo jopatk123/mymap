@@ -5,7 +5,8 @@ import { useKmlLayer } from './use-kml-layer';
 
 export function useMap(containerId) {
   // 核心地图实例
-  const { map, initMap, changeMapType, destroyMap, getBounds, getZoom, getCenter, setCenter } = useMapInstance(containerId);
+  const { map, initMap, changeMapType, destroyMap, getBounds, getZoom, getCenter, setCenter } =
+    useMapInstance(containerId);
 
   // 共享状态
   const { markers, kmlLayers, isLoading, onMarkerClick } = useMapState();
@@ -39,11 +40,10 @@ export function useMap(containerId) {
   const clearPointMarkers = () => {
     clearMarkersLogic();
   };
-  
+
   const clearKmlLayers = () => {
     clearKmlLayersLogic();
   };
-
 
   return {
     map,
@@ -51,7 +51,7 @@ export function useMap(containerId) {
     kmlLayers,
     isLoading,
     onMarkerClick,
-    
+
     // Map Instance
     initMap,
     changeMapType,
@@ -67,8 +67,8 @@ export function useMap(containerId) {
     addPanoramaMarkers,
     addPointMarkers,
     removeMarker,
-  clearMarkers,
-  clearPointMarkers,
+    clearMarkers,
+    clearPointMarkers,
     fitBounds,
 
     // KML

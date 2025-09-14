@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue';
 
 export function useMapInitializer(
   loadAllPointStyles,
@@ -20,51 +20,49 @@ export function useMapInitializer(
       point_opacity: 1.0,
       point_icon_type: 'marker',
       point_label_size: 14,
-      point_label_color: '#000000'
-    }
+      point_label_color: '#000000',
+    };
     window.panoramaPointStyles = panoramaPointStyles.value || {
       point_color: '#2ed573',
       point_size: 10,
       point_opacity: 1.0,
       point_icon_type: 'marker',
       point_label_size: 12,
-      point_label_color: '#000000'
-    }
-  }
-
-
+      point_label_color: '#000000',
+    };
+  };
 
   // 初始化地图页面
   const initializeMap = async () => {
     // 加载点位样式配置
-    await loadAllPointStyles()
-    
+    await loadAllPointStyles();
+
     // 设置全局样式
-    setupGlobalStyles()
-    
+    setupGlobalStyles();
+
     // 初始化页面
-    await initializePage()
-    
+    await initializePage();
+
     // 监听文件夹可见性变化事件
-    window.addEventListener('folder-visibility-changed', handleFolderVisibilityChanged)
-  }
+    window.addEventListener('folder-visibility-changed', handleFolderVisibilityChanged);
+  };
 
   // 清理资源
   const cleanup = () => {
-    window.removeEventListener('folder-visibility-changed', handleFolderVisibilityChanged)
-  }
+    window.removeEventListener('folder-visibility-changed', handleFolderVisibilityChanged);
+  };
 
   // 设置生命周期钩子
   onMounted(async () => {
-    await initializeMap()
-  })
+    await initializeMap();
+  });
 
   onUnmounted(() => {
-    cleanup()
-  })
+    cleanup();
+  });
 
   return {
     initializeMap,
-    cleanup
-  }
+    cleanup,
+  };
 }

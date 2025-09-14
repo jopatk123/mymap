@@ -6,7 +6,7 @@
     @update:model-value="$emit('update:showPanoramaModal', $event)"
     @panorama-deleted="$emit('panorama-deleted', $event)"
   />
-  
+
   <!-- 上传对话框 -->
   <UploadDialog
     :model-value="showUploadDialog"
@@ -22,44 +22,41 @@
     @update:model-value="$emit('update:showBatchUploadDialog', $event)"
     @success="$emit('upload-success')"
   />
-  
-
 </template>
 
 <script setup>
-import PanoramaModal from '@/components/map/PanoramaModal.vue'
-import UploadDialog from '@/components/common/UploadDialog.vue'
-import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue'
+import PanoramaModal from '@/components/map/PanoramaModal.vue';
+import UploadDialog from '@/components/common/UploadDialog.vue';
+import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue';
 
 defineProps({
   showPanoramaModal: {
     type: Boolean,
-    required: true
+    required: true,
   },
   selectedPanorama: {
     type: Object,
-    default: null
+    default: null,
   },
   showUploadDialog: {
     type: Boolean,
-    required: true
+    required: true,
   },
   showBatchUploadDialog: {
     type: Boolean,
-    default: undefined
+    default: undefined,
   },
-
-})
+});
 
 defineEmits([
   'update:showPanoramaModal',
-  'update:showUploadDialog', 
+  'update:showUploadDialog',
   'update:showBatchUploadDialog',
 
-  'panorama-deleted', 
+  'panorama-deleted',
   'upload-success',
-  'open-batch-upload'
-])
+  'open-batch-upload',
+]);
 </script>
 
 <style lang="scss" scoped>

@@ -3,10 +3,10 @@
     <div class="list-header">
       <h3>点位类型</h3>
     </div>
-    
+
     <div class="point-type-items">
-      <div 
-        v-for="type in pointTypes" 
+      <div
+        v-for="type in pointTypes"
         :key="type.value"
         class="point-type-item"
         :class="{ active: selectedType === type.value }"
@@ -30,25 +30,25 @@
 </template>
 
 <script setup>
-import { VideoPlay, Camera } from '@element-plus/icons-vue'
-import StylePreview from './styles/StylePreview.vue'
+import { VideoPlay, Camera } from '@element-plus/icons-vue';
+import StylePreview from './styles/StylePreview.vue';
 
 const props = defineProps({
   selectedType: {
     type: String,
-    default: ''
+    default: '',
   },
   videoStyles: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   panoramaStyles: {
     type: Object,
-    default: () => ({})
-  }
-})
+    default: () => ({}),
+  },
+});
 
-const emit = defineEmits(['update:selectedType'])
+const emit = defineEmits(['update:selectedType']);
 
 const pointTypes = [
   {
@@ -57,7 +57,7 @@ const pointTypes = [
     description: '设置视频点位的图标和标签样式',
     icon: VideoPlay,
     iconClass: 'video-icon',
-    previewStyles: props.videoStyles
+    previewStyles: props.videoStyles,
   },
   {
     value: 'panorama',
@@ -65,13 +65,13 @@ const pointTypes = [
     description: '设置全景图点位的图标和标签样式',
     icon: Camera,
     iconClass: 'panorama-icon',
-    previewStyles: props.panoramaStyles
-  }
-]
+    previewStyles: props.panoramaStyles,
+  },
+];
 
 const selectType = (type) => {
-  emit('update:selectedType', type)
-}
+  emit('update:selectedType', type);
+};
 </script>
 
 <style lang="scss" scoped>
@@ -79,10 +79,10 @@ const selectType = (type) => {
   width: 320px;
   border-right: 1px solid #e4e7ed;
   padding-right: 20px;
-  
+
   .list-header {
     margin-bottom: 16px;
-    
+
     h3 {
       margin: 0;
       font-size: 16px;
@@ -90,7 +90,7 @@ const selectType = (type) => {
       color: #303133;
     }
   }
-  
+
   .point-type-items {
     .point-type-item {
       display: flex;
@@ -102,18 +102,18 @@ const selectType = (type) => {
       cursor: pointer;
       transition: all 0.2s;
       gap: 12px;
-      
+
       &:hover {
         border-color: #409eff;
         background-color: #f0f9ff;
       }
-      
+
       &.active {
         border-color: #409eff;
         background-color: #e6f7ff;
         box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
       }
-      
+
       .type-icon {
         width: 40px;
         height: 40px;
@@ -122,21 +122,21 @@ const selectType = (type) => {
         align-items: center;
         justify-content: center;
         font-size: 20px;
-        
+
         &.video-icon {
           background-color: #ff4757;
           color: white;
         }
-        
+
         &.panorama-icon {
           background-color: #2ed573;
           color: white;
         }
       }
-      
+
       .type-info {
         flex: 1;
-        
+
         .type-name {
           display: block;
           font-weight: 500;
@@ -144,14 +144,14 @@ const selectType = (type) => {
           margin-bottom: 4px;
           color: #303133;
         }
-        
+
         .type-desc {
           font-size: 12px;
           color: #666;
           line-height: 1.4;
         }
       }
-      
+
       .type-preview {
         width: 60px;
         height: 30px;

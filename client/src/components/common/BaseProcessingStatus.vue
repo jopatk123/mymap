@@ -7,7 +7,7 @@
       </el-icon>
       <span class="processing-text">{{ processingText || '处理中...' }}</span>
     </div>
-    
+
     <!-- 上传进度 -->
     <div v-if="uploading" class="upload-progress">
       <div class="progress-info">
@@ -25,34 +25,34 @@
 </template>
 
 <script setup>
-import { Loading } from '@element-plus/icons-vue'
-import { computed } from 'vue'
+import { Loading } from '@element-plus/icons-vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   processing: {
     type: Boolean,
-    default: false
+    default: false,
   },
   processingText: {
     type: String,
-    default: ''
+    default: '',
   },
   uploading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   uploadProgress: {
     type: Number,
-    default: 0
-  }
-})
+    default: 0,
+  },
+});
 
 // 根据进度改变颜色
 const progressColor = computed(() => {
-  if (props.uploadProgress < 30) return '#f56c6c'
-  if (props.uploadProgress < 70) return '#e6a23c'
-  return '#67c23a'
-})
+  if (props.uploadProgress < 30) return '#f56c6c';
+  if (props.uploadProgress < 70) return '#e6a23c';
+  return '#67c23a';
+});
 </script>
 
 <style scoped>

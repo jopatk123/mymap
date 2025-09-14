@@ -1,7 +1,7 @@
 <template>
   <div class="style-debug-panel">
     <h3>🔧 点位样式调试面板</h3>
-    
+
     <div class="debug-section">
       <h4>📊 当前样式状态</h4>
       <div class="style-info">
@@ -14,7 +14,7 @@
             <pre>{{ JSON.stringify(globalVideoStyles, null, 2) }}</pre>
           </div>
         </div>
-        
+
         <div class="style-group">
           <h5>🌐 全景图点位样式</h5>
           <div class="style-details">
@@ -30,12 +30,12 @@
     <div class="debug-section">
       <h4>🧪 测试操作</h4>
       <div class="test-buttons">
-        <button @click="loadStyles" :disabled="loading">
+        <button :disabled="loading" @click="loadStyles">
           {{ loading ? '加载中...' : '重新加载样式' }}
         </button>
         <button @click="syncGlobalStyles">同步全局样式</button>
         <button @click="testStyleUpdate">测试样式更新</button>
-        <button @click="clearCache">清除缓存</button>
+        <button @click="handleClearCache">清除缓存</button>
       </div>
     </div>
 
@@ -52,9 +52,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { usePointStyles } from '@/composables/use-point-styles.js'
-import styleManager from '@/utils/style-manager.js'
+import { ref, onMounted, computed } from 'vue';
+import { usePointStyles } from '@/composables/use-point-styles.js';
+import styleManager from '@/utils/style-manager.js';
 
 const {
   loading,
@@ -64,82 +64,85 @@ const {
   updateVideoPointStyles,
   updatePanoramaPointStyles,
   syncGlobalStyles,
-  clearCache
-} = usePointStyles()
+  clearCache,
+} = usePointStyles();
 
-const logs = ref([])
+const logs = ref([]);
 
 // 计算全局样式变量
 const globalVideoStyles = computed(() => {
-  return window.videoPointStyles || {}
-})
+  return window.videoPointStyles || {};
+});
 
 const globalPanoramaStyles = computed(() => {
-  return window.panoramaPointStyles || {}
-})
+  return window.panoramaPointStyles || {};
+});
 
 // 添加日志
 const addLog = (message) => {
   logs.value.unshift({
     time: new Date().toLocaleTimeString(),
-    message
-  })
+    message,
+  });
   // 只保留最近20条日志
   if (logs.value.length > 20) {
-    logs.value = logs.value.slice(0, 20)
+    logs.value = logs.value.slice(0, 20);
   }
-}
+};
 
 // 加载样式
 const loadStyles = async () => {
   try {
-    addLog('开始加载样式配置...')
-    await styleManager.refresh()
-    await loadAllPointStyles(false) // 强制从服务器加载
-    addLog('✅ 样式配置加载成功')
+    addLog('开始加载样式配置...');
+    await styleManager.refresh();
+    await loadAllPointStyles(false); // 强制从服务器加载
+    addLog('✅ 样式配置加载成功');
   } catch (error) {
-    addLog(`❌ 样式配置加载失败: ${error.message}`)
+    addLog(`❌ 样式配置加载失败: ${error.message}`);
   }
-}
+};
 
 // 测试样式更新
 const testStyleUpdate = async () => {
   try {
-    addLog('开始测试样式更新...')
-    
+    addLog('开始测试样式更新...');
+
     // 测试更新视频点位样式
     const newVideoStyle = {
-      point_color: '#' + Math.floor(Math.random()*16777215).toString(16),
-      point_size: Math.floor(Math.random() * 10) + 8
-    }
-    
-    await updateVideoPointStyles(newVideoStyle)
-    addLog(`✅ 视频点位样式更新成功: 颜色=${newVideoStyle.point_color}, 大小=${newVideoStyle.point_size}`)
-    
+      point_color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      point_size: Math.floor(Math.random() * 10) + 8,
+    };
+
+    await updateVideoPointStyles(newVideoStyle);
+    addLog(
+      `✅ 视频点位样式更新成功: 颜色=${newVideoStyle.point_color}, 大小=${newVideoStyle.point_size}`
+    );
+
     // 测试更新全景图点位样式
     const newPanoramaStyle = {
-      point_color: '#' + Math.floor(Math.random()*16777215).toString(16),
-      point_size: Math.floor(Math.random() * 10) + 8
-    }
-    
-    await updatePanoramaPointStyles(newPanoramaStyle)
-    addLog(`✅ 全景图点位样式更新成功: 颜色=${newPanoramaStyle.point_color}, 大小=${newPanoramaStyle.point_size}`)
-    
+      point_color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      point_size: Math.floor(Math.random() * 10) + 8,
+    };
+
+    await updatePanoramaPointStyles(newPanoramaStyle);
+    addLog(
+      `✅ 全景图点位样式更新成功: 颜色=${newPanoramaStyle.point_color}, 大小=${newPanoramaStyle.point_size}`
+    );
   } catch (error) {
-    addLog(`❌ 样式更新测试失败: ${error.message}`)
+    addLog(`❌ 样式更新测试失败: ${error.message}`);
   }
-}
+};
 
 // 清除缓存
 const handleClearCache = () => {
-  clearCache()
-  addLog('🗑️ 本地缓存已清除')
-}
+  clearCache();
+  addLog('🗑️ 本地缓存已清除');
+};
 
 onMounted(() => {
-  addLog('🚀 样式调试面板已加载')
-  loadStyles()
-})
+  addLog('🚀 样式调试面板已加载');
+  loadStyles();
+});
 </script>
 
 <style scoped>
@@ -229,7 +232,9 @@ onMounted(() => {
   color: #333;
 }
 
-h3, h4, h5 {
+h3,
+h4,
+h5 {
   margin-top: 0;
   color: #333;
 }

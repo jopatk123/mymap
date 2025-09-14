@@ -61,16 +61,26 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           try {
             // convert received plain object to Map for existing code compatibility
             state.spatialIndex = new Map(Object.entries(msg.index || {}));
-            try { console.info('[Map] 空间索引(Worker) 构建完成', { cells: state.spatialIndex.size }); } catch {}
+            try {
+              console.info('[Map] 空间索引(Worker) 构建完成', { cells: state.spatialIndex.size });
+            } catch {}
           } catch (err) {
-            try { console.warn('Failed to apply spatial index from worker', err); } catch {}
+            try {
+              console.warn('Failed to apply spatial index from worker', err);
+            } catch {}
           }
         }
       };
-      indexWorker.onerror = (err) => { try { console.warn('Index worker error', err); } catch {} };
+      indexWorker.onerror = (err) => {
+        try {
+          console.warn('Index worker error', err);
+        } catch {}
+      };
       return indexWorker;
     } catch (err) {
-      try { console.warn('Failed to create index worker', err); } catch {}
+      try {
+        console.warn('Failed to create index worker', err);
+      } catch {}
       indexWorker = null;
       return null;
     }
@@ -98,11 +108,25 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     if (worker) {
       try {
         // worker 接收原始点数组；为避免 circular 引用，传送最小字段
-        const payloadPoints = state.sourcePoints.map(p => ({ id: p.id, wgs84_lng: p.wgs84_lng, wgs84_lat: p.wgs84_lat, coordinates: p.coordinates }));
-        worker.postMessage({ type: 'buildIndex', points: payloadPoints, cellSizeDeg: state.cellSizeDeg });
+        const payloadPoints = state.sourcePoints.map((p) => ({
+          id: p.id,
+          wgs84_lng: p.wgs84_lng,
+          wgs84_lat: p.wgs84_lat,
+          coordinates: p.coordinates,
+        }));
+        worker.postMessage({
+          type: 'buildIndex',
+          points: payloadPoints,
+          cellSizeDeg: state.cellSizeDeg,
+        });
         return;
       } catch (err) {
-        try { console.warn('[Map] index worker postMessage failed, falling back to main-thread build', err); } catch {}
+        try {
+          console.warn(
+            '[Map] index worker postMessage failed, falling back to main-thread build',
+            err
+          );
+        } catch {}
       }
     }
 
@@ -119,10 +143,15 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       if (!isFinite(lat) || !isFinite(lng)) continue;
       const key = getCellKey(lng, lat);
       let bucket = state.spatialIndex.get(key);
-      if (!bucket) { bucket = []; state.spatialIndex.set(key, bucket); }
+      if (!bucket) {
+        bucket = [];
+        state.spatialIndex.set(key, bucket);
+      }
       bucket.push(p);
     }
-    try { console.info('[Map] 空间索引构建完成', { cells: state.spatialIndex.size }); } catch {}
+    try {
+      console.info('[Map] 空间索引构建完成', { cells: state.spatialIndex.size });
+    } catch {}
   };
 
   // 根据当前地图缩放级别自适应 cellSizeDeg
@@ -139,7 +168,9 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       else newSize = 0.02;
       if (Math.abs(newSize - state.cellSizeDeg) > 1e-9) {
         state.cellSizeDeg = newSize;
-        try { console.info('[Map] 调整 cellSizeDeg', { zoom: z, cellSizeDeg: state.cellSizeDeg }); } catch {}
+        try {
+          console.info('[Map] 调整 cellSizeDeg', { zoom: z, cellSizeDeg: state.cellSizeDeg });
+        } catch {}
       }
     } catch {}
   };
@@ -157,7 +188,10 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
         const bucket = state.spatialIndex.get(`${x}:${y}`);
         if (!bucket || bucket.length === 0) continue;
         for (const p of bucket) {
-          if (!seen.has(p.id)) { out.push(p); seen.add(p.id); }
+          if (!seen.has(p.id)) {
+            out.push(p);
+            seen.add(p.id);
+          }
         }
       }
     }
@@ -174,7 +208,9 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
         else if (z <= 12) pad = Math.min(pad, 0.1);
       }
       return b.pad(pad);
-    } catch { return b; }
+    } catch {
+      return b;
+    }
   };
 
   const createMarkerInfo = (point) => {
@@ -188,11 +224,16 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     const [displayLng, displayLat] = coordinates;
     const pointType = point.type || 'panorama';
     const paneName = getPaneNameByType(pointType);
-    const marker = createPointMarker([displayLat, displayLng], pointType, {
-      title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
-      updateWhenZoom: false,
-      pane: paneName,
-    }, point.styleConfig || null);
+    const marker = createPointMarker(
+      [displayLat, displayLng],
+      pointType,
+      {
+        title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
+        updateWhenZoom: false,
+        pane: paneName,
+      },
+      point.styleConfig || null
+    );
     marker.on('click', () => onMarkerClick.value(point));
     return { id: point.id, marker, type: pointType, data: point };
   };
@@ -200,16 +241,32 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
   const updateViewportRendering = () => {
     if (!map.value || !state.enabled || !state.sourcePoints?.length) return;
     const bounds = getPaddedBounds();
-    const sw = bounds?._southWest; const ne = bounds?._northEast; if (!sw || !ne) return;
-    const south = sw.lat, west = sw.lng, north = ne.lat, east = ne.lng;
+    const sw = bounds?._southWest;
+    const ne = bounds?._northEast;
+    if (!sw || !ne) return;
+    const south = sw.lat,
+      west = sw.lng,
+      north = ne.lat,
+      east = ne.lng;
 
-  const toAdd = [];
+    const toAdd = [];
     const currentInBounds = new Set();
     const candidates = getCandidatesByBounds(west, south, east, north);
-  try { console.info('[Map][DEBUG] candidates count for bounds', { candidates: candidates.length, west, south, east, north }) } catch {}
+    try {
+      console.info('[Map][DEBUG] candidates count for bounds', {
+        candidates: candidates.length,
+        west,
+        south,
+        east,
+        north,
+      });
+    } catch {}
     for (const p of candidates) {
       let coords = state.coordCache.get(p.id);
-      if (!coords) { coords = getDisplayCoordinates(p); if (coords) state.coordCache.set(p.id, coords); }
+      if (!coords) {
+        coords = getDisplayCoordinates(p);
+        if (coords) state.coordCache.set(p.id, coords);
+      }
       if (!coords) continue;
       const [lng, lat] = coords;
       if (lat >= south && lat <= north && lng >= west && lng <= east) {
@@ -219,18 +276,35 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     }
 
     const toRemove = [];
-    state.renderedIds.forEach((id) => { if (!currentInBounds.has(id)) toRemove.push(id); });
-    try { console.info('[Map][DEBUG] toAdd/toRemove lengths', { toAdd: toAdd.length, toRemove: toRemove.length, renderedIds: state.renderedIds.size }) } catch {}
+    state.renderedIds.forEach((id) => {
+      if (!currentInBounds.has(id)) toRemove.push(id);
+    });
+    try {
+      console.info('[Map][DEBUG] toAdd/toRemove lengths', {
+        toAdd: toAdd.length,
+        toRemove: toRemove.length,
+        renderedIds: state.renderedIds.size,
+      });
+    } catch {}
 
     if (toRemove.length) {
-      try { console.info('[Map][DEBUG] removing markers', { count: toRemove.length }) } catch {}
+      try {
+        console.info('[Map][DEBUG] removing markers', { count: toRemove.length });
+      } catch {}
       removeMarkersBatch(toRemove);
       toRemove.forEach((id) => state.renderedIds.delete(id));
     }
     if (toAdd.length) {
       const createBatch = [];
-      for (const p of toAdd) { const info = createMarkerInfo(p); if (info) createBatch.push(info); }
-      try { console.info('[Map][DEBUG] created createBatch length', { createBatch: createBatch.length }) } catch {}
+      for (const p of toAdd) {
+        const info = createMarkerInfo(p);
+        if (info) createBatch.push(info);
+      }
+      try {
+        console.info('[Map][DEBUG] created createBatch length', {
+          createBatch: createBatch.length,
+        });
+      } catch {}
 
       if (createBatch.length) {
         const videoBatch = [];
@@ -243,7 +317,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
 
         for (const info of createBatch) {
           markers.value.push(info);
-            state.idToMarker.set(info.id, { marker: info.marker, type: info.type });
+          state.idToMarker.set(info.id, { marker: info.marker, type: info.type });
           if (!window.currentMarkers) window.currentMarkers = [];
           window.currentMarkers.push(info);
           if (info.type === 'video' && videoClusterOn) videoBatch.push(info.marker);
@@ -251,12 +325,30 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           else normalBatch.push(info.marker);
           state.renderedIds.add(info.id);
         }
-        try { console.info('[Map][DEBUG] batches sizes', { videoBatch: videoBatch.length, panoBatch: panoBatch.length, normalBatch: normalBatch.length }) } catch {}
+        try {
+          console.info('[Map][DEBUG] batches sizes', {
+            videoBatch: videoBatch.length,
+            panoBatch: panoBatch.length,
+            normalBatch: normalBatch.length,
+          });
+        } catch {}
 
-        if (videoBatch.length) { const g = clusterManager.ensureClusterGroup('video'); g.addLayers(videoBatch); clusterManager.ensureZoomGuards(); }
-        if (panoBatch.length) { const g = clusterManager.ensureClusterGroup('panorama'); g.addLayers(panoBatch); clusterManager.ensureZoomGuards(); }
-        if (normalBatch.length) { for (const m of normalBatch) m.addTo(map.value); }
-        try { console.info('[Map][DEBUG] renderedIds size after add', state.renderedIds.size) } catch {}
+        if (videoBatch.length) {
+          const g = clusterManager.ensureClusterGroup('video');
+          g.addLayers(videoBatch);
+          clusterManager.ensureZoomGuards();
+        }
+        if (panoBatch.length) {
+          const g = clusterManager.ensureClusterGroup('panorama');
+          g.addLayers(panoBatch);
+          clusterManager.ensureZoomGuards();
+        }
+        if (normalBatch.length) {
+          for (const m of normalBatch) m.addTo(map.value);
+        }
+        try {
+          console.info('[Map][DEBUG] renderedIds size after add', state.renderedIds.size);
+        } catch {}
       }
     }
   };
@@ -270,20 +362,29 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       const info = state.idToMarker.get(id);
       if (!info) continue;
       const { marker, type } = info;
-      const styles = type === 'video' ? (window.videoPointStyles || {}) : (window.panoramaPointStyles || {});
+      const styles =
+        type === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
       const useCluster = Boolean(styles.cluster_enabled);
       if (useCluster) {
-        if (type === 'video') videoToRemove.push(marker); else panoToRemove.push(marker);
+        if (type === 'video') videoToRemove.push(marker);
+        else panoToRemove.push(marker);
       } else normalToRemove.push(marker);
       state.idToMarker.delete(id);
       const idx = markers.value.findIndex((m) => m.id === id);
       if (idx > -1) markers.value.splice(idx, 1);
-      if (window.currentMarkers) window.currentMarkers = window.currentMarkers.filter(m => m.id !== id);
+      if (window.currentMarkers)
+        window.currentMarkers = window.currentMarkers.filter((m) => m.id !== id);
     }
-    if (videoToRemove.length && clusterManager.videoClusterGroup) clusterManager.videoClusterGroup.removeLayers(videoToRemove);
-    if (panoToRemove.length && clusterManager.panoramaClusterGroup) clusterManager.panoramaClusterGroup.removeLayers(panoToRemove);
+    if (videoToRemove.length && clusterManager.videoClusterGroup)
+      clusterManager.videoClusterGroup.removeLayers(videoToRemove);
+    if (panoToRemove.length && clusterManager.panoramaClusterGroup)
+      clusterManager.panoramaClusterGroup.removeLayers(panoToRemove);
     if (normalToRemove.length) {
-      for (const m of normalToRemove) { try { if (m && m._map && map.value) map.value.removeLayer(m); } catch {} }
+      for (const m of normalToRemove) {
+        try {
+          if (m && m._map && map.value) map.value.removeLayer(m);
+        } catch {}
+      }
     }
   };
 
@@ -297,25 +398,52 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     state.coordCache.clear();
     state.spatialIndex.clear();
     state.cellSizeDeg = options.cellSizeDeg ?? state.cellSizeDeg;
-    try { console.info('[Map] 视口裁剪渲染已启用', { count: state.sourcePoints.length, bufferPad: state.bufferPad, updateIntervalMs: state.updateIntervalMs }); } catch {}
+    try {
+      console.info('[Map] 视口裁剪渲染已启用', {
+        count: state.sourcePoints.length,
+        bufferPad: state.bufferPad,
+        updateIntervalMs: state.updateIntervalMs,
+      });
+    } catch {}
 
     if (!state.buildIndexScheduled) {
       state.buildIndexScheduled = true;
-      setTimeout(() => { try { buildSpatialIndex(); } finally { state.buildIndexScheduled = false; } }, 0);
+      setTimeout(() => {
+        try {
+          buildSpatialIndex();
+        } finally {
+          state.buildIndexScheduled = false;
+        }
+      }, 0);
     }
 
-    state.onZoomStart = () => { state.isZooming = true; state.prevInterval = state.updateIntervalMs; state.updateIntervalMs = Math.max(state.updateIntervalMs, 300); };
-    state.onMoveEnd = () => { if (!state.isZooming) scheduleViewportUpdate(); };
-    state.onZoomEnd = () => { 
-      state.isZooming = false; 
-      if (state.prevInterval != null) { state.updateIntervalMs = state.prevInterval; state.prevInterval = null; }
+    state.onZoomStart = () => {
+      state.isZooming = true;
+      state.prevInterval = state.updateIntervalMs;
+      state.updateIntervalMs = Math.max(state.updateIntervalMs, 300);
+    };
+    state.onMoveEnd = () => {
+      if (!state.isZooming) scheduleViewportUpdate();
+    };
+    state.onZoomEnd = () => {
+      state.isZooming = false;
+      if (state.prevInterval != null) {
+        state.updateIntervalMs = state.prevInterval;
+        state.prevInterval = null;
+      }
       // 缩放结束后根据新缩放级别调整栅格大小并重建索引
       adjustCellSizeByZoom();
       if (!state.buildIndexScheduled) {
         state.buildIndexScheduled = true;
-        setTimeout(() => { try { buildSpatialIndex(); } finally { state.buildIndexScheduled = false; } }, 0);
+        setTimeout(() => {
+          try {
+            buildSpatialIndex();
+          } finally {
+            state.buildIndexScheduled = false;
+          }
+        }, 0);
       }
-      scheduleViewportUpdate(); 
+      scheduleViewportUpdate();
     };
     map.value.on('zoomstart', state.onZoomStart);
     map.value.on('moveend', state.onMoveEnd);
@@ -334,7 +462,9 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     state.coordCache.clear();
     state.idToMarker.clear();
     state.spatialIndex.clear();
-    try { console.info('[Map] 视口裁剪渲染已关闭'); } catch {}
+    try {
+      console.info('[Map] 视口裁剪渲染已关闭');
+    } catch {}
   };
 
   return {

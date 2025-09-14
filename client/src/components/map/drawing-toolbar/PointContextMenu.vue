@@ -24,52 +24,55 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
-import { Edit, Delete } from '@element-plus/icons-vue'
+import { ref, nextTick, watch } from 'vue';
+import { Edit, Delete } from '@element-plus/icons-vue';
 
 const props = defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   position: {
     type: Object,
-    default: () => ({ x: 0, y: 0 })
-  }
-})
+    default: () => ({ x: 0, y: 0 }),
+  },
+});
 
-const emit = defineEmits(['close', 'edit-properties', 'delete-point'])
+const emit = defineEmits(['close', 'edit-properties', 'delete-point']);
 
-const dropdownRef = ref(null)
+const dropdownRef = ref(null);
 
 // 监听可见性变化，调整下拉菜单位置
-watch(() => props.visible, async (visible) => {
-  if (visible && dropdownRef.value) {
-    await nextTick()
-    // 获取下拉菜单的DOM元素并设置位置，增加空值检查以防止 runtime 错误
-  // debug: context menu visible at position (suppressed)
-    const popperEl = dropdownRef.value?.popperRef?.contentRef
-    const pos = props.position || { x: 0, y: 0 }
-    if (popperEl && popperEl.style) {
-      try {
-        popperEl.style.position = 'fixed'
-        // 仅在 pos.x/pos.y 有效时设置 left/top
-        if (typeof pos.x === 'number') popperEl.style.left = pos.x + 'px'
-        if (typeof pos.y === 'number') popperEl.style.top = pos.y + 'px'
-        popperEl.style.zIndex = '9999'
-      } catch (err) {
-        // 如果设置样式失败，记录（在 dev 环境下）但不抛出
-        console.warn('[PointContextMenu] 设置 context menu 位置失败', err)
+watch(
+  () => props.visible,
+  async (visible) => {
+    if (visible && dropdownRef.value) {
+      await nextTick();
+      // 获取下拉菜单的DOM元素并设置位置，增加空值检查以防止 runtime 错误
+      // debug: context menu visible at position (suppressed)
+      const popperEl = dropdownRef.value?.popperRef?.contentRef;
+      const pos = props.position || { x: 0, y: 0 };
+      if (popperEl && popperEl.style) {
+        try {
+          popperEl.style.position = 'fixed';
+          // 仅在 pos.x/pos.y 有效时设置 left/top
+          if (typeof pos.x === 'number') popperEl.style.left = pos.x + 'px';
+          if (typeof pos.y === 'number') popperEl.style.top = pos.y + 'px';
+          popperEl.style.zIndex = '9999';
+        } catch (err) {
+          // 如果设置样式失败，记录（在 dev 环境下）但不抛出
+          console.warn('[PointContextMenu] 设置 context menu 位置失败', err);
+        }
       }
     }
   }
-})
+);
 
 const handleVisibleChange = (visible) => {
   if (!visible) {
-    emit('close')
+    emit('close');
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
