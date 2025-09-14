@@ -38,26 +38,33 @@ mkdir -p "$OUT_DIR"
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [--no-compress] [--single]
+Usage: $(basename "$0") [--no-compress] [--single|--multi]
 
-This script will (default: single archive):
+This script will:
   - build the local image $MAP_IMAGE_NAME from $DOCKERFILE_PATH
   - pull $NGINX_IMAGE_NAME if not present locally
-  - save both images into a single tar.gz by default (use --single to keep this behavior)
-  - when not using single mode, produce sha256 checksums for each archive
+  - by default create a single archive containing both images (single mode)
+  - use --multi to save each image to its own archive and generate sha256 checksums
 
 Environment variables honored as build-args: HTTP_PROXY, HTTPS_PROXY, NO_PROXY, ALPINE_MIRROR
+
+Other environment variables:
+  USE_LOCAL_CLIENT=1    # if set, will pass to docker build so Dockerfile can copy a local client/dist
+  USE_HOST_PROXY=1     # if set, proxy env values on host are forwarded into docker build
+  KEEP_BUILD_CONTEXT=1  # if set, temporary build_context_extra is left on disk
 
 EOF
 }
 
 COMPRESS=true
+# default: single archive containing both images
 SINGLE=true
 while [[ ${#} -gt 0 ]]; do
   case $1 in
     -h|--help) usage; exit 0 ;;
     --no-compress) COMPRESS=false; shift ;;
-  --single) SINGLE=true; shift ;;
+    --single) SINGLE=true; shift ;;
+    --multi|--separate) SINGLE=false; shift ;;
     *) echo "Unknown arg: $1"; usage; exit 2 ;;
   esac
 done
@@ -92,20 +99,24 @@ fi
 # By default we clear proxy build-args so the build won't inherit a
 # localhost proxy that is unreachable from inside the container.
 # If you explicitly want to use the host proxy, set USE_HOST_PROXY=1
-build_args=( --build-arg "HTTP_PROXY=" --build-arg "HTTPS_PROXY=" --build-arg "NO_PROXY=" )
+# Default: clear common proxy build-args so docker build doesn't inherit a host-only proxy
+build_args=()
 DOCKER_BUILD_NETWORK=""
 if [ "${USE_HOST_PROXY:-0}" = "1" ]; then
   for var in HTTP_PROXY HTTPS_PROXY NO_PROXY ALPINE_MIRROR; do
     val="${!var:-}"
     if [ -n "$val" ]; then
       # If proxy points to localhost, enable host networking
-      if [[ "$var" =~ ^HTTP_PROXY$|^HTTPS_PROXY$ ]] && printf "%s" "$val" | grep -Eq "127\\.0\\.0\\.1|localhost"; then
+      if [[ "$var" =~ ^HTTP_PROXY$|^HTTPS_PROXY$ ]] && printf "%s" "$val" | grep -Eq "127\\.0\\.1|localhost"; then
         echo "Detected $var pointing to localhost; enabling --network=host for docker build and passing proxy values"
         DOCKER_BUILD_NETWORK="--network=host"
       fi
       build_args+=( --build-arg "$var=$val" )
     fi
   done
+else
+  # explicitly clear these so the build won't inherit host-local proxies
+  build_args+=( --build-arg "HTTP_PROXY=" --build-arg "HTTPS_PROXY=" --build-arg "NO_PROXY=" )
 fi
 
 echo "Building image: $MAP_IMAGE_NAME"
@@ -115,14 +126,19 @@ if [ -n "$DOCKER_BUILD_NETWORK" ]; then
   docker_build_cmd+=("$DOCKER_BUILD_NETWORK")
 fi
 docker_build_cmd+=( -t "$MAP_IMAGE_NAME" -f "$DOCKERFILE_PATH" )
-# append build-args if any
+
+# pass USE_LOCAL_CLIENT through to docker build so Dockerfile can act on it if desired
+if [ "${USE_LOCAL_CLIENT:-0}" = "1" ]; then
+  build_args+=( --build-arg "USE_LOCAL_CLIENT=1" )
+fi
+
 if [ ${#build_args[@]} -gt 0 ]; then
   docker_build_cmd+=( "${build_args[@]}" )
 fi
 docker_build_cmd+=("$BUILD_CONTEXT")
 
-# Execute the command array
-eval "${docker_build_cmd[@]}"
+# Execute the command array safely (preserve argument boundaries)
+"${docker_build_cmd[@]}"
 set +x
 
 echo "Ensuring nginx image exists locally: $NGINX_IMAGE_NAME"
@@ -188,7 +204,23 @@ else
   echo "  ${nginx_out}.sha256"
 fi
 
-cat <<EOF
+if [ "$SINGLE" = true ]; then
+  cat <<EOF
+Next steps (on the target server):
+
+  1) Upload the files in the "$OUT_DIR" directory to the server.
+  2) On the server, run:
+
+     docker load -i ${OUT_DIR}/mymap_images.tar.gz
+
+     # then start the stack (no build on server)
+     docker compose up -d
+
+  Note: If you used --no-compress, drop the .gz suffix above.
+
+EOF
+else
+  cat <<EOF
 Next steps (on the target server):
 
   1) Upload the files in the "$OUT_DIR" directory to the server.
@@ -203,5 +235,6 @@ Next steps (on the target server):
   Note: If you used --no-compress, drop the .gz suffix above.
 
 EOF
+fi
 
 exit 0

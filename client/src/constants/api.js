@@ -1,7 +1,8 @@
 // API相关常量
 export const API_CONFIG = {
   // 基础URL
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002',
+  // 默认使用相对路径 /api（由 nginx 或后台代理），避免硬编码容器内网地址到前端构建。
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api',
 
   // 请求超时时间
   TIMEOUT: 30000,

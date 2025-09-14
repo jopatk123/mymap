@@ -41,6 +41,57 @@ const getDatabase = async () => {
   return db;
 };
 
+// 检查表中是否存在指定列
+const columnExists = async (database, table, column) => {
+  try {
+    const rows = await database.all(`PRAGMA table_info(${table});`);
+    return rows.some((r) => r.name === column);
+  } catch (err) {
+    Logger.warn(`检查列是否存在失败: ${table}.${column} -> ${err.message}`);
+    return false;
+  }
+};
+
+// 获取/设置 user_version（简单迁移版本）
+const getUserVersion = async (database) => {
+  const row = await database.get('PRAGMA user_version');
+  return row && row.user_version ? row.user_version : 0;
+};
+
+const setUserVersion = async (database, v) => {
+  await database.exec(`PRAGMA user_version = ${v}`);
+};
+
+// 运行迁移（目前只是保证 kml_files 表有 is_basemap 列）
+const runMigrations = async (database) => {
+  try {
+    const current = await getUserVersion(database);
+    const migrations = [
+      {
+        version: 1,
+        description: 'ensure is_basemap column exists on kml_files',
+        up: async () => {
+          const exists = await columnExists(database, 'kml_files', 'is_basemap');
+          if (!exists) {
+            Logger.info('迁移: 添加 kml_files.is_basemap 列');
+            await database.exec('ALTER TABLE kml_files ADD COLUMN is_basemap INTEGER DEFAULT 0;');
+          }
+        },
+      },
+    ];
+
+    for (const m of migrations) {
+      if (m.version > current) {
+        Logger.info(`Applying DB migration v${m.version}: ${m.description}`);
+        await m.up();
+        await setUserVersion(database, m.version);
+      }
+    }
+  } catch (err) {
+    Logger.warn('运行数据库迁移时出现问题: ' + err.message);
+  }
+};
+
 // 测试数据库连接
 const testConnection = async () => {
   try {
@@ -250,6 +301,12 @@ const initTables = async () => {
       await initDefaultFolder();
     } catch (error) {
       Logger.warn('初始化默认文件夹失败:', error.message);
+    }
+    // 运行轻量级迁移，确保新增列/更改被应用到已存在的数据库
+    try {
+      await runMigrations(database);
+    } catch (err) {
+      Logger.warn('运行迁移失败:', err.message);
     }
   } catch (error) {
     Logger.error('数据库表初始化失败:', error.message);

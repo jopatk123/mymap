@@ -1,6 +1,9 @@
 import axios from 'axios';
+import api from './index';
 
-const BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+// 优先使用项目统一的 axios 实例（baseURL=/api），避免在生产环境中把后端地址写死在 bundle 中。
+// 仅在开发环境且明确设置了 VITE_API_BASE_URL 时，允许回退到该绝对地址（便于本地调试）。
+const DEV_BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || null;
 
 class KMLSearchAPI {
   /**
@@ -23,12 +26,17 @@ class KMLSearchAPI {
         params.files = files;
       }
 
-      const response = await axios.get(`${BACKEND_BASE}/api/kml-search/search`, {
-        params,
-        timeout: 10000,
-      });
+      // 在生产或默认情况下使用相对 /api 路径（通过项目的 api 实例统一处理）
+      if (DEV_BACKEND_BASE && import.meta.env.MODE !== 'production') {
+        const response = await axios.get(`${DEV_BACKEND_BASE}/api/kml-search/search`, {
+          params,
+          timeout: 10000,
+        });
+        return response.data;
+      }
 
-      return response.data;
+      const resp = await api.get('/kml-search/search', { params });
+      return resp;
     } catch (error) {
       console.error('搜索KML点位失败:', error);
       throw new Error(error.response?.data?.message || '搜索KML点位失败');
@@ -47,12 +55,16 @@ class KMLSearchAPI {
         params.files = files;
       }
 
-      const response = await axios.get(`${BACKEND_BASE}/api/kml-search/points`, {
-        params,
-        timeout: 10000,
-      });
+      if (DEV_BACKEND_BASE && import.meta.env.MODE !== 'production') {
+        const response = await axios.get(`${DEV_BACKEND_BASE}/api/kml-search/points`, {
+          params,
+          timeout: 10000,
+        });
+        return response.data;
+      }
 
-      return response.data;
+      const resp = await api.get('/kml-search/points', { params });
+      return resp;
     } catch (error) {
       console.error('获取所有KML点位失败:', error);
       throw new Error(error.response?.data?.message || '获取所有KML点位失败');
@@ -70,14 +82,16 @@ class KMLSearchAPI {
     }
 
     try {
-      const response = await axios.get(
-        `${BACKEND_BASE}/api/kml-search/points/${encodeURIComponent(id)}`,
-        {
-          timeout: 10000,
-        }
-      );
+      if (DEV_BACKEND_BASE && import.meta.env.MODE !== 'production') {
+        const response = await axios.get(
+          `${DEV_BACKEND_BASE}/api/kml-search/points/${encodeURIComponent(id)}`,
+          { timeout: 10000 }
+        );
+        return response.data;
+      }
 
-      return response.data;
+      const resp = await api.get(`/kml-search/points/${encodeURIComponent(id)}`);
+      return resp;
     } catch (error) {
       console.error('获取KML点位详情失败:', error);
       throw new Error(error.response?.data?.message || '获取KML点位详情失败');
