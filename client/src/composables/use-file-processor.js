@@ -90,10 +90,10 @@ export function useKmlProcessor() {
       } else {
         ElMessage.error('KML文件格式错误: ' + validation.error);
       }
-    } catch (error) {
-      console.error('验证KML文件失败:', error);
-      ElMessage.error('验证KML文件失败: ' + error.message);
-      validationResult.value = { valid: false, error: error.message };
+    } catch (_error) {
+      // console.error('验证KML文件失败:', _error);
+      ElMessage.error('验证KML文件失败: ' + _error.message);
+      validationResult.value = { valid: false, error: _error.message };
     }
   };
 
@@ -226,10 +226,10 @@ export function usePanoramaProcessor() {
       previewUrl.value = result.previewUrl;
 
       return result;
-    } catch (error) {
-      console.error('处理文件失败:', error);
-      ElMessage.error(error.message);
-      throw error;
+    } catch (_error) {
+      // console.error('处理文件失败:', _error);
+      ElMessage.error(_error.message);
+      throw _error;
     }
   };
 
