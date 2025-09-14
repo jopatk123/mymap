@@ -64,10 +64,10 @@ export function useFileOperations() {
           throw new Error('未知文件类型');
       }
 
-      const result = await req;
-      // debug: 删除API调用成功 (suppressed)
+  const _result = await req;
+  // debug: 删除API调用成功 (suppressed)
 
-      ElMessage.success('删除成功');
+  ElMessage.success('删除成功');
 
       // debug: 准备调用 onSuccess (suppressed)
       if (onSuccess) {
@@ -128,8 +128,7 @@ export function useFileOperations() {
 
       if (failedMoves.length > 0) {
         ElMessage.error('部分文件移动失败');
-        // 记录失败详情到控制台以便开发调试（仅在调试时查看）
-        // console.error('移动失败详情:', failedMoves);
+        // 记录失败详情到日志系统或调试器（已屏蔽 console 输出以满足 lint）
       } else {
         ElMessage.success('移动成功');
       }
@@ -152,7 +151,6 @@ export function useFileOperations() {
       ElMessage.success('文件已从列表中移除');
       onSuccess?.();
     } catch (error) {
-      // console.error('删除文件后更新失败:', error);
       ElMessage.error('更新失败，请刷新页面');
     }
   };

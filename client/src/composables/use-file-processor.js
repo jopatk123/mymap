@@ -79,7 +79,6 @@ export function useKmlProcessor() {
 
   const validateKmlFile = async (file) => {
     try {
-      // 前端基本验证：读取文件内容并检查XML格式
       const fileContent = await readFileAsText(file);
       const validation = await validateKmlContent(fileContent);
 

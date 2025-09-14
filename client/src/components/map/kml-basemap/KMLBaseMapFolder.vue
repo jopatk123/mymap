@@ -108,9 +108,10 @@ const selectedFile = ref(null);
 const detailsDialogVisible = ref(false);
 const filePoints = ref([]);
 
-// 表格行样式（目前未直接在模板中使用，保留以备将来使用）
-const _rowClassName = ({ row }) => {
-  return row.id === selectedFileId.value ? 'is-selected-row' : '';
+// 表格行样式（目前模板未直接使用，保留以备将来使用；前缀 _ 表示故意未使用）
+const _rowClassName = (payload) => {
+  const row = payload?.row;
+  return row && row.id === selectedFileId.value ? 'is-selected-row' : '';
 };
 
 // 初始化
