@@ -128,7 +128,8 @@ export function useFileOperations() {
 
       if (failedMoves.length > 0) {
         ElMessage.error('部分文件移动失败');
-        console.error('移动失败详情:', failedMoves);
+        // 记录失败详情到控制台以便开发调试（仅在调试时查看）
+        // console.error('移动失败详情:', failedMoves);
       } else {
         ElMessage.success('移动成功');
       }
@@ -138,7 +139,7 @@ export function useFileOperations() {
       movingFiles.value = [];
       onSuccess?.();
     } catch (error) {
-      ElMessage.error('移动失败: ' + error.message);
+  ElMessage.error('移动失败: ' + error.message);
     } finally {
       moving.value = false;
     }
@@ -151,7 +152,7 @@ export function useFileOperations() {
       ElMessage.success('文件已从列表中移除');
       onSuccess?.();
     } catch (error) {
-      console.error('删除文件后更新失败:', error);
+      // console.error('删除文件后更新失败:', error);
       ElMessage.error('更新失败，请刷新页面');
     }
   };
