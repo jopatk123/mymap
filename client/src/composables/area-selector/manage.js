@@ -1,6 +1,11 @@
 // 公共管理/控制操作
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+/**
+ * 管理模块：提供取消绘制、完成绘制、清除所有区域与删除单个区域的交互逻辑。
+ * 这些函数会调用 store 的方法并显示用户提示。
+ */
+
 export function createManageActions(context, circle, polygon) {
   const { store, isDrawingCircle, isDrawingPolygon } = context
   const { completeCircleDrawing } = circle

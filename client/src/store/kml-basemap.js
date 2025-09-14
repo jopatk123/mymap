@@ -175,6 +175,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 清除所有区域
   const clearAllAreas = () => {
+    // debug: 记录清除前的选区数量，便于排查时序问题
+    try { console.debug && console.debug('[kml-basemap] clearAllAreas called, previous areas:', areas.value ? areas.value.length : 0) } catch(e){}
     areas.value = []
     visiblePoints.value = []
     // 恢复地图点位（移除KML选区点）
@@ -185,7 +187,11 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
           // 触发一次标记刷新
           import('@/utils/marker-refresh.js').then(mod => {
             try { mod.refreshAllMarkers && mod.refreshAllMarkers() } catch (e) { console.warn('[kml-basemap] clearAllAreas refreshAllMarkers error', e) }
-          }).catch(()=>{})
+          }).catch((err)=>{
+            try { console.warn('[kml-basemap] import marker-refresh failed', err) } catch(e){}
+          })
+          // 额外兜底：若模块未能通过 import 使用，尝试调用可能挂载在 window 的函数
+          try { if (typeof window.refreshAllMarkers === 'function') { window.refreshAllMarkers(); } } catch(e) {}
         }
         window.kmlSelectedPoints = []
       }
