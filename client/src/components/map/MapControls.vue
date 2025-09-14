@@ -197,7 +197,7 @@ const {
   isDrawingCircle,
   isDrawingPolygon,
   isDrawing,
-  areas,
+  _areas,
   areasCount,
   setMapInstance,
   startCircleSelection,
@@ -209,7 +209,7 @@ const {
 
 const { exporting, hasExportableData, openExportDialog } = useKMLExport();
 
-const store = useKMLBaseMapStore();
+const _store = useKMLBaseMapStore();
 
 // 本地状态
 const radiusDialogVisible = ref(false);
