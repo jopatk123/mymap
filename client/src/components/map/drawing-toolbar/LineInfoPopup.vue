@@ -62,7 +62,7 @@
 <script setup>
 import { Close } from '@element-plus/icons-vue';
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false,
@@ -77,7 +77,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['close', 'edit-properties', 'delete-line']);
+defineEmits(['close', 'edit-properties', 'delete-line']);
 
 // 格式化距离显示
 const formatDistance = (distance) => {
