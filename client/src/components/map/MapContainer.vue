@@ -376,7 +376,7 @@ const handleMapTypeChange = (type) => {
 };
 
 // 定位用户位置
-const locateUser = () => {
+const _locateUser = () => {
   if (!navigator.geolocation) {
     ElMessage.warning('浏览器不支持地理定位');
     return;
@@ -391,7 +391,7 @@ const locateUser = () => {
       locating.value = false;
       ElMessage.success('定位成功');
     },
-    (error) => {
+    (_error) => {
       locating.value = false;
       ElMessage.error('定位失败，请检查位置权限');
     },
@@ -404,7 +404,7 @@ const locateUser = () => {
 };
 
 // 适应所有标记
-const fitAllMarkers = () => {
+const _fitAllMarkers = () => {
   fitBounds();
 };
 
