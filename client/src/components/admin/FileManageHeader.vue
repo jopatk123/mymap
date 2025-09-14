@@ -23,6 +23,12 @@
       <!-- 新增KML底图按钮 -->
       <KMLBaseMapButton />
       
+      <!-- 初始显示设置按钮 -->
+      <el-button @click="showInitialViewDialog = true" type="info">
+        <el-icon><Location /></el-icon>
+        初始显示设置
+      </el-button>
+      
       <!-- KML样式配置入口 -->
       <el-dropdown @command="handleStyleConfigCommand">
         <el-button type="info">
@@ -39,6 +45,12 @@
       </el-dropdown>
     </div>
     
+    <!-- 初始显示设置对话框 -->
+    <InitialViewSettingsDialog 
+      v-model="showInitialViewDialog"
+      @settings-updated="handleInitialViewSettingsUpdated"
+    />
+    
     <!-- KML样式配置对话框 -->
     <KmlStyleDialog 
       v-model="styleDialogVisible"
@@ -51,13 +63,17 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, VideoPlay, Document, Setting, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, VideoPlay, Document, Setting, ArrowDown, Location } from '@element-plus/icons-vue'
 import KMLBaseMapButton from './KMLBaseMapButton.vue'
-import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue'
+import KmlStyleDialog from '../map/KmlStyleDialog.vue'
+import InitialViewSettingsDialog from './InitialViewSettingsDialog.vue'
 
 defineEmits(['upload-request'])
 
 const router = useRouter()
+
+// 初始显示设置状态
+const showInitialViewDialog = ref(false)
 
 // KML样式配置状态
 const styleDialogVisible = ref(false)
@@ -83,6 +99,12 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('show-kml-settings', handleShowKmlSettings)
 })
+
+// 初始显示设置更新处理
+const handleInitialViewSettingsUpdated = () => {
+  // 设置更新后的处理逻辑（如果需要）
+  console.log('初始显示设置已更新')
+}
 
 // 样式更新处理
 const handleStylesUpdated = () => {

@@ -13,7 +13,8 @@ router.get('/', (req, res) => {
       description: '基于 Leaflet + Pannellum 的地图全景查看系统',
       endpoints: {
         panoramas: '/api/panoramas',
-        health: '/api/health'
+        health: '/api/health',
+        initialView: '/api/initial-view'
       }
     },
     timestamp: new Date().toISOString()
@@ -73,5 +74,9 @@ router.use('/point-styles', pointStyleRoutes)
 // 统一配置管理路由
 const configRoutes = require('./config.routes')
 router.use('/config', configRoutes)
+
+// 初始显示设置路由
+const initialViewRoutes = require('./initial-view')
+router.use('/initial-view', initialViewRoutes)
 
 module.exports = router

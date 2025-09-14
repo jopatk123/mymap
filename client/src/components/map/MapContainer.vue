@@ -217,12 +217,26 @@ onMounted(async () => {
   // 添加样式更新事件监听器
   addStyleListener('point-style-updated', handleStyleUpdate)
   addStyleListener('markers-refresh', handleMarkersRefresh)
+
+  // 监听全局 initial-view 更新事件，保存后立即应用
+  const onInitialViewUpdated = (e) => {
+    try {
+      const s = e?.detail || null
+      if (!s || !s.enabled) return
+      // s.center is [lng, lat] => convert to [lat, lng]
+      const [lng, lat] = s.center || []
+      if (lat == null || lng == null) return
+      setCenter(lat, lng, s.zoom)
+    } catch (err) {}
+  }
+  window.addEventListener('initial-view-updated', onInitialViewUpdated)
 })
 
 // 清理事件监听器
 onUnmounted(() => {
   removeStyleListener('point-style-updated', handleStyleUpdate)
   removeStyleListener('markers-refresh', handleMarkersRefresh)
+  try { window.removeEventListener('initial-view-updated', onInitialViewUpdated) } catch(e){}
 })
 
 // 监听全景图数据变化
@@ -250,6 +264,38 @@ watch(() => props.panoramas, async (newPanoramas) => {
 watch(mapType, (newType) => {
   changeMapType(newType)
 })
+
+// 监听外部传入的 center/zoom 变化，确保在 initialView 生效后更新地图视图
+watch(
+  () => props.center,
+  (newCenter) => {
+    try {
+      if (!map.value) return
+      if (!newCenter || newCenter.length !== 2) return
+      const [lat, lng] = newCenter
+      // 使用暴露的 setCenter 更新视图（保留当前缩放等级或使用传入的 props.zoom）
+      setCenter(lat, lng, props.zoom)
+    } catch (e) {
+      // 忽略更新错误
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.zoom,
+  (newZoom) => {
+    try {
+      if (!map.value) return
+      if (typeof newZoom !== 'number') return
+      // 将当前 center 应用新的缩放
+      const [lat, lng] = props.center || [null, null]
+      if (lat == null || lng == null) return
+      setCenter(lat, lng, newZoom)
+    } catch (e) {}
+  },
+  { immediate: false }
+)
 
 // 监听全局点位数据变化
 watch(() => window.allPoints, async (newPoints) => {

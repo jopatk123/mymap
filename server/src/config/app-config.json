@@ -92,7 +92,15 @@
     "defaultZoom": 12,
     "minZoom": 3,
     "maxZoom": 18,
-    "mapType": "normal"
+    "mapType": "normal",
+    "initialView": {
+      "enabled": true,
+      "center": [
+        119.305497,
+        25.9928
+      ],
+      "zoom": 11
+    }
   },
   "uploadSettings": {
     "maxFileSize": 104857600,

@@ -1,5 +1,6 @@
 // 拆分重构：聚合管理与视口裁剪逻辑已分离到 mapMarkers 子模块
 import L from 'leaflet';
+import { useAppStore } from '@/store/app.js'
 import 'leaflet.markercluster';
 import { createPointMarker } from '@/utils/map-utils.js';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
@@ -289,6 +290,11 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
   const fitBounds = () => {
     if (!map.value) return;
+    // 如果启用了初始显示设置，则不自动 fitBounds（初始位置由 initialView 控制）
+    try {
+      const appStore = useAppStore()
+      if (appStore?.initialViewSettings?.enabled) return
+    } catch (e) {}
     
     try {
       const validMarkers = markers.value.filter(m => m.marker && m.marker._map && typeof m.marker.getLatLng === 'function');

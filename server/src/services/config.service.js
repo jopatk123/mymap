@@ -201,6 +201,72 @@ class ConfigService {
     return config.uploadSettings
   }
 
+  // 获取初始显示设置
+  async getInitialViewSettings() {
+    const config = await this.loadConfig()
+    return config.mapSettings?.initialView || {
+      enabled: false,
+      center: [116.4074, 39.9042],
+      zoom: 12
+    }
+  }
+
+  // 更新初始显示设置
+  async updateInitialViewSettings(settings) {
+    try {
+      const config = await this.loadConfig()
+      
+      // 验证设置格式
+      if (!settings || typeof settings !== 'object') {
+        throw new Error('无效的设置格式')
+      }
+      
+      const { enabled, center, zoom } = settings
+      
+      // 验证 enabled 字段
+      if (typeof enabled !== 'boolean') {
+        throw new Error('enabled 字段必须是布尔值')
+      }
+      
+      // 验证 center 字段
+      if (!Array.isArray(center) || center.length !== 2) {
+        throw new Error('center 字段必须是包含两个数字的数组')
+      }
+      
+      const [lng, lat] = center
+      if (typeof lng !== 'number' || typeof lat !== 'number') {
+        throw new Error('坐标必须是数字')
+      }
+      
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        throw new Error('坐标超出有效范围')
+      }
+      
+      // 验证 zoom 字段
+      if (typeof zoom !== 'number' || zoom < 1 || zoom > 20) {
+        throw new Error('缩放级别必须是1-20之间的数字')
+      }
+      
+      // 确保 mapSettings 存在
+      if (!config.mapSettings) {
+        config.mapSettings = this.getDefaultConfig().mapSettings
+      }
+      
+      // 更新初始显示设置
+      config.mapSettings.initialView = {
+        enabled: Boolean(enabled),
+        center: [Number(lng), Number(lat)],
+        zoom: Number(zoom)
+      }
+      
+      await this.saveConfig(config)
+      return true
+    } catch (error) {
+      try { logError(error) } catch (e) {}
+      throw error
+    }
+  }
+
   getDefaultConfig() {
     // 返回硬编码的默认配置
     return {
@@ -252,7 +318,13 @@ class ConfigService {
         defaultZoom: 12,
         minZoom: 3,
         maxZoom: 18,
-        mapType: "normal"
+        mapType: "normal",
+        // 初始显示设置
+        initialView: {
+          enabled: false,
+          center: [116.4074, 39.9042], // WGS84 坐标
+          zoom: 12
+        }
       },
       uploadSettings: {
         maxFileSize: 104857600,

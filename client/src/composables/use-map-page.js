@@ -60,8 +60,8 @@ export function useMapPage() {
 
   // 初始化
   const initializePage = async () => {
-    // 初始化应用
-    appStore.initApp()
+    // 初始化应用（包括加载初始显示设置）
+    await appStore.initApp()
 
     // 初始化全局KML图层显示状态
     window.kmlLayersVisible = kmlLayersVisible.value
@@ -93,7 +93,11 @@ export function useMapPage() {
       // 数据加载完成后自动适应所有标记点并初始化KML图层
       setTimeout(() => {
         if (mapRef.value) {
-          mapRef.value.fitBounds()
+          // 只有当初始显示设置未启用时，才自动适应所有标记
+          if (!appStore.initialViewSettings?.enabled) {
+            mapRef.value.fitBounds()
+          }
+
           // 如果KML图层应该显示，则主动加载KML图层
           if (kmlLayersVisible.value && window.allKmlFiles && window.allKmlFiles.length > 0) {
             mapRef.value.addKmlLayers(window.allKmlFiles)
