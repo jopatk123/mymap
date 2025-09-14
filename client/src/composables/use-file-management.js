@@ -1,7 +1,8 @@
 import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import { folderApi } from '@/api/folder.js';
-import { pointsApi as _pointsApi } from '@/api/points.js';
+// pointsApi currently not used here; keep as comment for future usage to avoid unused import
+// import { pointsApi as _pointsApi } from '@/api/points.js';
 
 export function useFileManagement() {
   // 响应式数据
