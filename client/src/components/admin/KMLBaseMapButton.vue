@@ -54,7 +54,7 @@
             </template>
           </el-upload>
         </div>
-
+        void console.error('Upload error:', error);
         <!-- 文件信息 -->
         <div v-if="selectedFile" class="file-info">
           <el-card shadow="never">

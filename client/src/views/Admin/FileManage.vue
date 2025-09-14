@@ -316,7 +316,7 @@ const handleShowKmlFiles = async (event) => {
     pagination.page = 1;
     await loadFileList();
   } catch (error) {
-    console.error('切换到KML列表失败:', error);
+    void console.error('切换到KML列表失败:', error);
   }
 };
 

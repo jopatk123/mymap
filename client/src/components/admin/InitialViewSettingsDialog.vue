@@ -196,7 +196,7 @@ const loadSettings = async () => {
     form.center = [...settings.center];
     form.zoom = settings.zoom;
   } catch (error) {
-    console.error('加载初始显示设置失败:', error);
+    void console.error('加载初始显示设置失败:', error);
     ElMessage.error('加载设置失败');
   }
 };
