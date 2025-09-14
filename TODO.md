@@ -32,6 +32,7 @@
 - ✖ 98 problems (0 errors, 98 warnings) — 本次微批次后最新本地 lint 运行结果
 - ✖ 91 problems (0 errors, 91 warnings) — 本次微批次 #2 后最新本地 lint 运行结果
 - ✖ 84 problems (0 errors, 84 warnings) — 本次微批次 #3 后最新本地 lint 运行结果
+- ✖ 52 problems (0 errors, 52 warnings) — micro-batch #14 after fixes
 
 下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
@@ -57,6 +58,12 @@
 - Files changed: client/src/composables/use-map-interactions.js, client/src/composables/use-map-markers.js, client/src/composables/use-map-page.js, client/src/composables/use-map-style-updater.js, client/src/composables/use-panorama-viewer.js
 - Purpose: Prefix/mark intentionally unused args/vars (use `_` or `void`) to silence no-unused-vars; ran eslint --fix to resolve fixable Prettier/format issues. No runtime behavior changes.
 - 对于需要设计决策（例如是否允许 v-html 或日志策略），我会在 TODO.md 记录选项并在变更前征求确认。
+
+本次提交摘要（micro-batch #14）:
+
+- Commit: chore(lint): P2 micro-batch #14 - silence console & expose debug helper in kml-basemap
+- Files changed: client/src/store/kml-basemap.js
+- Purpose: Wrap non-UI console calls with `void` to satisfy linter, fix syntax issue discovered during formatting, and expose `debugPointChecks` on `window` for interactive debugging (prevents unused-var warnings while preserving behavior).
 
 最近已完成的具体变更（来自本次会话）：
 
