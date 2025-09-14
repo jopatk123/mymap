@@ -403,7 +403,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         // defer to next tick to avoid blocking initialization
         setTimeout(() => {
           try {
-            fetchKMLFiles().catch((err) => console.warn('auto fetchKMLFiles failed', err));
+            fetchKMLFiles().catch((err) => void console.warn('auto fetchKMLFiles failed', err));
           } catch (e) {
             /* ignore */
           }
