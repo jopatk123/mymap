@@ -130,7 +130,7 @@ const setSearchMarker = (lat, lng, labelOrPoint = '搜索位置') => {
       <div style="max-width: 240px;">
         <h4 class="popup-title">${escapeHtml(name)}</h4>
         <p class="popup-meta">${escapeHtml(desc)} ${
-      source ? `<span class=\"popup-source\">[${escapeHtml(source)}]</span>` : ''
+      source ? '<span class="popup-source">[' + escapeHtml(source) + ']</span>' : ''
     }</p>
         <p class="popup-meta">经纬度(WGS84): ${latStr}, ${lngStr}</p>
         <div class="popup-actions">
@@ -176,12 +176,12 @@ const clearSearchMarker = () => {
 };
 
 // 样式更新处理函数
-const handleStyleUpdate = (data) => {
+const handleStyleUpdate = (_data) => {
   // 样式已经在全局变量中更新，这里不需要额外处理
 };
 
 // 标记刷新处理函数
-const handleMarkersRefresh = (data) => {
+const handleMarkersRefresh = (_data) => {
   // 强制刷新点位（仅点位，不移除 KML 图层）
   setTimeout(() => {
     try {
@@ -265,7 +265,7 @@ onMounted(async () => {
       const [lng, lat] = s.center || [];
       if (lat == null || lng == null) return;
       setCenter(lat, lng, s.zoom);
-    } catch (err) {}
+    } catch (_err) {}
   };
   window.addEventListener('initial-view-updated', onInitialViewUpdated);
 });
