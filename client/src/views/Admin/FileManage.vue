@@ -92,6 +92,7 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
 import { onUnmounted } from 'vue';
+import { ElMessage } from 'element-plus';
 import { storeToRefs } from 'pinia';
 
 import { useFileManagement } from '@/composables/use-file-management';
@@ -190,7 +191,7 @@ const loadFolders = async () => {
   try {
     await folderStore.fetchFolders();
   } catch (error) {
-    console.error('加载文件夹失败:', error);
+    ElMessage.error('加载文件夹失败: ' + (error?.message || error));
   }
 };
 

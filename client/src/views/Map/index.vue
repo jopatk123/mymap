@@ -149,7 +149,7 @@ const {
 } = useMapPage();
 
 // 样式更新器
-const { updateAllMarkerStyles, isUpdating } = useMapStyleUpdater(
+const { updateAllMarkerStyles, isUpdating: _isUpdating } = useMapStyleUpdater(
   computed(() => mapRef.value?.map),
   computed(() => mapRef.value?.markers || [])
 );
