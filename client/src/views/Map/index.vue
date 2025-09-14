@@ -40,7 +40,7 @@
       :map-instance="mapRef?.map"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
-      @show-settings="showSettings = true"
+
       @show-kml-settings="showKmlSettings = true"
       @show-point-settings="showPointSettings = true"
       @locate-kml-point="handleLocateKMLPoint"
@@ -58,11 +58,11 @@
       :selected-panorama="selectedPanorama"
       :show-upload-dialog="showUploadDialog"
       :show-batch-upload-dialog="showBatchUploadDialog"
-      :show-settings="showSettings"
+
       @update:show-panorama-modal="showPanoramaModal = $event"
       @update:show-upload-dialog="showUploadDialog = $event"
       @update:showBatchUploadDialog="showBatchUploadDialog = $event"
-      @update:show-settings="showSettings = $event"
+
       @panorama-deleted="handlePanoramaDeleted"
       @upload-success="handleUploadSuccess"
       @open-batch-upload="openBatchUploadFromSingle()"
@@ -145,7 +145,7 @@ const {
   showVideoModal,
     showUploadDialog,
     showBatchUploadDialog,
-  showSettings,
+
   showPanoramaViewer,
   panoramaViewerLoading,
   autoRotating,

@@ -13,10 +13,7 @@
         <el-icon><Plus /></el-icon>
         添加
       </el-button>
-      <el-button @click="$emit('show-settings')" type="info">
-        <el-icon><Setting /></el-icon>
-        设置
-      </el-button>
+
       <el-button @click="$emit('show-kml-settings')" type="warning">
         <el-icon><Tools /></el-icon>
         KML设置
@@ -30,7 +27,7 @@
 </template>
 
 <script setup>
-import { Plus, Setting, View, Hide, Tools, Location } from '@element-plus/icons-vue'
+import { Plus, View, Hide, Tools, Location } from '@element-plus/icons-vue'
 
 defineProps({
   panoramaListVisible: {
@@ -46,7 +43,6 @@ defineProps({
 defineEmits([
   'toggle-panorama-list',
   'show-upload',
-  'show-settings',
   'show-kml-settings',
   'show-point-settings'
 ])

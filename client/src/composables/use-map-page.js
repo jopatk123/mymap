@@ -45,7 +45,7 @@ export function useMapPage() {
   const showPanoramaModal = ref(false)
   const showVideoModal = ref(false)
   const showUploadDialog = ref(false)
-  const showSettings = ref(false)
+
   const showBatchUploadDialog = ref(false)
   const showPanoramaViewer = ref(false)
   const panoramaViewerLoading = ref(false)
@@ -220,7 +220,7 @@ export function useMapPage() {
     showVideoModal,
     showUploadDialog,
     showBatchUploadDialog,
-    showSettings,
+
     showPanoramaViewer,
     panoramaViewerLoading,
     autoRotating,

@@ -23,17 +23,12 @@
     @success="$emit('upload-success')"
   />
   
-  <!-- 设置对话框 -->
-  <SettingsDialog
-    :model-value="showSettings"
-    @update:model-value="$emit('update:showSettings', $event)"
-  />
+
 </template>
 
 <script setup>
 import PanoramaModal from '@/components/map/PanoramaModal.vue'
 import UploadDialog from '@/components/common/UploadDialog.vue'
-import SettingsDialog from '@/components/common/SettingsDialog.vue'
 import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue'
 
 defineProps({
@@ -53,17 +48,14 @@ defineProps({
     type: Boolean,
     default: undefined
   },
-  showSettings: {
-    type: Boolean,
-    required: true
-  }
+
 })
 
 defineEmits([
   'update:showPanoramaModal',
   'update:showUploadDialog', 
   'update:showBatchUploadDialog',
-  'update:showSettings',
+
   'panorama-deleted', 
   'upload-success',
   'open-batch-upload'

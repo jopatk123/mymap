@@ -73,10 +73,7 @@
           导出
         </el-button>
 
-        <el-button @click="showSettings" type="info">
-          <el-icon><Setting /></el-icon>
-          设置
-        </el-button>
+
 
         <el-button @click="showKmlSettings" type="success">
           <el-icon><Tools /></el-icon>
@@ -154,7 +151,6 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
-  Setting, 
   Tools, Location,
   Compass, Crop, Delete, Download
 } from '@element-plus/icons-vue'
@@ -194,7 +190,6 @@ const props = defineProps({
 const emit = defineEmits([
   'toggle-panorama-list',
   'toggle-kml-layers',
-  'show-settings',
   'show-kml-settings',
   'show-point-settings',
   'locate-kml-point',
@@ -285,9 +280,7 @@ const toggleKmlLayers = () => {
   emit('toggle-kml-layers')
 }
 
-const showSettings = () => {
-  emit('show-settings')
-}
+
 
 const showKmlSettings = () => {
   emit('show-kml-settings')
