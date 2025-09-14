@@ -100,17 +100,7 @@
 </template>
 
 <script setup>
-import {
-  ArrowLeft,
-  ArrowRight,
-  Compass,
-  Location,
-  Minus,
-  Operation,
-  Edit,
-  Download,
-  Delete,
-} from '@element-plus/icons-vue';
+import { Compass, Location, Minus, Operation, Edit, Download, Delete } from '@element-plus/icons-vue';
 
 defineProps({
   activeTool: {

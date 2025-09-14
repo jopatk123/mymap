@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useDrawingTools } from '@/composables/drawing-tools.js';
 import ToolbarButtons from './ToolbarButtons.vue';
