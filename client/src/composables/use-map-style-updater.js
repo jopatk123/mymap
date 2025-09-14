@@ -101,7 +101,7 @@ export function useMapStyleUpdater(map, markers) {
       // 成功信息改为调试级别，开发模式下可查看
       // debug: 成功更新标记样式 (suppressed)
     } catch (error) {
-      console.error('更新标记样式失败:', error);
+      void console.error('更新标记样式失败:', error);
     } finally {
       isUpdating.value = false;
     }

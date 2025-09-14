@@ -151,7 +151,7 @@ export const useAppStore = defineStore('app', {
         }
         throw new Error('更新失败');
       } catch (error) {
-        console.error('更新初始显示设置失败:', error);
+        void console.error('更新初始显示设置失败:', error);
         throw error;
       }
     },
