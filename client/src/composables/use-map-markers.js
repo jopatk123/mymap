@@ -7,7 +7,8 @@ import { createClusterManager } from './mapMarkers/cluster-manager.js';
 import { createViewportClipping } from './mapMarkers/viewport-clipping.js';
 
 export function useMapMarkers(map, markers, onMarkerClick) {
-  const VIEWPORT_THRESHOLD = 1200;
+  // Threshold that triggers viewport-clipping mode. Increase for temporary testing to bypass clipping.
+  const VIEWPORT_THRESHOLD = 100000; // original: 1200
   // 子模块实例
   const clusterManager = createClusterManager(map);
   const { state: viewportState, enable: enableViewportClipping, disable: disableViewportClipping, scheduleViewportUpdate, removeMarkersBatch: vpRemoveMarkersBatch } = createViewportClipping(map, clusterManager, markers, onMarkerClick);

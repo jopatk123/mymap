@@ -159,7 +159,7 @@ class ConfigService {
         const entry = `\n[${new Date().toISOString()}] updateKmlStyles failed to save for fileId=${fileId}\nprocess.pid=${process.pid},uid=${process.getuid ? process.getuid() : 'n/a'},gid=${process.getgid ? process.getgid() : 'n/a'},cwd=${process.cwd()}\nconfigStat=${JSON.stringify(configStat)}\nconfigPreview=${configPreview}\nmerged=${JSON.stringify(merged).slice(0,2000)}\n`;
         await fs.appendFile(errLogPath, entry, { encoding: 'utf8' })
       } catch (e) {
-        try { /* swallow */ } catch (ee) {}
+  try { /* swallow */ } catch (ee) { console.warn('[config.service] swallow failed', ee) }
       }
     }
     return saved

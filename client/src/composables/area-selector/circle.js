@@ -106,6 +106,17 @@ export function createCircleActions(context) {
     }
   }
 
+  const clearTempLayers = () => {
+    try {
+      if (mapInstance.value && tempLayers.value && tempLayers.value.length > 0) {
+        tempLayers.value.forEach(layer => { try { mapInstance.value.removeLayer(layer) } catch (_) {} })
+        tempLayers.value = []
+      }
+    } catch (err) {
+      console.warn('[useAreaSelector] clearTempLayers (circle) failed', err)
+    }
+  }
+
   const setCircleRadius = (radius) => { if (radius > 0) circleRadius.value = radius }
 
   return {
@@ -113,6 +124,7 @@ export function createCircleActions(context) {
     startCircleSelection,
     handleCircleClick,
     completeCircleDrawing,
-    setCircleRadius
+    setCircleRadius,
+    clearTempLayers
   }
 }

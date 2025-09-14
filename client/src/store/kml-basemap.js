@@ -140,13 +140,19 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   visible: area.visible !== undefined ? area.visible : true,
       createdAt: new Date()
     })
-  try { /* area added */ } catch(e){}
+    try {
+      // area added hook - no-op but keep try for parity with earlier code
+    } catch (e) {
+      console.warn('[kml-basemap] addArea hook failed', e)
+    }
   updateVisiblePoints()
   }
   
   // 添加圆形区域
   const addCircleArea = (center, radius) => {
-  try { /* circle area added */ } catch(e){}
+  try {
+    // circle area pre-hook - no-op
+  } catch (e) { console.warn('[kml-basemap] addCircleArea pre-hook failed', e) }
     addArea({
       type: 'circle',
       center,
@@ -157,7 +163,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   
   // 添加自定义区域
   const addCustomArea = (polygon, name = '自定义区域') => {
-  try { /* custom area added */ } catch(e){}
+  try {
+    // custom area pre-hook - no-op
+  } catch (e) { console.warn('[kml-basemap] addCustomArea pre-hook failed', e) }
     addArea({
       type: 'polygon',
       polygon,
@@ -209,7 +217,9 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       return
     }
 
-  try { /* update visible points */ } catch(e){}
+  try {
+    // update visible points hook - no-op
+  } catch (e) { console.warn('[kml-basemap] updateVisiblePoints post-hook failed', e) }
 
     if (activeAreas.length === 0) {
       visiblePoints.value = []
@@ -252,7 +262,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     }
 
   visiblePoints.value = visible
-  try { /* visible points computed */ } catch(e){}
+  try { /* visible points computed */ } catch(e) { console.warn('[kml-basemap] visiblePoints computation post-hook failed', e) }
 
     // 将选区内的KML点位合并到地图现有点位中
     try {
@@ -315,7 +325,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const getPointsInArea = (areaId) => {
     const area = areas.value.find(a => a.id === areaId)
     if (!area) return []
-  try { /* getPointsInArea called */ } catch(e){}
+    try { /* getPointsInArea called */ } catch(e) { console.warn('[kml-basemap] getPointsInArea hook failed', e) }
 
   return kmlPoints.value.filter(point => {
       if (area.type === 'circle') {

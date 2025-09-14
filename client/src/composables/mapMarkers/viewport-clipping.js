@@ -203,9 +203,10 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     const sw = bounds?._southWest; const ne = bounds?._northEast; if (!sw || !ne) return;
     const south = sw.lat, west = sw.lng, north = ne.lat, east = ne.lng;
 
-    const toAdd = [];
+  const toAdd = [];
     const currentInBounds = new Set();
     const candidates = getCandidatesByBounds(west, south, east, north);
+  try { console.info('[Map][DEBUG] candidates count for bounds', { candidates: candidates.length, west, south, east, north }) } catch {}
     for (const p of candidates) {
       let coords = state.coordCache.get(p.id);
       if (!coords) { coords = getDisplayCoordinates(p); if (coords) state.coordCache.set(p.id, coords); }
@@ -219,14 +220,17 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
 
     const toRemove = [];
     state.renderedIds.forEach((id) => { if (!currentInBounds.has(id)) toRemove.push(id); });
+    try { console.info('[Map][DEBUG] toAdd/toRemove lengths', { toAdd: toAdd.length, toRemove: toRemove.length, renderedIds: state.renderedIds.size }) } catch {}
 
     if (toRemove.length) {
+      try { console.info('[Map][DEBUG] removing markers', { count: toRemove.length }) } catch {}
       removeMarkersBatch(toRemove);
       toRemove.forEach((id) => state.renderedIds.delete(id));
     }
     if (toAdd.length) {
       const createBatch = [];
       for (const p of toAdd) { const info = createMarkerInfo(p); if (info) createBatch.push(info); }
+      try { console.info('[Map][DEBUG] created createBatch length', { createBatch: createBatch.length }) } catch {}
 
       if (createBatch.length) {
         const videoBatch = [];
@@ -247,10 +251,12 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           else normalBatch.push(info.marker);
           state.renderedIds.add(info.id);
         }
+        try { console.info('[Map][DEBUG] batches sizes', { videoBatch: videoBatch.length, panoBatch: panoBatch.length, normalBatch: normalBatch.length }) } catch {}
 
         if (videoBatch.length) { const g = clusterManager.ensureClusterGroup('video'); g.addLayers(videoBatch); clusterManager.ensureZoomGuards(); }
         if (panoBatch.length) { const g = clusterManager.ensureClusterGroup('panorama'); g.addLayers(panoBatch); clusterManager.ensureZoomGuards(); }
         if (normalBatch.length) { for (const m of normalBatch) m.addTo(map.value); }
+        try { console.info('[Map][DEBUG] renderedIds size after add', state.renderedIds.size) } catch {}
       }
     }
   };

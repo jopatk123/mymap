@@ -5,6 +5,8 @@ export function createManageActions(context, circle, polygon) {
   const { store, isDrawingCircle, isDrawingPolygon } = context
   const { completeCircleDrawing } = circle
   const { finishPolygonDrawing, clearTempLayers } = polygon
+  // circle may now expose clearTempLayers
+  const { clearTempLayers: clearCircleTempLayers } = circle
 
   const cancelDrawing = () => {
     if (isDrawingCircle.value) {
@@ -13,6 +15,7 @@ export function createManageActions(context, circle, polygon) {
       finishPolygonDrawing()
     }
     try { clearTempLayers() } catch (err) { console.warn('[useAreaSelector] cancelDrawing: clearTempLayers failed', err) }
+    try { if (typeof clearCircleTempLayers === 'function') clearCircleTempLayers() } catch (err) { console.warn('[useAreaSelector] cancelDrawing: clearCircleTempLayers failed', err) }
     ElMessage.info('已取消绘制')
   }
 
@@ -36,6 +39,7 @@ export function createManageActions(context, circle, polygon) {
       await ElMessageBox.confirm(`确定要清除所有 ${store.areas.length} 个区域吗？`, '确认清除', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
       store.clearAllAreas()
       try { clearTempLayers() } catch (err) { console.warn('[useAreaSelector] clearAllAreas: failed to clear temp layers', err) }
+      try { if (typeof clearCircleTempLayers === 'function') clearCircleTempLayers() } catch (err) { console.warn('[useAreaSelector] clearAllAreas: failed to clear circle temp layers', err) }
       ElMessage.success('已清除所有区域')
     } catch (_) { /* 用户取消 */ }
   }
