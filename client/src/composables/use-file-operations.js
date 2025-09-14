@@ -139,7 +139,7 @@ export function useFileOperations() {
       movingFiles.value = [];
       onSuccess?.();
     } catch (error) {
-  ElMessage.error('移动失败: ' + error.message);
+      ElMessage.error('移动失败: ' + error.message);
     } finally {
       moving.value = false;
     }
