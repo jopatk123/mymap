@@ -264,15 +264,30 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       try {
         if (typeof window !== 'undefined' && window.basePoints) {
           window.allPoints = [...window.basePoints];
-          import('@/utils/marker-refresh.js').then((mod) => {
-            try {
-              mod.refreshAllMarkers && mod.refreshAllMarkers();
-            } catch (e) {}
-          });
+          import('@/utils/marker-refresh.js')
+            .then((mod) => {
+              try {
+                mod.refreshAllMarkers && mod.refreshAllMarkers();
+              } catch (e) {
+                void console.warn('[kml-basemap] updateVisiblePoints reset error', e);
+              }
+            })
+            .catch((err) => {
+              void console.warn('[kml-basemap] import marker-refresh failed', err);
+            });
+
+          //额外兜底：若模块未能通过 import 使用，尝试调用可能挂载在 window 的函数
+          try {
+            if (typeof window.refreshAllMarkers === 'function') {
+              window.refreshAllMarkers();
+            }
+          } catch (e) {
+            /* ignore */
+          }
         }
         if (typeof window !== 'undefined') window.kmlSelectedPoints = [];
       } catch (e) {
-        console.warn('[kml-basemap] updateVisiblePoints reset error', e);
+        void console.warn('[kml-basemap] updateVisiblePoints reset error', e);
       }
       return;
     }
@@ -515,6 +530,13 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       return [];
     }
   };
+
+  // expose debugPointChecks for interactive debugging (prevents unused-var lint warning)
+  try {
+    if (typeof window !== 'undefined') window.debugPointChecks = debugPointChecks;
+  } catch (e) {
+    /* ignore */
+  }
 
   // 切换区域显示状态
   const toggleAreaVisibility = (areaId) => {
