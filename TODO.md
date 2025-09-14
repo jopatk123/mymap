@@ -28,12 +28,18 @@
  当前 ESLint 快照（本次运行）：
 
  - ✖ 119 problems (4 errors, 115 warnings)  — 最近本地 lint 运行结果
+ - ✖ 98 problems (0 errors, 98 warnings)  — 本次微批次后最新本地 lint 运行结果
 
  下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
 修复策略：
 
 - 我将按文件批次修复，优先处理 P1（运行时/安全）文件；每次完成 1-3 个文件就运行 lint/format 并汇报变更和当前 ESLint 统计。
+ 
+ 最近提交摘要（本批次）:
+ - Commit: chore(lint): P2 micro-batch - replace console with ElMessage; mark isUpdating as unused
+ - Files changed: client/src/views/Admin/FileManage.vue, client/src/views/Map/index.vue
+ - Purpose: Replace console.error with ElMessage.error to avoid no-console in UI code; mark unused isUpdating return as _isUpdating to avoid no-unused-vars without changing behavior.
 - 对于需要设计决策（例如是否允许 v-html 或日志策略），我会在 TODO.md 记录选项并在变更前征求确认。
 
 最近已完成的具体变更（来自本次会话）：
