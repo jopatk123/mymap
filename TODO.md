@@ -27,8 +27,7 @@
  
  当前 ESLint 快照（本次运行）：
 
-- Errors: 0
-- Warnings: 120
+ - ✖ 119 problems (4 errors, 115 warnings)  — 最近本地 lint 运行结果
 
  下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
@@ -64,10 +63,11 @@
 2. 继续按计划修复 `FileActionDialogs.vue`、`InteractiveManager.vue`、`PointPropertiesDialog.vue` 等（每次 1 个文件为宜以便回滚与验证）。
 3. 当 P1 的大部分条目完成后，开启 P2：处理 no-unused-vars 与 vue/require-default-prop（批量机械修复）。
 
-当前进展（本轮）：
+ 当前进展（本轮）：
 
-- 已完成并本地提交：KMLBaseMapFolder.vue、use-file-management.js、use-file-operations.js、use-file-processor.js、PanoramaModal.vue、VideoModal.vue
-- 正在进行：核心 composables 与工具（下一目标详见下方）
+ - 已完成并本地提交：KMLBaseMapFolder.vue、use-file-management.js、use-file-operations.js、use-file-processor.js、PanoramaModal.vue、VideoModal.vue
+ - 最近微批次（8 文件）已应用并本地提交：保守变更以减少 no-unused-vars 与 prettier 报告
+ - 正在进行：核心 composables 与工具（下一目标详见下方)
 
 下一步短期目标（P2 高优先）：
 1. `client/src/composables/kml-text-parser.js` — 清理不必要的转义字符（大量 no-useless-escape）
