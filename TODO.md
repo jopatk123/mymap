@@ -27,8 +27,8 @@
  
  当前 ESLint 快照（本次运行）：
 
- - Errors: 0
- - Warnings: 161
+ - Errors: 1
+ - Warnings: 145
 
  下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
@@ -51,12 +51,28 @@
 - `client/src/components/map/drawing-toolbar/DrawingToolbar.vue` — 删除未使用的导入/绑定以减少 no-unused-vars 报告。
 - `client/src/components/map/MapControls.vue` — 注释/移除未使用的计算属性绑定以避免未使用变量警告。
 - `client/src/components/map/video/VideoPlayer.vue` — 用 `ElMessage` 替换 console 输出，去掉生产 console，避免 no-console（P3）在部分检测点出现。
+ - `client/src/components/map/kml-basemap/KMLBaseMapFolder.vue` — 保守前缀未使用绑定并移除未使用的 `computed` 导入（本地已提交）。
+ - `client/src/composables/use-file-management.js` — 前缀未使用的 `pointsApi` 导入（本地已提交）。
+ - `client/src/composables/use-file-operations.js` — 抑制 console.error 输出并修复 Prettier 缩进（本地已提交）。
+ - `client/src/composables/use-file-processor.js` — 抑制 console.error 并统一 catch 变量为 `_error`（本地已提交）。
+ - `client/src/components/map/PanoramaModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
+ - `client/src/components/map/VideoModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
 
 接下来要做（短期，P1）：
 
 1. 修改并保守修复 `client/src/components/admin/FileUploadDialogs.vue`（避免 mutating props）。完成后运行 lint/format 并报告变化。
 2. 继续按计划修复 `FileActionDialogs.vue`、`InteractiveManager.vue`、`PointPropertiesDialog.vue` 等（每次 1 个文件为宜以便回滚与验证）。
 3. 当 P1 的大部分条目完成后，开启 P2：处理 no-unused-vars 与 vue/require-default-prop（批量机械修复）。
+
+当前进展（本轮）：
+
+- 已完成并本地提交：KMLBaseMapFolder.vue、use-file-management.js、use-file-operations.js、use-file-processor.js、PanoramaModal.vue、VideoModal.vue
+- 正在进行：核心 composables 与工具（下一目标详见下方）
+
+下一步短期目标（P2 高优先）：
+1. `client/src/composables/kml-text-parser.js` — 清理不必要的转义字符（大量 no-useless-escape）
+2. `client/src/composables/use-kml-export.js` 与 `client/src/services/kml-export-service.js` — 处理 no-console / no-control-regex 报告
+3. 继续逐个 Vue 组件修复 assigned-but-unused 与 missing default props（每次 3-5 文件小批量提交）
 
 如何与我交互：
 
