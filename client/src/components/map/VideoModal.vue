@@ -37,7 +37,7 @@ const emit = defineEmits(['update:modelValue', 'close']);
 const showPlayer = ref(false);
 const isLoading = computed(() => props.loading);
 
-const { visible, handleClose: modalHandleClose, copyCoordinate } = useVideoModal();
+const { visible: _visible, handleClose: modalHandleClose, copyCoordinate } = useVideoModal();
 
 // 计算属性：同步外部 v-model
 const modalVisible = computed({
