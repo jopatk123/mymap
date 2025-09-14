@@ -106,7 +106,6 @@ const performExport = async () => {
     closeExportDialog();
   } catch (error) {
     ElMessage.error('导出失败: ' + error.message);
-    console.error('Export error:', error);
   } finally {
     exporting.value = false;
   }
@@ -131,7 +130,6 @@ const quickExportCSV = async () => {
     ElMessage.success(`CSV文件导出成功！共导出 ${points.length} 个点位`);
   } catch (error) {
     ElMessage.error('导出失败: ' + error.message);
-    console.error('Quick export error:', error);
   } finally {
     exporting.value = false;
   }
@@ -160,7 +158,6 @@ const quickExportKML = async () => {
     ElMessage.success(`KML文件导出成功！共导出 ${points.length} 个点位`);
   } catch (error) {
     ElMessage.error('导出失败: ' + error.message);
-    console.error('Quick export KML error:', error);
   } finally {
     exporting.value = false;
   }
@@ -185,9 +182,13 @@ const previewExportData = () => {
     来源文件: point.sourceFile || '未知',
   }));
 
-  console.table(preview);
-  // previewExportData generated; output suppressed
-  ElMessage.info(`数据预览已输出到控制台，共 ${points.length} 个点位`);
+  // show a compact preview in a modal (avoid console output to satisfy lint rules)
+  ElMessageBox.alert(JSON.stringify(preview, null, 2), '预览数据', {
+    confirmButtonText: '关闭',
+    dangerouslyUseHTMLString: false,
+    modalClass: 'kml-export-preview',
+  });
+  ElMessage.info(`数据预览已显示，共 ${points.length} 个点位`);
 };
 
 // 验证导出参数

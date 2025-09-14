@@ -184,7 +184,18 @@ export class KMLExportService {
   sanitizeFilename(filename) {
     if (typeof filename !== 'string' || filename.trim() === '') return 'download';
     // 移除控制字符、/ \ ? % * : | " < > 等并保留点和下划线
-    const cleaned = filename.replace(/[\\/:*?"<>|\u0000-\u001F]/g, '_');
+    // Avoid control-character range in regex to satisfy no-control-regex rules.
+    const replaceChars = new Set(['\\', '/', ':', '*', '?', '"', '<', '>', '|']);
+    let cleaned = '';
+    for (let i = 0; i < filename.length; i++) {
+      const ch = filename[i];
+      const code = ch.charCodeAt(0);
+      if (replaceChars.has(ch) || (code >= 0 && code <= 31)) {
+        cleaned += '_';
+      } else {
+        cleaned += ch;
+      }
+    }
     // 限制长度（保守处理，保留扩展名）
     if (cleaned.length <= 200) return cleaned;
     const parts = cleaned.split('.');
