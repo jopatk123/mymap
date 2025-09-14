@@ -135,6 +135,7 @@ export const useAppStore = defineStore('app', {
     // 更新初始显示设置
     async updateInitialViewSettings(settings) {
       try {
+        console.log('[store] updateInitialViewSettings called with', settings);
         const res = await initialViewApi.updateSettings(settings);
         const returned = res && res.data ? res.data : res;
 
@@ -149,6 +150,15 @@ export const useAppStore = defineStore('app', {
               new CustomEvent('initial-view-updated', { detail: this.initialViewSettings })
             );
           } catch (e) {}
+          // 写入 localStorage 以触发其他浏览器 tab 的 storage 事件，实现跨 tab 同步
+          try {
+            const marker = { ...this.initialViewSettings, _t: Date.now() };
+            localStorage.setItem('initial-view-updated', JSON.stringify(marker));
+            console.log('[store] wrote initial-view-updated to localStorage', marker);
+          } catch (e) {
+            /* ignore */
+          }
+
           return returned;
         }
         throw new Error('更新失败');

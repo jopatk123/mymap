@@ -7,6 +7,8 @@
   >
     <div id="map" class="map-view"></div>
 
+    <!-- debug panel removed -->
+
     <!-- 地图控制面板 -->
     <div class="map-controls">
       <el-button-group>
@@ -60,6 +62,7 @@ const appStore = useAppStore();
 const mapType = computed(() => appStore.mapSettings.mapType);
 
 const locating = ref(false);
+// Debug helpers removed in cleanup
 
 const {
   map,
@@ -77,25 +80,12 @@ const {
   onMarkerClick,
 } = useMap('map');
 
-// 记录 map 值何时变化，便于调试暴露链路
-watch(
-  map,
-  (_v) => {
-    // map changed — intentionally no debug logging to avoid noisy console output
-  },
-  { immediate: true }
-);
-
-// 搜索结果临时标记
+// 模块作用域的搜索标记（在多个函数间共享）
 let searchMarker = null;
 
-/**
- * setSearchMarker 支持两种调用形式：
- * 1) setSearchMarker(lat, lng, 'label')
- * 2) setSearchMarker(lat, lng, pointObject) -- pointObject 来自 KML 搜索，包含 name/description/sourceFile 等
- */
-const setSearchMarker = (lat, lng, labelOrPoint = '搜索位置') => {
-  if (!map.value) return;
+// setSearchMarker: 在地图上显示一个搜索结果标记（可能包含丰富弹窗）
+const setSearchMarker = (labelOrPoint, lat, lng) => {
+  // 记录 map 值何时变化，便于调试暴露链路
   if (searchMarker) {
     try {
       map.value.removeLayer(searchMarker);
@@ -260,14 +250,113 @@ onMounted(async () => {
   onInitialViewUpdated = (e) => {
     try {
       const s = e?.detail || null;
-      if (!s || !s.enabled) return;
+      console.log('[initial-view-updated] received event detail:', s);
+      if (!s || !s.enabled) {
+        console.log('[initial-view-updated] settings disabled or empty, skipping');
+        return;
+      }
       // s.center is [lng, lat] => convert to [lat, lng]
       const [lng, lat] = s.center || [];
-      if (lat == null || lng == null) return;
+      if (lat == null || lng == null) {
+        console.warn('[initial-view-updated] invalid center received:', s.center);
+        return;
+      }
+      console.log('[initial-view-updated] applying center/zoom ->', { lat, lng, zoom: s.zoom });
       setCenter(lat, lng, s.zoom);
     } catch (_err) {}
   };
+  console.log('[map-container] registering initial-view-updated listener');
   window.addEventListener('initial-view-updated', onInitialViewUpdated);
+
+  // Fallback: if the initial-view was saved before this tab mounted (same-tab navigation),
+  // read the latest marker from localStorage and apply it now.
+  try {
+    const raw = localStorage.getItem('initial-view-updated');
+    if (raw) {
+      try {
+        const marker = JSON.parse(raw);
+        console.log('[map-container] found initial-view-updated in localStorage at mount:', marker);
+        if (marker && marker.enabled) {
+          const [lng, lat] = marker.center || [];
+          if (lat != null && lng != null) {
+            console.log('[map-container] applying center from localStorage (mount):', {
+              lat,
+              lng,
+              zoom: marker.zoom,
+            });
+            // removed debug marker assignment
+            try {
+              if (typeof setCenter === 'function') {
+                setCenter(lat, lng, marker.zoom);
+              } else {
+                setTimeout(() => {
+                  try {
+                    if (typeof setCenter === 'function') {
+                      setCenter(lat, lng, marker.zoom);
+                    } else {
+                      console.warn('[map-container] setCenter not available on retry (mount)');
+                    }
+                  } catch (err) {
+                    console.error('[map-container] retry apply setCenter failed (mount):', err);
+                  }
+                }, 60);
+              }
+            } catch (err) {
+              console.error('[map-container] error applying center from localStorage:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(
+          '[map-container] failed to parse initial-view-updated from localStorage (mount):',
+          err
+        );
+      }
+    }
+  } catch (e) {
+    /* ignore localStorage errors */
+  }
+
+  // 监听 storage 事件以支持跨 tab 的初始视图更新同步
+  const handleStorage = (e) => {
+    try {
+      if (!e || !e.key) return;
+      if (e.key !== 'initial-view-updated') return;
+      const marker = JSON.parse(e.newValue || e.oldValue || '{}');
+      console.log('[storage] initial-view-updated marker received:', marker);
+      // removed debug state update
+      if (marker && marker.enabled) {
+        const [lng, lat] = marker.center || [];
+        if (lat != null && lng != null) {
+          console.log('[storage] applying center from storage:', { lat, lng, zoom: marker.zoom });
+          // setCenter may not be initialized yet in some bundling/setup orders; guard and retry shortly if needed
+          try {
+            if (typeof setCenter === 'function') {
+              setCenter(lat, lng, marker.zoom);
+            } else {
+              // retry once after a short delay
+              setTimeout(() => {
+                try {
+                  if (typeof setCenter === 'function') {
+                    setCenter(lat, lng, marker.zoom);
+                  } else {
+                    console.warn('[map-container] setCenter not available on retry');
+                  }
+                } catch (err) {
+                  console.error('[map-container] retry apply setCenter failed:', err);
+                }
+              }, 60);
+            }
+          } catch (err) {
+            console.error('[map-container] error applying center from localStorage:', err);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('handleStorage error:', err);
+    }
+  };
+  window.addEventListener('storage', handleStorage);
 });
 
 // 清理事件监听器

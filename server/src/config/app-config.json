@@ -85,22 +85,39 @@
     }
   },
   "mapSettings": {
-    "defaultCenter": [116.4074, 39.9042],
+    "defaultCenter": [
+      116.4074,
+      39.9042
+    ],
     "defaultZoom": 12,
     "minZoom": 3,
     "maxZoom": 18,
     "mapType": "normal",
     "initialView": {
       "enabled": true,
-      "center": [119.305497, 25.9928],
-      "zoom": 11
+      "center": [
+        119.3,
+        26
+      ],
+      "zoom": 12
     }
   },
   "uploadSettings": {
     "maxFileSize": 104857600,
-    "allowedImageTypes": ["jpg", "jpeg", "png"],
-    "allowedVideoTypes": ["mp4", "avi", "mov"],
-    "allowedKmlTypes": ["kml", "kmz"],
+    "allowedImageTypes": [
+      "jpg",
+      "jpeg",
+      "png"
+    ],
+    "allowedVideoTypes": [
+      "mp4",
+      "avi",
+      "mov"
+    ],
+    "allowedKmlTypes": [
+      "kml",
+      "kmz"
+    ],
     "thumbnailSize": {
       "width": 300,
       "height": 200

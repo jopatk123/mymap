@@ -122,6 +122,7 @@ import { ref, reactive, computed, watch, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Location, MapLocation } from '@element-plus/icons-vue';
 import { initialViewApi } from '../../api/initial-view.js';
+import { useAppStore } from '@/store/app.js';
 
 const props = defineProps({
   modelValue: {
@@ -218,6 +219,38 @@ const handleEnabledChange = (enabled) => {
   }
 };
 
+// 获取当前地理位置并填充表单
+const getCurrentLocation = async () => {
+  if (!navigator || !navigator.geolocation) {
+    ElMessage.error('浏览器不支持地理位置功能');
+    return;
+  }
+
+  gettingLocation.value = true;
+  try {
+    await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { longitude, latitude } = pos.coords;
+          // 保持与表单使用的 [lng, lat] 格式一致
+          form.center = [Number(longitude.toFixed(6)), Number(latitude.toFixed(6))];
+          ElMessage.success('已获取当前位置');
+          resolve();
+        },
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  } catch (error) {
+    console.error('获取当前位置失败:', error);
+    ElMessage.error(
+      '获取当前位置失败: ' + (error && error.message ? error.message : '请检查定位权限')
+    );
+  } finally {
+    gettingLocation.value = false;
+  }
+};
+
 // 保存设置
 const handleSave = async () => {
   try {
@@ -234,10 +267,18 @@ const handleSave = async () => {
       zoom: form.enabled ? form.zoom : 12,
     };
 
-    await initialViewApi.updateSettings(settings);
+    // 使用 store 的 action 更新（action 内会调用 API、更新 state 并派发全局事件）
+    const appStore = useAppStore();
+    console.log('[dialog] calling appStore.updateInitialViewSettings with', settings);
+    const returned = await appStore.updateInitialViewSettings(settings);
+    console.log('[dialog] updateInitialViewSettings returned', returned);
 
-    // 保存成功（axios拦截器已处理错误情况）
+    // 保存成功
     ElMessage.success('初始显示设置保存成功');
+    // 可见调试：把返回数据放到 window 上，便于在另一个 tab 或 context 检查
+    try {
+  // Removed debug-only global exposure
+    } catch (e) {}
     emit('settings-updated');
     visible.value = false;
   } catch (error) {
