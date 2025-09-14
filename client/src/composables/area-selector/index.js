@@ -1,5 +1,5 @@
 // useAreaSelector 入口 - 聚合拆分后的模块，保持原有 API
-import { computed } from 'vue';
+// computed import removed (not used in this module)
 import { createAreaSelectorContext } from './context.js';
 import { createMapSync } from './map-sync.js';
 import { createCircleActions } from './circle.js';
@@ -9,7 +9,9 @@ import { createManageActions } from './manage.js';
 export function useAreaSelector() {
   const context = createAreaSelectorContext();
   // 子模块
-  const mapSync = createMapSync(context); // eslint-disable-line no-unused-vars
+  const mapSync = createMapSync(context);
+  // intentionally not referenced further; mark to satisfy linter
+  void mapSync;
   const circle = createCircleActions(context);
   const polygon = createPolygonActions(context);
   const manage = createManageActions(context, circle, polygon);

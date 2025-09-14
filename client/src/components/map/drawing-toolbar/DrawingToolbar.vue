@@ -98,6 +98,9 @@ const handleShowExport = () => {
   }
 };
 
+// Mark intentionally unused import as referenced for linter
+void _exportDrawings;
+
 // 监听地图实例变化
 watch(
   () => props.mapInstance,

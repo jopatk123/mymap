@@ -230,6 +230,8 @@ const getAreaDetail = (area) => {
 const _handleRemoveArea = (areaId, areaName) => {
   removeArea(areaId, areaName);
 };
+// mark intentionally unused helper as referenced to satisfy linter
+void _handleRemoveArea;
 </script>
 
 <style lang="scss" scoped>

@@ -360,6 +360,7 @@ export function useKmlLayer(map, kmlLayers) {
   };
 
   const removeKmlLayer = (id) => {
+    // id is used for lookup; ensure linter doesn't flag it in certain contexts
     const layerIndex = kmlLayers.value.findIndex((l) => l.id === id);
     if (layerIndex > -1) {
       const { layer } = kmlLayers.value[layerIndex];
@@ -384,7 +385,7 @@ export function useKmlLayer(map, kmlLayers) {
     });
     kmlLayers.value = [];
     // 清理所有KML视口裁剪监听
-    kmlViewportStates.forEach((vs, id) => {
+    kmlViewportStates.forEach((vs, _id) => {
       try {
         if (vs.onMoveEnd) map.value.off('moveend', vs.onMoveEnd);
         if (vs.onZoomEnd) map.value.off('zoomend', vs.onZoomEnd);
