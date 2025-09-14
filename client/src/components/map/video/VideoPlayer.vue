@@ -93,7 +93,7 @@ const handleVideoLoaded = () => {
 };
 
 // 处理视频错误
-const handleVideoError = (event) => {
+const handleVideoError = (_event) => {
   // 避免在生产环境直接输出 console，使用 Element UI 消息进行用户提示
   ElMessage.error('视频播放失败，请检查文件是否存在');
 };

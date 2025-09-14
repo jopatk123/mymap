@@ -316,19 +316,19 @@ function createPopupContent(feature, kmlFile) {
           ? `<p class="popup-meta">${feature.properties.description}</p>`
           : ''
       }
-      ${wgs84Text ? `<p class=\"popup-meta\">经纬度(WGS84): ${wgs84Text}</p>` : ''}
-      ${kmlFile?.description ? `<div class=\"popup-meta\">备注：${kmlFile.description}</div>` : ''}
+      ${wgs84Text ? `<p class="popup-meta">经纬度(WGS84): ${wgs84Text}</p>` : ''}
+      ${kmlFile?.description ? `<div class="popup-meta">备注：${kmlFile.description}</div>` : ''}
       ${
         amapUrl || bmapUrl
-          ? `<div class=\"popup-actions\">\
+          ? `<div class="popup-actions">
         ${
           amapUrl
-            ? `<a class=\"map-btn gaode\" href=\"${amapUrl}\" target=\"_blank\" rel=\"noopener\">在高德地图打开</a>`
+            ? `<a class="map-btn gaode" href="${amapUrl}" target="_blank" rel="noopener">在高德地图打开</a>`
             : ''
-        }\
+        }
         ${
           bmapUrl
-            ? `<a class=\"map-btn baidu\" href=\"${bmapUrl}\" target=\"_blank\" rel=\"noopener\">在百度地图打开</a>`
+            ? `<a class="map-btn baidu" href="${bmapUrl}" target="_blank" rel="noopener">在百度地图打开</a>`
             : ''
         }
       </div>`

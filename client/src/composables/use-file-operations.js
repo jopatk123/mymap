@@ -46,7 +46,7 @@ export function useFileOperations() {
       // debug: 用户确认删除，开始调用API (suppressed)
 
       // 根据文件类型调用相应的删除API
-      let req;
+    let req;
       switch (file.fileType) {
         case 'panorama':
           // debug: 调用全景图删除API (suppressed)
@@ -64,7 +64,7 @@ export function useFileOperations() {
           throw new Error('未知文件类型');
       }
 
-  const _result = await req;
+  await req;
   // debug: 删除API调用成功 (suppressed)
 
   ElMessage.success('删除成功');
@@ -78,8 +78,7 @@ export function useFileOperations() {
       }
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('删除失败:', error);
-        ElMessage.error('删除失败: ' + error.message);
+        ElMessage.error('删除失败: ' + (error?.message || error));
       }
     }
   };

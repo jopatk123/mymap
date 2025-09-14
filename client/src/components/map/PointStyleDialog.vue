@@ -58,7 +58,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import PointStyleEditor from './styles/PointStyleEditor.vue';
-import StylePreview from './styles/StylePreview.vue';
 import PointTypeSelector from './PointTypeSelector.vue';
 import { usePointStyle } from '@/composables/use-point-style.js';
 

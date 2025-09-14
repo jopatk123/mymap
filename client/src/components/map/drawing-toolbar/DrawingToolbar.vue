@@ -60,7 +60,7 @@ const {
   activateTool,
   deactivateTool,
   clearAllDrawings,
-  exportDrawings,
+  exportDrawings: _exportDrawings,
 } = useDrawingTools();
 
 // 计算属性和方法
