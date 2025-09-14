@@ -226,8 +226,8 @@ const getAreaDetail = (area) => {
   }
 };
 
-// 删除区域
-const handleRemoveArea = (areaId, areaName) => {
+// 删除区域（当前模板/调用链未使用，保留为私有函数）
+const _handleRemoveArea = (areaId, areaName) => {
   removeArea(areaId, areaName);
 };
 </script>

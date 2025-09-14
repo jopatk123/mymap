@@ -89,9 +89,9 @@ export function useKmlProcessor() {
       } else {
         ElMessage.error('KML文件格式错误: ' + validation.error);
       }
-    } catch (_error) {
-      // console.error('验证KML文件失败:', _error);
-      ElMessage.error('验证KML文件失败: ' + _error.message);
+    } catch (_e) {
+        // ...existing code...
+      }
       validationResult.value = { valid: false, error: _error.message };
     }
   };

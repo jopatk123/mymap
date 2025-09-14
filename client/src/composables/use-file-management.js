@@ -57,7 +57,7 @@ export function useFileManagement() {
 
       pagination.total = response.pagination?.total || response.data.length;
     } catch (error) {
-        ElMessage.error('加载文件列表失败: ' + error.message);
+      ElMessage.error('加载文件列表失败: ' + error.message);
     } finally {
       loading.value = false;
     }
