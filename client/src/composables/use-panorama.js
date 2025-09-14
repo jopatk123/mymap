@@ -139,11 +139,17 @@ export function usePanorama() {
       isLoading.value = false;
     });
 
-    viewer.value.on('scenechange', (sceneId) => {});
+    viewer.value.on('scenechange', (_sceneId) => {
+      void _sceneId;
+    });
 
-    viewer.value.on('mousedown', () => {});
+    viewer.value.on('mousedown', (_ev) => {
+      void _ev;
+    });
 
-    viewer.value.on('mouseup', () => {});
+    viewer.value.on('mouseup', (_ev) => {
+      void _ev;
+    });
   };
 
   // 打开全景图查看器

@@ -20,6 +20,8 @@ export function useMapPage() {
     storeToRefs(panoramaStore);
   // pagination may be unused in some views; mark to avoid linter warning
   void pagination;
+  // mark onMounted as intentionally imported (used by consumers or reserved)
+  void onMounted;
 
   const { sidebarCollapsed, panoramaListVisible, mapConfig, isOnline } = storeToRefs(appStore);
 

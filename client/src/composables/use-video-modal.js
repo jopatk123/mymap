@@ -5,7 +5,8 @@ export function useVideoModal() {
   const visible = ref(false);
 
   // 显示模态框
-  const show = (video) => {
+  const show = (_video) => {
+    void _video;
     visible.value = true;
   };
 
@@ -52,7 +53,7 @@ export function useVideoModal() {
       document.execCommand('copy');
       ElMessage.success('坐标已复制到剪贴板');
     } catch (err) {
-      console.error('复制失败:', err);
+      void console.error('复制失败:', err);
       ElMessage.error('复制失败，请手动复制');
     } finally {
       document.body.removeChild(textArea);

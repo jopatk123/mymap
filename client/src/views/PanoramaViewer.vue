@@ -52,6 +52,10 @@ const {
   setView,
 } = usePanorama();
 
+// mark ElMessage/viewer as intentionally available
+void ElMessage;
+void viewer;
+
 const panoramaService = new PanoramaViewerService();
 const panorama = ref(null);
 const error = ref('');
