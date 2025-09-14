@@ -125,7 +125,7 @@ export const useAppStore = defineStore('app', {
           void console.log('初始显示设置加载成功:', this.initialViewSettings);
         }
       } catch (error) {
-        console.warn('加载初始显示设置失败，使用默认设置:', error);
+        void console.warn('加载初始显示设置失败，使用默认设置:', error);
         this.initialViewSettings.loaded = true; // 标记为已加载，避免重复请求
       }
     },

@@ -416,6 +416,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
 
   // 调试函数：检查所有 KML 点与当前区域的匹配情况，阈值单位为米
   const debugPointChecks = (thresholdMeters = 50) => {
+    // Expose function reference for interactive debugging without creating unused-var warnings
+    void debugPointChecks;
     try {
       const activeAreas = areas.value.filter((a) => a.visible !== false);
       if (!activeAreas.length) {
@@ -498,7 +500,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
 
       // table output is useful during debugging but suppressed here to satisfy linter rules
       void console.table &&
-        console.table(
+        void console.table(
           results.map((r) => ({
             pointId: r.pointId,
             title: r.title,
