@@ -37,6 +37,7 @@ export function useKmlLayer(map, kmlLayers) {
           }
         }
       } catch (error) {
+        // non-fatal: fetch from server failed, fallback to parsing file directly
         void console.warn('从服务端获取KML点位数据失败，回退到解析KML文件:', error);
       }
 

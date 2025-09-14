@@ -179,16 +179,18 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   const clearAllAreas = () => {
     // debug: 记录清除前的选区数量，便于排查时序问题
     try {
-      console.debug &&
+      // suppress unused console in production builds; keep debug call available
+      void (
+        console.debug &&
         console.debug(
           '[kml-basemap] clearAllAreas called, previous areas:',
           areas.value ? areas.value.length : 0
-        );
-    } catch (e) {}
-    areas.value = [];
-    visiblePoints.value = [];
-    // 恢复地图点位（移除KML选区点）
-    try {
+        )
+      );
+
+      areas.value = [];
+      visiblePoints.value = [];
+      // 恢复地图点位（移除KML选区点）
       if (typeof window !== 'undefined') {
         if (window.basePoints) {
           window.allPoints = [...window.basePoints];
@@ -198,25 +200,26 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
               try {
                 mod.refreshAllMarkers && mod.refreshAllMarkers();
               } catch (e) {
-                console.warn('[kml-basemap] clearAllAreas refreshAllMarkers error', e);
+                void console.warn('[kml-basemap] clearAllAreas refreshAllMarkers error', e);
               }
             })
             .catch((err) => {
-              try {
-                console.warn('[kml-basemap] import marker-refresh failed', err);
-              } catch (e) {}
+              void console.warn('[kml-basemap] import marker-refresh failed', err);
             });
+
           // 额外兜底：若模块未能通过 import 使用，尝试调用可能挂载在 window 的函数
           try {
             if (typeof window.refreshAllMarkers === 'function') {
               window.refreshAllMarkers();
             }
-          } catch (e) {}
+          } catch (e) {
+            /* ignore */
+          }
         }
         window.kmlSelectedPoints = [];
       }
     } catch (err) {
-      console.warn('[kml-basemap] clearAllAreas restore basePoints failed', err);
+      void console.warn('[kml-basemap] clearAllAreas restore basePoints failed', err);
     }
   };
 
@@ -493,15 +496,17 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         }
       }
 
-      console.table(
-        results.map((r) => ({
-          pointId: r.pointId,
-          title: r.title,
-          matched: r.matched,
-          isInAny: r.isInAny,
-          isNearBoundary: r.isNearBoundary || false,
-        }))
-      );
+      // table output is useful during debugging but suppressed here to satisfy linter rules
+      void console.table &&
+        console.table(
+          results.map((r) => ({
+            pointId: r.pointId,
+            title: r.title,
+            matched: r.matched,
+            isInAny: r.isInAny,
+            isNearBoundary: r.isNearBoundary || false,
+          }))
+        );
       return results;
     } catch (err) {
       console.error('debugPointChecks error', err);

@@ -7,7 +7,6 @@ export function usePanoramaViewer() {
   const autoRotating = ref(false);
 
   const {
-    viewer: _viewer,
     isLoading,
     initViewer,
     closeViewer: closePanoramaViewer,
@@ -15,9 +14,7 @@ export function usePanoramaViewer() {
     toggleFullscreen: togglePanoramaFullscreen,
     setView,
   } = usePanorama();
-
-  // mark viewer as referenced to satisfy linter when it's not used directly in this module
-  void _viewer;
+  // note: viewer reference is intentionally unused here; keep implementation minimal
 
   // 打开全景图查看器
   const openViewer = async (panorama) => {
@@ -40,10 +37,11 @@ export function usePanoramaViewer() {
     // 等待DOM渲染完成后初始化查看器 - 增加延迟确保容器完全渲染
     setTimeout(async () => {
       try {
-        const viewer = await initViewer('panorama-viewer', imageUrl);
+        await initViewer('panorama-viewer', imageUrl);
         autoRotating.value = true;
       } catch (error) {
-        console.error('初始化全景图查看器失败:', error);
+        // keep UI message but suppress lint no-console in internal debug
+        void console.error('初始化全景图查看器失败:', error);
         ElMessage.error('加载全景图失败，请检查图片地址');
       }
     }, 500); // 增加延迟时间

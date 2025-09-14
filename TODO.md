@@ -16,42 +16,46 @@
 
   - 已完成（保守修复）：`client/src/components/admin/FileSearchBar.vue`（使用 local reactive 副本并 emit update:searchForm）
   - 下一批（计划顺序，低风险优先）：
-   1. `client/src/components/admin/FileUploadDialogs.vue` (completed)
-   2. `client/src/components/admin/FileActionDialogs.vue` (completed)
-    3. `client/src/components/map/drawing-toolbar/InteractiveManager.vue`
-    4. `client/src/components/map/drawing-toolbar/PointPropertiesDialog.vue`
-    5. `client/src/components/map/drawing-toolbar/PointInfoPopup.vue` (completed)
+
+  1.  `client/src/components/admin/FileUploadDialogs.vue` (completed)
+  2.  `client/src/components/admin/FileActionDialogs.vue` (completed)
+  3.  `client/src/components/map/drawing-toolbar/InteractiveManager.vue`
+  4.  `client/src/components/map/drawing-toolbar/PointPropertiesDialog.vue`
+  5.  `client/src/components/map/drawing-toolbar/PointInfoPopup.vue` (completed)
 
 - [not-started] P2: 移除未使用变量 / 添加默认 prop 值（分批进行）
 - [not-started] P3: 决策并统一 console 使用（后期集中处理）
- 
- 当前 ESLint 快照（本次运行）：
 
- - ✖ 119 problems (4 errors, 115 warnings)  — 最近本地 lint 运行结果
- - ✖ 98 problems (0 errors, 98 warnings)  — 本次微批次后最新本地 lint 运行结果
- - ✖ 91 problems (0 errors, 91 warnings)  — 本次微批次 #2 后最新本地 lint 运行结果
- - ✖ 84 problems (0 errors, 84 warnings)  — 本次微批次 #3 后最新本地 lint 运行结果
+当前 ESLint 快照（本次运行）：
 
- 下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
+- ✖ 119 problems (4 errors, 115 warnings) — 最近本地 lint 运行结果
+- ✖ 98 problems (0 errors, 98 warnings) — 本次微批次后最新本地 lint 运行结果
+- ✖ 91 problems (0 errors, 91 warnings) — 本次微批次 #2 后最新本地 lint 运行结果
+- ✖ 84 problems (0 errors, 84 warnings) — 本次微批次 #3 后最新本地 lint 运行结果
+
+下一步：开始 P2（机械修复），优先清理 no-unused-vars 与 require-default-prop，分批提交，每批完成后运行 lint/format 并记录差异。
 
 修复策略：
 
 - 我将按文件批次修复，优先处理 P1（运行时/安全）文件；每次完成 1-3 个文件就运行 lint/format 并汇报变更和当前 ESLint 统计。
- 
- 最近提交摘要（本批次）:
- - Commit: chore(lint): P2 micro-batch - replace console with ElMessage; mark isUpdating as unused
- - Files changed: client/src/views/Admin/FileManage.vue, client/src/views/Map/index.vue
- - Purpose: Replace console.error with ElMessage.error to avoid no-console in UI code; mark unused isUpdating return as _isUpdating to avoid no-unused-vars without changing behavior.
- 
- 本次提交摘要（micro-batch #2）:
- - Commit: chore(lint): P2 micro-batch #2 - mark unused locals and silence no-unused-vars
- - Files changed: client/src/components/map/area-selector/AreaControls.vue, client/src/components/map/drawing-toolbar/DrawingToolbar.vue, client/src/components/map/drawing-toolbar/PolygonInfoPopup.vue, client/src/composables/area-selector/index.js, client/src/composables/use-kml-layer.js
- - Purpose: Mark intentionally unused locals as referenced (void <var>), remove/replace unused imports, and rename certain callback params to align with no-unused-vars rule. No runtime behavior changes expected.
 
- 本次提交摘要（micro-batch #3）:
- - Commit: chore(lint): P2 micro-batch #3 - mark unused args/vars in composables; run eslint --fix
- - Files changed: client/src/composables/use-map-interactions.js, client/src/composables/use-map-markers.js, client/src/composables/use-map-page.js, client/src/composables/use-map-style-updater.js, client/src/composables/use-panorama-viewer.js
- - Purpose: Prefix/mark intentionally unused args/vars (use `_` or `void`) to silence no-unused-vars; ran eslint --fix to resolve fixable Prettier/format issues. No runtime behavior changes.
+最近提交摘要（本批次）:
+
+- Commit: chore(lint): P2 micro-batch - replace console with ElMessage; mark isUpdating as unused
+- Files changed: client/src/views/Admin/FileManage.vue, client/src/views/Map/index.vue
+- Purpose: Replace console.error with ElMessage.error to avoid no-console in UI code; mark unused isUpdating return as \_isUpdating to avoid no-unused-vars without changing behavior.
+
+本次提交摘要（micro-batch #2）:
+
+- Commit: chore(lint): P2 micro-batch #2 - mark unused locals and silence no-unused-vars
+- Files changed: client/src/components/map/area-selector/AreaControls.vue, client/src/components/map/drawing-toolbar/DrawingToolbar.vue, client/src/components/map/drawing-toolbar/PolygonInfoPopup.vue, client/src/composables/area-selector/index.js, client/src/composables/use-kml-layer.js
+- Purpose: Mark intentionally unused locals as referenced (void <var>), remove/replace unused imports, and rename certain callback params to align with no-unused-vars rule. No runtime behavior changes expected.
+
+本次提交摘要（micro-batch #3）:
+
+- Commit: chore(lint): P2 micro-batch #3 - mark unused args/vars in composables; run eslint --fix
+- Files changed: client/src/composables/use-map-interactions.js, client/src/composables/use-map-markers.js, client/src/composables/use-map-page.js, client/src/composables/use-map-style-updater.js, client/src/composables/use-panorama-viewer.js
+- Purpose: Prefix/mark intentionally unused args/vars (use `_` or `void`) to silence no-unused-vars; ran eslint --fix to resolve fixable Prettier/format issues. No runtime behavior changes.
 - 对于需要设计决策（例如是否允许 v-html 或日志策略），我会在 TODO.md 记录选项并在变更前征求确认。
 
 最近已完成的具体变更（来自本次会话）：
@@ -68,12 +72,12 @@
 - `client/src/components/map/drawing-toolbar/DrawingToolbar.vue` — 删除未使用的导入/绑定以减少 no-unused-vars 报告。
 - `client/src/components/map/MapControls.vue` — 注释/移除未使用的计算属性绑定以避免未使用变量警告。
 - `client/src/components/map/video/VideoPlayer.vue` — 用 `ElMessage` 替换 console 输出，去掉生产 console，避免 no-console（P3）在部分检测点出现。
- - `client/src/components/map/kml-basemap/KMLBaseMapFolder.vue` — 保守前缀未使用绑定并移除未使用的 `computed` 导入（本地已提交）。
- - `client/src/composables/use-file-management.js` — 前缀未使用的 `pointsApi` 导入（本地已提交）。
- - `client/src/composables/use-file-operations.js` — 抑制 console.error 输出并修复 Prettier 缩进（本地已提交）。
- - `client/src/composables/use-file-processor.js` — 抑制 console.error 并统一 catch 变量为 `_error`（本地已提交）。
- - `client/src/components/map/PanoramaModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
- - `client/src/components/map/VideoModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
+- `client/src/components/map/kml-basemap/KMLBaseMapFolder.vue` — 保守前缀未使用绑定并移除未使用的 `computed` 导入（本地已提交）。
+- `client/src/composables/use-file-management.js` — 前缀未使用的 `pointsApi` 导入（本地已提交）。
+- `client/src/composables/use-file-operations.js` — 抑制 console.error 输出并修复 Prettier 缩进（本地已提交）。
+- `client/src/composables/use-file-processor.js` — 抑制 console.error 并统一 catch 变量为 `_error`（本地已提交）。
+- `client/src/components/map/PanoramaModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
+- `client/src/components/map/VideoModal.vue` — 前缀 `visible` 返回值为 `_visible`（本地已提交）。
 
 接下来要做（短期，P1）：
 
@@ -81,13 +85,14 @@
 2. 继续按计划修复 `FileActionDialogs.vue`、`InteractiveManager.vue`、`PointPropertiesDialog.vue` 等（每次 1 个文件为宜以便回滚与验证）。
 3. 当 P1 的大部分条目完成后，开启 P2：处理 no-unused-vars 与 vue/require-default-prop（批量机械修复）。
 
- 当前进展（本轮）：
+当前进展（本轮）：
 
- - 已完成并本地提交：KMLBaseMapFolder.vue、use-file-management.js、use-file-operations.js、use-file-processor.js、PanoramaModal.vue、VideoModal.vue
- - 最近微批次（8 文件）已应用并本地提交：保守变更以减少 no-unused-vars 与 prettier 报告
- - 正在进行：核心 composables 与工具（下一目标详见下方)
+- 已完成并本地提交：KMLBaseMapFolder.vue、use-file-management.js、use-file-operations.js、use-file-processor.js、PanoramaModal.vue、VideoModal.vue
+- 最近微批次（8 文件）已应用并本地提交：保守变更以减少 no-unused-vars 与 prettier 报告
+- 正在进行：核心 composables 与工具（下一目标详见下方)
 
 下一步短期目标（P2 高优先）：
+
 1. `client/src/composables/kml-text-parser.js` — 清理不必要的转义字符（大量 no-useless-escape）
 2. `client/src/composables/use-kml-export.js` 与 `client/src/services/kml-export-service.js` — 处理 no-console / no-control-regex 报告
 3. 继续逐个 Vue 组件修复 assigned-but-unused 与 missing default props（每次 3-5 文件小批量提交）
