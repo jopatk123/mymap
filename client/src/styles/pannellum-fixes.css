@@ -1,0 +1,24 @@
+/* Improve scrolling responsiveness for Pannellum viewer
+   - prefer non-blocking touch behaviors where possible
+   - prevent accidental overscroll while interacting with the viewer
+   This is a low-risk CSS-only mitigation that avoids editing third-party JS.
+*/
+.pnlm-container,
+.pnlm-render-container,
+.pnlm-dragfix,
+.pnlm-ui {
+  /* Allow touch panning within the viewer without blocking the main scroll
+     The viewer intentionally handles touch gestures; set touch-action to 'none'
+     only for the pannellum interactive area so the browser doesn't need to
+     block scrolling by waiting for JS touch handlers. */
+  touch-action: none;
+
+  /* Prevent the viewport from performing overscroll (bounce) while interacting */
+  overscroll-behavior: contain;
+}
+
+/* For orientation button and some controls we still want default touch behavior */
+.pnlm-orientation-button,
+.pnlm-controls-container {
+  touch-action: auto;
+}

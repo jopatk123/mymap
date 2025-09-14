@@ -6,6 +6,7 @@ import router from './router';
 import App from './App.vue';
 import './styles/global.scss';
 import './styles/popup-overrides.scss';
+import './styles/pannellum-fixes.css';
 // 引入 Leaflet.markercluster 依赖样式（JS 通过插件包引入）
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
