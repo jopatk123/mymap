@@ -231,7 +231,7 @@ export const useAppStore = defineStore('app', {
       try {
         localStorage.setItem('app-settings', JSON.stringify(settings));
       } catch (error) {
-        console.warn('无法保存设置到本地存储:', error);
+        void console.warn('无法保存设置到本地存储:', error);
       }
     },
 
@@ -248,7 +248,7 @@ export const useAppStore = defineStore('app', {
           this.mapSettings = { ...this.mapSettings, ...parsed.mapSettings };
         }
       } catch (error) {
-        console.warn('无法从本地存储加载设置:', error);
+        void console.warn('无法从本地存储加载设置:', error);
       }
     },
   },

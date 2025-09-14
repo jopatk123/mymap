@@ -69,7 +69,7 @@ export function useKmlStyles() {
 
       return updatedStyles;
     } catch (error) {
-      console.error(`更新KML文件 ${kmlFileId} 样式失败:`, error);
+      void console.error(`更新KML文件 ${kmlFileId} 样式失败:`, error);
       throw error;
     } finally {
       loading.value = false;
@@ -94,7 +94,7 @@ export function useKmlStyles() {
 
       return defaultStyles;
     } catch (error) {
-      console.error(`重置KML文件 ${kmlFileId} 样式失败:`, error);
+      void console.error(`重置KML文件 ${kmlFileId} 样式失败:`, error);
       throw error;
     } finally {
       loading.value = false;

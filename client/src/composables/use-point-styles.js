@@ -36,7 +36,7 @@ export function usePointStyles() {
         if (styles.panorama) panoramaPointStyles.value = styles.panorama;
       }
     } catch (error) {
-      console.warn('读取本地样式缓存失败:', error);
+      void console.warn('读取本地样式缓存失败:', error);
     }
   };
 
@@ -50,7 +50,7 @@ export function usePointStyles() {
       };
       localStorage.setItem('pointStyles', JSON.stringify(styles));
     } catch (error) {
-      console.warn('保存本地样式缓存失败:', error);
+      void console.warn('保存本地样式缓存失败:', error);
     }
   };
 
@@ -87,7 +87,7 @@ export function usePointStyles() {
       saveToLocalCache();
       return response.data;
     } catch (error) {
-      console.error('加载视频点位样式失败:', error);
+      void console.error('加载视频点位样式失败:', error);
       return videoPointStyles.value; // 返回默认样式
     } finally {
       loading.value = false;
@@ -123,7 +123,7 @@ export function usePointStyles() {
       saveToLocalCache();
       return response.data;
     } catch (error) {
-      console.error('加载全景图点位样式失败:', error);
+      void console.error('加载全景图点位样式失败:', error);
       return panoramaPointStyles.value;
     } finally {
       loading.value = false;
@@ -136,7 +136,7 @@ export function usePointStyles() {
       loading.value = true;
       await Promise.all([loadVideoPointStyles(useCache), loadPanoramaPointStyles(useCache)]);
     } catch (error) {
-      console.error('加载点位样式失败:', error);
+      void console.error('加载点位样式失败:', error);
     } finally {
       loading.value = false;
     }
@@ -161,7 +161,7 @@ export function usePointStyles() {
       saveToLocalCache();
       return updatedStyles;
     } catch (error) {
-      console.error('❌ 更新视频点位样式失败:', error);
+      void console.error('❌ 更新视频点位样式失败:', error);
       throw error;
     }
   };
@@ -174,7 +174,7 @@ export function usePointStyles() {
       saveToLocalCache();
       return updatedStyles;
     } catch (error) {
-      console.error('❌ 更新全景图点位样式失败:', error);
+      void console.error('❌ 更新全景图点位样式失败:', error);
       throw error;
     }
   };

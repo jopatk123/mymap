@@ -134,7 +134,7 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
 
     return { kmlLayer: layer, featureCount };
   } catch (error) {
-    console.error('处理KML点位数据失败:', error);
+    void console.error('处理KML点位数据失败:', error);
     return { kmlLayer: null, featureCount: 0 };
   }
 }

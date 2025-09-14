@@ -41,7 +41,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
 
     if (!coordinates) {
-      console.warn('点位坐标无效:', point);
+      void console.warn('点位坐标无效:', point);
       return null;
     }
 
@@ -360,7 +360,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         map.value.fitBounds(bounds, { padding: [20, 20] });
       }
     } catch (error) {
-      console.warn('fitBounds failed:', error);
+      void console.warn('fitBounds failed:', error);
     }
   };
 
