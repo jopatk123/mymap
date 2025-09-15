@@ -2,6 +2,7 @@ import { ElMessage } from 'element-plus';
 import { usePanoramaStore } from '@/store/panorama.js';
 import { useAppStore } from '@/store/app.js';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
+import { createPopupContent } from '@/composables/kml-point-renderer.js';
 
 /**
  * 地图交互组合函数
@@ -63,8 +64,7 @@ export function useMapInteractions(
           (f) => f.id === point.fileId || f.id === point.file_id || f.name === point.sourceFile
         ) || { title: '' };
 
-        const mod = await import('@/composables/kml-point-renderer.js');
-        const popupContent = mod.createPopupContent(feature, kmlFile);
+        const popupContent = createPopupContent(feature, kmlFile);
 
         // 尝试在已存在的 marker 上打开 popup
         const currentMarkers =

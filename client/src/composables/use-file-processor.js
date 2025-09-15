@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { imageProcessor } from '@/services/image-processor.js';
 
 export function useVideoProcessor() {
   const previewUrl = ref('');
@@ -190,8 +191,6 @@ export function usePanoramaProcessor() {
   const previewUrl = ref('');
 
   const processFile = async (file, form) => {
-    const { imageProcessor } = await import('@/services/image-processor.js');
-
     try {
       const result = await imageProcessor.processFile(file);
 

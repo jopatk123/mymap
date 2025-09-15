@@ -202,9 +202,8 @@ const handleSubmit = async () => {
     const total = items.length;
     let completed = 0;
 
-    // 延迟加载压缩器
-    let imageProcessorModule = await import('@/services/image-processor.js');
-    const singleton = imageProcessorModule.imageProcessor;
+    // 使用已导入的压缩器
+    const singleton = new ImageProcessor();
 
     for (const it of items) {
       processing.value = true;
@@ -327,6 +326,8 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 .actions {
+  display: flex;
+  gap: 8px;
 }
 .dialog-footer {
   display: flex;

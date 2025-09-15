@@ -163,5 +163,5 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/panoramaViewer.scss';
+@use '@/styles/panoramaViewer.scss';
 </style>

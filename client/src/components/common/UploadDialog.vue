@@ -32,9 +32,8 @@ import BaseUploadDialog from './BaseUploadDialog.vue';
 import PanoramaUploadArea from './PanoramaUploadArea.vue';
 import { usePanoramaProcessor } from '@/composables/use-file-processor';
 import { uploadPanoramaImage } from '@/api/panorama.js';
+import { imageProcessor } from '@/services/image-processor.js';
 // usePanoramaStore removed: not referenced in this component
-// 按需加载 image-processor，避免和动态导入混用阻止分包
-let imageProcessor;
 
 defineProps({
   modelValue: Boolean,
@@ -121,10 +120,7 @@ const handlePanoramaUpload = async (form, { setProgress, setProcessing }) => {
   // 检查图片尺寸并压缩
   setProcessing(true, '正在处理图片...');
 
-  if (!imageProcessor) {
-    const mod = await import('@/services/image-processor.js');
-    imageProcessor = mod.imageProcessor;
-  }
+  // 使用已导入的 imageProcessor
   const compressionResult = await imageProcessor.compressImageIfNeeded(form.file);
   let fileToUpload = compressionResult.file;
 

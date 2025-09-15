@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { kmlBaseMapService } from '@/services/kml-basemap-service.js';
 import { areaCalculationService } from '@/services/area-calculation-service.js';
 import { generateUUID } from '@/utils/uuid.js';
+import { kmlApi } from '@/api/kml.js';
 
 export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
   // 状态
@@ -38,7 +39,6 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
         : [];
 
       // 为每个文件获取样式配置
-      const { kmlApi } = await import('@/api/kml.js');
       for (const file of normalized) {
         try {
           const styleResponse = await kmlApi.getKmlFileStyles(file.id);
