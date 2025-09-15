@@ -38,6 +38,54 @@ const startServer = async () => {
       `);
     });
 
+    // --- WebSocket: 用于向所有连接的客户端广播配置更新（如初始显示设置）
+    try {
+      const WebSocket = require('ws');
+      const wss = new WebSocket.Server({ server });
+      // 把 wss 暴露到 app.locals，便于其他模块（如 ConfigService）使用
+      app.locals.wss = wss;
+
+      Logger.info('WebSocket 服务已启动，监听配置更新广播');
+
+      wss.on('connection', (ws, req) => {
+        const clientIp = req.socket.remoteAddress;
+        Logger.info(`WebSocket 客户端已连接: ${clientIp}`);
+        
+        // 心跳检测
+        ws.isAlive = true;
+        ws.on('pong', () => (ws.isAlive = true));
+        
+        ws.on('close', () => {
+          Logger.info(`WebSocket 客户端已断开: ${clientIp}`);
+        });
+        
+        ws.on('error', (err) => {
+          Logger.warn(`WebSocket 客户端错误 ${clientIp}:`, err.message);
+        });
+      });
+
+      // 定期清理死连接
+      const interval = setInterval(() => {
+        wss.clients.forEach((ws) => {
+          if (ws.isAlive === false) {
+            Logger.info('清理死连接');
+            return ws.terminate();
+          }
+          ws.isAlive = false;
+          ws.ping(() => {});
+        });
+      }, 30000);
+
+      wss.on('close', () => {
+        Logger.info('WebSocket 服务已关闭');
+        clearInterval(interval);
+      });
+
+      Logger.info(`WebSocket 服务已成功启动，当前连接数: ${wss.clients.size}`);
+    } catch (e) {
+      Logger.warn('无法启动 WebSocket 服务，实时广播功能不可用:', e && e.message ? e.message : e);
+    }
+
     // 优雅关闭处理
     const gracefulShutdown = (_signal) => {
       server.close(async () => {

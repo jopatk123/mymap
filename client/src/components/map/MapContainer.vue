@@ -250,9 +250,7 @@ onMounted(async () => {
   onInitialViewUpdated = (e) => {
     try {
       const s = e?.detail || null;
-      console.log('[initial-view-updated] received event detail:', s);
       if (!s || !s.enabled) {
-        console.log('[initial-view-updated] settings disabled or empty, skipping');
         return;
       }
       // s.center is [lng, lat] => convert to [lat, lng]
@@ -261,11 +259,9 @@ onMounted(async () => {
         console.warn('[initial-view-updated] invalid center received:', s.center);
         return;
       }
-      console.log('[initial-view-updated] applying center/zoom ->', { lat, lng, zoom: s.zoom });
       setCenter(lat, lng, s.zoom);
     } catch (_err) {}
   };
-  console.log('[map-container] registering initial-view-updated listener');
   window.addEventListener('initial-view-updated', onInitialViewUpdated);
 
   // Fallback: if the initial-view was saved before this tab mounted (same-tab navigation),
@@ -275,15 +271,10 @@ onMounted(async () => {
     if (raw) {
       try {
         const marker = JSON.parse(raw);
-        console.log('[map-container] found initial-view-updated in localStorage at mount:', marker);
         if (marker && marker.enabled) {
           const [lng, lat] = marker.center || [];
           if (lat != null && lng != null) {
-            console.log('[map-container] applying center from localStorage (mount):', {
-              lat,
-              lng,
-              zoom: marker.zoom,
-            });
+            try {
             // removed debug marker assignment
             try {
               if (typeof setCenter === 'function') {
@@ -303,6 +294,9 @@ onMounted(async () => {
               }
             } catch (err) {
               console.error('[map-container] error applying center from localStorage:', err);
+            }
+            } catch (e) {
+              // ignore
             }
           }
         }

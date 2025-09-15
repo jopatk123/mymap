@@ -119,6 +119,16 @@ export const useAppStore = defineStore('app', {
             ...settings,
             loaded: true,
           };
+          
+          // 如果设置已启用，立即触发初始视图更新事件，确保地图应用正确的初始位置
+          if (settings.enabled) {
+            try {
+              window.dispatchEvent(new CustomEvent('initial-view-updated', { detail: this.initialViewSettings }));
+            } catch (e) {
+              console.warn('[app.store] failed to dispatch initial event:', e);
+            }
+          }
+          
           // expose debug info to window to keep it accessible without console logging
           try {
             if (typeof window !== 'undefined') window.debugInitialView = this.initialViewSettings;
@@ -135,7 +145,6 @@ export const useAppStore = defineStore('app', {
     // 更新初始显示设置
     async updateInitialViewSettings(settings) {
       try {
-        console.log('[store] updateInitialViewSettings called with', settings);
         const res = await initialViewApi.updateSettings(settings);
         const returned = res && res.data ? res.data : res;
 
@@ -154,7 +163,6 @@ export const useAppStore = defineStore('app', {
           try {
             const marker = { ...this.initialViewSettings, _t: Date.now() };
             localStorage.setItem('initial-view-updated', JSON.stringify(marker));
-            console.log('[store] wrote initial-view-updated to localStorage', marker);
           } catch (e) {
             /* ignore */
           }
@@ -201,6 +209,9 @@ export const useAppStore = defineStore('app', {
 
       // 检测设备类型
       this.detectDeviceType();
+
+      // 建立 WebSocket 连接以接收后端广播（例如 initial-view 更新），以便即时同步到所有客户端
+      this.setupWebSocketConnection();
     },
 
     // 设置在线状态监听器
@@ -263,6 +274,61 @@ export const useAppStore = defineStore('app', {
         }
       } catch (error) {
         void console.warn('无法从本地存储加载设置:', error);
+      }
+    },
+
+    // 设置WebSocket连接以接收服务器端配置更新广播
+    setupWebSocketConnection() {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const host = window.location.host; // 包含端口
+        const wsUrl = `${protocol}://${host}`;
+        
+        const ws = new WebSocket(wsUrl);
+
+        ws.addEventListener('message', (evt) => {
+          try {
+            const msg = JSON.parse(evt.data);
+            if (!msg || !msg.type) return;
+            if (msg.type === 'initial-view-updated' && msg.data) {
+              const settings = { ...msg.data, loaded: true };
+              // 更新本地 store
+              this.initialViewSettings = settings;
+              // 触发浏览器内事件
+              try {
+                window.dispatchEvent(new CustomEvent('initial-view-updated', { detail: settings }));
+              } catch (e) {
+                /* ignore */
+              }
+              // 尝试写入 localStorage（无痕模式可能不可用）
+              try {
+                localStorage.setItem('initial-view-updated', JSON.stringify({ ...settings, _t: Date.now() }));
+              } catch (e) {
+                /* ignore */
+              }
+            }
+          } catch (e) {
+            // ignore malformed messages
+          }
+        });
+
+        ws.addEventListener('close', (evt) => {
+          // 简单重连机制：5秒后重试（仅重试一次）
+          if (!this._wsReconnectAttempted) {
+            this._wsReconnectAttempted = true;
+            setTimeout(() => {
+              this.setupWebSocketConnection();
+            }, 5000);
+          }
+        });
+
+        ws.addEventListener('error', () => {
+          // ignore
+        });
+
+        this._ws = ws;
+      } catch (e) {
+        // ignore
       }
     },
   },

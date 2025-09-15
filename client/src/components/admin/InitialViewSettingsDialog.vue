@@ -268,10 +268,8 @@ const handleSave = async () => {
     };
 
     // 使用 store 的 action 更新（action 内会调用 API、更新 state 并派发全局事件）
-    const appStore = useAppStore();
-    console.log('[dialog] calling appStore.updateInitialViewSettings with', settings);
-    const returned = await appStore.updateInitialViewSettings(settings);
-    console.log('[dialog] updateInitialViewSettings returned', returned);
+  const appStore = useAppStore();
+  const returned = await appStore.updateInitialViewSettings(settings);
 
     // 保存成功
     ElMessage.success('初始显示设置保存成功');

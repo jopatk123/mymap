@@ -80,6 +80,45 @@ class ConfigService {
           await fs.rename(tmpPath, this.configPath);
           this.config = newConfig;
           this.lastModified = new Date();
+
+          // 广播 initial-view 更新（如果存在）到所有通过 WebSocket 连接的客户端
+          try {
+            // 延迟 require，避免循环依赖；从 app.locals 获取 wss
+            const app = require('../app');
+            const wss = app && app.locals ? app.locals.wss : null;
+            if (wss && newConfig && newConfig.mapSettings && newConfig.mapSettings.initialView) {
+              const payload = {
+                type: 'initial-view-updated',
+                data: newConfig.mapSettings.initialView,
+                _t: Date.now(),
+              };
+              const text = JSON.stringify(payload);
+              
+              let sentCount = 0;
+              wss.clients.forEach((client) => {
+                try {
+                  if (client.readyState === 1) { // WebSocket.OPEN
+                    client.send(text);
+                    sentCount++;
+                  }
+                } catch (e) {
+                  // 单个客户端发送失败，不影响其他客户端
+                }
+              });
+              
+              const Logger = require('../utils/logger');
+              Logger.info(`初始显示设置已广播到 ${sentCount} 个WebSocket客户端`);
+            }
+          } catch (e) {
+            // 不要影响保存逻辑
+            try {
+              const Logger = require('../utils/logger');
+              Logger.warn('WebSocket广播失败:', e.message);
+            } catch (e2) {
+              // ignore
+            }
+          }
+
           return true;
         } catch (error) {
           lastErr = error;
