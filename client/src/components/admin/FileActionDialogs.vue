@@ -12,6 +12,7 @@
       v-model="localDialogs.showViewDialog"
       :file="currentFile"
       @file-deleted="$emit('file-deleted')"
+      @edit-file="$emit('edit-file', $event)"
     />
 
     <!-- 移动到文件夹对话框 -->

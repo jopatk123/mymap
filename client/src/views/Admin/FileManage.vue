@@ -85,6 +85,8 @@
       @file-deleted="() => handleFileDeleted(loadFileList)"
       @move-confirm="handleMoveConfirmWithCleanup"
       @update:move-to-folder-id="moveToFolderId = $event"
+      @update:actionDialogs="(v) => Object.assign(actionDialogs, v)"
+      @edit-file="(file) => editFile(file)"
     />
   </div>
 </template>
