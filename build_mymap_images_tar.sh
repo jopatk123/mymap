@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Builds the local images required by this project and exports them to tar.gz files
-# so they can be uploaded and loaded on an air-gapped/restricted server.
+# 构建本项目所需的本地镜像，并将其导出为 tar.gz 文件
+# 以便在隔离网络或受限服务器上上传并加载。
 
 OUT_DIR="images"
 MAP_IMAGE_NAME="mymap:latest"
@@ -10,14 +10,14 @@ NGINX_IMAGE_NAME="nginx:1.25-alpine"
 DOCKERFILE_PATH="docker/Dockerfile"
 BUILD_CONTEXT="."
 
-# Optional temporary build context to include host server/node_modules for offline builds
+# 可选的临时构建上下文：在离线构建时包含主机的 server/node_modules
 BUILD_CTX_EXTRA_DIR="build_context_extra"
 BUILD_CTX_EXTRA_NODE_MODULES="$BUILD_CTX_EXTRA_DIR/server_node_modules"
 
-# If set to 1, keep the temporary build_context_extra after the script ends (for debugging)
+# 如果设置为 1，在脚本结束后保留临时的 build_context_extra（便于调试）
 KEEP_BUILD_CONTEXT=${KEEP_BUILD_CONTEXT:-0}
 
-# Cleanup function will remove temporary build_context_extra unless KEEP_BUILD_CONTEXT=1
+# 清理函数：除非 KEEP_BUILD_CONTEXT=1，否则会删除临时的 build_context_extra
 cleanup() {
   rc=$?
   if [ "$KEEP_BUILD_CONTEXT" != "1" ] && [ -d "$BUILD_CTX_EXTRA_DIR" ]; then
@@ -31,7 +31,7 @@ cleanup() {
   return $rc
 }
 
-# Ensure cleanup runs on exit or error
+# 确保在脚本退出或出错时运行清理函数
 trap cleanup EXIT
 
 mkdir -p "$OUT_DIR"
@@ -57,7 +57,7 @@ EOF
 }
 
 COMPRESS=true
-# default: single archive containing both images
+# 默认：将两个镜像打包为单个归档文件
 SINGLE=true
 while [[ ${#} -gt 0 ]]; do
   case $1 in
@@ -70,7 +70,7 @@ while [[ ${#} -gt 0 ]]; do
 done
 
 command -v docker >/dev/null 2>&1 || { echo "docker not found in PATH. Install Docker and try again." >&2; exit 3; }
-  # Support using a local prebuilt client/dist instead of building inside the image
+  # 支持使用本地预构建的 client/dist，而不是在镜像内构建
   if [ "${USE_LOCAL_CLIENT:-0}" = "1" ]; then
     echo "USE_LOCAL_CLIENT=1 detected - will skip client build inside image and copy local client/dist"
 
@@ -81,12 +81,12 @@ if ! docker info >/dev/null 2>&1; then
   exit 4
 fi
 
-# If local server/node_modules exists, copy it into build_context_extra to include
-# into the build context for offline builds. This avoids modifying .dockerignore.
+# 如果本地存在 server/node_modules，则将其复制到 build_context_extra 中以包含
+# 在离线构建的上下文中，从而避免修改 .dockerignore。
 if [ -d "server/node_modules" ] && [ "$(ls -A server/node_modules)" ]; then
   echo "Detected local server/node_modules - copying into $BUILD_CTX_EXTRA_NODE_MODULES for offline build"
   mkdir -p "$BUILD_CTX_EXTRA_NODE_MODULES"
-  # Use rsync if available for faster/more reliable copy, fallback to cp -a
+  # 如果可用，使用 rsync 进行更快/更可靠的复制；否则回退到 cp -a
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete server/node_modules/ "$BUILD_CTX_EXTRA_NODE_MODULES/"
   else
@@ -96,17 +96,16 @@ else
   echo "No local server/node_modules detected; will rely on Dockerfile/server-deps stage to install production deps during build (may require network)"
 fi
 
-# By default we clear proxy build-args so the build won't inherit a
-# localhost proxy that is unreachable from inside the container.
-# If you explicitly want to use the host proxy, set USE_HOST_PROXY=1
-# Default: clear common proxy build-args so docker build doesn't inherit a host-only proxy
+# 默认情况下清除代理相关的构建参数，避免继承到容器内部不可达的本地代理。
+# 如果希望显式使用主机代理，请设置 USE_HOST_PROXY=1
+# 默认：清除常见代理构建参数，避免 docker build 继承仅主机可用的代理
 build_args=()
 DOCKER_BUILD_NETWORK=""
 if [ "${USE_HOST_PROXY:-0}" = "1" ]; then
   for var in HTTP_PROXY HTTPS_PROXY NO_PROXY ALPINE_MIRROR; do
     val="${!var:-}"
     if [ -n "$val" ]; then
-      # If proxy points to localhost, enable host networking
+  # 如果代理指向 localhost，则为 docker build 启用主机网络
       if [[ "$var" =~ ^HTTP_PROXY$|^HTTPS_PROXY$ ]] && printf "%s" "$val" | grep -Eq "127\\.0\\.1|localhost"; then
         echo "Detected $var pointing to localhost; enabling --network=host for docker build and passing proxy values"
         DOCKER_BUILD_NETWORK="--network=host"
@@ -115,7 +114,7 @@ if [ "${USE_HOST_PROXY:-0}" = "1" ]; then
     fi
   done
 else
-  # explicitly clear these so the build won't inherit host-local proxies
+  # 显式清空这些变量，避免构建继承只能在主机访问的本地代理
   build_args+=( --build-arg "HTTP_PROXY=" --build-arg "HTTPS_PROXY=" --build-arg "NO_PROXY=" )
 fi
 
@@ -127,9 +126,18 @@ if [ -n "$DOCKER_BUILD_NETWORK" ]; then
 fi
 docker_build_cmd+=( -t "$MAP_IMAGE_NAME" -f "$DOCKERFILE_PATH" )
 
-# pass USE_LOCAL_CLIENT through to docker build so Dockerfile can act on it if desired
+# 将 USE_LOCAL_CLIENT 传递给 docker build，以便 Dockerfile 根据需要处理
 if [ "${USE_LOCAL_CLIENT:-0}" = "1" ]; then
   build_args+=( --build-arg "USE_LOCAL_CLIENT=1" )
+  # Dockerfile 当前识别 SKIP_CLIENT_BUILD，用于在 client-builder 阶段跳过客户端构建。
+  # 如果调用者希望使用已放入构建上下文的预构建 client/dist，可传递 SKIP_CLIENT_BUILD=1 以便捷使用。
+  build_args+=( --build-arg "SKIP_CLIENT_BUILD=1" )
+fi
+
+# 允许调用者跳过服务端的 npm install（当 server/node_modules 已包含在构建上下文中或进行完全离线构建时很有用）。
+if [ "${SKIP_SERVER_NPM_INSTALL:-0}" = "1" ]; then
+  echo "SKIP_SERVER_NPM_INSTALL=1 detected - passing through to docker build"
+  build_args+=( --build-arg "SKIP_SERVER_NPM_INSTALL=1" )
 fi
 
 if [ ${#build_args[@]} -gt 0 ]; then
@@ -137,7 +145,7 @@ if [ ${#build_args[@]} -gt 0 ]; then
 fi
 docker_build_cmd+=("$BUILD_CONTEXT")
 
-# Execute the command array safely (preserve argument boundaries)
+# 以安全的方式执行命令数组（保留参数边界）
 "${docker_build_cmd[@]}"
 set +x
 

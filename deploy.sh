@@ -56,13 +56,25 @@ main() {
   [ -n "${ALPINE_MIRROR:-}" ] && BUILD_ARGS+=(--build-arg ALPINE_MIRROR="$ALPINE_MIRROR")
 
   # If proxy targets localhost, docker build needs host network so build steps can reach it
-  BUILD_NETWORK=""
+  # 初始化为数组，避免在后续作为数组展开时出现参数拼接错误
+  BUILD_NETWORK=()
   if [ -n "${http_proxy:-}" ] && printf "%s" "$http_proxy" | grep -Eq "127\\.0\\.0\\.1|localhost"; then
     BUILD_NETWORK=(--network host)
     warn "Proxy points to localhost - using host network for docker build so build can reach the proxy"
   fi
 
-  docker build -t "$IMAGE_NAME" -f docker/Dockerfile "${BUILD_ARGS[@]}" "${BUILD_NETWORK[@]}" .
+  # 确保 build_context_extra 目录存在（占位），以避免 Dockerfile 中的 COPY 在没有预装依赖的情况下失败。
+  # 当需要提供预装的 server_node_modules 以支持离线构建时，调用者可以在仓库根目录创建该目录并放入内容；
+  # 否则默认使用由 server-deps 阶段生成的 node_modules。
+  mkdir -p build_context_extra/server_node_modules
+
+  # 构造命令数组以保留各参数边界，便于打印与调试
+  CMD=(docker build -t "$IMAGE_NAME" -f docker/Dockerfile "${BUILD_ARGS[@]}" "${BUILD_NETWORK[@]}" .)
+  # 打印将要执行的命令（以可重现的方式显示每个参数）
+  printf '[INFO] 执行镜像构建命令: '
+  printf '%q ' "${CMD[@]}"
+  printf '\n'
+  "${CMD[@]}"
 
   log "启动/更新服务: $APP_NAME (Node + Nginx)"
   # 不自动移除孤立容器，避免误删同宿主机上其他容器
