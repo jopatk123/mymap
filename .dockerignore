@@ -4,6 +4,8 @@
 node_modules
 client/node_modules
 server/node_modules
+# 但是允许 build_context_extra 目录通过（包含预复制的依赖）
+!build_context_extra/
 server/uploads
 server/data
 server/logs

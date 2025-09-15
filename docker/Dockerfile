@@ -98,10 +98,19 @@ RUN set -eux; \
 
 # 3) 运行时镜像
 FROM node:20-bookworm-slim AS runtime
-WORKDIR /app/server
+WORKDIR /app
 
 ENV NODE_ENV=production \
     PORT=3002
+
+# 复制根目录的 package.json (如果存在根目录依赖的话)
+COPY package*.json ./
+
+# 如果构建上下文包含预先在宿主机安装的根目录 node_modules，
+# 将其复制到镜像中以支持快速构建
+COPY build_context_extra/root_node_modules ./node_modules
+
+WORKDIR /app/server
 
 # 复制服务器源码
 COPY server /app/server

@@ -10,9 +10,10 @@ NGINX_IMAGE_NAME="nginx:1.25-alpine"
 DOCKERFILE_PATH="docker/Dockerfile"
 BUILD_CONTEXT="."
 
-# 可选的临时构建上下文：在离线构建时包含主机的 server/node_modules
+# 可选的临时构建上下文：在离线构建时包含主机的 server/node_modules 和根目录的 node_modules
 BUILD_CTX_EXTRA_DIR="build_context_extra"
 BUILD_CTX_EXTRA_NODE_MODULES="$BUILD_CTX_EXTRA_DIR/server_node_modules"
+BUILD_CTX_EXTRA_ROOT_NODE_MODULES="$BUILD_CTX_EXTRA_DIR/root_node_modules"
 
 # 如果设置为 1，在脚本结束后保留临时的 build_context_extra（便于调试）
 KEEP_BUILD_CONTEXT=${KEEP_BUILD_CONTEXT:-0}
@@ -52,6 +53,10 @@ Other environment variables:
   USE_LOCAL_CLIENT=1    # if set, will pass to docker build so Dockerfile can copy a local client/dist
   USE_HOST_PROXY=1     # if set, proxy env values on host are forwarded into docker build
   KEEP_BUILD_CONTEXT=1  # if set, temporary build_context_extra is left on disk
+
+Build optimization:
+  - If server/node_modules exists locally, it will be copied to speed up server dependency installation
+  - If root node_modules exists locally, it will be copied to speed up overall build process
 
 EOF
 }
@@ -94,6 +99,21 @@ if [ -d "server/node_modules" ] && [ "$(ls -A server/node_modules)" ]; then
   fi
 else
   echo "No local server/node_modules detected; will rely on Dockerfile/server-deps stage to install production deps during build (may require network)"
+fi
+
+# 如果本地存在根目录的 node_modules，则将其复制到 build_context_extra 中
+# 这可以加速构建过程，避免在容器内重新安装根目录的开发依赖
+if [ -d "node_modules" ] && [ "$(ls -A node_modules)" ]; then
+  echo "Detected root node_modules - copying into $BUILD_CTX_EXTRA_ROOT_NODE_MODULES for faster build"
+  mkdir -p "$BUILD_CTX_EXTRA_ROOT_NODE_MODULES"
+  # 如果可用，使用 rsync 进行更快/更可靠的复制；否则回退到 cp -a
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete node_modules/ "$BUILD_CTX_EXTRA_ROOT_NODE_MODULES/"
+  else
+    cp -a node_modules/. "$BUILD_CTX_EXTRA_ROOT_NODE_MODULES/"
+  fi
+else
+  echo "No root node_modules detected; will install dependencies during build if needed"
 fi
 
 # 默认情况下清除代理相关的构建参数，避免继承到容器内部不可达的本地代理。
