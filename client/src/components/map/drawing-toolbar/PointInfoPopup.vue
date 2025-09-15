@@ -44,6 +44,13 @@
           >
           <el-button type="danger" size="small" @click="$emit('delete-point')"> 删除 </el-button>
         </div>
+            <!-- 在高德/百度打开 -->
+            <el-button type="text" size="small" @click="openAmap(point)">
+              在高德地图打开
+            </el-button>
+            <el-button type="text" size="small" @click="openBaidu(point)">
+              在百度地图打开
+            </el-button>
       </div>
     </div>
   </el-popover>
@@ -52,6 +59,7 @@
 <script setup>
 import { Close } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { wgs84ToBd09, gcj02ToBd09, wgs84ToGcj02 } from '@/utils/coordinate-transform.js';
 
 defineProps({
   visible: {
@@ -108,6 +116,65 @@ const copyPointCoords = async (point) => {
   } catch (e) {
     console.error('复制失败', e);
     ElMessage.error('复制失败，请手动复制：' + formatted);
+  }
+};
+
+// 在高德地图打开
+const openAmap = (point) => {
+  const lat = Number(point?.latlng?.lat ?? point?.latitude ?? 0);
+  const lng = Number(point?.latlng?.lng ?? point?.longitude ?? 0);
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法打开高德地图');
+    return;
+  }
+  const latStr = lat.toFixed(6);
+  const lngStr = lng.toFixed(6);
+  const name = encodeURIComponent(point?.name || '');
+  const amapUrl = `https://uri.amap.com/marker?position=${lngStr},${latStr}&name=${name}`;
+  try {
+    window.open(amapUrl, '_blank');
+  } catch (e) {
+    console.error('open amap failed', e);
+    ElMessage.error('打开高德地图失败');
+  }
+};
+
+// 在百度地图打开
+const openBaidu = (point) => {
+  // read coordinates from possible fields
+  const lat = Number(point?.latlng?.lat ?? point?.latitude ?? 0);
+  const lng = Number(point?.latlng?.lng ?? point?.longitude ?? 0);
+  if (!isFinite(lat) || !isFinite(lng)) {
+    ElMessage.error('无效的坐标，无法打开百度地图');
+    return;
+  }
+
+  // Determine BD09 coordinates.
+  // Prefer WGS84 original coordinates when available (point.latitude/longitude),
+  // otherwise assume point.latlng is already the map display coords (GCJ02) and convert GCJ02->BD09.
+  let bdLng = null;
+  let bdLat = null;
+  if (point?.latitude != null && point?.longitude != null && !isNaN(point.latitude) && !isNaN(point.longitude)) {
+    // point.longitude/latitude are WGS84 -> convert to BD09
+    [bdLng, bdLat] = wgs84ToBd09(Number(point.longitude), Number(point.latitude));
+  } else {
+    // assume latlng is GCJ02 (map display) -> convert to BD09
+    [bdLng, bdLat] = gcj02ToBd09(lng, lat);
+  }
+
+  if (!isFinite(bdLng) || !isFinite(bdLat)) {
+    ElMessage.error('坐标转换失败，无法打开百度地图');
+    return;
+  }
+
+  const name = encodeURIComponent(point?.name || '');
+  const source = encodeURIComponent(point?.sourceFile || '');
+  const baiduUrl = `https://api.map.baidu.com/marker?location=${bdLat.toFixed(6)},${bdLng.toFixed(6)}&title=${name}&content=${source}&coord_type=bd09ll&output=html`;
+  try {
+    window.open(baiduUrl, '_blank');
+  } catch (e) {
+    console.error('open baidu failed', e);
+    ElMessage.error('打开百度地图失败');
   }
 };
 </script>
