@@ -1,4 +1,5 @@
 .git
+.vscode
 .gitignore
 node_modules
 client/node_modules

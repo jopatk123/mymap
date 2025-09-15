@@ -53,23 +53,31 @@ RUN set -eux; \
 # 2) 安装服务器运行时依赖
 FROM node:20-bookworm-slim AS server-deps
 WORKDIR /app
-# 为 sharp 及其它需要编译的本地模块安装系统依赖
+# 为 sharp 及其它需要编译的本地模块安装系统依赖（按需执行）
 ARG SKIP_SERVER_NPM_INSTALL=0
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+
+# 优先使用 sharp 的预编译二进制并避免从源码编译（当可用时）
+ENV npm_config_sharp_binary_host="https://github.com/lovell/sharp-libvips/releases/download" \
+    npm_config_sharp_libvips_binary_host="https://github.com/lovell/sharp-libvips/releases/download" \
+    npm_config_build_from_source=false
+
+# 在需要安装时再安装最小构建依赖，执行 npm ci 后立即清理构建工具以减小镜像中间层
+RUN set -eux; \
+    if [ "${SKIP_SERVER_NPM_INSTALL}" = "1" ]; then \
+        echo "SKIP_SERVER_NPM_INSTALL=1 - skipping apt install and npm ci"; \
+        mkdir -p /app/server/node_modules; \
+        exit 0; \
+    fi; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
         python3 \
-        make \
-        g++ \
-        libc6-dev \
-        libvips-dev \
+        build-essential \
         pkg-config \
+        libvips-dev \
         libglib2.0-dev \
-        libcairo2-dev \
-        libjpeg-dev \
-        libpng-dev \
-        libtiff-dev \
-        libwebp-dev \
-    && rm -rf /var/lib/apt/lists/*
+    ; \
+    rm -rf /var/lib/apt/lists/*
 
 # 设置 npm 配置以使用 sharp 的预编译二进制文件，避免从源码编译
 ENV npm_config_sharp_binary_host="https://github.com/lovell/sharp-libvips/releases/download" \
@@ -81,7 +89,11 @@ RUN set -eux; \
         echo "SKIP_SERVER_NPM_INSTALL=1 - skipping 'npm ci' for server"; \
         mkdir -p /app/server/node_modules; \
     else \
+        npm set progress=false; npm config set fund false; \
         npm ci --omit=dev --prefix server --prefer-offline --no-audit; \
+        # 卸载构建依赖以减小中间镜像体积（保留运行时所需库）
+        apt-get purge -y --auto-remove build-essential pkg-config python3 || true; \
+        rm -rf /var/lib/apt/lists/* /root/.npm /root/.cache || true; \
     fi
 
 # 3) 运行时镜像
