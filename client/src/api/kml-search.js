@@ -32,11 +32,19 @@ class KMLSearchAPI {
           params,
           timeout: 10000,
         });
-        return response.data;
+        // Normalize shape: if backend returns raw array/object, wrap into { success, data }
+        const d = response.data;
+        if (d && d.success !== undefined) return d;
+        return { success: true, data: d };
       }
 
       const resp = await api.get('/kml-search/search', { params });
-      return resp;
+      // The shared api instance may unwrap different response formats. Normalize here so callers
+      // (like SearchTool.vue) can reliably check response.success and response.data.
+      if (resp && resp.success !== undefined) {
+        return resp;
+      }
+      return { success: true, data: resp };
     } catch (error) {
       console.error('搜索KML点位失败:', error);
       throw new Error(error.response?.data?.message || '搜索KML点位失败');
@@ -60,11 +68,14 @@ class KMLSearchAPI {
           params,
           timeout: 10000,
         });
-        return response.data;
+        const d = response.data;
+        if (d && d.success !== undefined) return d;
+        return { success: true, data: d };
       }
 
       const resp = await api.get('/kml-search/points', { params });
-      return resp;
+      if (resp && resp.success !== undefined) return resp;
+      return { success: true, data: resp };
     } catch (error) {
       console.error('获取所有KML点位失败:', error);
       throw new Error(error.response?.data?.message || '获取所有KML点位失败');
@@ -87,11 +98,14 @@ class KMLSearchAPI {
           `${DEV_BACKEND_BASE}/api/kml-search/points/${encodeURIComponent(id)}`,
           { timeout: 10000 }
         );
-        return response.data;
+        const d = response.data;
+        if (d && d.success !== undefined) return d;
+        return { success: true, data: d };
       }
 
       const resp = await api.get(`/kml-search/points/${encodeURIComponent(id)}`);
-      return resp;
+      if (resp && resp.success !== undefined) return resp;
+      return { success: true, data: resp };
     } catch (error) {
       console.error('获取KML点位详情失败:', error);
       throw new Error(error.response?.data?.message || '获取KML点位详情失败');

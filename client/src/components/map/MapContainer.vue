@@ -84,7 +84,8 @@ const {
 let searchMarker = null;
 
 // setSearchMarker: 在地图上显示一个搜索结果标记（可能包含丰富弹窗）
-const setSearchMarker = (labelOrPoint, lat, lng) => {
+// 统一签名为 (lat, lng, labelOrPoint) —— 这样与 MapView 暴露的接口和上层调用保持一致。
+const setSearchMarker = (lat, lng, labelOrPoint) => {
   // 记录 map 值何时变化，便于调试暴露链路
   if (searchMarker) {
     try {
@@ -94,7 +95,7 @@ const setSearchMarker = (labelOrPoint, lat, lng) => {
   }
 
   searchMarker = L.marker([lat, lng], {
-    title: typeof labelOrPoint === 'string' ? labelOrPoint : labelOrPoint.name || '搜索位置',
+    title: typeof labelOrPoint === 'string' ? labelOrPoint : labelOrPoint?.name || '搜索位置',
   });
   searchMarker.addTo(map.value);
 
@@ -105,8 +106,8 @@ const setSearchMarker = (labelOrPoint, lat, lng) => {
     const name = point.name || '';
     const desc = point.description || '';
     const source = point.sourceFile || '';
-    const latStr = Number(point.latitude).toFixed(6);
-    const lngStr = Number(point.longitude).toFixed(6);
+    const latStr = Number(point.latitude ?? lat).toFixed(6);
+    const lngStr = Number(point.longitude ?? lng).toFixed(6);
 
     // 高德和百度链接（高德使用经度,纬度，百度使用纬度,经度或使用api的location=lat,lng）
     const amapUrl = `https://uri.amap.com/marker?position=${lngStr},${latStr}&name=${encodeURIComponent(
@@ -136,7 +137,7 @@ const setSearchMarker = (labelOrPoint, lat, lng) => {
     const label =
       typeof labelOrPoint === 'string'
         ? labelOrPoint
-        : (labelOrPoint && labelOrPoint.name) || '搜索位置';
+        : (labelOrPoint && labelOrPoint?.name) || '搜索位置';
     searchMarker.bindPopup(label, { autoClose: true, closeOnClick: true }).openPopup();
   }
 };
