@@ -1,12 +1,28 @@
 <template>
   <div class="map-controls">
-    <!-- 工具栏 -->
+    <!-- 工具栏（整排按钮） -->
     <div class="toolbar">
-      <el-button-group>
+      <el-button-group class="controls-group">
+        <!-- 优先显示的按钮（尽量保持在第一行） -->
+        <el-button class="priority" type="success" @click="$emit('show-kml-settings')">
+          <el-icon><Tools /></el-icon>
+          KML设置
+        </el-button>
+        <el-button class="priority" type="primary" @click="$emit('show-point-settings')">
+          <el-icon><Location /></el-icon>
+          点位图标
+        </el-button>
+
+        <!-- 搜索工具也尽量保持第一行 -->
+        <div class="priority search-wrapper">
+          <SearchTool @locate-kml-point="$emit('locate-kml-point', $event)" @locate-address="$emit('locate-address', $event)" />
+        </div>
+
+        <!-- 其余按钮按原顺序 -->
         <el-button
           type="primary"
           :title="panoramaListVisible ? '隐藏点位列表' : '显示点位列表'"
-          @click="togglePanoramaList"
+          @click="$emit('toggle-panorama-list')"
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
@@ -14,150 +30,25 @@
         <el-button
           type="warning"
           :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
-          @click="toggleKmlLayers"
+          @click="$emit('toggle-kml-layers')"
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
         </el-button>
 
-        <!-- 新增的4个按钮 -->
-        <el-button
-          class="btn-circle-area"
-          type="success"
-          :disabled="isDrawing"
-          :loading="isDrawingCircle"
-          title="选择圆形区域"
-          @click="handleCircleAreaClick"
-        >
-          <el-icon><Compass /></el-icon>
-          圆形区域
-        </el-button>
-
-        <el-button
-          type="success"
-          :disabled="isDrawing"
-          :loading="isDrawingPolygon"
-          title="选择自定义区域"
-          @click="handleCustomAreaClick"
-        >
-          <el-icon><Crop /></el-icon>
-          自定义区域
-        </el-button>
-
-        <el-button
-          type="danger"
-          :disabled="areasCount === 0"
-          title="清除所有区域"
-          @click="handleClearAreas"
-        >
-          <el-icon><Delete /></el-icon>
-          清除
-        </el-button>
-
-        <el-button
-          v-if="isDrawing"
-          type="primary"
-          title="完成当前绘制"
-          @click="handleFinishDrawing"
-        >
-          完成
-        </el-button>
-
-        <el-button
-          type="warning"
-          :disabled="!hasExportableData"
-          :loading="exporting"
-          title="导出选中点位数据"
-          @click="handleExport"
-        >
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-
-        <el-button type="success" @click="showKmlSettings">
-          <el-icon><Tools /></el-icon>
-          KML设置
-        </el-button>
-
-        <el-button type="primary" @click="showPointSettings">
-          <el-icon><Location /></el-icon>
-          点位图标
-        </el-button>
-
-        <!-- 搜索工具 -->
-        <SearchTool
-          @locate-kml-point="handleLocateKMLPoint"
-          @locate-address="handleLocateAddress"
-        />
+        <!-- 区域选择与导出 -->
+        <AreaControls :map-instance="mapInstance" />
       </el-button-group>
     </div>
-
-    <!-- 状态栏（已移除：显示信息由其他组件或页面顶部状态替代） -->
-
-    <!-- KML数据导出对话框 -->
-    <KMLDataExporter />
-
-    <!-- 圆形半径设置对话框 -->
-    <el-dialog
-      v-model="radiusDialogVisible"
-      title="设置圆形区域半径"
-      width="400px"
-      :close-on-click-modal="false"
-    >
-      <div class="radius-setting">
-        <el-form label-width="80px">
-          <el-form-item label="半径">
-            <el-input-number
-              v-model="tempRadius"
-              :min="50"
-              :max="50000"
-              :step="100"
-              controls-position="right"
-              style="width: 200px"
-            />
-            <span style="margin-left: 8px">米</span>
-          </el-form-item>
-        </el-form>
-
-        <div class="radius-presets">
-          <span class="preset-label">常用半径:</span>
-          <el-button-group size="small">
-            <el-button
-              v-for="preset in radiusPresets"
-              :key="preset"
-              :type="tempRadius === preset ? 'primary' : ''"
-              @click="tempRadius = preset"
-            >
-              {{ preset }}m
-            </el-button>
-          </el-button-group>
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="radiusDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmRadiusAndStartDrawing">
-            确定并开始绘制
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
+  
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import { ElMessage } from 'element-plus';
-import { Tools, Location, Compass, Crop, Delete, Download } from '@element-plus/icons-vue';
-import { useAreaSelector } from '@/composables/use-area-selector.js';
-import { useKMLExport } from '@/composables/use-kml-export.js';
-// intentionally not using kml base map store locally in this component
-// keep the import commented to avoid unused import warnings if needed later
-// import { useKMLBaseMapStore as _useKMLBaseMapStore } from '@/store/kml-basemap.js';
-import KMLDataExporter from './kml-basemap/KMLDataExporter.vue';
+import { Tools, Location } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
+import AreaControls from './area-selector/AreaControls.vue';
 
-const props = defineProps({
+defineProps({
   panoramaListVisible: {
     type: Boolean,
     default: true,
@@ -184,7 +75,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
+defineEmits([
   'toggle-panorama-list',
   'toggle-kml-layers',
   'show-kml-settings',
@@ -192,158 +83,83 @@ const emit = defineEmits([
   'locate-kml-point',
   'locate-address',
 ]);
-
-// 使用组合式函数
-const {
-  circleRadius,
-  isDrawingCircle,
-  isDrawingPolygon,
-  isDrawing,
-  areasCount,
-  setMapInstance,
-  startCircleSelection,
-  startPolygonSelection,
-  finishDrawing,
-  clearAllAreas,
-  setCircleRadius,
-} = useAreaSelector();
-
-const { exporting, hasExportableData, openExportDialog } = useKMLExport();
-
-// intentionally not using kml base map store locally in this component
-
-// 本地状态
-const radiusDialogVisible = ref(false);
-const tempRadius = ref(1000);
-const radiusPresets = [500, 1000, 2000, 5000, 10000];
-
-// 计算属性（保留占位以备将来使用）
-// const visiblePointsCount = computed(() => store.visiblePointsCount);
-
-// 监听地图实例变化
-watch(
-  () => props.mapInstance,
-  (mapInstance) => {
-    if (mapInstance) {
-      setMapInstance(mapInstance);
-    }
-  },
-  { immediate: true }
-);
-
-// 处理圆形区域点击
-const handleCircleAreaClick = () => {
-  tempRadius.value = circleRadius.value;
-  radiusDialogVisible.value = true;
-};
-
-// 确认半径并开始绘制
-const confirmRadiusAndStartDrawing = () => {
-  if (tempRadius.value < 50 || tempRadius.value > 50000) {
-    ElMessage.error('半径应在50-50000米之间');
-    return;
-  }
-
-  setCircleRadius(tempRadius.value);
-  radiusDialogVisible.value = false;
-  startCircleSelection();
-};
-
-// 处理自定义区域点击
-const handleCustomAreaClick = () => {
-  startPolygonSelection();
-};
-
-// 处理清除区域
-const handleClearAreas = () => {
-  clearAllAreas();
-};
-
-const handleFinishDrawing = async () => {
-  await finishDrawing();
-};
-
-// 处理导出
-const handleExport = () => {
-  openExportDialog();
-};
-
-const togglePanoramaList = () => {
-  emit('toggle-panorama-list');
-};
-
-const toggleKmlLayers = () => {
-  emit('toggle-kml-layers');
-};
-
-const showKmlSettings = () => {
-  emit('show-kml-settings');
-};
-
-const showPointSettings = () => {
-  emit('show-point-settings');
-};
-
-// 处理KML点位定位
-const handleLocateKMLPoint = (data) => {
-  emit('locate-kml-point', data);
-};
-
-// 处理地址定位
-const handleLocateAddress = (data) => {
-  emit('locate-address', data);
-};
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .map-controls {
-  .toolbar {
+    .toolbar {
     position: absolute;
     top: 20px;
-    /* 进一步向左移动以避免遮挡，调整为更大的 right 值 */
-    right: 170px;
+    right: 170px; /* 与右侧绘图工具保持距离 */
     z-index: 1000;
 
     display: flex;
-    gap: 6px;
-    /* 再次缩小内边距，使白色区域更紧凑 */
+    gap: 0; /* 去掉父容器间距，按钮间距由 .controls-group 控制 */
     padding: 4px 4px;
-    background: transparent; /* 修改为完全透明 */
+    background: transparent; 
     border-radius: 4px;
-    box-shadow: none; /* 移除阴影 */
-    backdrop-filter: none; /* 移除模糊效果 */
+    box-shadow: none; 
+    backdrop-filter: none; 
 
-    /* 为工具栏中的所有按钮添加圆角 */
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0; /* 所有按钮紧贴 */
+      flex-wrap: wrap; /* 当空间不足时换行 */
+    }
+
+    /* 确保 Element Plus 的按钮没有外边距导致空隙，但保留内部 padding */
+    .controls-group > * {
+      margin: 0 !important;
+      /* don't reset padding here so button text has normal spacing */
+    }
+
+    /* 按钮背景要相互贴合：中间按钮取消圆角，首尾按钮保留圆角 */
+    .controls-group > * {
+      border-radius: 0 !important;
+    }
+    .controls-group > *:first-child {
+      border-top-left-radius: 8px !important;
+      border-bottom-left-radius: 8px !important;
+    }
+    .controls-group > *:last-child {
+      border-top-right-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
+    }
+
     .el-button {
-      border-radius: 8px !important; /* 添加圆角 */
-      transition: all 0.3s ease; /* 平滑过渡效果 */
+      /* restore comfortable internal padding */
+      padding: 6px 12px !important;
+      transition: all 0.3s ease; 
 
       &:hover {
-        transform: translateY(-1px); /* 悬停时轻微上移效果 */
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 悬停阴影 */
+        transform: translateY(-1px); 
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); 
       }
 
       &:active {
-        transform: translateY(0); /* 点击时恢复位置 */
+        transform: translateY(0); 
       }
     }
 
-    /* 单独覆盖“圆形区域”按钮为紫色主题（优先级更高，使用 !important 以覆盖 element-plus 主题样式） */
-    .el-button.btn-circle-area {
-      background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%) !important;
-      border-color: #8e44ad !important;
-      color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(142, 68, 173, 0.2);
+    /* 优先显示的按钮：不随宽度压缩，保持在首行（除非空间实在不够） */
+    .priority {
+      flex: 0 0 auto !important;
+      white-space: nowrap;
     }
 
-    .el-button.btn-circle-area:hover {
-      background: linear-gradient(180deg, #8e44ad 0%, #7a2f9b 100%) !important;
-      border-color: #7a2f9b !important;
+    .search-wrapper {
+      display: inline-flex;
+      align-items: center;
     }
 
-    .el-button.btn-circle-area:active {
-      background: linear-gradient(180deg, #7a2f9b 0%, #6a267f 100%) !important;
-      border-color: #6a267f !important;
+    /* 处理嵌套的 AreaControls 中的 el-button-group，使其按钮也紧贴 */
+    .controls-group .area-controls,
+    .controls-group .area-controls .el-button-group {
+      margin: 0 !important;
+      gap: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
     }
 
     .el-button.btn-circle-area .el-icon {
@@ -351,35 +167,9 @@ const handleLocateAddress = (data) => {
     }
   }
 
-  /* 状态栏样式已移除 */
-
-  .radius-setting {
-    .radius-presets {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .preset-label {
-        color: #606266;
-        font-size: 14px;
-      }
-    }
-  }
-
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
-}
-
-// 移动端适配
-@media (max-width: 768px) {
-  .map-controls {
+  @media (max-width: 768px) {
     .toolbar {
       top: 10px;
-      /* 移动端适当左移，但保持可触达 */
       right: 40px;
 
       .el-button-group {

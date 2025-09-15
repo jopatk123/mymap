@@ -6,26 +6,9 @@
     element-loading-background="rgba(255, 255, 255, 0.8)"
   >
     <div id="map" class="map-view"></div>
+    <!-- 地图类型切换（右上角） -->
+    <MapTypeSwitch :map-type="mapType" @change="handleMapTypeChange" />
 
-    <!-- debug panel removed -->
-
-    <!-- 地图控制面板 -->
-    <div class="map-controls">
-      <el-button-group>
-        <el-button
-          :type="mapType === 'normal' ? 'primary' : ''"
-          @click="handleMapTypeChange('normal')"
-        >
-          普通
-        </el-button>
-        <el-button
-          :type="mapType === 'satellite' ? 'primary' : ''"
-          @click="handleMapTypeChange('satellite')"
-        >
-          卫星
-        </el-button>
-      </el-button-group>
-    </div>
   </div>
 </template>
 
@@ -39,6 +22,9 @@ let setMapInstance, setMarkersData;
 let onInitialViewUpdated;
 import { addStyleListener, removeStyleListener } from '@/utils/style-events.js';
 import { dlog } from '@/composables/drawing-tools/utils/debug.js';
+import MapTypeSwitch from './MapTypeSwitch.vue';
+import { useSearchMarker } from '@/composables/use-search-marker.js';
+import { useInitialViewSync } from '@/composables/use-initial-view-sync.js';
 
 const props = defineProps({
   panoramas: {
@@ -80,91 +66,8 @@ const {
   onMarkerClick,
 } = useMap('map');
 
-// 模块作用域的搜索标记（在多个函数间共享）
-let searchMarker = null;
-
-// setSearchMarker: 在地图上显示一个搜索结果标记（可能包含丰富弹窗）
-// 统一签名为 (lat, lng, labelOrPoint) —— 这样与 MapView 暴露的接口和上层调用保持一致。
-const setSearchMarker = (lat, lng, labelOrPoint) => {
-  // 记录 map 值何时变化，便于调试暴露链路
-  if (searchMarker) {
-    try {
-      map.value.removeLayer(searchMarker);
-    } catch (_) {}
-    searchMarker = null;
-  }
-
-  searchMarker = L.marker([lat, lng], {
-    title: typeof labelOrPoint === 'string' ? labelOrPoint : labelOrPoint?.name || '搜索位置',
-  });
-  searchMarker.addTo(map.value);
-
-  // 如果第三个参数是对象，则渲染丰富弹窗内容
-  if (labelOrPoint && typeof labelOrPoint === 'object') {
-    const point = labelOrPoint;
-    // 构造弹窗 HTML，基于用户提供的示例结构
-    const name = point.name || '';
-    const desc = point.description || '';
-    const source = point.sourceFile || '';
-    const latStr = Number(point.latitude ?? lat).toFixed(6);
-    const lngStr = Number(point.longitude ?? lng).toFixed(6);
-
-    // 高德和百度链接（高德使用经度,纬度，百度使用纬度,经度或使用api的location=lat,lng）
-    const amapUrl = `https://uri.amap.com/marker?position=${lngStr},${latStr}&name=${encodeURIComponent(
-      name
-    )}`;
-    const baiduUrl = `https://api.map.baidu.com/marker?location=${latStr},${lngStr}&title=${encodeURIComponent(
-      name
-    )}&content=${encodeURIComponent(source)}&coord_type=bd09ll&output=html`;
-
-    const popupHtml = `
-      <div style="max-width: 240px;">
-        <h4 class="popup-title">${escapeHtml(name)}</h4>
-        <p class="popup-meta">${escapeHtml(desc)} ${
-      source ? '<span class="popup-source">[' + escapeHtml(source) + ']</span>' : ''
-    }</p>
-        <p class="popup-meta">经纬度(WGS84): ${latStr}, ${lngStr}</p>
-        <div class="popup-actions">
-          <a class="map-btn gaode" href="${amapUrl}" target="_blank" rel="noopener">在高德地图打开</a>
-          <a class="map-btn baidu" href="${baiduUrl}" target="_blank" rel="noopener">在百度地图打开</a>
-        </div>
-      </div>
-    `;
-
-    searchMarker.bindPopup(popupHtml, { autoClose: true, closeOnClick: true }).openPopup();
-  } else {
-    // 简单文本弹窗
-    const label =
-      typeof labelOrPoint === 'string'
-        ? labelOrPoint
-        : (labelOrPoint && labelOrPoint?.name) || '搜索位置';
-    searchMarker.bindPopup(label, { autoClose: true, closeOnClick: true }).openPopup();
-  }
-};
-
-// 简单的 HTML 转义，防止注入
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/[&<>"'`]/g, function (s) {
-    return {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-      '`': '&#96;',
-    }[s];
-  });
-}
-
-const clearSearchMarker = () => {
-  if (map.value && searchMarker) {
-    try {
-      map.value.removeLayer(searchMarker);
-    } catch (_) {}
-  }
-  searchMarker = null;
-};
+// 搜索标记逻辑提取为可组合函数
+const { setSearchMarker, clearSearchMarker } = useSearchMarker(map);
 
 // 样式更新处理函数
 const handleStyleUpdate = (_data) => {
@@ -246,112 +149,11 @@ onMounted(async () => {
   addStyleListener('point-style-updated', handleStyleUpdate);
   addStyleListener('markers-refresh', handleMarkersRefresh);
 
-  // 监听全局 initial-view 更新事件，保存后立即应用
-  // 将处理器赋值到模块作用域变量，以便 onUnmounted 时能够正确引用
-  onInitialViewUpdated = (e) => {
-    try {
-      const s = e?.detail || null;
-      if (!s || !s.enabled) {
-        return;
-      }
-      // s.center is [lng, lat] => convert to [lat, lng]
-      const [lng, lat] = s.center || [];
-      if (lat == null || lng == null) {
-        console.warn('[initial-view-updated] invalid center received:', s.center);
-        return;
-      }
-      setCenter(lat, lng, s.zoom);
-    } catch (_err) {}
-  };
-  window.addEventListener('initial-view-updated', onInitialViewUpdated);
-
-  // Fallback: if the initial-view was saved before this tab mounted (same-tab navigation),
-  // read the latest marker from localStorage and apply it now.
-  try {
-    const raw = localStorage.getItem('initial-view-updated');
-    if (raw) {
-      try {
-        const marker = JSON.parse(raw);
-        if (marker && marker.enabled) {
-          const [lng, lat] = marker.center || [];
-          if (lat != null && lng != null) {
-            try {
-            // removed debug marker assignment
-            try {
-              if (typeof setCenter === 'function') {
-                setCenter(lat, lng, marker.zoom);
-              } else {
-                setTimeout(() => {
-                  try {
-                    if (typeof setCenter === 'function') {
-                      setCenter(lat, lng, marker.zoom);
-                    } else {
-                      console.warn('[map-container] setCenter not available on retry (mount)');
-                    }
-                  } catch (err) {
-                    console.error('[map-container] retry apply setCenter failed (mount):', err);
-                  }
-                }, 60);
-              }
-            } catch (err) {
-              console.error('[map-container] error applying center from localStorage:', err);
-            }
-            } catch (e) {
-              // ignore
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(
-          '[map-container] failed to parse initial-view-updated from localStorage (mount):',
-          err
-        );
-      }
-    }
-  } catch (e) {
-    /* ignore localStorage errors */
-  }
-
-  // 监听 storage 事件以支持跨 tab 的初始视图更新同步
-  const handleStorage = (e) => {
-    try {
-      if (!e || !e.key) return;
-      if (e.key !== 'initial-view-updated') return;
-      const marker = JSON.parse(e.newValue || e.oldValue || '{}');
-      console.log('[storage] initial-view-updated marker received:', marker);
-      // removed debug state update
-      if (marker && marker.enabled) {
-        const [lng, lat] = marker.center || [];
-        if (lat != null && lng != null) {
-          console.log('[storage] applying center from storage:', { lat, lng, zoom: marker.zoom });
-          // setCenter may not be initialized yet in some bundling/setup orders; guard and retry shortly if needed
-          try {
-            if (typeof setCenter === 'function') {
-              setCenter(lat, lng, marker.zoom);
-            } else {
-              // retry once after a short delay
-              setTimeout(() => {
-                try {
-                  if (typeof setCenter === 'function') {
-                    setCenter(lat, lng, marker.zoom);
-                  } else {
-                    console.warn('[map-container] setCenter not available on retry');
-                  }
-                } catch (err) {
-                  console.error('[map-container] retry apply setCenter failed:', err);
-                }
-              }, 60);
-            }
-          } catch (err) {
-            console.error('[map-container] error applying center from localStorage:', err);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('handleStorage error:', err);
-    }
-  };
-  window.addEventListener('storage', handleStorage);
+  // 初始视图同步（事件 + localStorage）
+  const { setup: setupInitialViewSync } = useInitialViewSync(setCenter);
+  const cleanupInitialViewSync = setupInitialViewSync();
+  // 记录用于卸载
+  onInitialViewUpdated = cleanupInitialViewSync;
 });
 
 // 清理事件监听器
@@ -359,7 +161,8 @@ onUnmounted(() => {
   removeStyleListener('point-style-updated', handleStyleUpdate);
   removeStyleListener('markers-refresh', handleMarkersRefresh);
   try {
-    window.removeEventListener('initial-view-updated', onInitialViewUpdated);
+    // onInitialViewUpdated 在此处存放的是清理函数
+    if (typeof onInitialViewUpdated === 'function') onInitialViewUpdated();
   } catch (e) {}
 });
 
@@ -519,20 +322,6 @@ defineExpose({
   .map-view {
     width: 100%;
     height: 100%;
-  }
-
-  .map-controls {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    .el-button-group {
-      display: flex;
-    }
   }
 }
 </style>
