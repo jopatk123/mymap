@@ -20,7 +20,7 @@
         </el-form-item>
 
         <el-form-item label="目标文件夹">
-          <BaseFolderSelect v-model="folderId" :folders="folders" />
+          <BaseFolderSelect v-model="folderId" :use-global-store="true" />
         </el-form-item>
 
         <el-form-item label="选择文件" required>
@@ -91,13 +91,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { Picture, Delete } from '@element-plus/icons-vue';
 import BaseFolderSelect from './BaseFolderSelect.vue';
 import BaseProcessingStatus from './BaseProcessingStatus.vue';
 import { ImageProcessor } from '@/services/image-processor.js';
 import { uploadPanoramaImage } from '@/api/panorama.js';
 import { ElMessage } from 'element-plus';
+import { useFolderStore } from '@/store/folder.js';
 
 const props = defineProps({
   modelValue: Boolean,
@@ -110,22 +111,34 @@ const visible = computed({
   set: (v) => emit('update:modelValue', v),
 });
 
-// folders
-const folders = ref([]);
+// 使用全局 store
+const folderStore = useFolderStore();
+
+// folders - 直接使用 store 中的响应式数据
+const folders = computed(() => folderStore.flatFolders || []);
 const folderId = ref(null);
+
 const loadFolders = async () => {
   try {
-    const { folderApi } = await import('@/api/folder.js');
-    const resp = await folderApi.getFoldersFlat();
-    folders.value = Array.isArray(resp?.data) ? resp.data : [];
+    // 使用全局 store 获取文件夹数据
+    await folderStore.fetchFolders();
+    
     if (folders.value.length > 0 && folderId.value == null) {
       const defaultFolder = folders.value.find((f) => f.name === '默认文件夹');
       folderId.value = defaultFolder ? defaultFolder.id : folders.value[0].id;
     }
   } catch (e) {
-    folders.value = [];
+    console.error('加载文件夹失败:', e);
   }
 };
+
+// 监听文件夹数据变化，自动设置默认文件夹
+watch(folders, (newFolders) => {
+  if (newFolders.length > 0 && folderId.value == null) {
+    const defaultFolder = newFolders.find((f) => f.name === '默认文件夹');
+    folderId.value = defaultFolder ? defaultFolder.id : newFolders[0].id;
+  }
+}, { immediate: true });
 
 // state
 const items = reactive([]); // {id, file, title, lat, lng, previewUrl}

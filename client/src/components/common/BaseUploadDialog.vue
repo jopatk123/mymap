@@ -37,7 +37,7 @@
       <slot name="custom-content" :form="form" />
 
       <!-- 文件夹选择 -->
-      <BaseFolderSelect v-model="form.folderId" :folders="folders" />
+      <BaseFolderSelect v-model="form.folderId" :use-global-store="true" />
 
       <!-- 处理状态显示 -->
       <BaseProcessingStatus

@@ -1,15 +1,18 @@
-import { ref, computed, reactive, onMounted } from 'vue';
+import { ref, computed, reactive, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 
 export function useBaseUploadDialog(props, emit) {
   // 响应式数据
   const formRef = ref(null);
   const uploadRef = ref(null);
-  const folders = ref([]);
   const uploading = ref(false);
   const uploadProgress = ref(0);
   const processing = ref(false);
   const processingText = ref('');
+  
+  // 使用全局 store
+  let folderStore = null;
+  const folders = ref([]);
 
   // 计算属性
   const visible = computed({
@@ -86,21 +89,26 @@ export function useBaseUploadDialog(props, emit) {
   // 加载文件夹
   const loadFolders = async () => {
     try {
-      const { folderApi } = await import('@/api/folder.js');
-      const response = await folderApi.getFoldersFlat();
-      folders.value = Array.isArray(response?.data) ? response.data : [];
-
-      // 设置默认文件夹ID
-      if (folders.value.length > 0 && form.folderId === null) {
-        // 查找名为"默认文件夹"的文件夹
-        const defaultFolder = folders.value.find((folder) => folder.name === '默认文件夹');
-        if (defaultFolder) {
-          form.folderId = defaultFolder.id;
-        } else {
-          // 如果没有找到"默认文件夹"，使用第一个文件夹
-          form.folderId = folders.value[0].id;
+      const { useFolderStore } = await import('@/store/folder.js');
+      folderStore = useFolderStore();
+      
+      // 使用全局 store 获取文件夹数据
+      await folderStore.fetchFolders();
+      
+      // 创建对 store 数据的响应式引用
+      watch(() => folderStore.flatFolders, (newFolders) => {
+        folders.value = newFolders || [];
+        // 如果用户还没有选择文件夹，自动设置默认文件夹
+        if (newFolders && newFolders.length > 0 && form.folderId === null) {
+          const defaultFolder = newFolders.find((folder) => folder.name === '默认文件夹');
+          if (defaultFolder) {
+            form.folderId = defaultFolder.id;
+          } else {
+            form.folderId = newFolders[0].id;
+          }
         }
-      }
+      }, { immediate: true });
+
     } catch (error) {
       console.error('加载文件夹失败:', error);
       folders.value = [];
