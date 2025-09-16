@@ -167,14 +167,14 @@ export function useKmlProcessor() {
     }
 
     const isKml = file.name.toLowerCase().endsWith('.kml');
-    const isLt10M = file.size / 1024 / 1024 < 10;
+  const isLt50M = file.size / 1024 / 1024 < 50;
 
     if (!isKml) {
       ElMessage.error('只能上传KML格式文件!');
       return false;
     }
-    if (!isLt10M) {
-      ElMessage.error('文件大小不能超过 10MB!');
+    if (!isLt50M) {
+      ElMessage.error('文件大小不能超过 50MB!');
       return false;
     }
     return true;

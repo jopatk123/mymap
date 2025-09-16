@@ -15,7 +15,7 @@
         <el-icon class="upload-icon"><Document /></el-icon>
         <div class="upload-text">
           <p>点击或拖拽KML文件到此处</p>
-          <p class="upload-hint">支持 .kml 格式，最大 10MB</p>
+          <p class="upload-hint">支持 .kml 格式，最大 50MB</p>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ const handleFileChange = async (file) => {
   }
 
   if (!isLt10M) {
-    ElMessage.error('文件大小不能超过 10MB!');
+  ElMessage.error('文件大小不能超过 50MB!');
     return false;
   }
 

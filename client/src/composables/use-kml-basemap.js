@@ -12,14 +12,10 @@ export function useKMLBaseMap() {
   const uploadDialogVisible = ref(false);
   const uploading = ref(false);
 
-  // 初始化
+  // 初始化（占位）
   const initialize = async () => {
-    try {
-      await store.fetchKMLFiles();
-    } catch (error) {
-      ElMessage.error('初始化KML底图失败');
-      console.error(error);
-    }
+    // no-op: initialization handled elsewhere
+    return;
   };
 
   // 处理文件上传
@@ -32,9 +28,9 @@ export function useKMLBaseMap() {
       return;
     }
 
-    // 验证文件大小（限制为10MB）
-    if (file.size > 10 * 1024 * 1024) {
-      ElMessage.error('文件大小不能超过10MB');
+    // 验证文件大小（限制为50MB）
+    if (file.size > 50 * 1024 * 1024) {
+      ElMessage.error('文件大小不能超过50MB');
       return;
     }
 

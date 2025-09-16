@@ -43,7 +43,7 @@ const upload = multer({
     }
   },
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 50 * 1024 * 1024, // 50MB
   },
 });
 
@@ -340,7 +340,7 @@ router.delete('/:fileId', async (req, res) => {
     // ensure relative path
     const filePath = path.join(process.cwd(), (fileUrl || '').replace(/^\//, ''));
 
-    // 使用事务：先在事务中删除点位与文件记录，再删除物理文件；若物理文件删除失败（非ENOENT），回滚事务
+    // 使用事务：仅删除数据库记录（点位与文件），不在事务中删除物理文件，避免外部 IO 问题导致回滚
     try {
       await transaction(async (db) => {
         // 删除点位
@@ -351,24 +351,30 @@ router.delete('/:fileId', async (req, res) => {
         if (!delRes || delRes.changes === 0) {
           throw new Error('删除数据库记录失败');
         }
-
-        // 删除物理文件（如果不存在则视为成功；其他错误则抛出以触发回滚）
-        try {
-          await fs.unlink(filePath);
-        } catch (err) {
-          if (err && err.code === 'ENOENT') {
-            // 文件已不存在，继续完成事务
-            Logger.warn('物理文件已不存在:', filePath);
-          } else {
-            Logger.warn('删除物理文件失败:', err && err.message);
-            throw err;
-          }
-        }
       });
+
+      // 事务提交后尝试删除物理文件：
+      // - ENOENT 视为已删除
+      // - 其他错误仅记录警告，不影响接口成功返回
+      try {
+        const KmlFileUtils = require('../utils/kml-file-utils');
+        await KmlFileUtils.deletePhysicalFile(fileUrl);
+      } catch (err) {
+        // deletePhysicalFile 仅在不可忽略错误时抛出，这里继续忽略以保证幂等
+        Logger.warn('删除物理文件失败（已忽略）:', err && err.message ? err.message : err);
+      }
+
+      // 清理样式配置（与 /kml-files 删除逻辑保持一致），失败不影响主流程
+      try {
+        const ConfigService = require('../services/config.service');
+        await ConfigService.deleteKmlStyles(String(fileId));
+      } catch (e) {
+        Logger.warn('删除KML样式配置失败（已忽略）:', e && e.message ? e.message : e);
+      }
 
       return res.json({ success: true, message: 'KML文件删除成功' });
     } catch (err) {
-      Logger.error('事务性删除KML文件失败:', err);
+      Logger.error('删除KML文件失败（事务回滚）:', err);
       return res.status(500).json({ success: false, message: '删除失败，已回滚' });
     }
   } catch (error) {

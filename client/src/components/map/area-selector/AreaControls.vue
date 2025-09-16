@@ -3,7 +3,7 @@
     <el-button-group>
       <!-- 圆形区域按钮 -->
       <el-button
-        type="success"
+        class="btn-circle"
         :disabled="isDrawing"
         :loading="isDrawingCircle"
         @click="handleCircleAreaClick"
@@ -14,7 +14,7 @@
 
       <!-- 自定义区域按钮 -->
       <el-button
-        type="success"
+        class="btn-custom"
         :disabled="isDrawing"
         :loading="isDrawingPolygon"
         @click="handleCustomAreaClick"
@@ -24,7 +24,7 @@
       </el-button>
 
       <!-- 清除按钮 -->
-      <el-button type="danger" :disabled="areasCount === 0" @click="handleClearAreas">
+      <el-button class="btn-clear" :disabled="areasCount === 0" @click="handleClearAreas">
         <el-icon><Delete /></el-icon>
         清除
       </el-button>
@@ -34,7 +34,7 @@
 
       <!-- 导出按钮 -->
       <el-button
-        type="warning"
+        class="btn-export"
         :disabled="!hasExportableData"
         :loading="exporting"
         @click="handleExport"
@@ -276,5 +276,36 @@ void _handleRemoveArea;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* Button color mappings per design */
+.btn-circle {
+  background: #fb8c00 !important; /* 橙色 */
+  border-color: #fb8c00 !important;
+  color: #fff !important;
+}
+
+.btn-custom {
+  background: #fdd835 !important; /* 黄色 */
+  border-color: #fdd835 !important;
+  color: #333 !important;
+}
+
+.btn-clear {
+  background: #43a047 !important; /* 绿色 */
+  border-color: #43a047 !important;
+  color: #fff !important;
+}
+
+.btn-export {
+  background: #00acc1 !important; /* 青色 */
+  border-color: #00acc1 !important;
+  color: #fff !important;
+}
+
+/* Ensure grouped buttons visually align when embedded in MapControls */
+.area-controls-inline {
+  display: inline-flex;
+  align-items: center;
 }
 </style>

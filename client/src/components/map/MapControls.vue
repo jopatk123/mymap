@@ -3,40 +3,45 @@
     <!-- 工具栏（整排按钮） -->
     <div class="toolbar">
       <el-button-group class="controls-group">
-        <!-- 优先显示的按钮（尽量保持在第一行） -->
-        <el-button class="priority" type="success" @click="$emit('show-kml-settings')">
+        <!-- 按用户要求的顺序：搜索、圆形、自定义、清除、导出、KML设置、点位图标、显示列表、隐藏KML图层 -->
+
+        <!-- 搜索工具（赤红色） -->
+        <div class="priority search-wrapper btn-search">
+          <SearchTool @locate-kml-point="$emit('locate-kml-point', $event)" @locate-address="$emit('locate-address', $event)" />
+        </div>
+
+        <!-- 区域选择与导出（按钮颜色在 AreaControls 中定义） -->
+        <AreaControls class="area-controls-inline" :map-instance="mapInstance" />
+
+        <!-- KML设置（蓝色） -->
+        <el-button class="btn-kml-settings priority" @click="$emit('show-kml-settings')">
           <el-icon><Tools /></el-icon>
           KML设置
         </el-button>
-        <el-button class="priority" type="primary" @click="$emit('show-point-settings')">
+
+        <!-- 点位图标（紫色） -->
+        <el-button class="btn-point-icons priority" @click="$emit('show-point-settings')">
           <el-icon><Location /></el-icon>
           点位图标
         </el-button>
 
-        <!-- 搜索工具也尽量保持第一行 -->
-        <div class="priority search-wrapper">
-          <SearchTool @locate-kml-point="$emit('locate-kml-point', $event)" @locate-address="$emit('locate-address', $event)" />
-        </div>
-
-        <!-- 其余按钮按原顺序 -->
+        <!-- 显示/隐藏列表（粉色） -->
         <el-button
-          type="primary"
+          class="btn-show-list"
           :title="panoramaListVisible ? '隐藏点位列表' : '显示点位列表'"
           @click="$emit('toggle-panorama-list')"
         >
           {{ panoramaListVisible ? '隐藏列表' : '显示列表' }}
         </el-button>
 
+        <!-- 隐藏/显示 KML 图层（白色） -->
         <el-button
-          type="warning"
+          class="btn-toggle-kml"
           :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
           @click="$emit('toggle-kml-layers')"
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
         </el-button>
-
-        <!-- 区域选择与导出 -->
-        <AreaControls :map-instance="mapInstance" />
       </el-button-group>
     </div>
   </div>
@@ -163,6 +168,48 @@ defineEmits([
     }
 
     .el-button.btn-circle-area .el-icon {
+      color: #fff !important;
+    }
+
+    /* Custom button color classes (use background + border overrides) */
+    .btn-search {
+      /* 赤红色 */
+      --btn-bg: #d32f2f;
+    }
+
+    .btn-kml-settings {
+      --btn-bg: #1976d2; /* 蓝色 */
+      background: var(--btn-bg) !important;
+      border-color: var(--btn-bg) !important;
+      color: #fff !important;
+    }
+
+    .btn-point-icons {
+      --btn-bg: #7b1fa2; /* 紫色 */
+      background: var(--btn-bg) !important;
+      border-color: var(--btn-bg) !important;
+      color: #fff !important;
+    }
+
+    .btn-show-list {
+      --btn-bg: #f06292; /* 粉色 */
+      background: var(--btn-bg) !important;
+      border-color: var(--btn-bg) !important;
+      color: #fff !important;
+    }
+
+    .btn-toggle-kml {
+      --btn-bg: #ffffff; /* 白色 */
+      background: var(--btn-bg) !important;
+      border-color: #dcdcdc !important;
+      color: #333 !important;
+    }
+
+    /* Search wrapper contains the SearchTool which may include buttons; ensure background shows */
+    .btn-search ::v-deep .el-input__inner,
+    .btn-search ::v-deep .el-button {
+      background: var(--btn-bg) !important;
+      border-color: var(--btn-bg) !important;
       color: #fff !important;
     }
   }

@@ -28,7 +28,7 @@
 
       <!-- 作为底图 选项 -->
       <el-form-item v-if="form" label="作为底图">
-        <el-checkbox v-model="form.isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
+  <!-- Checkbox for marking as basemap removed per UX change -->
       </el-form-item>
 
       <!-- 地标预览 -->

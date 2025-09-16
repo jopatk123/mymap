@@ -50,7 +50,7 @@
             </el-icon>
             <div class="el-upload__text">将KML文件拖拽到此处，或<em>点击选择文件</em></div>
             <template #tip>
-              <div class="el-upload__tip">只能上传 .kml 格式文件，且文件大小不超过 10MB</div>
+              <div class="el-upload__tip">只能上传 .kml 格式文件，且文件大小不超过 50MB</div>
             </template>
           </el-upload>
         </div>
@@ -68,7 +68,7 @@
         </div>
 
         <div class="basemap-option">
-          <el-checkbox v-model="isBasemap">将此 KML 标记为底图（点位默认不显示）</el-checkbox>
+          <!-- Checkbox for marking as basemap removed per UX change -->
         </div>
 
         <!-- 统计信息 -->
