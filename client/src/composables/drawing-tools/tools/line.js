@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { dlog } from '../utils/debug.js';
+import { getStyleManager, getEventManager, debounce, throttle } from '../utils/performance.js';
 
 export function createLineTool(mapInstance, drawings, register, onCleanup) {
   dlog('设置添加线工具');
@@ -93,8 +94,20 @@ export function createLineTool(mapInstance, drawings, register, onCleanup) {
       // 设置线段事件
       setupLineEvents(interactivePolyline, lineData, drawings, mapInstance);
 
-      // 添加到绘图数组
-      drawings.value.push(lineData);
+      // 添加到绘图数组（统一 data 结构）
+      drawings.value.push({
+        type: 'line',
+        id: lineData.id,
+        name: lineData.name,
+        timestamp: lineData.timestamp,
+        // 兼容旧结构
+        points: points,
+        polyline: interactivePolyline,
+        // 标准化 data 字段
+        data: { points: points, distance: distance, color: lineData.color, weight: lineData.weight },
+        properties: lineData.properties,
+        _internal: { polyline: interactivePolyline },
+      });
 
       dlog('线段已添加:', lineData);
 
@@ -145,6 +158,9 @@ function calculateDistance(latlngs) {
 
 // 设置线段事件
 function setupLineEvents(polyline, lineData, drawings, mapInstance) {
+  const styleManager = getStyleManager();
+  const eventManager = getEventManager(mapInstance);
+
   // 左键点击事件 - 显示信息弹窗
   polyline.on('click', (e) => {
     dlog('[line] click handler fired for:', lineData && lineData.name);
@@ -181,20 +197,25 @@ function setupLineEvents(polyline, lineData, drawings, mapInstance) {
     });
   });
 
-  // 鼠标悬停效果
-  polyline.on('mouseover', () => {
-    polyline.setStyle({
+  // 优化的鼠标悬停效果 - 使用防抖和样式管理器
+  const handleMouseOver = throttle(eventManager.createOptimizedHandler(() => {
+    const hoverStyle = {
       weight: (lineData.weight || 3) + 2,
       opacity: Math.min((lineData.opacity || 0.8) + 0.2, 1),
-    });
-  });
+    };
+    styleManager.setStyle(polyline, hoverStyle);
+  }, 'mouseover'), 50);
 
-  polyline.on('mouseout', () => {
-    polyline.setStyle({
+  const handleMouseOut = throttle(eventManager.createOptimizedHandler(() => {
+    const normalStyle = {
       weight: lineData.weight || 3,
       opacity: lineData.opacity || 0.8,
-    });
-  });
+    };
+    styleManager.setStyle(polyline, normalStyle);
+  }, 'mouseout'), 50);
+
+  polyline.on('mouseover', handleMouseOver);
+  polyline.on('mouseout', handleMouseOut);
 }
 
 // 更新线段样式

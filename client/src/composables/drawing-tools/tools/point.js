@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { dlog } from '../utils/debug.js';
+import { getStyleManager, getEventManager, debounce, throttle } from '../utils/performance.js';
 
 export function createPointTool(mapInstance, drawings, register, onComplete) {
   dlog('设置添加点工具');
@@ -49,8 +50,20 @@ export function createPointTool(mapInstance, drawings, register, onComplete) {
     // 设置标记事件
     setupMarkerEvents(marker, pointData, drawings, mapInstance);
 
-    // 添加到绘图数组
-    drawings.value.push(pointData);
+    // 添加到绘图数组（统一 data 结构）
+    drawings.value.push({
+      type: 'point',
+      id: pointData.id,
+      name: pointData.name,
+      timestamp: pointData.timestamp,
+      // 兼容旧结构（顶层字段）
+      latlng: pointData.latlng,
+      marker: pointData.marker,
+      // 标准化 data 字段
+      data: { latlng: pointData.latlng, icon: pointData.icon, color: pointData.color, size: pointData.size },
+      properties: pointData.properties,
+      _internal: { marker: pointData.marker },
+    });
 
     dlog('点位已添加:', pointData);
 
@@ -129,18 +142,21 @@ function setupMarkerEvents(marker, pointData, drawings, mapInstance) {
     });
   });
 
-  // 鼠标悬停效果
-  marker.on('mouseover', () => {
+  // 优化的鼠标悬停效果 - 使用节流和事件管理器
+  const eventManager = getEventManager(mapInstance);
+
+  const handleMouseOver = throttle(eventManager.createOptimizedHandler(() => {
     const icon = marker.getElement();
     if (icon) {
       const iconDiv = icon.querySelector('div');
       if (iconDiv) {
         iconDiv.style.transform = 'scale(1.2)';
+        iconDiv.style.transition = 'transform 0.2s ease';
       }
     }
-  });
+  }, 'mouseover'), 50);
 
-  marker.on('mouseout', () => {
+  const handleMouseOut = throttle(eventManager.createOptimizedHandler(() => {
     const icon = marker.getElement();
     if (icon) {
       const iconDiv = icon.querySelector('div');
@@ -148,7 +164,10 @@ function setupMarkerEvents(marker, pointData, drawings, mapInstance) {
         iconDiv.style.transform = 'scale(1)';
       }
     }
-  });
+  }, 'mouseout'), 50);
+
+  marker.on('mouseover', handleMouseOver);
+  marker.on('mouseout', handleMouseOut);
 }
 
 // 导出辅助函数供其他模块使用

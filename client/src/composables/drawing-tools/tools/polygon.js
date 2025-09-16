@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { dlog } from '../utils/debug.js';
+import { getStyleManager, getEventManager, debounce, throttle } from '../utils/performance.js';
 
 export function createPolygonTool(mapInstance, drawings, register, onCleanup) {
   dlog('设置添加面工具');
@@ -103,8 +104,20 @@ export function createPolygonTool(mapInstance, drawings, register, onCleanup) {
       // 设置面积事件
       setupPolygonEvents(interactivePolygon, polygonData, drawings, mapInstance);
 
-      // 添加到绘图数组
-      drawings.value.push(polygonData);
+      // 添加到绘图数组（统一 data 结构）
+      drawings.value.push({
+        type: 'polygon',
+        id: polygonData.id,
+        name: polygonData.name,
+        timestamp: polygonData.timestamp,
+        // 兼容旧结构
+        points: points,
+        polygon: interactivePolygon,
+        // 标准化 data 字段
+        data: { points: points, area: area, perimeter: perimeter, color: polygonData.color, fillColor: polygonData.fillColor },
+        properties: polygonData.properties,
+        _internal: { polygon: interactivePolygon },
+      });
 
       dlog('面积已添加:', polygonData);
 
@@ -214,22 +227,30 @@ function setupPolygonEvents(polygon, polygonData, drawings, mapInstance) {
     });
   });
 
-  // 鼠标悬停效果
-  polygon.on('mouseover', () => {
-    polygon.setStyle({
+  // 优化的鼠标悬停效果 - 使用防抖和样式管理器
+  const styleManager = getStyleManager();
+  const eventManager = getEventManager(mapInstance);
+
+  const handleMouseOver = throttle(eventManager.createOptimizedHandler(() => {
+    const hoverStyle = {
       weight: (polygonData.weight || 3) + 2,
       opacity: Math.min((polygonData.opacity || 1.0) + 0.1, 1),
       fillOpacity: Math.min((polygonData.fillOpacity || 0.2) + 0.1, 0.5),
-    });
-  });
+    };
+    styleManager.setStyle(polygon, hoverStyle);
+  }, 'mouseover'), 50);
 
-  polygon.on('mouseout', () => {
-    polygon.setStyle({
+  const handleMouseOut = throttle(eventManager.createOptimizedHandler(() => {
+    const normalStyle = {
       weight: polygonData.weight || 3,
       opacity: polygonData.opacity || 1.0,
       fillOpacity: polygonData.fillOpacity || 0.2,
-    });
-  });
+    };
+    styleManager.setStyle(polygon, normalStyle);
+  }, 'mouseout'), 50);
+
+  polygon.on('mouseover', handleMouseOver);
+  polygon.on('mouseout', handleMouseOut);
 }
 
 // 更新面积样式

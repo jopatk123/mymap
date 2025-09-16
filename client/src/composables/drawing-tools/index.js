@@ -10,6 +10,7 @@ import { createPointTool } from './tools/point.js';
 import { createLineTool } from './tools/line.js';
 import { createPolygonTool } from './tools/polygon.js';
 import { createFreeDrawTool } from './tools/free-draw.js';
+import { getStyleManager, getEventManager, resetPerformanceManagers } from './utils/performance.js';
 
 // 工具状态管理
 const activeTool = ref(null);
@@ -40,6 +41,11 @@ export function useDrawingTools() {
     } else {
       dlog('绘图图层组已存在');
     }
+
+    // 初始化性能管理器
+    getStyleManager();
+    getEventManager(map);
+    dlog('性能管理器初始化完成');
 
     dlog('绘图工具初始化完成');
   };
@@ -102,6 +108,12 @@ export function useDrawingTools() {
       } catch {}
     });
     cleanupCallbacks = [];
+
+    // 清理性能管理器的缓存
+    const styleManager = getStyleManager();
+    if (styleManager) {
+      styleManager.clearCache();
+    }
   };
 
   // 工具安装器

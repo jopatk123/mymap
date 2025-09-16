@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { dlog } from '../utils/debug.js';
+import { getEventManager } from '../utils/performance.js';
 
 export function createFreeDrawTool(mapInstance, drawings, register, onCleanup) {
   dlog('设置画笔工具');
@@ -9,6 +10,9 @@ export function createFreeDrawTool(mapInstance, drawings, register, onCleanup) {
   let isDrawing = false;
   let points = [];
   let polyline = null;
+  
+  // 初始化事件管理器
+  const eventManager = getEventManager(mapInstance);
 
   const handleMouseDown = (e) => {
     dlog('开始自由绘制');

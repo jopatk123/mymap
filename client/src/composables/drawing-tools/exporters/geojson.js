@@ -1,20 +1,34 @@
 import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 import { getTypeLabel } from '../utils/shared.js';
 
+function getDrawingPoint(drawing) {
+  return drawing?.data?.latlng || drawing?.latlng || null;
+}
+
+function getDrawingPoints(drawing) {
+  return (
+    drawing?.data?.points || drawing?.data?.latlngs || drawing?.latlngs || drawing?.points || []
+  );
+}
+
 export function generateGeoJSON(drawings) {
   const features = drawings.map((drawing) => {
     let geometry = {};
     switch (drawing.type) {
       case 'point': {
-        const [lngW, latW] = gcj02ToWgs84(drawing.data.latlng.lng, drawing.data.latlng.lat);
+        const pt = getDrawingPoint(drawing);
+        if (!pt) break;
+        const [lngW, latW] = gcj02ToWgs84(pt.lng, pt.lat);
         geometry = { type: 'Point', coordinates: [lngW, latW] };
         break;
       }
       case 'line':
       case 'measure': {
+        const points = getDrawingPoints(drawing);
         geometry = {
           type: 'LineString',
-          coordinates: drawing.data.points.map((p) => {
+          coordinates: points.map((p) => {
+            if (!p) return [0, 0];
             const [lngW, latW] = gcj02ToWgs84(p.lng, p.lat);
             return [lngW, latW];
           }),
@@ -22,7 +36,9 @@ export function generateGeoJSON(drawings) {
         break;
       }
       case 'polygon': {
-        const coords = drawing.data.points.map((p) => {
+        const points = getDrawingPoints(drawing);
+        const coords = points.map((p) => {
+          if (!p) return [0, 0];
           const [lngW, latW] = gcj02ToWgs84(p.lng, p.lat);
           return [lngW, latW];
         });
@@ -41,7 +57,7 @@ export function generateGeoJSON(drawings) {
       id: drawing.id,
       timestamp: drawing.timestamp?.toISOString(),
     };
-    if (drawing.data.distance) {
+    if (drawing.data?.distance) {
       properties.distance = drawing.data.distance;
       properties.distanceText = `${drawing.data.distance.toFixed(2)}米`;
     }

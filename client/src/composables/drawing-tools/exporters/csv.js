@@ -1,6 +1,16 @@
 import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 import { getTypeLabel } from '../utils/shared.js';
 
+function getDrawingPoint(drawing) {
+  return drawing?.data?.latlng || drawing?.latlng || null;
+}
+
+function getDrawingPoints(drawing) {
+  return (
+    drawing?.data?.points || drawing?.data?.latlngs || drawing?.latlngs || drawing?.points || []
+  );
+}
+
 export function generateCSV(drawings) {
   const headers = ['名称', '类型', '经度', '纬度', '距离(米)', '创建时间', '描述'];
   let csv = headers.join(',') + '\n';
@@ -11,14 +21,16 @@ export function generateCSV(drawings) {
       `"${getTypeLabel(drawing.type)}"`,
       '',
       '',
-      drawing.data.distance ? drawing.data.distance.toFixed(2) : '',
+      drawing?.data?.distance ? drawing.data.distance.toFixed(2) : '',
       drawing.timestamp ? `"${drawing.timestamp.toLocaleString()}"` : '',
       `"${drawing.type === 'measure' ? '测距线段' : '绘图元素'}"`,
     ];
 
     switch (drawing.type) {
       case 'point': {
-        const [lngW, latW] = gcj02ToWgs84(drawing.data.latlng.lng, drawing.data.latlng.lat);
+        const pt = getDrawingPoint(drawing);
+        if (!pt) break;
+        const [lngW, latW] = gcj02ToWgs84(pt.lng, pt.lat);
         baseInfo[2] = lngW.toFixed(6);
         baseInfo[3] = latW.toFixed(6);
         csv += baseInfo.join(',') + '\n';
@@ -27,7 +39,9 @@ export function generateCSV(drawings) {
       case 'line':
       case 'measure':
       case 'polygon': {
-        drawing.data.points.forEach((p, idx) => {
+        const points = getDrawingPoints(drawing);
+        points.forEach((p, idx) => {
+          if (!p) return;
           const [lngW, latW] = gcj02ToWgs84(p.lng, p.lat);
           const row = [...baseInfo];
           row[0] = `"${drawing.name || '未命名'} - 点${idx + 1}"`;
