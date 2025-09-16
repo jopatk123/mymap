@@ -109,17 +109,35 @@ export class ImageProcessor {
   }
 
   // 压缩图片
-  async compressImageIfNeeded(file, maxWidth = 8000, maxHeight = 4000, quality = 0.9) {
+  async compressImageIfNeeded(
+    file,
+    maxWidth = 8000,
+    maxHeight = 4000,
+    quality = 0.85,
+    forceReencode = true
+  ) {
     try {
       const dimensions = await getImageDimensions(file);
 
-      if (dimensions.width > maxWidth || dimensions.height > maxHeight) {
-        const compressedFile = await compressImage(file, maxWidth, maxHeight, quality);
+      if (
+        dimensions.width > maxWidth ||
+        dimensions.height > maxHeight ||
+        // 即使不缩放，也可以选择性进行有损重编码（JPEG/WebP）
+        forceReencode
+      ) {
+        const compressedFile = await compressImage(
+          file,
+          maxWidth,
+          maxHeight,
+          quality,
+          forceReencode
+        );
         return {
           file: compressedFile,
           compressed: true,
           originalDimensions: dimensions,
-          newDimensions: { width: maxWidth, height: maxHeight },
+          // 实际新尺寸在前端不易直接得知，这里仅回显目标约束
+          newDimensions: { width: Math.min(dimensions.width, maxWidth), height: Math.min(dimensions.height, maxHeight) },
         };
       }
 

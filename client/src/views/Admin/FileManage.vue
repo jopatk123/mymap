@@ -73,7 +73,11 @@
       </div>
     </div>
 
-    <FileUploadDialogs :upload-dialogs="uploadDialogs" @upload-success="handleUploadSuccess" />
+    <FileUploadDialogs
+      :upload-dialogs="uploadDialogs"
+      @upload-success="handleUploadSuccess"
+      @update:uploadDialogs="(v) => Object.assign(uploadDialogs, v)"
+    />
 
     <FileActionDialogs
       :action-dialogs="actionDialogs"
@@ -249,6 +253,10 @@ const getFileDownloadUrl = (file) => {
   if (!file) return null;
   switch (file.fileType) {
     case 'panorama':
+      // 使用后端下载端点以便写回EXIF GPS
+      if (file.id != null) {
+        return `/api/panoramas/${file.id}/download`;
+      }
       return file.image_url || file.imageUrl || null;
     case 'video':
       return file.video_url || null;

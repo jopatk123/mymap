@@ -141,7 +141,13 @@ function convertDMSToDD(dms, ref) {
  * @param {number} quality 压缩质量 (0-1)
  * @returns {Promise<File>}
  */
-export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality = 0.5) {
+export function compressImage(
+  file,
+  maxWidth = 8000,
+  maxHeight = 4000,
+  quality = 0.5,
+  forceReencode = false
+) {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -149,13 +155,6 @@ export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality =
 
     img.onload = () => {
       const { width, height } = img;
-
-      // 如果图片尺寸小于等于目标尺寸，直接返回原文件
-      if (width <= maxWidth && height <= maxHeight) {
-        URL.revokeObjectURL(img.src);
-        resolve(file);
-        return;
-      }
 
       // 计算压缩后的尺寸，保持宽高比
       let newWidth = width;
@@ -169,6 +168,22 @@ export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality =
       if (newHeight > maxHeight) {
         newHeight = maxHeight;
         newWidth = (width * maxHeight) / height;
+      }
+
+      const resized = newWidth !== width || newHeight !== height;
+
+      // 若无需缩放且未要求强制重编码，直接返回原文件
+      if (!resized && !forceReencode) {
+        URL.revokeObjectURL(img.src);
+        resolve(file);
+        return;
+      }
+
+      // 对 PNG 在无缩放时不做有损重编码（避免改变格式带来副作用）
+      if (!resized && forceReencode && !/^image\/(jpeg|jpg|webp)$/i.test(file.type)) {
+        URL.revokeObjectURL(img.src);
+        resolve(file);
+        return;
       }
 
       // 设置canvas尺寸
@@ -186,17 +201,28 @@ export function compressImage(file, maxWidth = 8000, maxHeight = 4000, quality =
       canvas.toBlob(
         (blob) => {
           // 创建新的File对象
+          const outputType = (() => {
+            if (/^image\/(jpeg|jpg)$/i.test(file.type)) return 'image/jpeg';
+            if (/^image\/webp$/i.test(file.type)) return 'image/webp';
+            return file.type;
+          })();
+
           const compressedFile = new File([blob], file.name, {
-            type: file.type,
+            type: outputType,
             lastModified: Date.now(),
           });
 
           // 清理资源
           URL.revokeObjectURL(img.src);
 
-          resolve(compressedFile);
+          resolve(compressedFile || file);
         },
-        file.type,
+        // 输出格式尽量保持与原始一致（仅在 JPEG/WebP 时使用质量参数）
+        /^image\/(jpeg|jpg|webp)$/i.test(file.type) ? (() => {
+          if (/^image\/(jpeg|jpg)$/i.test(file.type)) return 'image/jpeg';
+          if (/^image\/webp$/i.test(file.type)) return 'image/webp';
+          return file.type;
+        })() : file.type,
         quality
       );
     };
