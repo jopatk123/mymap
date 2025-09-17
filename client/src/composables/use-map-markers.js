@@ -105,14 +105,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     if (!Array.isArray(points) || points.length === 0) return;
     // 自动启用视口裁剪
     if (!viewportState.enabled && points.length >= VIEWPORT_THRESHOLD) {
-      try {
-        // 控制台提示：启用视口裁剪渲染
-        void console.info('[Map] 启用视口裁剪渲染:', {
-          totalPoints: points.length,
-          threshold: VIEWPORT_THRESHOLD,
-          bufferPad: viewportState.bufferPad,
-        });
-      } catch {}
+      // enable viewport clipping for large point sets
       enableViewportClipping(points);
       return;
     }

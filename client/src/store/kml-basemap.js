@@ -182,14 +182,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     // debug: 记录清除前的选区数量，便于排查时序问题
     try {
       // suppress unused console in production builds; keep debug call available
-      void (
-        console.debug &&
-        console.debug(
-          '[kml-basemap] clearAllAreas called, previous areas:',
-          areas.value ? areas.value.length : 0
-        )
-      );
-
+      // removed debug logging
       areas.value = [];
       visiblePoints.value = [];
       // 恢复地图点位（移除KML选区点）
@@ -438,7 +431,7 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
     try {
       const activeAreas = areas.value.filter((a) => a.visible !== false);
       if (!activeAreas.length) {
-        void console.info('[kml-basemap-debug] debugPointChecks: no active areas');
+        // debug logging removed
         return [];
       }
 

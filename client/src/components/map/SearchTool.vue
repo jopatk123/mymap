@@ -181,9 +181,8 @@ const addressSearching = ref(false);
 
 // 切换搜索对话框
 const toggleSearchDialog = () => {
-  console.log('搜索按钮被点击，当前状态:', showSearchDialog.value);
+  // debug: 搜索按钮被点击（状态切换）
   showSearchDialog.value = !showSearchDialog.value;
-  console.log('弹窗状态已切换为:', showSearchDialog.value);
   if (showSearchDialog.value) {
     // 重置搜索状态
     resetSearch();
@@ -224,8 +223,7 @@ const searchKMLPoints = async () => {
     const response = await kmlSearchApi.searchKMLPoints(keyword);
 
     if (response.success) {
-      // debug: 打印返回结果，便于定位无结果问题
-      void console.debug('[KML Search] response:', response);
+      // debug logging removed
       kmlResults.value = response.data || [];
     } else {
       void console.error('KML搜索失败:', response.message);

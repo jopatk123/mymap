@@ -61,9 +61,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           try {
             // convert received plain object to Map for existing code compatibility
             state.spatialIndex = new Map(Object.entries(msg.index || {}));
-            try {
-              console.info('[Map] 空间索引(Worker) 构建完成', { cells: state.spatialIndex.size });
-            } catch {}
+            // debug logging removed
           } catch (err) {
             try {
               console.warn('Failed to apply spatial index from worker', err);
@@ -149,9 +147,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       }
       bucket.push(p);
     }
-    try {
-      console.info('[Map] 空间索引构建完成', { cells: state.spatialIndex.size });
-    } catch {}
+    // debug logging removed
   };
 
   // 根据当前地图缩放级别自适应 cellSizeDeg
@@ -168,9 +164,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       else newSize = 0.02;
       if (Math.abs(newSize - state.cellSizeDeg) > 1e-9) {
         state.cellSizeDeg = newSize;
-        try {
-          console.info('[Map] 调整 cellSizeDeg', { zoom: z, cellSizeDeg: state.cellSizeDeg });
-        } catch {}
+        // debug logging removed
       }
     } catch {}
   };
@@ -252,15 +246,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     const toAdd = [];
     const currentInBounds = new Set();
     const candidates = getCandidatesByBounds(west, south, east, north);
-    try {
-      console.info('[Map][DEBUG] candidates count for bounds', {
-        candidates: candidates.length,
-        west,
-        south,
-        east,
-        north,
-      });
-    } catch {}
+    // debug logging removed
     for (const p of candidates) {
       let coords = state.coordCache.get(p.id);
       if (!coords) {
@@ -279,18 +265,10 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     state.renderedIds.forEach((id) => {
       if (!currentInBounds.has(id)) toRemove.push(id);
     });
-    try {
-      console.info('[Map][DEBUG] toAdd/toRemove lengths', {
-        toAdd: toAdd.length,
-        toRemove: toRemove.length,
-        renderedIds: state.renderedIds.size,
-      });
-    } catch {}
+    // debug logging removed
 
     if (toRemove.length) {
-      try {
-        console.info('[Map][DEBUG] removing markers', { count: toRemove.length });
-      } catch {}
+      // debug logging removed
       removeMarkersBatch(toRemove);
       toRemove.forEach((id) => state.renderedIds.delete(id));
     }
@@ -300,11 +278,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
         const info = createMarkerInfo(p);
         if (info) createBatch.push(info);
       }
-      try {
-        console.info('[Map][DEBUG] created createBatch length', {
-          createBatch: createBatch.length,
-        });
-      } catch {}
+      // debug logging removed
 
       if (createBatch.length) {
         const videoBatch = [];
@@ -325,13 +299,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           else normalBatch.push(info.marker);
           state.renderedIds.add(info.id);
         }
-        try {
-          console.info('[Map][DEBUG] batches sizes', {
-            videoBatch: videoBatch.length,
-            panoBatch: panoBatch.length,
-            normalBatch: normalBatch.length,
-          });
-        } catch {}
+        // debug logging removed
 
         if (videoBatch.length) {
           const g = clusterManager.ensureClusterGroup('video');
@@ -346,9 +314,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
         if (normalBatch.length) {
           for (const m of normalBatch) m.addTo(map.value);
         }
-        try {
-          console.info('[Map][DEBUG] renderedIds size after add', state.renderedIds.size);
-        } catch {}
+        // debug logging removed
       }
     }
   };
@@ -398,13 +364,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     state.coordCache.clear();
     state.spatialIndex.clear();
     state.cellSizeDeg = options.cellSizeDeg ?? state.cellSizeDeg;
-    try {
-      console.info('[Map] 视口裁剪渲染已启用', {
-        count: state.sourcePoints.length,
-        bufferPad: state.bufferPad,
-        updateIntervalMs: state.updateIntervalMs,
-      });
-    } catch {}
+    // debug logging removed
 
     if (!state.buildIndexScheduled) {
       state.buildIndexScheduled = true;
@@ -462,9 +422,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     state.coordCache.clear();
     state.idToMarker.clear();
     state.spatialIndex.clear();
-    try {
-      console.info('[Map] 视口裁剪渲染已关闭');
-    } catch {}
+    // debug logging removed
   };
 
   return {

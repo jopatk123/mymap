@@ -111,10 +111,10 @@ watch(() => props.mapInstance, (mapInstance) => {
 }, { immediate: true });
 
 const handleCircleAreaClick = () => {
-  console.log('圆形区域按钮被点击，当前状态:', radiusDialogVisible.value);
+  // debug: 圆形区域按钮被点击
   tempRadius.value = circleRadius.value;
   radiusDialogVisible.value = true;
-  console.log('半径对话框状态已切换为:', radiusDialogVisible.value);
+  // debug: 半径对话框状态已切换
 };
 
 const confirmRadiusAndStartDrawing = () => {

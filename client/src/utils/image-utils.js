@@ -288,11 +288,7 @@ export async function compressImageToTargetSize(
           return lastResult;
         }
 
-        // 调试信息，便于在浏览器控制台观察每次尝试的大小
-        try {
-          // eslint-disable-next-line no-console
-          console.debug(`compressImageToTargetSize: try quality=${q} -> size=${compressed.size}`);
-        } catch (_) {}
+        // removed debug logging
 
         lastResult = compressed;
 

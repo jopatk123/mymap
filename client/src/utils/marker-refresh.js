@@ -70,14 +70,7 @@ export async function refreshAllMarkers(points = null, options = {}) {
   }
 
   if (currentPoints.length === 0) {
-    try {
-      console.debug &&
-        console.debug(
-          '[marker-refresh] refreshAllMarkers: no points to add, cleared existing markers'
-        );
-    } catch (e) {
-      /* noop */
-    }
+    // no points to add
     return true;
   }
 
