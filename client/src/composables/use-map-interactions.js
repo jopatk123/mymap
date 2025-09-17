@@ -155,6 +155,14 @@ export function useMapInteractions(
 
   // 定位到全景图
   const locatePanorama = (panorama) => {
+    // 隐藏点位列表然后定位到指定点位
+    try {
+      appStore.setPanoramaListVisible(false);
+    } catch (e) {
+      // 若 store 方法不可用则静默失败
+      void e;
+    }
+
     if (mapRef.value) {
       const coords = getDisplayCoordinates(panorama);
       if (coords) {
