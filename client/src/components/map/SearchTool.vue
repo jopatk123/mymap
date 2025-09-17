@@ -1,7 +1,13 @@
 <template>
   <div class="search-tool">
     <!-- 搜索按钮 -->
-    <el-button type="primary" :icon="Search" title="综合搜索" @click="toggleSearchDialog">
+    <el-button 
+      type="primary" 
+      :icon="Search" 
+      title="综合搜索" 
+      @click.stop="toggleSearchDialog"
+      style="pointer-events: auto !important; z-index: 1000 !important;"
+    >
       搜索
     </el-button>
 
@@ -11,6 +17,10 @@
       title="综合搜索"
       width="500px"
       :before-close="handleClose"
+      :modal="true"
+      :close-on-click-modal="false"
+      :z-index="2000"
+      :append-to-body="true"
     >
       <div class="search-content">
         <!-- 搜索类型选择 -->
@@ -171,7 +181,9 @@ const addressSearching = ref(false);
 
 // 切换搜索对话框
 const toggleSearchDialog = () => {
+  console.log('搜索按钮被点击，当前状态:', showSearchDialog.value);
   showSearchDialog.value = !showSearchDialog.value;
+  console.log('弹窗状态已切换为:', showSearchDialog.value);
   if (showSearchDialog.value) {
     // 重置搜索状态
     resetSearch();
@@ -218,12 +230,12 @@ const searchKMLPoints = async () => {
     } else {
       void console.error('KML搜索失败:', response.message);
       kmlResults.value = [];
-      ElMessage.error(response.message || 'KML搜索失败');
+      ElMessage.error({ message: response.message || 'KML搜索失败', duration: 1000 });
     }
   } catch (error) {
     void console.error('KML搜索出错:', error);
     kmlResults.value = [];
-    ElMessage.error(error.message || 'KML搜索出错');
+    ElMessage.error({ message: error.message || 'KML搜索出错', duration: 1000 });
   } finally {
     kmlSearching.value = false;
   }
@@ -259,7 +271,7 @@ const searchAddresses = async () => {
   } catch (error) {
     void console.error('地址搜索出错:', error);
     addressResults.value = [];
-    ElMessage.error(error.message || '地址搜索出错');
+    ElMessage.error({ message: error.message || '地址搜索出错', duration: 1000 });
   } finally {
     addressSearching.value = false;
   }
@@ -273,7 +285,7 @@ const selectKMLResult = (result) => {
     point: result,
   });
   showSearchDialog.value = false;
-  ElMessage.success(`已定位到：${result.name}`);
+  ElMessage.success({ message: `已定位到：${result.name}`, duration: 1000 });
 };
 
 // 选择地址搜索结果
@@ -289,7 +301,7 @@ const selectAddressResult = (tip) => {
 
   emit('locate-address', { lat, lng, tip });
   showSearchDialog.value = false;
-  ElMessage.success(`已定位到：${tip.name}`);
+  ElMessage.success({ message: `已定位到：${tip.name}`, duration: 1000 });
 };
 
 // 将文本按关键字分割为安全的片段数组 { text, isMatch }
@@ -324,7 +336,77 @@ watch(searchType, () => {
 
 <style lang="scss" scoped>
 .search-tool {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+
+  .el-button {
+    height: 40px !important;
+    min-width: 80px;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1;
+      opacity: 1 !important;
+    }
+
+    &:active {
+      transform: translateY(0);
+      opacity: 1 !important;
+    }
+
+    &:focus {
+      outline: none !important;
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
+      opacity: 1 !important;
+    }
+
+    .el-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    height: 36px;
+
+    .el-button {
+      height: 36px !important;
+      min-width: 70px;
+      padding: 0 8px !important;
+      font-size: 12px !important;
+
+      .el-icon {
+        margin-right: 2px;
+        font-size: 12px;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .el-button {
+      min-width: 60px;
+      padding: 0 6px !important;
+      font-size: 11px !important;
+
+      .el-icon {
+        margin-right: 1px;
+      }
+    }
+  }
 }
 
 .search-content {

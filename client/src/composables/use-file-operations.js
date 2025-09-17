@@ -67,7 +67,7 @@ export function useFileOperations() {
       await req;
       // debug: 删除API调用成功 (suppressed)
 
-      ElMessage.success('删除成功');
+      ElMessage.success({ message: '删除成功', duration: 1000 });
 
       // debug: 准备调用 onSuccess (suppressed)
       if (onSuccess) {
@@ -78,7 +78,7 @@ export function useFileOperations() {
       }
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除失败: ' + (error?.message || error));
+        ElMessage.error({ message: '删除失败: ' + (error?.message || error), duration: 1000 });
       }
     }
   };
@@ -86,7 +86,7 @@ export function useFileOperations() {
   // 移动确认
   const handleMoveConfirm = async (onSuccess) => {
     if (!movingFiles.value || movingFiles.value.length === 0) {
-      ElMessage.warning('没有选择要移动的文件');
+      ElMessage.warning({ message: '没有选择要移动的文件', duration: 1000 });
       return;
     }
 
@@ -118,7 +118,7 @@ export function useFileOperations() {
       }
 
       if (movePromises.length === 0) {
-        ElMessage.info('没有需要移动的文件');
+        ElMessage.info({ message: '没有需要移动的文件', duration: 1000 });
         return;
       }
 
@@ -126,10 +126,10 @@ export function useFileOperations() {
       const failedMoves = results.filter((result) => result.status === 'rejected');
 
       if (failedMoves.length > 0) {
-        ElMessage.error('部分文件移动失败');
+        ElMessage.error({ message: '部分文件移动失败', duration: 1000 });
         // 记录失败详情到日志系统或调试器（已屏蔽 console 输出以满足 lint）
       } else {
-        ElMessage.success('移动成功');
+        ElMessage.success({ message: '移动成功', duration: 1000 });
       }
 
       dialogStates.showMoveDialog = false;
@@ -137,7 +137,7 @@ export function useFileOperations() {
       movingFiles.value = [];
       onSuccess?.();
     } catch (error) {
-      ElMessage.error('移动失败: ' + error.message);
+      ElMessage.error({ message: '移动失败: ' + error.message, duration: 1000 });
     } finally {
       moving.value = false;
     }
@@ -147,10 +147,10 @@ export function useFileOperations() {
   const handleFileDeleted = async (onSuccess) => {
     try {
       dialogStates.showViewDialog = false;
-      ElMessage.success('文件已从列表中移除');
+      ElMessage.success({ message: '文件已从列表中移除', duration: 1000 });
       onSuccess?.();
     } catch (error) {
-      ElMessage.error('更新失败，请刷新页面');
+      ElMessage.error({ message: '更新失败，请刷新页面', duration: 1000 });
     }
   };
 

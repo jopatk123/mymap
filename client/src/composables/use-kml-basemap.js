@@ -24,13 +24,13 @@ export function useKMLBaseMap() {
 
     // 验证文件类型
     if (!file.name.toLowerCase().endsWith('.kml')) {
-      ElMessage.error('请选择KML格式的文件');
+      ElMessage.error({ message: '请选择KML格式的文件', duration: 1000 });
       return;
     }
 
     // 验证文件大小（限制为50MB）
     if (file.size > 50 * 1024 * 1024) {
-      ElMessage.error('文件大小不能超过50MB');
+      ElMessage.error({ message: '文件大小不能超过50MB', duration: 1000 });
       return;
     }
 
@@ -46,10 +46,10 @@ export function useKMLBaseMap() {
       window.dispatchEvent(new CustomEvent('kml-files-updated'));
       window.dispatchEvent(new CustomEvent('show-kml-files'));
 
-      ElMessage.success('KML文件上传成功');
+      ElMessage.success({ message: 'KML文件上传成功', duration: 1000 });
       uploadDialogVisible.value = false;
     } catch (error) {
-      ElMessage.error('KML文件上传失败: ' + error.message);
+      ElMessage.error({ message: 'KML文件上传失败: ' + error.message, duration: 1000 });
     } finally {
       uploading.value = false;
     }
@@ -65,10 +65,10 @@ export function useKMLBaseMap() {
       });
 
       await store.deleteKMLFile(fileId);
-      ElMessage.success('KML文件删除成功');
+      ElMessage.success({ message: 'KML文件删除成功', duration: 1000 });
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除KML文件失败: ' + error.message);
+        ElMessage.error({ message: '删除KML文件失败: ' + error.message, duration: 1000 });
       }
     }
   };

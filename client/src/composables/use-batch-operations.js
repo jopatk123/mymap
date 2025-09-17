@@ -20,11 +20,11 @@ export function useBatchOperations() {
       });
 
       await panoramaStore.deletePanoramaAsync(panorama.id);
-      ElMessage.success('删除成功');
+      ElMessage.success({ message: '删除成功', duration: 1000 });
       onSuccess?.();
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除失败: ' + error.message);
+        ElMessage.error({ message: '删除失败: ' + error.message, duration: 1000 });
       }
     }
   };
@@ -33,10 +33,10 @@ export function useBatchOperations() {
   const togglePanoramaVisibility = async (panorama, onSuccess) => {
     try {
       await panoramaStore.updatePanoramaVisibility(panorama.id, !panorama.is_visible);
-      ElMessage.success(`全景图已${panorama.is_visible ? '隐藏' : '显示'}`);
+      ElMessage.success({ message: `全景图已${panorama.is_visible ? '隐藏' : '显示'}`, duration: 1000 });
       onSuccess?.();
     } catch (error) {
-      ElMessage.error('更新可见性失败: ' + error.message);
+      ElMessage.error({ message: '更新可见性失败: ' + error.message, duration: 1000 });
     }
   };
 
@@ -76,16 +76,16 @@ export function useBatchOperations() {
       const failedUpdates = results.filter((result) => result.status === 'rejected');
 
       if (failedUpdates.length > 0) {
-        ElMessage.error('部分文件更新可见性失败');
+        ElMessage.error({ message: '部分文件更新可见性失败', duration: 1000 });
         console.error('更新失败详情:', failedUpdates);
       } else {
-        ElMessage.success(`批量${isVisible ? '显示' : '隐藏'}成功`);
+        ElMessage.success({ message: `批量${isVisible ? '显示' : '隐藏'}成功`, duration: 1000 });
       }
 
       onSuccess?.();
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(`批量${isVisible ? '显示' : '隐藏'}失败: ` + error.message);
+        ElMessage.error({ message: `批量${isVisible ? '显示' : '隐藏'}失败: ` + error.message, duration: 1000 });
       }
     }
   };
@@ -126,16 +126,16 @@ export function useBatchOperations() {
       const failedDeletes = results.filter((result) => result.status === 'rejected');
 
       if (failedDeletes.length > 0) {
-        ElMessage.error('部分文件删除失败');
+        ElMessage.error({ message: '部分文件删除失败', duration: 1000 });
         console.error('删除失败详情:', failedDeletes);
       } else {
-        ElMessage.success('批量删除成功');
+        ElMessage.success({ message: '批量删除成功', duration: 1000 });
       }
 
       onSuccess?.();
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('批量删除失败: ' + error.message);
+        ElMessage.error({ message: '批量删除失败: ' + error.message, duration: 1000 });
       }
     }
   };
@@ -168,15 +168,15 @@ export function useBatchOperations() {
       const failedMoves = results.filter((result) => result.status === 'rejected');
 
       if (failedMoves.length > 0) {
-        ElMessage.error('部分文件移动失败');
+        ElMessage.error({ message: '部分文件移动失败', duration: 1000 });
         console.error('移动失败详情:', failedMoves);
       } else {
-        ElMessage.success('移动成功');
+        ElMessage.success({ message: '移动成功', duration: 1000 });
       }
 
       onSuccess?.();
     } catch (error) {
-      ElMessage.error('移动失败: ' + error.message);
+      ElMessage.error({ message: '移动失败: ' + error.message, duration: 1000 });
     } finally {
       moving.value = false;
     }

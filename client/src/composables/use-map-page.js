@@ -98,7 +98,7 @@ export function useMapPage() {
         }
       }, 500);
     } catch (error) {
-      ElMessage.error('加载数据失败: ' + error.message);
+      ElMessage.error({ message: '加载数据失败: ' + error.message, duration: 1000 });
     }
   };
 

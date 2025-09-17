@@ -54,6 +54,11 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(ElementPlus);
+app.use(ElementPlus, {
+  // 全局配置Element Plus消息提示的默认显示时间为1秒
+  message: {
+    duration: 1000
+  }
+});
 
 app.mount('#app');
