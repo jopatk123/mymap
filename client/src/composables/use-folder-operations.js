@@ -20,11 +20,11 @@ export function useFolderOperations() {
         parentId: folderData.parentId,
         isVisible: folderData.isVisible,
       });
-      ElMessage.success('文件夹创建成功');
+      ElMessage.success({ message: '文件夹创建成功', duration: 1000 });
       showCreateDialog.value = false;
       return true;
     } catch (error) {
-      ElMessage.error('创建文件夹失败: ' + error.message);
+      ElMessage.error({ message: '创建文件夹失败: ' + error.message, duration: 1000 });
       throw error;
     } finally {
       submitting.value = false;
@@ -42,11 +42,11 @@ export function useFolderOperations() {
         parentId: folderData.parentId,
         isVisible: folderData.isVisible,
       });
-      ElMessage.success('文件夹更新成功');
+      ElMessage.success({ message: '文件夹更新成功', duration: 1000 });
       showCreateDialog.value = false;
       return true;
     } catch (error) {
-      ElMessage.error('更新文件夹失败: ' + error.message);
+      ElMessage.error({ message: '更新文件夹失败: ' + error.message, duration: 1000 });
       throw error;
     } finally {
       submitting.value = false;
@@ -63,11 +63,11 @@ export function useFolderOperations() {
       });
 
       await folderStore.deleteFolder(folder.id);
-      ElMessage.success('文件夹删除成功');
+      ElMessage.success({ message: '文件夹删除成功', duration: 1000 });
       return true;
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除文件夹失败: ' + error.message);
+        ElMessage.error({ message: '删除文件夹失败: ' + error.message, duration: 1000 });
         throw error;
       }
       return false;

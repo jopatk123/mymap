@@ -31,11 +31,11 @@ defineEmits(['panorama-click', 'map-click']);
 const mapRef = ref(null);
 
 // 调试：观察 mapRef.value.map 何时被设置（使用共享 dlog）
-import { dlog } from '@/composables/drawing-tools/utils/debug.js';
+// import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
 watch(
   () => mapRef.value?.map,
   (v) => {
-    dlog('MapView: mapRef.value?.map 变化:', v);
+    // dlog('MapView: mapRef.value?.map 变化:', v);
   },
   { immediate: true }
 );
@@ -55,7 +55,7 @@ defineExpose({
   // 使用 computed 返回底层 map 对象（自动解包），避免暴露为函数或未解包的 ref
   map: computed(() => {
     const result = mapRef.value?.map;
-    dlog('MapView: computed map 计算结果:', result);
+    // dlog('MapView: computed map 计算结果:', result);
     return result;
   }),
 });

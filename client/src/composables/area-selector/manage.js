@@ -29,7 +29,7 @@ export function createManageActions(context, circle, polygon) {
     } catch (err) {
       console.warn('[useAreaSelector] cancelDrawing: clearCircleTempLayers failed', err);
     }
-    ElMessage.info('已取消绘制');
+    ElMessage.info({ message: '已取消绘制', duration: 1000 });
   };
 
   const finishDrawing = async () => {
@@ -45,7 +45,7 @@ export function createManageActions(context, circle, polygon) {
 
   const clearAllAreas = async () => {
     if (store.areas.length === 0) {
-      ElMessage.info('没有可清除的区域');
+      ElMessage.info({ message: '没有可清除的区域', duration: 1000 });
       return;
     }
     try {
@@ -80,7 +80,7 @@ export function createManageActions(context, circle, polygon) {
         type: 'warning',
       });
       store.removeArea(areaId);
-      ElMessage.success('区域删除成功');
+      ElMessage.success({ message: '区域删除成功', duration: 1000 });
     } catch (_) {
       /* 用户取消 */
     }

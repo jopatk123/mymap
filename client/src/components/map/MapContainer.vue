@@ -21,7 +21,7 @@ import { useAppStore } from '@/store/app.js';
 let setMapInstance, setMarkersData;
 let onInitialViewUpdated;
 import { addStyleListener, removeStyleListener } from '@/utils/style-events.js';
-import { dlog } from '@/composables/drawing-tools/utils/debug.js';
+// import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
 import MapTypeSwitch from './MapTypeSwitch.vue';
 import { useSearchMarker } from '@/composables/use-search-marker.js';
 import { useInitialViewSync } from '@/composables/use-initial-view-sync.js';
@@ -106,19 +106,19 @@ onMounted(async () => {
     mapType.value // 使用 store 中的地图类型进行初始化
   );
   try {
-    dlog('[map-container] initMap returned', mapInstance);
+    // dlog('[map-container] initMap returned', mapInstance);
   } catch (_e) {}
 
   // 设置地图实例到刷新工具
   if (mapInstance) {
     const mod = await import('@/utils/marker-refresh.js');
     try {
-      dlog('[map-container] imported marker-refresh', !!mod);
+      // dlog('[map-container] imported marker-refresh', !!mod);
     } catch (_e) {}
     setMapInstance = mod.setMapInstance;
     setMarkersData = mod.setMarkersData;
     try {
-      dlog('[map-container] about to call setMapInstance');
+      // dlog('[map-container] about to call setMapInstance');
     } catch (_e) {}
     // 将刷新工具所需的 clear 函数指向仅清除点位的实现，避免移除 KML 图层
     setMapInstance({
@@ -126,7 +126,7 @@ onMounted(async () => {
       addPointMarkers,
     });
     try {
-      dlog('[map-container] setMapInstance called');
+      // dlog('[map-container] setMapInstance called');
     } catch (_e) {}
   }
 

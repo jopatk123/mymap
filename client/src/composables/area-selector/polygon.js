@@ -18,7 +18,7 @@ export function createPolygonActions(context) {
       mapInstance.value = window.mapInstance;
     }
     if (!mapInstance.value) {
-      ElMessage.error('地图未初始化');
+      ElMessage.error({ message: '地图未初始化', duration: 1000 });
       return;
     }
     currentMode.value = 'polygon';
@@ -35,11 +35,11 @@ export function createPolygonActions(context) {
           '[useAreaSelector] startPolygonSelection: mapInstance has no .on method',
           mapInstance.value
         );
-        ElMessage.error('地图对象不具备事件绑定方法 (on)，绘制功能可能不可用');
+        ElMessage.error({ message: '地图对象不具备事件绑定方法 (on)，绘制功能可能不可用', duration: 1000 });
       }
     } catch (err) {
       console.error('[useAreaSelector] startPolygonSelection bind error:', err);
-      ElMessage.error('绑定地图点击事件失败');
+      ElMessage.error({ message: '绑定地图点击事件失败', duration: 1000 });
     }
     try {
       const container = mapInstance.value.getContainer?.() || mapInstance.value._container;
@@ -88,7 +88,7 @@ export function createPolygonActions(context) {
 
   const completePolygonDrawing = async () => {
     if (polygonPoints.value.length < 3) {
-      ElMessage.warning('多边形至少需要3个点');
+      ElMessage.warning({ message: '多边形至少需要3个点', duration: 1000 });
       return;
     }
     try {
@@ -102,7 +102,7 @@ export function createPolygonActions(context) {
   // ElMessage.success(`已添加自定义区域: ${autoName}`);
     } catch (err) {
       console.error('[useAreaSelector] addCustomArea failed', err);
-      ElMessage.error('添加自定义区域失败');
+      ElMessage.error({ message: '添加自定义区域失败', duration: 1000 });
     }
     finishPolygonDrawing();
   };

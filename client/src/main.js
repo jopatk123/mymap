@@ -7,6 +7,7 @@ import App from './App.vue';
 import './styles/global.scss';
 import './styles/popup-overrides.scss';
 import './styles/pannellum-fixes.css';
+import './assets/css/drawing-tools.css';
 // 引入 Leaflet.markercluster 依赖样式（JS 通过插件包引入）
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -53,6 +54,11 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(ElementPlus);
+app.use(ElementPlus, {
+  // 全局配置Element Plus消息提示的默认显示时间为1秒
+  message: {
+    duration: 1000
+  }
+});
 
 app.mount('#app');
