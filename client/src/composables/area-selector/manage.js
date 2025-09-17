@@ -65,7 +65,8 @@ export function createManageActions(context, circle, polygon) {
       } catch (err) {
         console.warn('[useAreaSelector] clearAllAreas: failed to clear circle temp layers', err);
       }
-      ElMessage.success('已清除所有区域');
+  // 已移除清除所有区域成功提示
+  // ElMessage.success('已清除所有区域');
     } catch (_) {
       /* 用户取消 */
     }

@@ -92,6 +92,7 @@ export class EventManager {
     this.mapInstance = mapInstance;
     this.isMapInteracting = false;
     this.pausedEvents = new Set();
+    this.interactionTimeout = null;
     this.setupMapInteractionDetection();
   }
 
@@ -104,9 +105,12 @@ export class EventManager {
       this.setMapInteracting(true);
     });
 
-    // 监听地图缩放结束
+    // 监听地图缩放结束 - 延迟恢复以确保渲染完成
     this.mapInstance.on('zoomend', () => {
-      this.setMapInteracting(false);
+      this.clearInteractionTimeout();
+      this.interactionTimeout = setTimeout(() => {
+        this.setMapInteracting(false);
+      }, 100); // 延迟100ms确保缩放动画完成
     });
 
     // 监听地图拖拽开始
@@ -114,12 +118,42 @@ export class EventManager {
       this.setMapInteracting(true);
     });
 
-    // 监听地图拖拽结束
+    // 监听地图拖拽结束 - 延迟恢复
     this.mapInstance.on('dragend', () => {
-      this.setMapInteracting(false);
+      this.clearInteractionTimeout();
+      this.interactionTimeout = setTimeout(() => {
+        this.setMapInteracting(false);
+      }, 50); // 拖拽结束后延迟50ms
     });
 
-    dlog('[EventManager] Map interaction detection setup complete');
+    // 监听地图移动过程中
+    this.mapInstance.on('move', () => {
+      if (!this.isMapInteracting) {
+        this.setMapInteracting(true);
+      }
+      // 重置超时以延长交互状态
+      this.clearInteractionTimeout();
+      this.interactionTimeout = setTimeout(() => {
+        this.setMapInteracting(false);
+      }, 150);
+    });
+
+    // 监听地图缩放过程中
+    this.mapInstance.on('zoom', () => {
+      if (!this.isMapInteracting) {
+        this.setMapInteracting(true);
+      }
+    });
+
+    dlog('[EventManager] Enhanced map interaction detection setup complete');
+  }
+
+  // 清理交互超时
+  clearInteractionTimeout() {
+    if (this.interactionTimeout) {
+      clearTimeout(this.interactionTimeout);
+      this.interactionTimeout = null;
+    }
   }
 
   setMapInteracting(isInteracting) {

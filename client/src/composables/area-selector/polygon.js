@@ -24,7 +24,8 @@ export function createPolygonActions(context) {
     currentMode.value = 'polygon';
     isDrawingPolygon.value = true;
     polygonPoints.value = [];
-    ElMessage.info('点击地图绘制多边形区域，双击完成绘制');
+  // 已移除开始绘制多边形的提示
+  // ElMessage.info('点击地图绘制多边形区域，双击完成绘制');
     try {
       if (mapInstance.value.on) {
         mapInstance.value.on('click', handlePolygonClick);
@@ -97,7 +98,8 @@ export function createPolygonActions(context) {
           ? tempPolygonName.value.trim()
           : `自定义区域 ${count + 1}`;
       store.addCustomArea(polygonPoints.value, autoName);
-      ElMessage.success(`已添加自定义区域: ${autoName}`);
+  // 已移除添加自定义区域成功提示
+  // ElMessage.success(`已添加自定义区域: ${autoName}`);
     } catch (err) {
       console.error('[useAreaSelector] addCustomArea failed', err);
       ElMessage.error('添加自定义区域失败');

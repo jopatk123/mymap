@@ -78,10 +78,13 @@ const runAddressTips = async () => {
   }
   try {
     const { tips: result } = await amapApi.inputTips(keyword);
-    // 仅保留带坐标或有 location 的项
-    tips.value = (result || []).filter(
-      (t) => t.location || (t.location && t.location.split(',').length === 2)
-    );
+    // 仅保留带坐标且为字符串形式的 location 项 ("lng,lat")
+    tips.value = (result || []).filter((t) => {
+      if (!t || !t.location) return false;
+      if (typeof t.location !== 'string') return false;
+      const parts = t.location.split(',');
+      return parts.length === 2 && parts[0].trim() !== '' && parts[1].trim() !== '';
+    });
   } catch (e) {
     tips.value = [];
   }
@@ -96,11 +99,12 @@ const handleInput = debounce(() => {
 }, 300);
 
 const selectTip = (tip) => {
-  // tip.location 为 "lng,lat"
-  if (!tip?.location) return;
-  const [lngStr, latStr] = tip.location.split(',');
-  const lng = parseFloat(lngStr);
-  const lat = parseFloat(latStr);
+  // tip.location 为 "lng,lat" 字符串
+  if (!tip || !tip.location || typeof tip.location !== 'string') return;
+  const parts = tip.location.split(',');
+  if (parts.length !== 2) return;
+  const lng = parseFloat(parts[0]);
+  const lat = parseFloat(parts[1]);
   if (isNaN(lng) || isNaN(lat)) return;
   emit('locate', { lat, lng, tip });
   tips.value = [];

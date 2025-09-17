@@ -48,7 +48,8 @@ export function createCircleActions(context) {
     }
     currentMode.value = 'circle';
     isDrawingCircle.value = true;
-    ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`);
+  // 已移除点击地图选择圆心的提示
+  // ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`);
     try {
       if (mapInstance.value.on) {
         mapInstance.value.on('click', handleCircleClick);
@@ -98,7 +99,8 @@ export function createCircleActions(context) {
       console.warn('[useAreaSelector] failed to draw preview circle:', err);
     }
     completeCircleDrawing();
-    ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`);
+  // 已移除添加圆形区域成功提示
+  // ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`);
   };
 
   const completeCircleDrawing = () => {

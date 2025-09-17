@@ -8,7 +8,8 @@ export function createPointTool(mapInstance, drawings, register, onComplete) {
   // register 返回一个 unregister 方法（在 setupTool 中实现）
   let unregister = null;
 
-  const handleClick = (e) => {
+  // 防抖处理，避免快速重复点击
+  const handleClick = debounce((e) => {
     // 防止在点击已有标记时重复添加
     if (
       e.originalEvent &&
@@ -79,7 +80,7 @@ export function createPointTool(mapInstance, drawings, register, onComplete) {
     } catch (e) {
       dlog('onComplete 回调执行失败', e);
     }
-  };
+  }, 200);
 
   // 在声明 handleClick 后再注册事件以获得正确的函数引用
   try {

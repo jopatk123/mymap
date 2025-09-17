@@ -42,16 +42,19 @@
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
         </el-button>
-      </el-button-group>
+        </el-button-group>
     </div>
+    <!-- KML数据导出对话框（全局渲染，useKMLExport 管理可见性） -->
+    <KMLDataExporter />
   </div>
-  
+
 </template>
 
 <script setup>
 import { Tools, Location } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
+import KMLDataExporter from './kml-basemap/KMLDataExporter.vue';
 
 defineProps({
   panoramaListVisible: {
@@ -117,6 +120,7 @@ defineEmits([
     .controls-group > * {
       margin: 0 !important;
       /* don't reset padding here so button text has normal spacing */
+      align-self: center !important;
     }
 
     /* 按钮背景要相互贴合：中间按钮取消圆角，首尾按钮保留圆角 */

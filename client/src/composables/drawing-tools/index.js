@@ -94,25 +94,49 @@ export function useDrawingTools() {
   const cleanupEventHandlers = () => {
     if (!mapInstance) return;
 
+    // 清理所有注册的事件处理器
     Object.keys(currentEventHandlers).forEach((eventType) => {
       if (currentEventHandlers[eventType]) {
-        mapInstance.off(eventType, currentEventHandlers[eventType]);
+        try {
+          mapInstance.off(eventType, currentEventHandlers[eventType]);
+        } catch (e) {
+          console.warn(`清理事件 ${eventType} 失败:`, e);
+        }
       }
     });
 
     currentEventHandlers = {};
+    
     // 执行注册的清理回调
     cleanupCallbacks.forEach((fn) => {
       try {
         fn();
-      } catch {}
+      } catch (e) {
+        console.warn('执行清理回调失败:', e);
+      }
     });
     cleanupCallbacks = [];
 
-    // 清理性能管理器的缓存
+    // 清理性能管理器的缓存和状态
     const styleManager = getStyleManager();
     if (styleManager) {
       styleManager.clearCache();
+      styleManager.setMapInteracting(false);
+    }
+
+    const eventManager = getEventManager(mapInstance);
+    if (eventManager) {
+      eventManager.setMapInteracting(false);
+      eventManager.clearInteractionTimeout();
+    }
+
+    // 强制垃圾回收（如果浏览器支持）
+    if (window.gc && typeof window.gc === 'function') {
+      try {
+        window.gc();
+      } catch (e) {
+        // 忽略垃圾回收错误
+      }
     }
   };
 

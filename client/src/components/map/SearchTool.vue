@@ -247,9 +247,13 @@ const searchAddresses = async () => {
     const response = await amapApi.inputTips(keyword);
 
     // 过滤出有坐标的地址
-    const tips = (response.tips || []).filter(
-      (tip) => tip.location && tip.location.split(',').length === 2
-    );
+    const tips = (response.tips || []).filter((tip) => {
+      // only accept string locations like "lng,lat"
+      if (!tip || !tip.location) return false;
+      if (typeof tip.location !== 'string') return false;
+      const parts = tip.location.split(',');
+      return parts.length === 2 && parts[0].trim() !== '' && parts[1].trim() !== '';
+    });
 
     addressResults.value = tips;
   } catch (error) {
@@ -274,12 +278,13 @@ const selectKMLResult = (result) => {
 
 // 选择地址搜索结果
 const selectAddressResult = (tip) => {
-  if (!tip.location) return;
+  if (!tip || !tip.location || typeof tip.location !== 'string') return;
 
-  const [lngStr, latStr] = tip.location.split(',');
-  const lng = parseFloat(lngStr);
-  const lat = parseFloat(latStr);
+  const parts = tip.location.split(',');
+  if (parts.length !== 2) return;
 
+  const lng = parseFloat(parts[0]);
+  const lat = parseFloat(parts[1]);
   if (isNaN(lng) || isNaN(lat)) return;
 
   emit('locate-address', { lat, lng, tip });

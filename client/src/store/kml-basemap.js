@@ -158,7 +158,8 @@ export const useKMLBaseMapStore = defineStore('kmlBaseMap', () => {
       type: 'circle',
       center,
       radius,
-      name: `圆形区域 (半径: ${radius}m)`,
+      // 不再在名称中显示半径，避免重复或多余提示
+      name: '圆形区域',
     });
   };
 

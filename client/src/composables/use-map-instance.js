@@ -16,13 +16,29 @@ export function useMapInstance(containerId) {
     };
 
     // 禁用一些动画以避免在缩放动画与图层移除并发时访问已为 null 的内部字段
+    // 同时增加更多性能优化配置
     const animationSafeDefaults = {
       zoomAnimation: false,
       markerZoomAnimation: false,
       fadeAnimation: false,
+      // 新增性能优化配置
+      preferCanvas: true, // 优先使用Canvas渲染以提升性能
+      renderer: L.canvas({ tolerance: 5 }), // 使用Canvas渲染器，增加容差
+      updateWhenIdle: true, // 仅在地图空闲时更新图层
+      updateWhenZooming: false, // 缩放时不更新图层以提升性能
+      keepBuffer: 2, // 保持更多瓦片缓存
     };
 
-    const mapOptions = { ...defaultOptions, ...animationSafeDefaults, ...options };
+    const mapOptions = { 
+      ...defaultOptions, 
+      ...animationSafeDefaults, 
+      // 降低滚轮缩放频率与开销
+      wheelDebounceTime: 40,
+      wheelPxPerZoomLevel: 120,
+      zoomAnimationThreshold: 4,
+      bounceAtZoomLimits: false,
+      ...options 
+    };
     map.value = L.map(containerId, mapOptions);
 
     // 自定义pane控制叠放顺序：KML < 视频 < 全景
