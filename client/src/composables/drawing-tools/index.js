@@ -83,9 +83,19 @@ export function useDrawingTools() {
     let totalDistance = 0;
     let points = [];
     let segmentTooltips = []; // 存储每段距离的提示框
+    let pointMarkers = []; // 每次点击的位置小点
 
     mapInstance.on('click', (e) => {
       points.push(e.latlng);
+      // 在每个点击位置添加一个小圆点
+      const dot = L.circleMarker(e.latlng, {
+        radius: 4,
+        fillColor: '#ff0000',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(drawingLayer);
+      pointMarkers.push(dot);
       
       if (points.length === 1) {
         // 第一个点，创建线
@@ -148,11 +158,13 @@ export function useDrawingTools() {
           coordinates: points.map(p => [p.lng, p.lat]),
           layer: measureLine,
           distance: totalDistance,
-          tooltips: [...segmentTooltips, measureTooltip] // 保存所有提示框
+          tooltips: [...segmentTooltips, measureTooltip], // 保存所有提示框
+          pointMarkers // 保存点击点的小圆点
         });
       }
       // 重置变量，但不清除提示框（它们已经保存到drawings中）
       segmentTooltips = [];
+      pointMarkers = [];
       measureTooltip = null;
       deactivateTool();
       ElMessage.success('测距完成');
@@ -186,11 +198,25 @@ export function useDrawingTools() {
       
       drawings.value.push(pointData);
       
-      // 添加点击事件处理
-      marker.on('click', (markerEvent) => {
-        L.DomEvent.stopPropagation(markerEvent);
+      // 添加点击/触摸事件处理（兼容移动端）
+      let lastOpenTs = 0;
+      const openEdit = (evt) => {
+        const now = Date.now();
+        // 防止 pointerup 与 click 重复触发
+        if (now - lastOpenTs < 300) return;
+        lastOpenTs = now;
+        // 阻止默认与冒泡，避免地图拖拽/点击干扰
+        try {
+          const domEvt = evt?.originalEvent || evt;
+          L.DomEvent.stop(domEvt);
+        } catch (_) {
+          /* no-op */
+        }
         showPointEditDialog(pointData);
-      });
+      };
+      marker.on('click', openEdit);
+      marker.on('touchend', openEdit);
+      marker.on('pointerup', openEdit);
       
       // 添加成功后立即结束添加点工具
       deactivateTool();
