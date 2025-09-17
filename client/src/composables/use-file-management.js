@@ -13,7 +13,7 @@ export function useFileManagement() {
   const searchForm = reactive({
     fileType: 'all',
     keyword: '',
-    includeHidden: false,
+    includeHidden: true,
     // 是否仅显示底图 KML（默认 false）
     basemapOnly: false,
     // 是否包含底图（用于包含底图与普通文件同时显示）
@@ -65,7 +65,11 @@ export function useFileManagement() {
   };
 
   // 搜索
-  const handleSearch = async () => {
+  // newForm: optional object from child components to update searchForm before loading
+  const handleSearch = async (newForm = null) => {
+    if (newForm && typeof newForm === 'object') {
+      Object.assign(searchForm, newForm);
+    }
     pagination.page = 1;
     await loadFileList();
   };

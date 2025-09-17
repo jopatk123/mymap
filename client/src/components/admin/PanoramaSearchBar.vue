@@ -53,7 +53,7 @@ const emit = defineEmits(['search', 'reset', 'batch-delete']);
 
 const searchForm = reactive({
   keyword: '',
-  includeHidden: false,
+  includeHidden: true,
 });
 
 const handleSearch = () => {

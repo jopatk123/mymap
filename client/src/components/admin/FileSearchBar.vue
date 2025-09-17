@@ -2,7 +2,7 @@
   <div class="search-section">
     <el-form :model="localForm" inline>
       <el-form-item label="文件类型">
-        <el-select v-model="localForm.fileType" @change="$emit('search')">
+  <el-select v-model="localForm.fileType" @change="$emit('search', { ...localForm })">
           <el-option label="全部" value="all" />
           <el-option label="全景图" value="panorama" />
           <el-option label="视频点位" value="video" />
@@ -14,7 +14,7 @@
           v-model="localForm.keyword"
           placeholder="搜索标题或描述"
           clearable
-          @keyup.enter="$emit('search')"
+          @keyup.enter="$emit('search', { ...localForm })"
         />
       </el-form-item>
       <el-form-item label="显示隐藏">
@@ -22,11 +22,11 @@
           v-model="localForm.includeHidden"
           active-text="是"
           inactive-text="否"
-          @change="$emit('search')"
+          @change="$emit('search', { ...localForm })"
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="$emit('search')">搜索</el-button>
+  <el-button type="primary" @click="$emit('search', { ...localForm })">搜索</el-button>
         <el-button @click="$emit('refresh')">刷新</el-button>
         <el-button
           type="danger"

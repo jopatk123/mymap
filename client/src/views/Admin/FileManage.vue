@@ -21,7 +21,7 @@
         </div>
 
         <FileSearchBar
-          :search-form="searchForm"
+          v-model:searchForm="searchForm"
           :selected-count="selectedRows.length"
           :loading="loading"
           :downloading="downloading"
