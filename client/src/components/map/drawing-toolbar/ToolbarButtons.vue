@@ -90,12 +90,7 @@
       </el-button>
     </el-tooltip>
 
-    <!-- 保存工具 -->
-    <el-tooltip content="导出保存" placement="left">
-      <el-button type="success" :disabled="!hasDrawings" circle @click="$emit('show-export')">
-        <el-icon><Download /></el-icon>
-      </el-button>
-    </el-tooltip>
+
   </div>
 </template>
 
@@ -125,7 +120,7 @@ defineProps({
   },
 });
 
-defineEmits(['toggle-collapse', 'toggle-tool', 'clear-all', 'show-export']);
+defineEmits(['toggle-collapse', 'toggle-tool', 'clear-all']);
 </script>
 
 <style lang="scss" scoped>

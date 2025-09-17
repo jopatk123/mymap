@@ -3,14 +3,14 @@
     <!-- 工具栏（整排按钮） -->
     <div class="toolbar">
       <el-button-group class="controls-group">
-        <!-- 按用户要求的顺序：搜索、圆形、自定义、清除、导出、KML设置、点位图标、显示列表、隐藏KML图层 -->
+        <!-- 按用户要求的顺序：搜索、圆形、自定义、清除、KML设置、点位图标、显示列表、隐藏KML图层 -->
 
         <!-- 搜索工具（赤红色） -->
         <div class="priority search-wrapper btn-search">
           <SearchTool @locate-kml-point="$emit('locate-kml-point', $event)" @locate-address="$emit('locate-address', $event)" />
         </div>
 
-        <!-- 区域选择与导出（按钮颜色在 AreaControls 中定义） -->
+        <!-- 区域选择（按钮颜色在 AreaControls 中定义） -->
         <AreaControls class="area-controls-inline" :map-instance="mapInstance" />
 
         <!-- KML设置（蓝色） -->
@@ -44,8 +44,6 @@
         </el-button>
         </el-button-group>
     </div>
-    <!-- KML数据导出对话框（全局渲染，useKMLExport 管理可见性） -->
-    <KMLDataExporter />
   </div>
 
 </template>
@@ -54,7 +52,6 @@
 import { Tools, Location } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
-import KMLDataExporter from './kml-basemap/KMLDataExporter.vue';
 
 defineProps({
   panoramaListVisible: {

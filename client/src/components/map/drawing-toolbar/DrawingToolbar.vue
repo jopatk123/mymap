@@ -17,27 +17,17 @@
         @toggle-collapse="toggleCollapse"
         @toggle-tool="toggleTool"
         @clear-all="clearAll"
-        @show-export="handleShowExport"
       />
     </div>
 
-    <!-- 交互管理器 -->
-    <InteractiveManager
-      ref="interactiveManagerRef"
-      :map-instance="mapInstance"
-      :drawings="drawings"
-    />
+    <!-- 移除交互管理器，因为没有功能实现 -->
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref } from 'vue';
 import { useDrawingTools } from '@/composables/drawing-tools.js';
 import ToolbarButtons from './ToolbarButtons.vue';
-import InteractiveManager from './InteractiveManager.vue';
-
-import { dlog } from '@/composables/drawing-tools/utils/debug.js';
 
 // Props
 const props = defineProps({
@@ -49,19 +39,14 @@ const props = defineProps({
 
 // 响应式状态
 const isCollapsed = ref(false);
-const interactiveManagerRef = ref(null);
 
-// 使用绘图工具 composable
+// 使用绘图工具 composable（仅用于状态显示）
 const {
   activeTool,
   hasDrawings,
-  drawings,
-  initializeTools,
   activateTool,
   deactivateTool,
   clearAllDrawings,
-  // exportDrawings is intentionally not used directly in this component
-  exportDrawings: _exportDrawings,
 } = useDrawingTools();
 
 // 计算属性和方法
@@ -70,129 +55,28 @@ const toggleCollapse = () => {
 };
 
 const toggleTool = (toolType) => {
-  dlog('toggleTool called with:', toolType, 'mapInstance:', props.mapInstance);
-
+  // 仅切换按钮状态，不执行实际功能
   if (activeTool.value === toolType) {
     deactivateTool();
   } else {
-    if (!props.mapInstance) {
-      ElMessage.warning('地图尚未加载完成，请稍后再试');
-      return;
-    }
-    activateTool(toolType, props.mapInstance);
+    activateTool(toolType);
   }
 };
 
 const clearAll = async () => {
-  try {
-    await clearAllDrawings();
-    ElMessage.success('已清除所有绘图内容');
-  } catch (error) {
-    ElMessage.error('清除失败: ' + error.message);
-  }
+  // 仅重置状态，不执行实际清除功能
+  await clearAllDrawings();
 };
 
-const handleShowExport = () => {
-  if (interactiveManagerRef.value) {
-    interactiveManagerRef.value.handleShowExport();
-  }
-};
 
-// Mark intentionally unused import as referenced for linter
-void _exportDrawings;
 
-// 监听地图实例变化
-watch(
-  () => props.mapInstance,
-  async (newMap, oldMap) => {
-    dlog('地图实例变化:', oldMap, '=>', newMap);
-    if (newMap) {
-      // 等待下一个tick确保地图完全渲染
-      // 等待 DOM / 子组件多次 tick，确保 interactiveManagerRef 被挂载
-      await nextTick();
-      await nextTick();
-      dlog('初始化绘图工具');
-      initializeTools(newMap);
 
-      // 如果 interactiveManagerRef 还不可用，继续等待一次微任务再尝试
-      if (!interactiveManagerRef.value) {
-        dlog('interactiveManagerRef not ready, waiting another tick');
-        await nextTick();
-      }
 
-      // 设置事件监听（在 manager 可用后绑定）
-      setupEventListeners(newMap);
-    }
-  },
-  { immediate: true }
-);
-
-// 设置事件监听
-const setupEventListeners = (map) => {
-  if (!interactiveManagerRef.value) return;
-
-  const manager = interactiveManagerRef.value;
-
-  // 监听点位事件
-  if (manager.handlePointClick && manager.handlePointContextMenu) {
-    map.on('point:click', manager.handlePointClick);
-    map.on('point:contextmenu', manager.handlePointContextMenu);
-    dlog('bound point:click and point:contextmenu on map');
-  } else {
-    dlog(
-      'point handlers missing on manager:',
-      !!manager.handlePointClick,
-      !!manager.handlePointContextMenu
-    );
-  }
-
-  // 监听线段事件
-  if (manager.handleLineClick && manager.handleLineContextMenu) {
-    map.on('line:click', manager.handleLineClick);
-    map.on('line:contextmenu', manager.handleLineContextMenu);
-    dlog('bound line:click and line:contextmenu on map');
-  } else {
-    dlog(
-      'line handlers missing on manager:',
-      !!manager.handleLineClick,
-      !!manager.handleLineContextMenu
-    );
-  }
-
-  // 监听面域事件
-  if (manager.handlePolygonClick && manager.handlePolygonContextMenu) {
-    map.on('polygon:click', manager.handlePolygonClick);
-    map.on('polygon:contextmenu', manager.handlePolygonContextMenu);
-    dlog('bound polygon:click and polygon:contextmenu on map');
-  } else {
-    dlog(
-      'polygon handlers missing on manager:',
-      !!manager.handlePolygonClick,
-      !!manager.handlePolygonContextMenu
-    );
-  }
-};
+// 不需要监听地图实例变化，因为没有功能实现
 </script>
 
 <style lang="scss" scoped>
-@use './point-tools.scss';
-
-/* 测距工具样式 */
-:global(.measure-marker) {
-  background: transparent;
-  border: none;
-}
-
-:global(.measure-point) {
-  background: rgba(255, 0, 0, 0.8);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
+/* 简化后的样式，仅保留工具栏布局 */
 
 .drawing-toolbar {
   position: fixed;

@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { dlog } from './drawing-tools/utils/debug.js';
+// import { dlog } from './drawing-tools/utils/debug.js'; // 已删除debug工具
 import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js';
 import styleManager from '@/utils/style-manager.js';
 
@@ -82,7 +82,7 @@ export function usePointStyles() {
 
       // 同步更新全局变量
       window.videoPointStyles = { ...window.videoPointStyles, ...response.data };
-      dlog('🔄 已加载并同步视频点位样式:', response.data);
+      // dlog('🔄 已加载并同步视频点位样式:', response.data);
 
       saveToLocalCache();
       return response.data;
@@ -118,7 +118,7 @@ export function usePointStyles() {
 
       // 同步更新全局变量
       window.panoramaPointStyles = { ...window.panoramaPointStyles, ...response.data };
-      dlog('🔄 已加载并同步全景图点位样式:', response.data);
+      // dlog('🔄 已加载并同步全景图点位样式:', response.data);
 
       saveToLocalCache();
       return response.data;

@@ -1,6 +1,6 @@
 <template>
   <div class="area-controls">
-    <div class="status-wrapper" v-if="hasExportableData">
+    <div class="status-wrapper" v-if="visiblePointsCount > 0">
       <el-text type="success" size="small">
         <el-icon><CircleCheck /></el-icon>
         已选中 {{ visiblePointsCount }} 个点位
@@ -35,16 +35,6 @@
         </el-button>
 
         <el-button v-if="isDrawing" type="primary" @click="handleFinishDrawing"> 完成 </el-button>
-
-        <el-button
-          class="btn-export"
-          :disabled="!hasExportableData"
-          :loading="exporting"
-          @click="handleExport"
-        >
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
       </el-button-group>
     </div>
 
@@ -78,9 +68,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Compass, Crop, Delete, Download, CircleCheck } from '@element-plus/icons-vue';
+import { Compass, Crop, Delete, CircleCheck } from '@element-plus/icons-vue';
 import { useAreaSelector } from '@/composables/use-area-selector.js';
-import { useKMLExport } from '@/composables/use-kml-export.js';
 import { useKMLBaseMapStore } from '@/store/kml-basemap.js';
 
 const props = defineProps({
@@ -103,7 +92,6 @@ const {
   setCircleRadius,
 } = useAreaSelector();
 
-const { exporting, hasExportableData, openExportDialog } = useKMLExport();
 const store = useKMLBaseMapStore();
 
 const radiusDialogVisible = ref(false);
@@ -134,7 +122,6 @@ const confirmRadiusAndStartDrawing = () => {
 const handleCustomAreaClick = () => startPolygonSelection();
 const handleClearAreas = () => clearAllAreas();
 const handleFinishDrawing = async () => { await finishDrawing(); };
-const handleExport = () => openExportDialog();
 
 const _handleRemoveArea = (areaId, areaName) => { removeArea(areaId, areaName); };
 void _handleRemoveArea;
@@ -172,6 +159,5 @@ void _handleRemoveArea;
 .btn-circle { background:#fb8c00 !important; border-color:#fb8c00 !important; color:#fff !important; }
 .btn-custom { background:#fdd835 !important; border-color:#fdd835 !important; color:#333 !important; }
 .btn-clear { background:#43a047 !important; border-color:#43a047 !important; color:#fff !important; }
-.btn-export { background:#00acc1 !important; border-color:#00acc1 !important; color:#fff !important; }
 </style>
                           position: relative;
