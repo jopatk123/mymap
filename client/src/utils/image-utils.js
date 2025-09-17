@@ -237,6 +237,87 @@ export function compressImage(
 }
 
 /**
+ * 逐步按质量压缩图片直到达到目标字节数或质量耗尽
+ * 该函数会依次使用 quality 序列对图片重编码并测量结果大小，返回满足条件的最终 File
+ * @param {File} file 原始图片文件或上一次压缩后的文件
+ * @param {number} maxWidth 最大宽度
+ * @param {number} maxHeight 最大高度
+ * @param {Array<number>} qualities 质量序列（0-1），按顺序尝试，默认 [0.85,0.75,0.65,0.55,0.45]
+ * @param {number} targetBytes 目标字节数，默认 5MB
+ * @returns {Promise<File>} 最终压缩后的 File（如果所有尝试均未达到目标，则返回最后一次压缩结果）
+ */
+export async function compressImageToTargetSize(
+  file,
+  maxWidth = 8000,
+  maxHeight = 4000,
+  qualities = [0.85, 0.75, 0.65, 0.55, 0.45],
+  targetBytes = 5 * 1024 * 1024
+) {
+  // 快速检查输入是否为图片
+  if (!isImageFile(file)) return file;
+  let lastResult = file;
+
+  try {
+    // 获取原始尺寸，必要时自适应降低最大宽度以获得更大压缩比
+    const dims = await getImageDimensions(file);
+    const pixelCount = dims.width * dims.height;
+
+    // 如果图片非常大（例如 > 50MP），先降低 maxWidth 到 5000；若 >30MP，降到6000
+    if (pixelCount > 50_000_000) {
+      maxWidth = Math.min(maxWidth, 5000);
+      maxHeight = Math.min(maxHeight, Math.round((dims.height / dims.width) * maxWidth));
+    } else if (pixelCount > 30_000_000) {
+      maxWidth = Math.min(maxWidth, 6000);
+      maxHeight = Math.min(maxHeight, Math.round((dims.height / dims.width) * maxWidth));
+    }
+
+    // 如果 qualities 未包含更低的值，默认再补充一些更低质量尝试
+    const extendedQualities = Array.isArray(qualities) ? qualities.slice() : [];
+    if (!extendedQualities.includes(0.35)) extendedQualities.push(0.35);
+    if (!extendedQualities.includes(0.25)) extendedQualities.push(0.25);
+
+    for (let i = 0; i < extendedQualities.length; i++) {
+      const q = extendedQualities[i];
+
+      try {
+        // 强制重编码以确保质量生效
+        const compressed = await compressImage(lastResult, maxWidth, maxHeight, q, true);
+
+        if (!compressed || typeof compressed.size !== 'number') {
+          console.warn('compressImageToTargetSize: compressImage 返回非预期结果，终止循环');
+          return lastResult;
+        }
+
+        // 调试信息，便于在浏览器控制台观察每次尝试的大小
+        try {
+          // eslint-disable-next-line no-console
+          console.debug(`compressImageToTargetSize: try quality=${q} -> size=${compressed.size}`);
+        } catch (_) {}
+
+        lastResult = compressed;
+
+        // 如果已经低于目标字节数，则直接返回
+        if (lastResult.size <= targetBytes) {
+          return lastResult;
+        }
+
+        // 否则继续使用更低质量重新压缩（循环）
+      } catch (err) {
+        // 出错时记录并返回当前已得到的结果
+        console.warn('compressImageToTargetSize 中的压缩尝试失败：', err?.message || err);
+        return lastResult;
+      }
+    }
+  } catch (err) {
+    console.warn('compressImageToTargetSize 预处理时出错，退回到原始行为：', err?.message || err);
+    return lastResult;
+  }
+
+  // 所有质量尝试完毕仍未满足，返回最后一次压缩结果（可能仍大于 targetBytes）
+  return lastResult;
+}
+
+/**
  * 获取图片尺寸信息
  * @param {File} file 图片文件
  * @returns {Promise<{width: number, height: number}>}

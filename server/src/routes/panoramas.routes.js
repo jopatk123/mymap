@@ -219,11 +219,30 @@ router.get('/:id/download', async (req, res) => {
     const suggestName = (ext) => `${safeBase || `panorama-${id}`}.${ext}`;
     const setDownloadHeaders = (fileNameOut, contentType) => {
       res.setHeader('Content-Type', contentType);
-      // 同时设置 filename 与 filename*（RFC 5987），兼容中文文件名
+
+      // 为避免 Node 在设置 header 时抛出 ERR_INVALID_CHAR，需要保证 filename 参数只包含安全的 ASCII 字符
+      // 我们仍然保留 filename*（RFC5987）来传递 UTF-8 编码的文件名以兼容中文
       const encoded = encodeURIComponent(fileNameOut);
+
+      // 构造一个 ASCII-safe 的 filename 备选（去除换行和双引号，非可打印ASCII替换为下划线）
+      const makeAsciiFilename = (name) => {
+        if (!name) return `panorama-${id}`;
+        // 去掉 CR/LF 和双引号等可能破坏 header 的字符
+        let s = String(name).replace(/[\r\n"]/g, ' ').trim();
+        // 将连续空格合并
+        s = s.replace(/\s+/g, ' ');
+        // 将非可打印 ASCII 字符替换为下划线（0x20-0x7E 是常见可打印字符范围）
+        s = s.replace(/[^\x20-\x7E]/g, '_');
+        // 如果处理后为空，使用默认名
+        if (!s) s = `panorama-${id}`;
+        return s;
+      };
+
+      const asciiName = makeAsciiFilename(fileNameOut);
+
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${fileNameOut}"; filename*=UTF-8''${encoded}`
+        `attachment; filename="${asciiName}"; filename*=UTF-8''${encoded}`
       );
     };
 

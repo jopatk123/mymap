@@ -3,6 +3,7 @@ import {
   extractTitleFromFilename,
   extractGPSFromImage,
   compressImage,
+  compressImageToTargetSize,
   getImageDimensions,
   isImageFile,
 } from '@/utils/image-utils.js';
@@ -125,12 +126,15 @@ export class ImageProcessor {
         // 即使不缩放，也可以选择性进行有损重编码（JPEG/WebP）
         forceReencode
       ) {
-        const compressedFile = await compressImage(
+        // 使用按目标字节多轮压缩的策略，先以给定 quality 进行一次压缩，再根据需要逐步降低 quality，目标为 5MB
+        const qualities = [0.85, 0.75, 0.65, 0.55, 0.45];
+        const targetBytes = 5 * 1024 * 1024; // 5MB
+        const compressedFile = await compressImageToTargetSize(
           file,
           maxWidth,
           maxHeight,
-          quality,
-          forceReencode
+          qualities,
+          targetBytes
         );
         return {
           file: compressedFile,
