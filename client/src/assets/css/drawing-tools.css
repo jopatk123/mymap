@@ -1,0 +1,76 @@
+/* 绘图工具样式 */
+
+/* 测距提示框样式 */
+.leaflet-tooltip.leaflet-tooltip-top {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.leaflet-tooltip.leaflet-tooltip-top:before {
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+/* 段距离提示框样式 */
+.leaflet-tooltip.segment-distance-tooltip {
+  background: rgba(255, 87, 34, 0.9);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-tooltip.segment-distance-tooltip:before {
+  display: none; /* 隐藏箭头 */
+}
+
+/* 总距离提示框样式 */
+.leaflet-tooltip.total-distance-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-tooltip.total-distance-tooltip:before {
+  border-top-color: #409eff;
+}
+
+/* 绘图工具栏按钮激活状态 */
+.drawing-toolbar .el-button.active {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+/* 画笔工具特殊状态指示器 */
+.drawing-toolbar .el-button.draw-tool-active::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #f56c6c;
+  border-radius: 50%;
+  border: 1px solid white;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .leaflet-tooltip {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}

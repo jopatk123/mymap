@@ -17,6 +17,7 @@
         @toggle-collapse="toggleCollapse"
         @toggle-tool="toggleTool"
         @clear-all="clearAll"
+        @export-kml="exportKml"
       />
     </div>
 
@@ -40,13 +41,15 @@ const props = defineProps({
 // 响应式状态
 const isCollapsed = ref(false);
 
-// 使用绘图工具 composable（仅用于状态显示）
+// 使用绘图工具 composable
 const {
   activeTool,
   hasDrawings,
+  initializeTools,
   activateTool,
   deactivateTool,
   clearAllDrawings,
+  exportToKml,
 } = useDrawingTools();
 
 // 计算属性和方法
@@ -64,15 +67,25 @@ const toggleTool = (toolType) => {
 };
 
 const clearAll = async () => {
-  // 仅重置状态，不执行实际清除功能
   await clearAllDrawings();
 };
 
+const exportKml = () => {
+  exportToKml();
+};
 
+// 监听地图实例变化，初始化绘图工具
+import { watch } from 'vue';
 
-
-
-// 不需要监听地图实例变化，因为没有功能实现
+watch(
+  () => props.mapInstance,
+  (newMapInstance) => {
+    if (newMapInstance) {
+      initializeTools(newMapInstance);
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style lang="scss" scoped>

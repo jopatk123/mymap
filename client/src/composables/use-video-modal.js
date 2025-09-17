@@ -22,7 +22,7 @@ export function useVideoModal() {
       return;
     }
 
-    const coordinate = `${video.lat}, ${video.lng}`;
+    const coordinate = `${parseFloat(video.lng).toFixed(6)},${parseFloat(video.lat).toFixed(6)}`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard
