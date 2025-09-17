@@ -78,7 +78,8 @@ export const kmlApi = {
 
   // 样式配置相关API
   getKmlFileStyles(id) {
-    return api.get(`/kml-files/${id}/styles`);
+    // 加上时间戳避免浏览器/代理缓存导致 304 返回空体
+    return api.get(`/kml-files/${id}/styles`, { params: { _t: Date.now() } });
   },
   updateKmlFileStyles(id, styleConfig) {
     return api.put(`/kml-files/${id}/styles`, styleConfig);

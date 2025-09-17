@@ -63,11 +63,27 @@ export function useMapPage() {
     await loadInitialData();
   };
 
+  // 通用重试封装（指数退避）
+  const retry = async (fn, { retries = 3, baseDelay = 200 } = {}) => {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        return await fn();
+      } catch (err) {
+        attempt++;
+        if (attempt >= retries) throw err;
+        const delay = Math.pow(2, attempt) * baseDelay;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  };
+
   // 加载初始数据
   const loadInitialData = async () => {
     try {
       // 只加载一次点位数据，避免重复调用
-      await loadAllPoints();
+      // 保存设置后，后端有可能短暂重启，给点位与KML列表增加重试
+      await retry(() => loadAllPoints(), { retries: 3, baseDelay: 150 });
 
       // 将所有点位数据同步到panoramaStore（包括全景图和视频点位）
       if (window.allPoints && window.allPoints.length > 0) {
@@ -134,18 +150,30 @@ export function useMapPage() {
 
       window.allPoints = filteredPoints;
 
-      // 3. 为每个KML文件加载其详细样式
+      // 3. 为每个KML文件加载其详细样式（添加重试机制）
       const kmlFiles = kmlFilesResponse.data || [];
       const kmlFilesWithStyles = await Promise.all(
         kmlFiles.map(async (file) => {
-          try {
-            const styleResponse = await kmlApi.getKmlFileStyles(file.id);
-            // 将样式配置合并到文件对象中
-            return { ...file, styleConfig: styleResponse.data };
-          } catch (error) {
-            console.warn(`加载KML文件 ${file.id} 的样式失败:`, error);
-            // 如果样式加载失败，则返回原始文件信息并附带空样式配置
-            return { ...file, styleConfig: null };
+          let retryCount = 0;
+          const maxRetries = 3;
+          
+          while (retryCount < maxRetries) {
+            try {
+              const styleResponse = await kmlApi.getKmlFileStyles(file.id);
+              // 将样式配置合并到文件对象中
+              return { ...file, styleConfig: styleResponse.data };
+            } catch (error) {
+              retryCount++;
+              console.warn(`加载KML文件 ${file.id} 的样式失败 (尝试 ${retryCount}/${maxRetries}):`, error);
+              
+              if (retryCount >= maxRetries) {
+                // 所有重试都失败了，返回原始文件信息并附带空样式配置
+                return { ...file, styleConfig: null };
+              }
+              
+              // 等待一段时间后重试（指数退避）
+              await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 100));
+            }
           }
         })
       );

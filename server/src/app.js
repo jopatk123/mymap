@@ -12,6 +12,9 @@ const { loggerMiddleware } = require('./middleware/logger.middleware');
 // 创建Express应用
 const app = express();
 
+// 关闭 ETag，减少 304/空体对前端 axios 解析的影响
+app.disable('etag');
+
 // 安全中间件
 // - 关闭在非 HTTPS 环境下会产生告警/影响行为的安全头（HSTS/COOP/OAC/COEP）
 // - 暂时关闭 CSP，由前置 Nginx 统一控制（避免意外携带 upgrade-insecure-requests）
@@ -151,7 +154,13 @@ if (config.server.env !== 'production') {
   });
 }
 
-app.use('/api', routes);
+// API路由（为防缓存增加 no-store/no-cache）
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+}, routes);
 
 // 静态文件服务（前端构建文件）
 const distDir = path.join(__dirname, '../../client/dist');

@@ -15,17 +15,32 @@ class KmlFileStyleController {
         logOperation('getKmlFileStyles', { id }, req);
       } catch (e) {}
       const styles = await ConfigService.getKmlStyles(id);
+      // 防缓存，确保每次都拉到最新
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.json({ success: true, data: styles, message: '获取KML文件样式配置成功' });
     } catch (error) {
-      Logger.error('获取KML文件样式配置失败:', error);
+      Logger.error(`获取KML文件样式配置失败 (ID: ${req.params.id}):`, error);
       try {
         logError(error, req);
       } catch (e) {}
-      res.status(500).json({
-        success: false,
-        message: '获取样式配置失败',
-        error: process.env.NODE_ENV === 'development' ? error.message : '内部服务器错误',
-      });
+      // 兜底：返回默认样式，避免前端出现 500
+      try {
+        Logger.info(`尝试为KML文件 ${req.params.id} 返回默认样式配置`);
+        const fallback = await ConfigService.getKmlStyles('default');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        return res.status(200).json({ success: true, data: fallback, message: '返回默认KML样式配置' });
+      } catch (fallbackError) {
+        Logger.error(`获取默认样式配置也失败 (ID: ${req.params.id}):`, fallbackError);
+        res.status(500).json({
+          success: false,
+          message: '获取样式配置失败',
+          error: process.env.NODE_ENV === 'development' ? error.message : '内部服务器错误',
+        });
+      }
     }
   }
 
@@ -44,6 +59,9 @@ class KmlFileStyleController {
       const success = await ConfigService.updateKmlStyles(id, styleConfig);
       if (success) {
         const styles = await ConfigService.getKmlStyles(id);
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.json({ success: true, message: '样式配置更新成功', data: styles });
       } else {
         // 记录更多调试上下文到 error-debug.log
@@ -95,6 +113,10 @@ class KmlFileStyleController {
         }: ${error && error.stack ? error.stack : error}\nrecentDebug=${tail}\n`;
         await fs.appendFile(errPath, entry, { encoding: 'utf8' });
       } catch (e) {}
+      // 更新失败也设置 no-store 以防缓存错误态
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.status(500).json({ success: false, message: '更新样式配置失败', error: error.message });
     }
   }
@@ -113,6 +135,9 @@ class KmlFileStyleController {
       const success = await ConfigService.updateKmlStyles(id, defaultConfig.kmlStyles.default);
       if (success) {
         const styles = await ConfigService.getKmlStyles('default');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.json({ success: true, message: '样式配置已重置为默认', data: styles });
       } else {
         throw new Error('重置配置失败');
@@ -122,6 +147,9 @@ class KmlFileStyleController {
       try {
         logError(error, req);
       } catch (e) {}
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.status(500).json({ success: false, message: '重置样式配置失败', error: error.message });
     }
   }

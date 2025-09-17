@@ -183,9 +183,24 @@ class ConfigService {
   }
 
   async getKmlStyles(fileId = 'default') {
-    const config = await this.loadConfig();
-    const raw = config.kmlStyles[fileId] || config.kmlStyles.default;
-    return this.normalizeClusterFields(raw);
+    try {
+      const config = await this.loadConfig();
+      if (!config) {
+        throw new Error('配置文件加载失败');
+      }
+      if (!config.kmlStyles) {
+        throw new Error('配置文件中缺少 kmlStyles 字段');
+      }
+      const raw = config.kmlStyles[fileId] || config.kmlStyles.default;
+      if (!raw) {
+        throw new Error(`未找到 KML 样式配置 (fileId: ${fileId})`);
+      }
+      return this.normalizeClusterFields(raw);
+    } catch (error) {
+      // 记录详细错误信息
+      console.error(`getKmlStyles 错误 (fileId: ${fileId}):`, error);
+      throw error;
+    }
   }
 
   async updateKmlStyles(fileId, styles) {

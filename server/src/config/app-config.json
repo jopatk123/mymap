@@ -2,31 +2,34 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_color": "#2ed573",
-      "point_size": 10,
+      "point_color": "#ff4757",
+      "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 12,
+      "point_label_size": 8,
       "point_label_color": "#000000",
       "point_icon_type": "marker",
       "cluster_enabled": true,
-      "cluster_color": "#2ed573",
-      "cluster_icon_color": "#2ed573"
+      "cluster_color": "#ff4757",
+      "cluster_icon_color": "#ff4757"
     },
     "video": {
       "point_color": "#ff4757",
-      "point_size": 10,
+      "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 14,
+      "point_label_size": 8,
       "point_label_color": "#000000",
-      "point_icon_type": "marker"
+      "point_icon_type": "marker",
+      "cluster_enabled": true,
+      "cluster_color": "#ff4757",
+      "cluster_icon_color": "#ff4757"
     }
   },
   "kmlStyles": {
     "6": {
-      "point_color": "rgb(119, 75, 37)",
+      "point_color": "#ff7800",
       "point_size": 9,
       "point_opacity": 1,
-      "point_label_size": 0,
+      "point_label_size": 7,
       "point_label_color": "#000000",
       "line_color": "#ff7800",
       "line_width": 2,
@@ -37,7 +40,7 @@
       "polygon_stroke_color": "#ff7800",
       "polygon_stroke_width": 2,
       "polygon_stroke_style": "solid",
-      "cluster_enabled": true,
+      "cluster_enabled": false,
       "cluster_icon_color": "#00ff00",
       "cluster_text_color": "#000000",
       "cluster_color": "#00ff00",
