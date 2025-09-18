@@ -13,6 +13,9 @@
         <!-- 区域选择（按钮颜色在 AreaControls 中定义） -->
         <AreaControls class="area-controls-inline" :map-instance="mapInstance" />
 
+        <!-- 导出控件（绿色） -->
+        <ExportControls class="export-controls-inline" :visible-k-m-l-points="visibleKMLPoints" />
+
         <!-- KML设置（蓝色） -->
         <el-button class="btn-kml-settings priority" @click.stop="$emit('show-kml-settings')">
           <el-icon><Tools /></el-icon>
@@ -52,6 +55,7 @@
 import { Tools, Location } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
+import ExportControls from './ExportControls.vue';
 
 defineProps({
   panoramaListVisible: {
@@ -77,6 +81,10 @@ defineProps({
   mapInstance: {
     type: Object,
     default: null,
+  },
+  visibleKMLPoints: {
+    type: Array,
+    default: () => []
   },
 });
 

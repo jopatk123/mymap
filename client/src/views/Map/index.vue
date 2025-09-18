@@ -37,6 +37,7 @@
       :total-count="totalCount"
       :is-online="isOnline"
       :map-instance="mapRef?.map"
+      :visible-k-m-l-points="visibleKMLPoints"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
       @show-kml-settings="showKmlSettings = true"
@@ -97,6 +98,8 @@ import { usePanoramaViewer } from '@/composables/use-panorama-viewer';
 import { usePointStyles } from '@/composables/use-point-styles';
 import { useMapStyleUpdater } from '@/composables/use-map-style-updater';
 import { useMapEventHandlers } from './composables/map-event-handlers';
+import { useKMLBaseMapStore } from '@/store/kml-basemap.js';
+import { storeToRefs } from 'pinia';
 import { useMapInitializer } from './composables/map-initializer';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 
@@ -148,6 +151,10 @@ const {
   toggleKmlLayers,
   openBatchUploadFromSingle,
 } = useMapPage();
+
+// KML底图数据
+const kmlStore = useKMLBaseMapStore();
+const { visiblePoints: visibleKMLPoints } = storeToRefs(kmlStore);
 
 // 样式更新器
 const { updateAllMarkerStyles, isUpdating: _isUpdating } = useMapStyleUpdater(
