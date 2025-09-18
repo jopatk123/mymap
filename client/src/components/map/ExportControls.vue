@@ -12,9 +12,7 @@
         :disabled="!hasExportableData"
         :loading="exporting"
       >
-        <el-icon><Download /></el-icon>
         导出数据
-        <el-icon class="el-icon--right"><ArrowDown /></el-icon>
       </el-button>
       
       <template #dropdown>

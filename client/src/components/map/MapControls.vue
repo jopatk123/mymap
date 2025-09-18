@@ -18,13 +18,11 @@
 
         <!-- KML设置（蓝色） -->
         <el-button class="btn-kml-settings priority" @click.stop="$emit('show-kml-settings')">
-          <el-icon><Tools /></el-icon>
           KML设置
         </el-button>
 
         <!-- 点位图标（紫色） -->
         <el-button class="btn-point-icons priority" @click.stop="$emit('show-point-settings')">
-          <el-icon><Location /></el-icon>
           点位图标
         </el-button>
 
@@ -52,7 +50,7 @@
 </template>
 
 <script setup>
-import { Tools, Location } from '@element-plus/icons-vue';
+import { Tools, Location, List, View } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
 import ExportControls from './ExportControls.vue';
@@ -101,18 +99,18 @@ defineEmits([
 <style scoped lang="scss">
 .map-controls {
   .toolbar {
-    position: absolute;
-    top: 16px;
-    right: 170px; /* 与右侧绘图工具保持距离 */
-    z-index: 1000;
-    max-width: calc(100vw - 200px); /* 防止超出屏幕 */
+  position: absolute;
+  top: 12px; /* 减小顶部间距 */
+  right: 170px; /* 与右侧绘图工具保持距离 */
+  z-index: 1000;
+  max-width: calc(100vw - 200px); /* 防止超出屏幕 */
 
     display: flex;
     gap: 0;
     padding: 0;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    border-radius: 10px; /* 减小圆角 */
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.12); /* 减小阴影 */
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     overflow: hidden; /* 确保圆角效果 */
@@ -122,25 +120,52 @@ defineEmits([
       align-items: stretch; /* 让所有按钮高度一致 */
       gap: 0;
       flex-wrap: nowrap; /* 桌面端不换行 */
-      height: 44px; /* 增加高度提升点击体验 */
+      height: 36px; /* 减小高度，更紧凑 */
       pointer-events: auto !important;
     }
 
-    /* 统一按钮样式 */
+    /* 移动设备修复：避免 toolbar 因右侧固定偏移或 max-width 被裁剪 */
+    @media (max-width: 768px) {
+      .toolbar {
+        /* 在窄屏上把 toolbar 靠右的偏移缩小，利用屏幕更大比例的宽度 */
+        right: 12px !important;
+        left: 12px !important;
+        max-width: calc(100vw - 24px) !important;
+        overflow: visible !important; /* 允许内部横向滚动或换行显示 */
+      }
+
+      .controls-group {
+        /* 保持高度但允许横向滚动以避免内容被裁剪
+           - 如果希望按钮可以换行显示，可以改为 flex-wrap: wrap; */
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px; /* 给滚动条或触摸留白 */
+        gap: 6px;
+      }
+
+      /* 保证子按钮在横向滚动时仍然是紧凑的 */
+      .controls-group ::v-deep .el-button {
+        white-space: nowrap;
+      }
+    }
+
+    /* 统一按钮样式 - 固定字体、固定高度、宽度自适应且尽量紧凑 */
     .controls-group > * {
       margin: 0 !important;
       border-radius: 0 !important;
       border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-      height: 44px !important;
-      min-width: 88px; /* 增加最小宽度 */
+      height: 36px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 13px !important;
+      font-size: 12px !important; /* 与“显示列表”一致的字体大小 */
       font-weight: 500 !important;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
       position: relative;
       white-space: nowrap;
+      flex: 0 0 auto; /* 宽度自适应内容 */
+      min-width: 0 !important;
     }
 
     /* 移除最后一个按钮的右边框 */
@@ -150,42 +175,48 @@ defineEmits([
 
     /* 首尾按钮圆角 */
     .controls-group > *:first-child {
-      border-top-left-radius: 12px !important;
-      border-bottom-left-radius: 12px !important;
+      border-top-left-radius: 10px !important;
+      border-bottom-left-radius: 10px !important;
     }
     .controls-group > *:last-child {
-      border-top-right-radius: 12px !important;
-      border-bottom-right-radius: 12px !important;
+      border-top-right-radius: 10px !important;
+      border-bottom-right-radius: 10px !important;
     }
 
     /* 统一按钮内边距 */
     .el-button {
-      padding: 0 14px !important;
-      line-height: 44px !important;
+      padding: 0 8px !important; /* 更紧凑的内边距 */
+      line-height: 36px !important;
+      min-width: 0 !important; /* 允许按钮宽度收缩到文本宽度 */
+      width: auto !important;
       
       /* 优化悬停效果 */
       &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px); /* 减小悬停位移 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         z-index: 1001;
         filter: brightness(1.1);
       }
 
       &:active {
-        transform: translateY(-1px);
+        transform: translateY(0px);
         transition: all 0.1s ease;
       }
 
       &:focus {
         outline: none !important;
-        box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2) !important;
+        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
       }
+    }
 
-      /* 图标样式 */
-      .el-icon {
-        margin-right: 6px;
-        font-size: 15px;
-      }
+    /* 确保嵌套子组件中的 el-button 也使用相同的紧凑样式 */
+    .controls-group ::v-deep .el-button {
+      font-size: 12px !important;
+      padding: 0 8px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      min-width: 0 !important;
+      width: auto !important;
     }
 
     /* 防止按钮组变暗 */
@@ -226,26 +257,28 @@ defineEmits([
     .search-wrapper {
       display: inline-flex;
       align-items: center;
-      height: 44px;
+      height: 36px;
     }
 
     /* 区域控制器内联样式 */
     .area-controls-inline {
       display: inline-flex !important;
       align-items: center !important;
-      height: 44px !important;
+      height: 36px !important;
       
       .buttons-wrapper {
-        height: 44px;
+        height: 36px;
         
         .el-button-group {
           display: inline-flex !important;
-          height: 44px !important;
+          height: 36px !important;
           
           .el-button {
-            height: 44px !important;
+            height: 36px !important;
             border-radius: 0 !important;
             border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+            padding: 0 8px !important;
+            flex: 0 0 auto; /* 宽度自适应内容 */
           }
         }
       }
@@ -255,15 +288,15 @@ defineEmits([
     .export-controls-inline {
       display: inline-flex !important;
       align-items: center !important;
-      height: 44px !important;
+      height: 36px !important;
       
       .btn-export-data {
-        height: 44px !important;
+        height: 36px !important;
         border-radius: 0 !important;
-        min-width: 88px !important;
-        padding: 0 14px !important;
-        font-size: 13px !important;
+        padding: 0 8px !important;
+        font-size: 12px !important;
         font-weight: 500 !important;
+        flex: 0 0 auto; /* 宽度自适应内容 */
       }
     }
 
@@ -345,169 +378,6 @@ defineEmits([
     }
   }
 
-  /* 平板端适配 */
-  @media (max-width: 1024px) {
-    .toolbar {
-      right: 120px;
-      max-width: calc(100vw - 140px);
-      
-      .controls-group > * {
-        min-width: 76px;
-        font-size: 12px !important;
-      }
 
-      .el-button {
-        padding: 0 10px !important;
-        
-        .el-icon {
-          margin-right: 4px;
-          font-size: 14px;
-        }
-      }
-    }
-  }
-
-  /* 移动端适配 */
-  @media (max-width: 768px) {
-    .toolbar {
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      width: calc(100% - 24px);
-      max-width: none;
-
-      .controls-group {
-        flex-wrap: wrap;
-        height: auto;
-        gap: 6px;
-        padding: 8px;
-        background: rgba(255, 255, 255, 0.98);
-        border-radius: 12px;
-        justify-content: center;
-      }
-
-      .controls-group > * {
-        flex: 1 1 calc(33.333% - 8px);
-        min-width: 80px;
-        max-width: 120px;
-        height: 40px !important;
-        border-radius: 8px !important;
-        border-right: none !important;
-        margin: 0 !important;
-        font-size: 12px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-      }
-
-      .el-button {
-        padding: 0 10px !important;
-        line-height: 40px !important;
-        
-        .el-icon {
-          margin-right: 3px;
-          font-size: 13px;
-        }
-      }
-
-      /* 移动端搜索工具 */
-      .search-wrapper {
-        height: 40px;
-      }
-
-      /* 移动端区域控制 */
-      .area-controls-inline {
-        height: 40px !important;
-        
-        .buttons-wrapper .el-button-group .el-button {
-          height: 40px !important;
-          border-radius: 8px !important;
-          margin: 0 2px !important;
-        }
-      }
-
-      /* 移动端导出控制 */
-      .export-controls-inline {
-        height: 40px !important;
-        
-        .btn-export-data {
-          height: 40px !important;
-          border-radius: 8px !important;
-        }
-      }
-    }
-  }
-
-  /* 超小屏幕适配 */
-  @media (max-width: 480px) {
-    .toolbar {
-      left: 8px;
-      right: 8px;
-      width: calc(100% - 16px);
-
-      .controls-group {
-        gap: 4px;
-        padding: 6px;
-      }
-
-      .controls-group > * {
-        flex: 1 1 calc(50% - 6px);
-        min-width: 70px;
-        max-width: none;
-        height: 36px !important;
-        font-size: 11px !important;
-      }
-
-      .el-button {
-        padding: 0 8px !important;
-        line-height: 36px !important;
-        
-        .el-icon {
-          margin-right: 2px;
-          font-size: 12px;
-        }
-      }
-
-      /* 超小屏幕搜索工具 */
-      .search-wrapper {
-        height: 36px;
-      }
-
-      /* 超小屏幕区域控制 */
-      .area-controls-inline {
-        height: 36px !important;
-        
-        .buttons-wrapper .el-button-group .el-button {
-          height: 36px !important;
-        }
-      }
-
-      /* 超小屏幕导出控制 */
-      .export-controls-inline {
-        height: 36px !important;
-        
-        .btn-export-data {
-          height: 36px !important;
-        }
-      }
-    }
-  }
-
-  /* 超宽屏幕优化 */
-  @media (min-width: 1440px) {
-    .toolbar {
-      .controls-group > * {
-        min-width: 96px;
-        font-size: 14px !important;
-      }
-
-      .el-button {
-        padding: 0 16px !important;
-        
-        .el-icon {
-          margin-right: 8px;
-          font-size: 16px;
-        }
-      }
-    }
-  }
 }
 </style>

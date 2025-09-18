@@ -5,6 +5,6 @@
 需要在前端和后端都运行npm install，前端在mymap-client目录下，后端在mymap-server目录下
 需要运行npm run build
 SKIP_SERVER_NPM_INSTALL=1 USE_LOCAL_CLIENT=1 ./build_mymap_images_tar.sh
-
+sleep 2
 docker load -i images/mymap_images.tar.gz
 docker compose -f docker/docker-compose.yml up -d --no-build --force-recreate

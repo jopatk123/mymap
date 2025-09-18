@@ -66,4 +66,14 @@ defineEmits(['toggle-panorama-list', 'show-upload', 'show-kml-settings', 'show-p
     }
   }
 }
+
+/* 与 MapControls 统一：固定字号、紧凑内边距、宽度自适应 */
+.toolbar ::v-deep .el-button {
+  font-size: 12px !important;
+  padding: 0 8px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
 </style>

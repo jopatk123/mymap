@@ -15,7 +15,6 @@
           @click.stop="handleCircleAreaClick"
           style="pointer-events: auto !important; z-index: 1000 !important;"
         >
-          <el-icon><Compass /></el-icon>
           圆形区域
         </el-button>
 
@@ -24,12 +23,10 @@
           :loading="isDrawingPolygon"
           @click="handleCustomAreaClick"
         >
-          <el-icon><Crop /></el-icon>
           自定义区域
         </el-button>
 
         <el-button class="btn-clear" :disabled="areasCount === 0" @click="handleClearAreas">
-          <el-icon><Delete /></el-icon>
           清除
         </el-button>
 

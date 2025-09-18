@@ -3,7 +3,6 @@
     <!-- 搜索按钮 -->
     <el-button 
       type="primary" 
-      :icon="Search" 
       title="综合搜索" 
       @click.stop="toggleSearchDialog"
       style="pointer-events: auto !important; z-index: 1000 !important;"
