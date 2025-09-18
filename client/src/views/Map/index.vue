@@ -98,6 +98,7 @@ import { usePointStyles } from '@/composables/use-point-styles';
 import { useMapStyleUpdater } from '@/composables/use-map-style-updater';
 import { useMapEventHandlers } from './composables/map-event-handlers';
 import { useMapInitializer } from './composables/map-initializer';
+import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 
 import MapView from './components/MapView.vue';
 import MapSidebar from '@/components/map/MapSidebar.vue';
@@ -257,9 +258,19 @@ const handleLocate = ({ lat, lng, tip }) => {
 
 // 处理KML点位定位
 const handleLocateKMLPoint = ({ lat, lng, point }) => {
-  // 标记并居中到KML点位
+  // 标记并居中到KML点位（KML 搜索结果为 WGS84，需要转 GCJ-02 以适配高德瓦片）
+  try {
+    const coords = getDisplayCoordinates(point || { latitude: lat, longitude: lng });
+    if (coords && coords.length === 2) {
+      const [displayLng, displayLat] = coords; // getDisplayCoordinates 返回 [lng, lat]
+      mapRef.value?.setCenter(displayLat, displayLng, 16);
+      mapRef.value?.setSearchMarker?.(displayLat, displayLng, point);
+      return;
+    }
+  } catch (_) {}
+
+  // 回退：无可用转换时按传入值定位
   mapRef.value?.setCenter(lat, lng, 16);
-  // 将完整 point 对象传给 setSearchMarker，以便渲染丰富弹窗
   mapRef.value?.setSearchMarker?.(lat, lng, point);
 };
 
