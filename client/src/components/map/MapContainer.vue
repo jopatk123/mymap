@@ -186,30 +186,21 @@ onMounted(async () => {
             if (typeof preferred.marker.openPopup === 'function') {
               preferred.marker.openPopup();
             }
-            // 验证是否真的打开了弹窗，否则回退
+            // 验证是否打开失败则回退（轻量延迟）
             setTimeout(() => {
-              try {
-                const opened = !!(
-                  map.value &&
-                  map.value._popup &&
-                  map.value._popup.isOpen &&
-                  map.value._popup.isOpen()
-                );
-                if (!opened) {
-                  // 使用显示坐标（已变换为与底图匹配的坐标系，如高德 GCJ-02）
-                  const coords = getDisplayCoordinates(point);
-                  if (coords && coords.length === 2) {
-                    const [displayLng, displayLat] = coords;
-                    L.popup()
-                      .setLatLng([displayLat, displayLng])
-                      .setContent(popupContent)
-                      .openOn(map.value);
-                    console.debug('[MapContainer] fallback open KML popup on map for id=', point.id);
-                  }
-                } else {
-                  console.debug('[MapContainer] open KML popup on marker id=', point.id);
+              const opened = !!(
+                map.value &&
+                map.value._popup &&
+                map.value._popup.isOpen &&
+                map.value._popup.isOpen()
+              );
+              if (!opened) {
+                const coords = getDisplayCoordinates(point);
+                if (coords && coords.length === 2) {
+                  const [displayLng, displayLat] = coords;
+                  L.popup().setLatLng([displayLat, displayLng]).setContent(popupContent).openOn(map.value);
                 }
-              } catch (_) {}
+              }
             }, 30);
             return;
           } catch (e) {
@@ -222,11 +213,9 @@ onMounted(async () => {
         const lng = point.lng ?? point.longitude;
         if (map.value && lat != null && lng != null) {
           L.popup().setLatLng([lat, lng]).setContent(popupContent).openOn(map.value);
-          console.debug('[MapContainer] open KML popup on map at latlng for id=', point.id);
           return;
         }
         // 如果没有坐标可用，直接返回不触发全景弹窗
-        console.debug('[MapContainer] KML point missing coords, skip popup id=', point?.id);
         return;
       }
     } catch (err) {
