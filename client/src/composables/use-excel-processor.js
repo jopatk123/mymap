@@ -203,6 +203,11 @@ export function useExcelProcessor() {
       validationResult.value = null;
       previewData.value = [];
 
+      // 检查文件对象
+      if (!file || !(file instanceof File || file instanceof Blob)) {
+        throw new Error('无效的文件对象');
+      }
+
       const workbook = await readExcelFile(file);
       
       // 获取第一个工作表
@@ -278,25 +283,27 @@ export function useExcelProcessor() {
 
   // 验证文件类型
   const validateFile = (file) => {
-    if (!file || typeof file !== 'object') {
+    if (!file || !(file instanceof File || file instanceof Blob)) {
       ElMessage.error('文件对象无效!');
       return false;
     }
 
-    if (!file.type || !file.size) {
+    if (!file.name || !file.type || !file.size) {
       ElMessage.error('文件信息不完整!');
       return false;
     }
 
-    // 检查文件扩展名和MIME类型
+    // 检查文件扩展名和MIME类型（临时支持CSV用于测试）
     const fileName = file.name.toLowerCase();
     const isExcel = fileName.endsWith('.xlsx') || 
                    fileName.endsWith('.xls') || 
+                   fileName.endsWith('.csv') ||
                    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                   file.type === 'application/vnd.ms-excel';
+                   file.type === 'application/vnd.ms-excel' ||
+                   file.type === 'text/csv';
 
     if (!isExcel) {
-      ElMessage.error('只能上传Excel文件(.xlsx, .xls)!');
+      ElMessage.error('只能上传Excel文件(.xlsx, .xls, .csv)!');
       return false;
     }
 

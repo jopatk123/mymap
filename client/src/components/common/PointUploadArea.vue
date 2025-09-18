@@ -54,6 +54,7 @@
         class="upload-area"
         drag
         :show-file-list="false"
+        :auto-upload="false"
         :before-upload="handleBeforeUpload"
         :on-change="handleFileChange"
         :accept="acceptedFileTypes"
@@ -211,13 +212,13 @@ const fileTypeText = computed(() => {
 const acceptedFileTypes = computed(() => {
   return selectedFileType.value === 'kml' 
     ? '.kml,.kmz'
-    : '.xlsx,.xls';
+    : '.xlsx,.xls,.csv';
 });
 
 const acceptHint = computed(() => {
   return selectedFileType.value === 'kml' 
     ? '支持 .kml, .kmz 格式'
-    : '支持 .xlsx, .xls 格式，大小不超过10MB';
+    : '支持 .xlsx, .xls, .csv 格式，大小不超过10MB';
 });
 
 // 监听验证结果变化
@@ -238,7 +239,10 @@ const handleBeforeUpload = (file) => {
 };
 
 // 文件选择处理
-const handleFileChange = async (file) => {
+const handleFileChange = async (uploadFile, uploadFiles) => {
+  // Element Plus el-upload 的 on-change 事件传递的是 UploadFile 对象
+  // 需要从中提取原始 File 对象
+  const file = uploadFile.raw;
   if (!file) return;
 
   try {
