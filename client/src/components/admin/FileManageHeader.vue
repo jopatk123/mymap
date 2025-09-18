@@ -14,7 +14,7 @@
       </el-button>
       <el-button type="warning" @click="$emit('upload-request', 'kml')">
         <el-icon><Document /></el-icon>
-        添加KML文件
+        添加点位
       </el-button>
       <!-- 新增KML底图按钮 -->
       <KMLBaseMapButton />

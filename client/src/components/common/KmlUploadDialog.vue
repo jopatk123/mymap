@@ -1,9 +1,9 @@
 <template>
   <BaseUploadDialog
     :model-value="modelValue"
-    title="添加KML文件"
-    title-placeholder="请输入KML文件标题"
-    description-placeholder="请输入KML文件描述"
+  title="添加点位"
+  title-placeholder="请输入点位标题"
+  description-placeholder="请输入点位描述"
     :submit-handler="handleKmlUpload"
     :external-can-submit="kmlCanSubmit"
     @update:model-value="$emit('update:modelValue', $event)"
