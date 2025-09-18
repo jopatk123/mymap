@@ -141,12 +141,12 @@ void _handleRemoveArea;
   align-items: center;
   gap: 0;
   position: relative;
-  height: 40px;
+  height: 44px;
 }
 
 .status-wrapper {
   position: absolute;
-  top: -25px;
+  top: -28px;
   left: 0;
   right: 0;
   display: flex;
@@ -154,63 +154,70 @@ void _handleRemoveArea;
   white-space: nowrap;
   font-size: 12px;
   z-index: 1001;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
 }
 
 .buttons-wrapper {
   display: inline-flex;
   align-items: center;
-  height: 40px;
+  height: 44px;
 }
 
 .buttons-wrapper .el-button-group {
   display: inline-flex;
   align-items: center;
   gap: 0;
-  height: 40px;
+  height: 44px;
 }
 
 .el-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px !important;
-  min-width: 80px;
-  padding: 0 12px !important;
+  height: 44px !important;
+  min-width: 88px;
+  padding: 0 14px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   border-radius: 0 !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
-  transition: all 0.2s ease !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   pointer-events: auto !important;
   cursor: pointer !important;
   opacity: 1 !important;
+  white-space: nowrap;
   
   &:last-child {
     border-right: none !important;
   }
   
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     z-index: 1;
     opacity: 1 !important;
+    filter: brightness(1.1);
   }
 
   &:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
     opacity: 1 !important;
+    transition: all 0.1s ease;
   }
 
   &:focus {
     outline: none !important;
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2) !important;
     opacity: 1 !important;
   }
 }
 
 .el-button .el-icon {
-  margin-right: 4px;
-  font-size: 14px;
+  margin-right: 6px;
+  font-size: 15px;
   display: inline-flex;
   align-items: center;
 }
@@ -221,34 +228,90 @@ void _handleRemoveArea;
   gap: 12px;
 }
 
-/* 按钮颜色保持不变 */
+/* 按钮颜色使用渐变效果 */
 .btn-circle {
-  background: #fb8c00 !important;
-  border-color: #fb8c00 !important;
+  background: linear-gradient(135deg, #ff9800, #f57c00) !important;
+  border-color: #ff9800 !important;
   color: #fff !important;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
 }
 
 .btn-custom {
-  background: #fdd835 !important;
-  border-color: #fdd835 !important;
-  color: #333 !important;
+  background: linear-gradient(135deg, #ffeb3b, #fbc02d) !important;
+  border-color: #ffeb3b !important;
+  color: #424242 !important;
+  box-shadow: 0 2px 8px rgba(255, 235, 59, 0.3);
 }
 
 .btn-clear {
-  background: #43a047 !important;
-  border-color: #43a047 !important;
+  background: linear-gradient(135deg, #4caf50, #388e3c) !important;
+  border-color: #4caf50 !important;
   color: #fff !important;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* 平板端适配 */
+@media (max-width: 1024px) {
+  .area-controls {
+    .el-button {
+      min-width: 76px;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+
+      .el-icon {
+        margin-right: 4px;
+        font-size: 14px;
+      }
+    }
+  }
 }
 
 /* 移动端适配 */
 @media (max-width: 768px) {
   .area-controls {
+    height: 40px;
+  }
+
+  .status-wrapper {
+    top: -24px;
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .buttons-wrapper {
+    height: 40px;
+  }
+
+  .buttons-wrapper .el-button-group {
+    height: 40px;
+  }
+
+  .el-button {
+    height: 40px !important;
+    min-width: 80px;
+    max-width: 120px;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    border-right: none !important;
+    margin: 0 2px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .el-button .el-icon {
+    margin-right: 3px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .area-controls {
     height: 36px;
   }
 
   .status-wrapper {
-    top: -20px;
-    font-size: 11px;
+    top: -22px;
+    font-size: 10px;
   }
 
   .buttons-wrapper {
@@ -263,7 +326,7 @@ void _handleRemoveArea;
     height: 36px !important;
     min-width: 70px;
     padding: 0 8px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
   }
 
   .el-button .el-icon {
@@ -272,15 +335,19 @@ void _handleRemoveArea;
   }
 }
 
-@media (max-width: 480px) {
-  .el-button {
-    min-width: 60px;
-    padding: 0 6px !important;
-    font-size: 11px !important;
-  }
+/* 超宽屏幕优化 */
+@media (min-width: 1440px) {
+  .area-controls {
+    .el-button {
+      min-width: 96px;
+      padding: 0 16px !important;
+      font-size: 14px !important;
 
-  .el-button .el-icon {
-    margin-right: 1px;
+      .el-icon {
+        margin-right: 8px;
+        font-size: 16px;
+      }
+    }
   }
 }
 </style>

@@ -112,26 +112,58 @@ defineExpose({
 
 <style scoped lang="scss">
 .export-controls {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  height: 44px;
 
   .btn-export-data {
-    background: linear-gradient(135deg, #67c23a, #5cb85c);
-    border-color: #67c23a;
-    color: white;
+    height: 44px !important;
+    min-width: 88px;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 0 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap;
+    
+    background: linear-gradient(135deg, #4caf50, #388e3c) !important;
+    border-color: #4caf50 !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
     
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #5cb85c, #449d44);
-      border-color: #5cb85c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+      filter: brightness(1.1);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(-1px);
+      transition: all 0.1s ease;
+    }
+
+    &:focus {
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2) !important;
     }
     
     &:disabled {
-      background: #c0c4cc;
-      border-color: #c0c4cc;
-      color: #ffffff;
+      background: linear-gradient(135deg, #c0c4cc, #a0a4a8) !important;
+      border-color: #c0c4cc !important;
+      color: #ffffff !important;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .el-icon {
+      margin-right: 6px;
+      font-size: 15px;
+    }
+
+    .el-icon--right {
+      margin-left: 4px;
+      margin-right: 0;
     }
   }
 
@@ -144,16 +176,79 @@ defineExpose({
   }
 }
 
-// 适配移动端
-@media (max-width: 768px) {
+// 平板端适配
+@media (max-width: 1024px) {
   .export-controls {
     .btn-export-data {
-      font-size: 12px;
-      padding: 6px 12px;
+      min-width: 76px;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+
+      .el-icon {
+        margin-right: 4px;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .export-controls {
+    height: 40px;
+
+    .btn-export-data {
+      height: 40px !important;
+      min-width: 80px;
+      max-width: 120px;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+
+      .el-icon {
+        margin-right: 3px;
+        font-size: 13px;
+      }
     }
     
     .export-status .el-text {
       font-size: 11px;
+    }
+  }
+}
+
+// 超小屏幕适配
+@media (max-width: 480px) {
+  .export-controls {
+    height: 36px;
+
+    .btn-export-data {
+      height: 36px !important;
+      min-width: 70px;
+      padding: 0 8px !important;
+      font-size: 11px !important;
+
+      .el-icon {
+        margin-right: 2px;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+// 超宽屏幕优化
+@media (min-width: 1440px) {
+  .export-controls {
+    .btn-export-data {
+      min-width: 96px;
+      padding: 0 16px !important;
+      font-size: 14px !important;
+
+      .el-icon {
+        margin-right: 8px;
+        font-size: 16px;
+      }
     }
   }
 }

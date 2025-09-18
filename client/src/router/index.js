@@ -48,6 +48,14 @@ const routes = [
     },
   },
   {
+    path: '/test/buttons',
+    name: 'ButtonTest',
+    component: () => import('@/views/ButtonTestView.vue'),
+    meta: {
+      title: '按钮UI测试',
+    },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),

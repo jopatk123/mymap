@@ -336,56 +336,92 @@ watch(searchType, () => {
 .search-tool {
   display: inline-flex;
   align-items: center;
-  height: 40px;
+  height: 44px;
 
   .el-button {
-    height: 40px !important;
-    min-width: 80px;
-    padding: 0 12px !important;
+    height: 44px !important;
+    min-width: 88px;
+    padding: 0 14px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
     border-radius: 0 !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     pointer-events: auto !important;
     cursor: pointer !important;
     opacity: 1 !important;
+    white-space: nowrap;
     
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
       z-index: 1;
       opacity: 1 !important;
+      filter: brightness(1.1);
     }
 
     &:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
       opacity: 1 !important;
+      transition: all 0.1s ease;
     }
 
     &:focus {
       outline: none !important;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
+      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2) !important;
       opacity: 1 !important;
     }
 
     .el-icon {
-      margin-right: 4px;
-      font-size: 14px;
+      margin-right: 6px;
+      font-size: 15px;
+    }
+  }
+
+  /* 平板端适配 */
+  @media (max-width: 1024px) {
+    .el-button {
+      min-width: 76px;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+
+      .el-icon {
+        margin-right: 4px;
+        font-size: 14px;
+      }
     }
   }
 
   /* 移动端适配 */
   @media (max-width: 768px) {
+    height: 40px;
+
+    .el-button {
+      height: 40px !important;
+      min-width: 80px;
+      max-width: 120px;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+
+      .el-icon {
+        margin-right: 3px;
+        font-size: 13px;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
     height: 36px;
 
     .el-button {
       height: 36px !important;
       min-width: 70px;
       padding: 0 8px !important;
-      font-size: 12px !important;
+      font-size: 11px !important;
 
       .el-icon {
         margin-right: 2px;
@@ -394,14 +430,16 @@ watch(searchType, () => {
     }
   }
 
-  @media (max-width: 480px) {
+  /* 超宽屏幕优化 */
+  @media (min-width: 1440px) {
     .el-button {
-      min-width: 60px;
-      padding: 0 6px !important;
-      font-size: 11px !important;
+      min-width: 96px;
+      padding: 0 16px !important;
+      font-size: 14px !important;
 
       .el-icon {
-        margin-right: 1px;
+        margin-right: 8px;
+        font-size: 16px;
       }
     }
   }
