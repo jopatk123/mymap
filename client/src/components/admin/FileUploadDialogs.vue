@@ -13,8 +13,8 @@
       @success="$emit('upload-success')"
     />
 
-    <!-- KML上传对话框 -->
-    <KmlUploadDialog
+    <!-- 点位上传对话框 -->
+    <PointUploadDialog
       v-model="localDialogs.showKmlUploadDialog"
       @success="$emit('upload-success')"
     />
@@ -30,7 +30,7 @@
 <script setup>
 import UploadDialog from '@/components/common/UploadDialog.vue';
 import VideoUploadDialog from '@/components/common/VideoUploadDialog.vue';
-import KmlUploadDialog from '@/components/common/KmlUploadDialog.vue';
+import PointUploadDialog from '@/components/common/PointUploadDialog.vue';
 import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue';
 
 import { reactive, watch } from 'vue';
