@@ -34,7 +34,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
     // 避免与其他模块（如 KML layer / viewport-clipping）重复创建同一 id 的 marker
     try {
-      if (viewportState.idToMarker.has(point.id)) {
+      // 仅在启用视口裁剪模式时，使用内部 idToMarker 去重；
+      // 未启用时，依赖 window.currentMarkers 去重，避免清空后因缓存未清导致“无法重建”。
+      if (viewportState.enabled && viewportState.idToMarker.has(point.id)) {
         return null;
       }
       if (window.currentMarkers && window.currentMarkers.some((m) => m.id === point.id)) {
@@ -118,8 +120,10 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     }
     const markerInfo = { id: point.id, marker, type: pointType, data: point };
     markers.value.push(markerInfo);
-    // 记录到快速索引
-    viewportState.idToMarker.set(point.id, { marker, type: pointType });
+    // 仅在启用视口裁剪时记录到快速索引
+    if (viewportState.enabled) {
+      viewportState.idToMarker.set(point.id, { marker, type: pointType });
+    }
 
     // 同步到全局标记数组
     if (!window.currentMarkers) {
@@ -172,7 +176,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     for (const p of points) {
       // 跳过已由视口裁剪或其他模块创建的 marker（避免重复）
       try {
-        if (viewportState.idToMarker.has(p.id)) {
+        if (viewportState.enabled && viewportState.idToMarker.has(p.id)) {
           continue;
         }
         if (window.currentMarkers && window.currentMarkers.some((m) => m.id === p.id)) {
@@ -360,11 +364,31 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
       // 清除全局标记数组
       window.currentMarkers = [];
+
+      // 无论是否启用视口裁剪，都清空内部缓存与索引，避免后续重建被陈旧缓存拦截
+      try {
+        viewportState.idToMarker.clear();
+      } catch {}
+      try {
+        viewportState.coordCache.clear();
+      } catch {}
+      try {
+        viewportState.renderedIds && viewportState.renderedIds.clear();
+      } catch {}
     } catch (error) {
       void console.warn('清除标记时出错:', error);
       // 强制清空数组，即使出错也要保证状态一致
       markers.value = [];
       window.currentMarkers = [];
+      try {
+        viewportState.idToMarker.clear();
+      } catch {}
+      try {
+        viewportState.coordCache.clear();
+      } catch {}
+      try {
+        viewportState.renderedIds && viewportState.renderedIds.clear();
+      } catch {}
     }
   };
 

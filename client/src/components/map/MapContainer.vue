@@ -22,7 +22,7 @@ import { createPopupContent } from '@/composables/kml-point-renderer.js';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 let setMapInstance, setMarkersData;
 let onInitialViewUpdated;
-import { addStyleListener, removeStyleListener } from '@/utils/style-events.js';
+import { addStyleListener, removeStyleListener, addRefreshListener, removeRefreshListener } from '@/utils/style-events.js';
 // import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
 import MapTypeSwitch from './MapTypeSwitch.vue';
 import { useSearchMarker } from '@/composables/use-search-marker.js';
@@ -236,9 +236,9 @@ onMounted(async () => {
     });
   }
 
-  // 添加样式更新事件监听器
-  addStyleListener('point-style-updated', handleStyleUpdate);
-  addStyleListener('markers-refresh', handleMarkersRefresh);
+  // 添加事件监听器（按事件类型分别注册）
+  addStyleListener(handleStyleUpdate);
+  addRefreshListener(handleMarkersRefresh);
 
   // 初始视图同步（事件 + localStorage）
   const { setup: setupInitialViewSync } = useInitialViewSync(setCenter);
@@ -249,8 +249,8 @@ onMounted(async () => {
 
 // 清理事件监听器
 onUnmounted(() => {
-  removeStyleListener('point-style-updated', handleStyleUpdate);
-  removeStyleListener('markers-refresh', handleMarkersRefresh);
+  removeStyleListener(handleStyleUpdate);
+  removeRefreshListener(handleMarkersRefresh);
   try {
     // onInitialViewUpdated 在此处存放的是清理函数
     if (typeof onInitialViewUpdated === 'function') onInitialViewUpdated();
