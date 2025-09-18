@@ -108,7 +108,8 @@ export const useAppStore = defineStore('app', {
     },
 
     // 加载初始显示设置
-    async loadInitialViewSettings() {
+    // allowLocalFallback: 若为 true，API 请求失败时会回退使用 localStorage 中保存的初始视图（用于离线或后端不可用场景）
+    async loadInitialViewSettings(allowLocalFallback = true) {
       try {
         // initialViewApi 可能返回 {success,data,...} 或直接返回 data（axios 拦截器已处理）
         const res = await initialViewApi.getSettings();
@@ -119,7 +120,7 @@ export const useAppStore = defineStore('app', {
             ...settings,
             loaded: true,
           };
-          
+
           // 如果设置已启用，立即触发初始视图更新事件，确保地图应用正确的初始位置
           if (settings.enabled) {
             try {
@@ -128,7 +129,7 @@ export const useAppStore = defineStore('app', {
               console.warn('[app.store] failed to dispatch initial event:', e);
             }
           }
-          
+
           // expose debug info to window to keep it accessible without console logging
           try {
             if (typeof window !== 'undefined') window.debugInitialView = this.initialViewSettings;
@@ -137,7 +138,24 @@ export const useAppStore = defineStore('app', {
           }
         }
       } catch (error) {
-        void console.warn('加载初始显示设置失败，使用默认设置:', error);
+        // 如果允许回退并且 localStorage 中有数据，则使用 localStorage 的数据（避免用户在离线时体验受损）
+        if (allowLocalFallback) {
+          try {
+            const raw = localStorage.getItem('initial-view-updated');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              this.initialViewSettings = { ...parsed, loaded: true };
+              try {
+                window.dispatchEvent(new CustomEvent('initial-view-updated', { detail: this.initialViewSettings }));
+              } catch (e) {}
+              return;
+            }
+          } catch (e) {
+            // ignore parse errors
+          }
+        }
+
+        void console.warn('加载初始显示设置失败，使用默认设置或本地缓存回退:', error);
         this.initialViewSettings.loaded = true; // 标记为已加载，避免重复请求
       }
     },
@@ -195,11 +213,11 @@ export const useAppStore = defineStore('app', {
 
     // 初始化应用
     async initApp() {
-      // 从本地存储加载设置
-      this.loadFromLocalStorage();
+  // 从本地存储加载 UI 设置（主题、侧栏等）作为初始状态
+  this.loadFromLocalStorage();
 
-      // 加载初始显示设置
-      await this.loadInitialViewSettings();
+  // 强制首先尝试从后端获取初始视图；若后端不可用则回退到 localStorage（allowLocalFallback=true）
+  await this.loadInitialViewSettings(true);
 
       // 监听在线状态
       this.setupOnlineStatusListener();

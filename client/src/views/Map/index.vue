@@ -247,6 +247,16 @@ onMounted(() => {
   window.addEventListener('show-kml-settings', () => {
     showKmlSettings.value = true;
   });
+
+  // 强制从后端拉取点位样式，忽略本地过期缓存（低风险：如后端不可用则回退到本地缓存）
+  (async () => {
+    try {
+      await loadAllPointStyles(false);
+    } catch (e) {
+      // 如果网络请求失败，保持本地缓存不变
+      console.warn('[Map] 强制刷新点位样式失败，继续使用本地缓存', e);
+    }
+  })();
 });
 
 onUnmounted(() => {
