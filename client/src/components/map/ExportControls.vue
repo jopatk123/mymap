@@ -30,13 +30,6 @@
         </el-dropdown-menu>
       </template>
     </el-dropdown>
-
-    <!-- 数据统计显示 -->
-    <div v-if="visibleCount > 0" class="export-status">
-      <el-text type="info" size="small">
-        可导出 {{ visibleCount }} 个KML点位
-      </el-text>
-    </div>
   </div>
 </template>
 
