@@ -32,6 +32,29 @@ export function useMapMarkers(map, markers, onMarkerClick) {
   const addPointMarker = (point) => {
     if (!map.value) return null;
 
+    // 避免与其他模块（如 KML layer / viewport-clipping）重复创建同一 id 的 marker
+    try {
+      if (viewportState.idToMarker.has(point.id)) {
+        try {
+          console.debug('[use-map-markers] skip addPointMarker - already exists id=', point.id);
+        } catch (err) {}
+        return null;
+      }
+      if (window.currentMarkers && window.currentMarkers.some((m) => m.id === point.id)) {
+        try {
+          console.debug('[use-map-markers] skip addPointMarker - found in window.currentMarkers id=', point.id);
+        } catch (err) {}
+        return null;
+      }
+      // 注释掉 KML 跳过逻辑，让标记正常创建但在点击时处理冲突
+      // if (String(point.id).includes('kml-')) {
+      //   try {
+      //     console.debug('[use-map-markers] skip addPointMarker - KML point id=', point.id);
+      //   } catch (err) {}
+      //   return null;
+      // }
+    } catch (err) {}
+
     // 使用坐标转换工具获取显示坐标
     // 坐标缓存
     let coordinates = viewportState.coordCache.get(point.id);
@@ -62,9 +85,34 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       point.styleConfig || null
     ); // 传递每点 styleConfig（若存在），否则回退到全局样式
 
-    marker.on('click', () => {
-      onMarkerClick.value(point);
-    });
+    // 对于 KML 点位，不绑定任何点击事件，让 KML 图层的标记处理
+    try {
+      if (String(point.id).includes('kml-')) {
+        console.debug('[use-map-markers] create KML marker without click handler id=', point.id);
+        // KML 点位不绑定点击事件，由 KML 图层的标记处理
+      } else if (typeof marker.getPopup === 'function' && marker.getPopup()) {
+        marker.on('click', (e) => {
+          try {
+            console.debug('[use-map-markers] marker click (has popup) id=', point.id);
+          } catch (err) {}
+          try {
+            marker.openPopup && marker.openPopup();
+          } catch (err) {}
+          try {
+            L.DomEvent.stopPropagation(e);
+          } catch (err) {}
+        });
+      } else {
+        marker.on('click', (e) => {
+          try {
+            console.debug('[use-map-markers] marker click (no popup) id=', point.id);
+          } catch (err) {}
+          try {
+            onMarkerClick.value(point);
+          } catch (err) {}
+        });
+      }
+    } catch (err) {}
 
     const styles =
       pointType === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
@@ -130,6 +178,28 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     const batchPano = [];
 
     for (const p of points) {
+      // 跳过已由视口裁剪或其他模块创建的 marker（避免重复）
+      try {
+        if (viewportState.idToMarker.has(p.id)) {
+          try {
+            console.debug('[use-map-markers] skip batch create - exists in viewportState id=', p.id);
+          } catch (err) {}
+          continue;
+        }
+        if (window.currentMarkers && window.currentMarkers.some((m) => m.id === p.id)) {
+          try {
+            console.debug('[use-map-markers] skip batch create - exists in window.currentMarkers id=', p.id);
+          } catch (err) {}
+          continue;
+        }
+        // 注释掉 KML 跳过逻辑，让标记正常创建但在点击时处理冲突
+        // if (String(p.id).includes('kml-')) {
+        //   try {
+        //     console.debug('[use-map-markers] skip batch create - KML point id=', p.id);
+        //   } catch (err) {}
+        //   continue;
+        // }
+      } catch (err) {}
       const pointType = p.type || 'panorama';
       const coordinates = getDisplayCoordinates(p);
       if (!coordinates) continue;
@@ -143,7 +213,45 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         },
         p.styleConfig || null
       );
-      marker.on('click', () => onMarkerClick.value(p));
+      // KML 点位：阻止冒泡并交给全局处理器打开 popup（避免 map click 立即关闭弹窗）
+      if (String(p.id).includes('kml-')) {
+        marker.on('click', (e) => {
+          try {
+            console.debug('[use-map-markers] kml duplicate marker click - stop propagation id=', p.id);
+          } catch (err) {}
+          try {
+            // 同时阻止默认与冒泡，避免地图 click 事件关闭刚打开的 popup
+            L.DomEvent.stop(e);
+            L.DomEvent.stopPropagation(e);
+          } catch (err) {}
+          try {
+            onMarkerClick.value(p);
+          } catch (err) {}
+        });
+      } else if (typeof marker.getPopup === 'function' && marker.getPopup()) {
+        // 其他有 popup 的标记：只阻止冒泡并打开自身 popup
+        marker.on('click', (e) => {
+          try {
+            console.debug('[use-map-markers] batch marker click (has popup) id=', p.id);
+          } catch (err) {}
+          try {
+            marker.openPopup && marker.openPopup();
+          } catch (err) {}
+          try {
+            L.DomEvent.stopPropagation(e);
+          } catch (err) {}
+        });
+      } else {
+        // 无 popup 的标记：走全局处理器
+        marker.on('click', (e) => {
+          try {
+            console.debug('[use-map-markers] batch marker click (no popup) id=', p.id);
+          } catch (err) {}
+          try {
+            onMarkerClick.value(p);
+          } catch (err) {}
+        });
+      }
 
       const markerInfo = { id: p.id, marker, type: pointType, data: p };
       markers.value.push(markerInfo);

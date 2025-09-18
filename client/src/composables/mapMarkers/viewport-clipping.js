@@ -228,7 +228,32 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
       },
       point.styleConfig || null
     );
-    marker.on('click', () => onMarkerClick.value(point));
+    // 增加调试日志并根据是否存在 popup 分支处理
+    try {
+      if (typeof marker.getPopup === 'function' && marker.getPopup()) {
+        marker.on('click', (e) => {
+          try {
+            console.debug('[viewport-clipping] marker click - has popup, id=', point.id);
+          } catch (err) {}
+          try {
+            // 确保 popup 被打开，并阻止事件向上冒泡到全局处理器
+            marker.openPopup && marker.openPopup();
+          } catch (err) {}
+          try {
+            L.DomEvent.stopPropagation(e);
+          } catch (err) {}
+        });
+      } else {
+        marker.on('click', (e) => {
+          try {
+            console.debug('[viewport-clipping] marker click - no popup, id=', point.id);
+          } catch (err) {}
+          try {
+            onMarkerClick.value(point);
+          } catch (err) {}
+        });
+      }
+    } catch (err) {}
     return { id: point.id, marker, type: pointType, data: point };
   };
 

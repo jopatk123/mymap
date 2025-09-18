@@ -18,6 +18,8 @@ import L from 'leaflet';
 import { ElMessage } from 'element-plus';
 import { useMap } from '@/composables/use-map.js';
 import { useAppStore } from '@/store/app.js';
+import { createPopupContent } from '@/composables/kml-point-renderer.js';
+import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 let setMapInstance, setMarkersData;
 let onInitialViewUpdated;
 import { addStyleListener, removeStyleListener } from '@/utils/style-events.js';
@@ -131,8 +133,108 @@ onMounted(async () => {
   }
 
   // 设置标记点击事件处理函数
-  const handleMarkerClick = (panorama) => {
-    emit('panorama-click', panorama);
+  const handleMarkerClick = async (point) => {
+    try {
+      const isKml =
+        !!point &&
+        (String(point.id || '').includes('kml-') || String(point.type || '').toLowerCase() === 'kml');
+      if (isKml) {
+        // 构造与 kml-point-renderer 一致的 feature 以生成弹窗内容
+        const wgsLat =
+          point.latitude != null
+            ? Number(point.latitude)
+            : point.lat != null
+            ? Number(point.lat)
+            : null;
+        const wgsLng =
+          point.longitude != null
+            ? Number(point.longitude)
+            : point.lng != null
+            ? Number(point.lng)
+            : null;
+        const feature = {
+          type: 'Feature',
+          properties: {
+            name: point.title || point.name || '',
+            description: point.description || '',
+            ...(wgsLat != null && wgsLng != null ? { wgs84_lat: wgsLat, wgs84_lng: wgsLng } : {}),
+          },
+          geometry: { type: 'Point', coordinates: [wgsLng, wgsLat] },
+        };
+
+        // 从全局尝试找到来源 KML 文件（用于弹窗里显示信息用，可选）
+        const kmlFiles = (window && window.allKmlFiles) || [];
+        const kmlFile =
+          kmlFiles.find(
+            (f) => f.id === point.fileId || f.id === point.file_id || f.name === point.sourceFile
+          ) || { title: '' };
+
+        const popupContent = createPopupContent(feature, kmlFile);
+
+        // 在已有 marker 上打开弹窗：优先选择使用显示坐标的标记（非 kmlPane），其次已绑定 popup 的标记
+        const cm = (window && window.currentMarkers) || [];
+        const sameId = cm.filter((m) => m && m.id === point.id && m.marker);
+        let preferred = sameId.find((m) => m.marker?.options?.pane !== 'kmlPane');
+        if (!preferred)
+          preferred = sameId.find(
+            (m) => typeof m.marker.getPopup === 'function' && m.marker.getPopup()
+          );
+        if (!preferred) preferred = sameId[0];
+        if (preferred && preferred.marker) {
+          try {
+            preferred.marker.bindPopup(popupContent);
+            if (typeof preferred.marker.openPopup === 'function') {
+              preferred.marker.openPopup();
+            }
+            // 验证是否真的打开了弹窗，否则回退
+            setTimeout(() => {
+              try {
+                const opened = !!(
+                  map.value &&
+                  map.value._popup &&
+                  map.value._popup.isOpen &&
+                  map.value._popup.isOpen()
+                );
+                if (!opened) {
+                  // 使用显示坐标（已变换为与底图匹配的坐标系，如高德 GCJ-02）
+                  const coords = getDisplayCoordinates(point);
+                  if (coords && coords.length === 2) {
+                    const [displayLng, displayLat] = coords;
+                    L.popup()
+                      .setLatLng([displayLat, displayLng])
+                      .setContent(popupContent)
+                      .openOn(map.value);
+                    console.debug('[MapContainer] fallback open KML popup on map for id=', point.id);
+                  }
+                } else {
+                  console.debug('[MapContainer] open KML popup on marker id=', point.id);
+                }
+              } catch (_) {}
+            }, 30);
+            return;
+          } catch (e) {
+            // 回退到地图弹窗
+          }
+        }
+
+        // 回退：在地图坐标上打开弹窗
+        const lat = point.lat ?? point.latitude;
+        const lng = point.lng ?? point.longitude;
+        if (map.value && lat != null && lng != null) {
+          L.popup().setLatLng([lat, lng]).setContent(popupContent).openOn(map.value);
+          console.debug('[MapContainer] open KML popup on map at latlng for id=', point.id);
+          return;
+        }
+        // 如果没有坐标可用，直接返回不触发全景弹窗
+        console.debug('[MapContainer] KML point missing coords, skip popup id=', point?.id);
+        return;
+      }
+    } catch (err) {
+      // 忽略 KML 处理中的错误，继续走默认分支
+    }
+
+    // 非 KML 点位，走原有逻辑（全景/视频）
+    emit('panorama-click', point);
   };
 
   // 更新 useMap 的 onMarkerClick

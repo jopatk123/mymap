@@ -214,6 +214,20 @@ export function useKmlLayer(map, kmlLayers) {
                 }
                 const popupContent = createPopupContent(feature, kmlFile);
                 marker.bindPopup(popupContent);
+                // 阻止默认的 onMarkerClick 全局处理器，仅打开 popup；增加调试日志并尝试确保 popup 打开
+                try {
+                  marker.on('click', (e) => {
+                    try {
+                      console.debug('[use-kml-layer] kml marker click id=', p.id);
+                    } catch (err) {}
+                    try {
+                      marker.openPopup && marker.openPopup();
+                    } catch (err) {}
+                    try {
+                      L.DomEvent.stopPropagation(e);
+                    } catch (err) {}
+                  });
+                } catch (err) {}
               } catch {}
               toAdd.push([id, marker]);
             }
