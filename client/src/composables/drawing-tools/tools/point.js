@@ -10,12 +10,17 @@ export function startDrawPoint(deactivateTool) {
     const idx = drawings.value.filter((d) => d.type === 'Point').length + 1;
     const defaultName = `点位${idx}`;
 
+    // create an interactive marker and place it on the marker pane so clicks are handled
     const marker = L.circleMarker(e.latlng, {
       radius: 8,
       fillColor: '#ff0000',
       color: '#ffffff',
       weight: 2,
       fillOpacity: 1,
+      // ensure interactivity
+      interactive: true,
+      // prefer placing on default marker pane so popups and events behave normally
+      pane: 'markerPane',
     }).addTo(state.drawingLayer);
 
     const pointData = {
@@ -31,13 +36,18 @@ export function startDrawPoint(deactivateTool) {
 
     let lastOpenTs = 0;
     const openEdit = (evt) => {
+      console.debug('[drawing-tools] marker event fired', { evt, pointData });
       const now = Date.now();
       if (now - lastOpenTs < 300) return;
       lastOpenTs = now;
       try {
         const domEvt = evt?.originalEvent || evt;
+        // stop propagation to avoid map click handlers consuming the event
         L.DomEvent.stop(domEvt);
-      } catch {}
+      } catch (err) {
+        console.warn('[drawing-tools] failed to stop dom event', err);
+      }
+      // open edit dialog
       showPointEditDialog(pointData, state.mapInstance);
     };
     marker.on('click', openEdit);
