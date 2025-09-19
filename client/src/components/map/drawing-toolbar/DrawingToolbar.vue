@@ -70,8 +70,9 @@ const clearAll = async () => {
   await clearAllDrawings();
 };
 
-const exportKml = () => {
-  exportToKml();
+const exportKml = (format) => {
+  // format may be 'kml' or 'csv'
+  exportToKml(format || 'kml');
 };
 
 // 监听地图实例变化，初始化绘图工具

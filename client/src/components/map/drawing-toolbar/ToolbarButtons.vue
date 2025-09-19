@@ -90,17 +90,24 @@
       </el-button>
     </el-tooltip>
 
-    <!-- 导出工具 -->
-    <el-tooltip content="导出KML" placement="left">
-      <el-button
-        type="success"
-        :disabled="!hasDrawings"
-        circle
-        class="btn-export"
-        @click="$emit('export-kml')"
-      >
-        <el-icon><Download /></el-icon>
-      </el-button>
+    <!-- 导出工具（下拉：KML / CSV） -->
+    <el-tooltip content="导出" placement="left">
+      <el-dropdown :disabled="!hasDrawings" @command="handleExport" placement="left" trigger="click">
+        <el-button
+          type="success"
+          :disabled="!hasDrawings"
+          circle
+          class="btn-export"
+        >
+          <el-icon><Download /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="kml">导出为KML</el-dropdown-item>
+            <el-dropdown-item command="csv">导出为CSV</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </el-tooltip>
 
   </div>
@@ -132,7 +139,12 @@ defineProps({
   },
 });
 
-defineEmits(['toggle-collapse', 'toggle-tool', 'clear-all', 'export-kml']);
+const emit = defineEmits(['toggle-collapse', 'toggle-tool', 'clear-all', 'export-kml']);
+
+function handleExport(command) {
+  // 向父组件发出导出事件，并传递格式参数
+  emit('export-kml', command);
+}
 </script>
 
 <style lang="scss" scoped>
