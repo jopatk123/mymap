@@ -32,6 +32,7 @@
           @batch-show="handleBatchActionWithMove('show')"
           @batch-move="handleBatchActionWithMove('move')"
           @batch-download="handleBatchActionWithMove('download')"
+          @batch-download-stats="handleBatchDownloadStats"
         />
 
         <!-- 文件列表表格 -->
@@ -303,6 +304,67 @@ const handleBatchDownload = async () => {
       downloading.value = false;
     }, Math.min(selectedRows.value.length * 200 + 300, 3000));
   }
+};
+
+// 生成 CSV 文本并触发下载
+const handleBatchDownloadStats = () => {
+  if (!selectedRows.value || selectedRows.value.length === 0) return;
+
+  // 表头：序号、类型、标题、描述、文件夹、经度、纬度
+  const headers = ['序号', '类型', '标题', '描述', '文件夹', '经度', '纬度'];
+
+  const escapeCSV = (text) => {
+    if (text === null || text === undefined) return '';
+    const str = String(text);
+    return /[",\n\r]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+  };
+
+  const getTypeLabel = (t) => ({ panorama: '全景图', video: '视频', kml: 'KML文件' }[t] || '未知');
+
+  // 经纬度：全景图/视频可能有 lat,lng 或 latitude,longitude；KML 没有经纬度（置空）
+  const rows = selectedRows.value.map((file, idx) => {
+    const order = idx + 1;
+    const typeLabel = getTypeLabel(file.fileType);
+    const title = file.title || '';
+    const description = file.description || '';
+    const folder = file.folder_name || file.folderName || '默认文件夹';
+
+    // pick coordinates by type
+    let lon = '';
+    let lat = '';
+    if (file.fileType === 'panorama' || file.fileType === 'video') {
+      const latVal = file.lat ?? file.latitude;
+      const lonVal = file.lng ?? file.longitude;
+      if (latVal !== undefined && lonVal !== undefined && latVal !== null && lonVal !== null) {
+        // 保留原始值，不做格式化，方便后续统计
+        lat = latVal;
+        lon = lonVal;
+      }
+    }
+
+    return [
+      order,
+      escapeCSV(typeLabel),
+      escapeCSV(title),
+      escapeCSV(description),
+      escapeCSV(folder),
+      escapeCSV(lon),
+      escapeCSV(lat),
+    ].join(',');
+  });
+
+  const csv = [headers.join(','), ...rows].join('\r\n');
+
+  // 触发下载
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `文件统计_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 // 上传成功

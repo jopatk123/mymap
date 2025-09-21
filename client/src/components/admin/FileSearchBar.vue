@@ -59,15 +59,28 @@
           <el-icon><FolderOpened /></el-icon>
           移动
         </el-button>
-        <el-button
-          type="info"
+        <el-dropdown
+          trigger="click"
           :disabled="selectedCount === 0"
-          :loading="downloading"
-          @click="$emit('batch-download')"
+          @command="(cmd) => cmd === 'download-selected' ? $emit('batch-download') : (cmd === 'download-stats' ? $emit('batch-download-stats') : null)"
         >
-          <el-icon><Download /></el-icon>
-          下载{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
-        </el-button>
+          <el-button type="info" :loading="downloading">
+            <el-icon><Download /></el-icon>
+            下载{{ selectedCount > 0 ? ` (${selectedCount})` : '' }}
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="download-selected">
+                <el-icon><Download /></el-icon>
+                下载选中文件
+              </el-dropdown-item>
+              <el-dropdown-item command="download-stats">
+                <el-icon><Download /></el-icon>
+                下载表格统计
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </el-form-item>
     </el-form>
   </div>
@@ -104,6 +117,7 @@ const emit = defineEmits([
   'batch-show',
   'batch-move',
   'batch-download',
+  'batch-download-stats',
   'update:searchForm',
 ]);
 
