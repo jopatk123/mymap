@@ -1,7 +1,9 @@
 import L from 'leaflet';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { wgs84ToGcj02, wgs84ToBd09 } from '@/utils/coordinate-transform.js';
 
-export function showPointEditDialog(pointData, mapInstance) {
+// options?: { onPositionChange?: (lngWgs:number, latWgs:number) => void }
+export function showPointEditDialog(pointData, mapInstance, options = {}) {
   const dialogContent = `
       <div style="padding: 20px;">
         <div style="margin-bottom: 15px;">
@@ -83,9 +85,14 @@ export function showPointEditDialog(pointData, mapInstance) {
         const coordsChanged = pointData.coordinates[0] !== newLng || pointData.coordinates[1] !== newLat;
         if (coordsChanged) {
           pointData.coordinates = [newLng, newLat];
-          const newLatLng = L.latLng(newLat, newLng);
-          pointData.layer.setLatLng(newLatLng);
-          mapInstance.setView(newLatLng, mapInstance.getZoom());
+          if (typeof options.onPositionChange === 'function') {
+            try { options.onPositionChange(newLng, newLat); } catch (_) {}
+          } else {
+            // 回退：按 WGS84 直接更新图层（仅当底图非高德或无需转换时）
+            const newLatLng = L.latLng(newLat, newLng);
+            try { pointData.layer.setLatLng(newLatLng); } catch (_) {}
+            try { mapInstance.setView(newLatLng, mapInstance.getZoom()); } catch (_) {}
+          }
         }
 
         ElMessage.success('点位信息已更新');
@@ -122,18 +129,42 @@ export function showPointEditDialog(pointData, mapInstance) {
 
     if (amapBtn) {
       amapBtn.onclick = () => {
-        const lng = document.getElementById('point-lng').value;
-        const lat = document.getElementById('point-lat').value;
-        const url = `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(pointData.name)}`;
+        const lngStr = document.getElementById('point-lng').value;
+        const latStr = document.getElementById('point-lat').value;
+        const lng = parseFloat(lngStr);
+        const lat = parseFloat(latStr);
+        if (Number.isNaN(lng) || Number.isNaN(lat)) {
+          ElMessage.error('经纬度无效，无法在高德地图中打开');
+          return;
+        }
+        // WGS84 -> GCJ-02（高德）
+        let gcjLng = lng;
+        let gcjLat = lat;
+        try {
+          [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat);
+        } catch (_) {}
+        const url = `https://uri.amap.com/marker?position=${gcjLng},${gcjLat}&name=${encodeURIComponent(pointData.name || '标记')}`;
         window.open(url, '_blank');
       };
     }
 
     if (baiduBtn) {
       baiduBtn.onclick = () => {
-        const lng = document.getElementById('point-lng').value;
-        const lat = document.getElementById('point-lat').value;
-        const url = `https://api.map.baidu.com/marker?location=${lat},${lng}&title=${encodeURIComponent(pointData.name)}&content=${encodeURIComponent(pointData.description || '')}&output=html&src=webapp.baidu.openAPIdemo`;
+        const lngStr = document.getElementById('point-lng').value;
+        const latStr = document.getElementById('point-lat').value;
+        const lng = parseFloat(lngStr);
+        const lat = parseFloat(latStr);
+        if (Number.isNaN(lng) || Number.isNaN(lat)) {
+          ElMessage.error('经纬度无效，无法在百度地图中打开');
+          return;
+        }
+        // WGS84 -> BD-09（百度）
+        let bdLng = lng;
+        let bdLat = lat;
+        try {
+          [bdLng, bdLat] = wgs84ToBd09(lng, lat);
+        } catch (_) {}
+        const url = `https://api.map.baidu.com/marker?location=${bdLat},${bdLng}&title=${encodeURIComponent(pointData.name || '标记')}&content=${encodeURIComponent(pointData.description || '')}&output=html&src=webapp.baidu.openAPIdemo`;
         window.open(url, '_blank');
       };
     }

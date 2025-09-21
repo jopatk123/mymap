@@ -1,15 +1,19 @@
 import L from 'leaflet';
 import { ElMessage } from 'element-plus';
 import { drawings, state } from '../state.js';
+import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 
 export function startDrawPolygon(deactivateTool) {
   if (!state.mapInstance) return;
 
   let points = [];
+  let wgsPoints = []; // 存储为 WGS84
   let polygon = null;
 
   const onClick = (e) => {
-    points.push(e.latlng);
+    points.push(e.latlng); // 渲染使用 GCJ-02
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+    wgsPoints.push([wgsLng, wgsLat]);
     if (points.length === 1) {
       polygon = L.polygon(points, {
         fillColor: '#00ff00',
@@ -24,7 +28,12 @@ export function startDrawPolygon(deactivateTool) {
 
   const onDblClick = () => {
     if (polygon && points.length > 2) {
-      drawings.value.push({ type: 'Polygon', coordinates: [points.map((p) => [p.lng, p.lat])], layer: polygon });
+      drawings.value.push({
+        type: 'Polygon',
+        coordinates: [wgsPoints], // WGS84
+        coordinateSystem: 'wgs84',
+        layer: polygon,
+      });
       ElMessage.success('添加面成功');
     }
     cleanup();

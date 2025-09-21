@@ -66,23 +66,16 @@ export function createPolygonActions(context) {
       }
     });
     if (window.L && mapInstance.value) {
-      if (polygonPoints.value.length >= 3) {
-        const polygon = window.L.polygon(latlngs, {
-          color: 'blue',
-          weight: 2,
-          opacity: 0.7,
-          fill: false,
-        }).addTo(mapInstance.value);
-        tempLayers.value.push(polygon);
-      } else {
-        const polyline = window.L.polyline(latlngs, {
-          color: 'blue',
-          weight: 2,
-          opacity: 0.7,
-          dashArray: '5, 5',
-        }).addTo(mapInstance.value);
-        tempLayers.value.push(polyline);
-      }
+      // 绘制过程中不闭合多边形：始终使用折线
+      const isReadyToClose = polygonPoints.value.length >= 3;
+      const polyline = window.L.polyline(latlngs, {
+        color: 'blue',
+        weight: 2,
+        opacity: 0.7,
+        // 少于3个点使用虚线，3个及以上使用实线，但不自动首尾相连
+        dashArray: isReadyToClose ? undefined : '5, 5',
+      }).addTo(mapInstance.value);
+      tempLayers.value.push(polyline);
     }
   };
 
@@ -98,6 +91,12 @@ export function createPolygonActions(context) {
           ? tempPolygonName.value.trim()
           : `自定义区域 ${count + 1}`;
       store.addCustomArea(polygonPoints.value, autoName);
+      // 完成绘制后：清除临时折线，最终闭合多边形由 map-sync 依据 store.areas 渲染
+      try {
+        clearTempLayers();
+      } catch (err) {
+        console.warn('[useAreaSelector] completePolygonDrawing: failed to clear temp layers', err);
+      }
   // 已移除添加自定义区域成功提示
   // ElMessage.success(`已添加自定义区域: ${autoName}`);
     } catch (err) {

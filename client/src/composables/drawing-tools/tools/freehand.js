@@ -1,11 +1,13 @@
 import L from 'leaflet';
 import { ElMessage } from 'element-plus';
 import { drawings, state } from '../state.js';
+import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 
 export function startFreehand(deactivateTool) {
   if (!state.mapInstance) return;
 
   let points = [];
+  let wgsPoints = [];
   let polyline = null;
 
   // 禁用地图拖拽
@@ -14,6 +16,8 @@ export function startFreehand(deactivateTool) {
   const onMouseDown = (e) => {
     state.isDrawing = true;
     points = [e.latlng];
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+    wgsPoints = [[wgsLng, wgsLat]];
     polyline = L.polyline(points, { color: '#ff6600', weight: 4, smoothFactor: 1 }).addTo(state.drawingLayer);
     L.DomEvent.stopPropagation(e.originalEvent);
   };
@@ -21,6 +25,8 @@ export function startFreehand(deactivateTool) {
   const onMouseMove = (e) => {
     if (state.isDrawing && polyline) {
       points.push(e.latlng);
+      const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+      wgsPoints.push([wgsLng, wgsLat]);
       polyline.setLatLngs(points);
     }
   };
@@ -31,7 +37,7 @@ export function startFreehand(deactivateTool) {
 
   const onDblClick = () => {
     if (polyline && points.length > 1) {
-      drawings.value.push({ type: 'Freehand', coordinates: points.map((p) => [p.lng, p.lat]), layer: polyline });
+      drawings.value.push({ type: 'Freehand', coordinates: wgsPoints, coordinateSystem: 'wgs84', layer: polyline });
       ElMessage.success('画笔绘制完成');
     }
     cleanup();

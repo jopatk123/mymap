@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { ElMessage } from 'element-plus';
 import { drawings, state } from '../state.js';
 import { showPointEditDialog } from '../ui/point-edit-dialog.js';
+import { gcj02ToWgs84, wgs84ToGcj02 } from '@/utils/coordinate-transform.js';
 
 export function startDrawPoint(deactivateTool) {
   if (!state.mapInstance) return;
@@ -23,9 +24,13 @@ export function startDrawPoint(deactivateTool) {
       pane: 'markerPane',
     }).addTo(state.drawingLayer);
 
+    // 将地图点击得到的 GCJ-02 坐标转换为 WGS84 进行存储与展示
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+
     const pointData = {
       type: 'Point',
-      coordinates: [e.latlng.lng, e.latlng.lat],
+      coordinates: [wgsLng, wgsLat], // 内部与对话框均使用 WGS84
+      coordinateSystem: 'wgs84',
       layer: marker,
       name: defaultName,
       description: '',
@@ -47,8 +52,17 @@ export function startDrawPoint(deactivateTool) {
       } catch (err) {
         console.warn('[drawing-tools] failed to stop dom event', err);
       }
-      // open edit dialog
-      showPointEditDialog(pointData, state.mapInstance);
+      // open edit dialog（对话框展示/编辑 WGS84；更新图层时转换为 GCJ-02 渲染）
+      showPointEditDialog(pointData, state.mapInstance, {
+        onPositionChange: (lngWgs, latWgs) => {
+          try {
+            const [gcjLng, gcjLat] = wgs84ToGcj02(lngWgs, latWgs);
+            const newLatLng = L.latLng(gcjLat, gcjLng);
+            pointData.layer.setLatLng(newLatLng);
+            state.mapInstance?.setView(newLatLng, state.mapInstance.getZoom());
+          } catch (_) {}
+        },
+      });
     };
     marker.on('click', openEdit);
     marker.on('touchend', openEdit);

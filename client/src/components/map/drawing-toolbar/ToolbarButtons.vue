@@ -103,7 +103,7 @@
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="kml">导出为KML</el-dropdown-item>
+            <el-dropdown-item command="kml">导出为KML (WGS84)</el-dropdown-item>
             <el-dropdown-item command="csv">导出为CSV</el-dropdown-item>
           </el-dropdown-menu>
         </template>

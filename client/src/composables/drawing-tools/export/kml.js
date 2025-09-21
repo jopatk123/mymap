@@ -15,9 +15,13 @@ function downloadFile(content, filename, mimeType) {
   URL.revokeObjectURL(url);
 }
 
-function convertCoord(lng, lat) {
+function convertCoord(lng, lat, system = 'gcj02') {
   try {
-    // 尝试把坐标从 GCJ-02 转为 WGS84（如果原本就是 WGS84，误差通常较小）
+    // 如果坐标已经是 WGS84，直接返回
+    if (system && system.toLowerCase() === 'wgs84') {
+      return [lng, lat];
+    }
+    // 否则按 GCJ-02 处理转换为 WGS84
     const [wgsLng, wgsLat] = gcj02ToWgs84(lng, lat);
     return [wgsLng, wgsLat];
   } catch (e) {
@@ -180,6 +184,7 @@ export function exportToKml(format = 'kml') {
     const type = d.type || (d.geometry && d.geometry.type) || 'Point';
     const name = d.name || (d.options && d.options.name) || '';
     const description = d.description || (d.options && d.options.description) || '';
+    const system = (d.coordinateSystem || 'gcj02').toLowerCase();
     const rawCoords = normalizeLatLngs(d);
 
     const copy = {
@@ -187,6 +192,7 @@ export function exportToKml(format = 'kml') {
       name,
       description,
       coordinates: rawCoords,
+      coordinateSystem: system,
     };
 
     // 如果没有可用坐标则跳过转换（后续生成时会忽略）
@@ -195,12 +201,12 @@ export function exportToKml(format = 'kml') {
     // 执行坐标转换（支持点、线、面）
     if (copy.type === 'Point' && Array.isArray(copy.coordinates)) {
       const [lng, lat] = copy.coordinates;
-      const [wgsLng, wgsLat] = convertCoord(lng, lat);
+      const [wgsLng, wgsLat] = convertCoord(lng, lat, system);
       copy.coordinates = [wgsLng, wgsLat];
     } else if (copy.type === 'Polygon' && Array.isArray(copy.coordinates) && Array.isArray(copy.coordinates[0])) {
       copy.coordinates[0] = copy.coordinates[0].map(c => {
         const [lng, lat] = c;
-        const [wgsLng, wgsLat] = convertCoord(lng, lat);
+        const [wgsLng, wgsLat] = convertCoord(lng, lat, system);
         return [wgsLng, wgsLat];
       });
     } else if (Array.isArray(copy.coordinates)) {
@@ -210,7 +216,7 @@ export function exportToKml(format = 'kml') {
         if (arr.length === 0) return [];
         if (typeof arr[0] === 'number') {
           const [lng, lat] = arr;
-          const [wgsLng, wgsLat] = convertCoord(lng, lat);
+          const [wgsLng, wgsLat] = convertCoord(lng, lat, system);
           return [wgsLng, wgsLat];
         }
         return arr.map(mapCoords);

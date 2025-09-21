@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import { ElMessage } from 'element-plus';
 import { drawings, state } from '../state.js';
+import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 
 // 启动测距工具
 export function startMeasure(deactivateTool) {
@@ -9,11 +10,14 @@ export function startMeasure(deactivateTool) {
   let measureLine = null;
   let totalDistance = 0;
   let points = [];
+  let wgsPoints = [];
   let segmentTooltips = []; // 每段距离提示
   let pointMarkers = []; // 点击位置小点
 
   const onClick = (e) => {
     points.push(e.latlng);
+    const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
+    wgsPoints.push([wgsLng, wgsLat]);
     const dot = L.circleMarker(e.latlng, {
       radius: 4,
       fillColor: '#ff0000',
@@ -62,7 +66,8 @@ export function startMeasure(deactivateTool) {
     if (measureLine) {
       drawings.value.push({
         type: 'Measure',
-        coordinates: points.map((p) => [p.lng, p.lat]),
+        coordinates: wgsPoints, // 存储为 WGS84
+        coordinateSystem: 'wgs84',
         layer: measureLine,
         distance: totalDistance,
         tooltips: [...segmentTooltips, state.measureTooltip],
