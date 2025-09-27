@@ -17,7 +17,7 @@ services:
       UPLOAD_DIR: uploads
     volumes:
       - mymap_data:/app/server/data
-      - mymap_uploads:/app/uploads
+      - mymap_uploads:/app/server/uploads
 
 volumes:
   mymap_data:

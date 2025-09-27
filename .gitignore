@@ -183,6 +183,7 @@ debug-startup.js
 #docker
 # temporary build context used to include local node_modules for offline builds
 build_context_extra/
+mymap_image.tar
 
 # exported images archive (created by build_mymap_images_tar.sh)
 images/

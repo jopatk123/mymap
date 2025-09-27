@@ -13,12 +13,13 @@ export DB_PATH
 if [ -z "${UPLOAD_DIR:-}" ]; then
   UPLOAD_DIR="uploads"
 fi
-mkdir -p "${UPLOAD_DIR}" \
-         "${UPLOAD_DIR}/kml" \
-         "${UPLOAD_DIR}/kml-basemap" \
-         "${UPLOAD_DIR}/panoramas" \
-         "${UPLOAD_DIR}/thumbnails" \
-         "${UPLOAD_DIR}/videos"
+# Ensure upload directories are created under server/ so they match the app's cwd (/app/server)
+mkdir -p "server/${UPLOAD_DIR}" \
+         "server/${UPLOAD_DIR}/kml" \
+         "server/${UPLOAD_DIR}/kml-basemap" \
+         "server/${UPLOAD_DIR}/panoramas" \
+         "server/${UPLOAD_DIR}/thumbnails" \
+         "server/${UPLOAD_DIR}/videos"
 
 mkdir -p server/logs
 
