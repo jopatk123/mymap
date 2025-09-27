@@ -3,8 +3,18 @@ set -euo pipefail
 
 cd /app
 
+# Normalize DB_PATH to absolute path under /app/server if not provided or provided as relative
 if [ -z "${DB_PATH:-}" ]; then
-  DB_PATH="server/data/panorama_map.db"
+  DB_PATH="/app/server/data/panorama_map.db"
+elif [ "${DB_PATH#*/}" = "${DB_PATH}" ]; then
+  # if DB_PATH is relative (e.g., server/data/panorama_map.db or ./data/panorama_map.db), anchor it to /app
+  case "${DB_PATH}" in
+    /*) : ;; # already absolute
+    server/*) DB_PATH="/app/${DB_PATH}" ;;
+    ./*) DB_PATH="/app/server/${DB_PATH#./}" ;;
+    data/*) DB_PATH="/app/server/${DB_PATH}" ;;
+    *) DB_PATH="/app/${DB_PATH}" ;;
+  esac
 fi
 DB_DIR="$(dirname "${DB_PATH}")"
 mkdir -p "${DB_DIR}"

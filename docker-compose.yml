@@ -13,7 +13,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3002
-      DB_PATH: server/data/panorama_map.db
+      DB_PATH: /app/server/data/panorama_map.db
       UPLOAD_DIR: uploads
     volumes:
       - mymap_data:/app/server/data
