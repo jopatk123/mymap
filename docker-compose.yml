@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  mymap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mymap:latest
+    container_name: mymap
+    restart: unless-stopped
+    ports:
+      - "${MYMAP_PORT:-50000}:3002"
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      DB_PATH: server/data/panorama_map.db
+      UPLOAD_DIR: uploads
+    volumes:
+      - mymap-db:/app/server/data
+      - mymap-uploads:/app/uploads
+
+volumes:
+  mymap-db:
+    driver: local
+  mymap-uploads:
+    driver: local
