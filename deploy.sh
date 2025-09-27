@@ -32,4 +32,5 @@ echo "[deploy] 构建并启动容器 (使用 ${COMPOSE_FILE})..."
 docker compose -f "${COMPOSE_FILE}" up -d --build --remove-orphans
 
 echo "[deploy] 部署完成，可通过 http://127.0.0.1:${MYMAP_PORT}/ 访问"
-echo "[deploy] 数据卷: mymap-db (SQLite) / mymap-uploads (文件上传)"
+echo "[deploy] 数据卷: mymap_data (SQLite) / mymap_uploads (文件上传)"
+
