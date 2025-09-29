@@ -23,11 +23,7 @@ export default defineConfig({
       reporter: ['text', 'html'],
       reportsDirectory: './coverage',
       include: ['src/**/*.{js,vue}'],
-      exclude: [
-        'src/**/*.d.ts',
-        'src/**/__tests__/**',
-        'src/setupTests.js',
-      ],
+      exclude: ['src/**/*.d.ts', 'src/**/__tests__/**', 'src/setupTests.js'],
     },
   },
 });

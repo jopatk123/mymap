@@ -77,6 +77,21 @@ module.exports = {
       },
     },
     {
+      files: ['client/src/**/*.{test,spec}.{js,ts,vue}'],
+      env: {
+        browser: true,
+      },
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly',
+      },
+    },
+    {
       files: [
         '**/*.config.{js,cjs,mjs}',
         '**/vite.config.js',

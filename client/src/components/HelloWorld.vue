@@ -9,5 +9,7 @@
 import { ref } from 'vue';
 defineProps({ msg: { type: String, default: 'Hello' } });
 const count = ref(0);
-function increment() { count.value += 1; }
+function increment() {
+  count.value += 1;
+}
 </script>
