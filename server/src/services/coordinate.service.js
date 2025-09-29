@@ -67,7 +67,14 @@ class CoordinateService {
       }
 
       return coordinates.map((coord) => {
-        if (!coord.lat || !coord.lng) {
+        if (
+          coord === null ||
+          coord === undefined ||
+          coord.lat === undefined ||
+          coord.lat === null ||
+          coord.lng === undefined ||
+          coord.lng === null
+        ) {
           throw new Error('坐标数据格式错误');
         }
         return this.convertCoordinate(coord.lat, coord.lng, from, to);

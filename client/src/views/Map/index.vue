@@ -210,7 +210,7 @@ const { handleFolderVisibilityChanged, handleKmlStylesUpdated, handlePointStyles
   );
 
 // 初始化器
-const { initializeMap, cleanup } = useMapInitializer(
+const { cleanup } = useMapInitializer(
   loadAllPointStyles,
   videoPointStyles,
   panoramaPointStyles,
@@ -239,14 +239,13 @@ const closePanoramaViewer = () => {
   autoRotating.value = false;
 };
 
-// 初始化生命周期
-initializeMap();
+const handleShowKmlSettings = () => {
+  showKmlSettings.value = true;
+};
 
 // 监听全局事件以便从侧栏快捷入口打开 KML 设置
 onMounted(() => {
-  window.addEventListener('show-kml-settings', () => {
-    showKmlSettings.value = true;
-  });
+  window.addEventListener('show-kml-settings', handleShowKmlSettings);
 
   // 强制从后端拉取点位样式，忽略本地过期缓存（低风险：如后端不可用则回退到本地缓存）
   (async () => {
@@ -260,9 +259,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('show-kml-settings', () => {
-    showKmlSettings.value = true;
-  });
+  window.removeEventListener('show-kml-settings', handleShowKmlSettings);
 });
 
 // 处理地址定位

@@ -27,8 +27,8 @@
 .
 ├── client/                 # 前端源代码（Vue 3 + Vite）
 ├── server/                 # 后端源代码（Express + SQLite）
+├── server/uploads/         # 开发模式下的多媒体上传目录
 ├── data/                   # 默认 SQLite 数据库存储路径
-├── uploads/                # 多媒体上传目录（开发模式）
 ├── deploy.sh               # Docker 部署脚本
 ├── start.sh / stop.sh      # 本地启动/停止辅助脚本
 ├── Dockerfile              # 多阶段 Docker 构建文件

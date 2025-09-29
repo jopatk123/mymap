@@ -7,14 +7,17 @@ class PanoramaMutationController {
     try {
       const { title, description, lat, lng, imageUrl, thumbnailUrl, fileSize, fileType, folderId } =
         req.body;
-      if (!title || !lat || !lng || !imageUrl) {
+      const normalizedTitle = typeof title === 'string' ? title.trim() : '';
+      const latNum = lat === '' || lat === undefined || lat === null ? NaN : Number(lat);
+      const lngNum = lng === '' || lng === undefined || lng === null ? NaN : Number(lng);
+      if (!normalizedTitle || !imageUrl || !Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
         return res.status(400).json(errorResponse('缺少必要参数'));
       }
       const panoramaData = {
-        title,
+        title: normalizedTitle,
         description,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
+        lat: latNum,
+        lng: lngNum,
         imageUrl,
         thumbnailUrl,
         fileSize: fileSize ? parseInt(fileSize) : null,
@@ -56,22 +59,27 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('无效的全景图ID'));
       }
       const panoramaData = {};
-      if (title !== undefined) panoramaData.title = title;
+      if (title !== undefined) {
+        panoramaData.title = typeof title === 'string' ? title.trim() : title;
+      }
       if (description !== undefined) panoramaData.description = description;
       if (imageUrl !== undefined) panoramaData.imageUrl = imageUrl;
       if (thumbnailUrl !== undefined) panoramaData.thumbnailUrl = thumbnailUrl;
       if (folderId !== undefined) panoramaData.folderId = folderId;
       if (isVisible !== undefined) panoramaData.isVisible = isVisible;
       if (sortOrder !== undefined) panoramaData.sortOrder = sortOrder;
-      if (lat !== undefined && lng !== undefined) {
-        panoramaData.lat = parseFloat(lat);
-        panoramaData.lng = parseFloat(lng);
-        if (
-          panoramaData.lat < -90 ||
-          panoramaData.lat > 90 ||
-          panoramaData.lng < -180 ||
-          panoramaData.lng > 180
-        ) {
+      if (lat !== undefined || lng !== undefined) {
+        if (lat === undefined || lng === undefined) {
+          return res.status(400).json(errorResponse('坐标参数必须同时提供'));
+        }
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+          return res.status(400).json(errorResponse('坐标参数格式错误'));
+        }
+        panoramaData.lat = latNum;
+        panoramaData.lng = lngNum;
+        if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
           return res.status(400).json(errorResponse('坐标参数超出有效范围'));
         }
       }
