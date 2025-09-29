@@ -116,6 +116,11 @@ cd server && npm run test:coverage   # 后端覆盖率
 | `ALLOWED_FILE_TYPES` | 见 `server/src/config/index.js` | 允许上传的 MIME 类型 |
 | `JWT_SECRET` | `default-secret-key` | 鉴权密钥（若启用认证） |
 | `LOG_LEVEL` | `info` | 日志级别 |
+| `VITE_API_BASE_URL` | （可选，默认通过 `/api` 代理） | 前端向后端发送 HTTP 请求时使用的基础地址（例如 `http://localhost:3002`）。 |
+| `VITE_WS_BASE_URL` | 自动推断 | WebSocket 根地址（例如 `ws://localhost:3002`），显式设置以在仅 HTTP 传输时避免端口不一致。 |
+| `VITE_WS_PATH` | 空 | WebSocket 路径前缀，服务端自定义握手路径时设置（例如 `/socket`）。 |
+| `VITE_BACKEND_HOST` | `localhost`（开发回退） | Vite 开发模式下推断 WebSocket 地址时使用的主机名。 |
+| `VITE_BACKEND_PORT` | `3002`（开发回退） | Vite 开发模式下推断 WebSocket 地址时使用的端口。 |
 
 > 建议将上述变量写入 `.env` 文件，并在部署环境通过密钥管理服务注入。
 

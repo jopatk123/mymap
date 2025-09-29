@@ -1,5 +1,47 @@
 import { defineStore } from 'pinia';
 import { initialViewApi } from '../api/initial-view.js';
+import { getWebSocketBaseUrl } from '@/utils/runtime-config.js';
+
+const DEFAULT_MAP_CENTER = [39.9042, 116.4074];
+const DEFAULT_MAP_ZOOM = 12;
+
+const toLatLng = (value) => {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return null;
+  }
+
+  const parsed = value.map((n) => Number(n));
+  if (!parsed.every((n) => Number.isFinite(n))) {
+    return null;
+  }
+
+  const [first, second] = parsed;
+  const firstLooksLat = Math.abs(first) <= 90;
+  const secondLooksLat = Math.abs(second) <= 90;
+  const firstLooksLng = Math.abs(first) <= 180;
+  const secondLooksLng = Math.abs(second) <= 180;
+
+  const latLngCandidate = firstLooksLat && secondLooksLng && !secondLooksLat;
+  const lngLatCandidate = firstLooksLng && secondLooksLat && !firstLooksLat;
+
+  if (latLngCandidate && !lngLatCandidate) {
+    return [first, second];
+  }
+
+  if (lngLatCandidate && !latLngCandidate) {
+    return [second, first];
+  }
+
+  if (!firstLooksLat && secondLooksLat) {
+    return [second, first];
+  }
+
+  if (!secondLooksLng && firstLooksLng) {
+    return [second, first];
+  }
+
+  return [first, second];
+};
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -44,15 +86,21 @@ export const useAppStore = defineStore('app', {
     // 获取完整的地图配置
     mapConfig: (state) => {
       // 如果初始显示设置已启用，使用自定义设置，否则使用默认设置
-      const defaultCenter = state.mapSettings.defaultCenter;
-      const defaultZoom = state.mapSettings.defaultZoom;
+      const defaultCenter = toLatLng(state.mapSettings.defaultCenter) || [...DEFAULT_MAP_CENTER];
+      const defaultZoom = Number(state.mapSettings.defaultZoom) || DEFAULT_MAP_ZOOM;
 
       let center = defaultCenter;
       let zoom = defaultZoom;
 
       if (state.initialViewSettings.enabled && state.initialViewSettings.loaded) {
-        // 转换坐标格式：从 WGS84 [lng, lat] 转为 Leaflet [lat, lng]
-        zoom = state.initialViewSettings.zoom;
+        const candidateCenter = toLatLng(state.initialViewSettings.center);
+        if (candidateCenter) {
+          center = candidateCenter;
+        }
+        const candidateZoom = Number(state.initialViewSettings.zoom);
+        if (Number.isFinite(candidateZoom) && candidateZoom > 0) {
+          zoom = candidateZoom;
+        }
       }
 
       return {
@@ -302,11 +350,24 @@ export const useAppStore = defineStore('app', {
     // 设置WebSocket连接以接收服务器端配置更新广播
     setupWebSocketConnection() {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const host = window.location.host; // 包含端口
-        const wsUrl = `${protocol}://${host}`;
+        const wsUrl = getWebSocketBaseUrl();
+        if (!wsUrl) {
+          return;
+        }
+
+        if (this._ws) {
+          try {
+            this._ws.close();
+          } catch (error) {
+            console.warn('[app.store] 关闭旧的 WebSocket 连接失败:', error);
+          }
+        }
 
         const ws = new WebSocket(wsUrl);
+        this._wsBaseUrl = wsUrl;
+        ws.addEventListener('open', () => {
+          this._wsReconnectAttempted = false;
+        });
 
         ws.addEventListener('message', (evt) => {
           try {
