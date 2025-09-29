@@ -1,27 +1,89 @@
 module.exports = {
   root: true,
   env: {
-    browser: true,
-    node: true,
     es2021: true,
   },
-  extends: ['eslint:recommended', 'plugin:vue/vue3-recommended', 'plugin:prettier/recommended'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
+  ignorePatterns: [
+    '**/dist/**',
+    '**/coverage/**',
+    'server/logs/**',
+    'server/server/logs/**',
+    'tmp/**',
+    'mymap_image.tar',
+  ],
+  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
   rules: {
-    // 项目可根据需要调整规则
     'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-    // 允许空的 catch 块（许多位置使用空块作为占位）
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^(_|props$)' }],
     'no-empty': ['error', { allowEmptyCatch: true }],
-    // 在短期内将变更 props 的规则降低为警告，便于渐进修复
-    'vue/no-mutating-props': 'warn',
-    // 允许单词组件名（在本项目中 index.vue 较多）
-    'vue/multi-word-component-names': 'off',
-    // 减少某些严格字符串/正则检查为警告
     'no-control-regex': 'warn',
     'no-useless-escape': 'warn',
   },
+  overrides: [
+    {
+      files: ['client/**/*.{js,vue}'],
+      env: {
+        browser: true,
+        node: false,
+      },
+      parser: 'vue-eslint-parser',
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+      extends: ['plugin:vue/vue3-recommended'],
+      globals: {
+        defineProps: 'readonly',
+        defineEmits: 'readonly',
+        defineExpose: 'readonly',
+        withDefaults: 'readonly',
+        L: 'readonly',
+        AMap: 'readonly',
+      },
+      rules: {
+        'vue/no-mutating-props': 'warn',
+        'vue/multi-word-component-names': 'off',
+      },
+    },
+    {
+      files: ['server/**/*.{js,cjs}', '*.cjs'],
+      env: {
+        browser: false,
+        node: true,
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'script',
+      },
+      rules: {
+        'no-console': 'off',
+      },
+    },
+    {
+      files: ['server/**/*.{test,spec}.{js,cjs}'],
+      env: {
+        jest: true,
+      },
+    },
+    {
+      files: ['**/*.config.{js,cjs,mjs}', '**/vite.config.js', '**/vite.config.cjs', '**/eslint.config.{js,cjs,mjs}'],
+      env: {
+        browser: false,
+        node: true,
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        process: 'readonly',
+      },
+    },
+  ],
 };
