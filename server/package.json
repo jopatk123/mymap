@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon --exec 'node --trace-deprecation src/server.js'",
     "start": "node src/server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "compression": "^1.7.4",
