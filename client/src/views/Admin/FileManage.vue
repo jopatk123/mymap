@@ -97,17 +97,6 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { onUnmounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { storeToRefs } from 'pinia';
-
-import { useFileManagement } from '@/composables/use-file-management';
-import { useFileOperations } from '@/composables/use-file-operations';
-import { useBatchOperations } from '@/composables/use-batch-operations';
-import { useFolderStore } from '@/store/folder.js';
-
-// 导入拆分后的组件
 import FileManageHeader from '@/components/admin/FileManageHeader.vue';
 import FileSearchBar from '@/components/admin/FileSearchBar.vue';
 import FileListTable from '@/components/admin/FileListTable.vue';
@@ -116,11 +105,8 @@ import FileUploadDialogs from '@/components/admin/FileUploadDialogs.vue';
 import FileActionDialogs from '@/components/admin/FileActionDialogs.vue';
 import FolderTree from '@/components/admin/FolderTree.vue';
 
-// Store
-const folderStore = useFolderStore();
-const { flatFolders } = storeToRefs(folderStore);
+import { useFileManagePage } from './composables/useFileManagePage.js';
 
-// 使用组合式函数
 const {
   fileList,
   loading,
@@ -129,7 +115,6 @@ const {
   pagination,
   loadFileList,
   handleSearch,
-  resetSearch,
   handleSizeChange,
   handleCurrentChange,
   handleFolderSelected,
@@ -137,270 +122,30 @@ const {
   getFileThumbnail,
   formatCoordinate,
   formatDate,
-} = useFileManagement();
-
-// mark resetSearch as intentionally available (may be used by child components via refs)
-void resetSearch;
-
-const {
+  folderPath,
+  validFolders,
+  handleFolderUpdated,
+  uploadDialogs,
+  handleUploadRequest,
+  selectedRows,
+  handleSelectionChange,
+  handleBatchActionWithMove,
+  handleBatchDownloadStats,
+  downloading,
   currentFile,
-  dialogStates: actionDialogs,
+  actionDialogs,
   moveToFolderId,
-  movingFiles,
   moving,
   viewFile,
   editFile,
   deleteFile,
-  handleMoveConfirm,
+  handleMoveConfirmWithCleanup,
   handleFileDeleted,
   handleImageError,
-} = useFileOperations();
-
-const { selectedRows, handleSelectionChange, handleBatchAction } = useBatchOperations();
-
-// 下载状态
-const downloading = ref(false);
-
-// 对话框状态管理
-const uploadDialogs = reactive({
-  showUploadDialog: false,
-  showVideoUploadDialog: false,
-  showKmlUploadDialog: false,
-  showPanoramaBatchUploadDialog: false,
-});
-
-// 计算属性
-const folderPath = computed(() => {
-  if (!selectedFolder.value) return [];
-  return folderStore.getFolderPath(selectedFolder.value.id);
-});
-
-const validFolders = computed(() => {
-  return flatFolders.value.filter(
-    (folder) =>
-      folder &&
-      folder.id !== null &&
-      folder.id !== undefined &&
-      (typeof folder.id === 'number' || typeof folder.id === 'string')
-  );
-});
-
-// 初始化
-onMounted(() => {
-  loadFileList();
-  loadFolders();
-  window.addEventListener('show-kml-files', handleShowKmlFiles);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('show-kml-files', handleShowKmlFiles);
-});
-
-// 加载文件夹
-const loadFolders = async () => {
-  try {
-    await folderStore.fetchFolders();
-  } catch (error) {
-    ElMessage.error('加载文件夹失败: ' + (error?.message || error));
-  }
-};
-
-// 文件夹更新处理
-const handleFolderUpdated = () => {
-  loadFileList();
-};
-
-// 上传请求处理
-const handleUploadRequest = (type) => {
-  switch (type) {
-    case 'panorama':
-      uploadDialogs.showUploadDialog = true;
-      break;
-    case 'video':
-      uploadDialogs.showVideoUploadDialog = true;
-      break;
-    case 'kml':
-      uploadDialogs.showKmlUploadDialog = true;
-      break;
-  }
-};
-
-// 批量操作处理（重写以支持移动对话框）
-const handleBatchActionWithMove = async (command) => {
-  if (command === 'move') {
-    movingFiles.value = selectedRows.value;
-    actionDialogs.showMoveDialog = true;
-  } else if (command === 'download') {
-    await handleBatchDownload();
-  } else {
-    await handleBatchAction(command, () => {
-      selectedRows.value = [];
-      loadFileList();
-    });
-  }
-};
-
-// 重写移动确认以清空选择
-const handleMoveConfirmWithCleanup = async () => {
-  await handleMoveConfirm(() => {
-    selectedRows.value = [];
-    loadFileList();
-    loadFolders();
-  });
-};
-
-// 生成下载链接
-const getFileDownloadUrl = (file) => {
-  if (!file) return null;
-  switch (file.fileType) {
-    case 'panorama':
-      // 使用后端下载端点以便写回EXIF GPS
-      if (file.id != null) {
-        return `/api/panoramas/${file.id}/download`;
-      }
-      return file.image_url || file.imageUrl || null;
-    case 'video':
-      return file.video_url || null;
-    case 'kml':
-      return file.file_url || file.url || file.image_url || null;
-    default:
-      return file.url || file.image_url || null;
-  }
-};
-
-// 触发浏览器下载
-const triggerDownload = (url, filename) => {
-  if (!url) return;
-  const a = document.createElement('a');
-  a.href = url;
-  if (filename) a.download = filename;
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
-
-// 批量下载
-const handleBatchDownload = async () => {
-  if (!selectedRows.value || selectedRows.value.length === 0) return;
-  try {
-    downloading.value = true;
-    // 逐个触发下载，避免被浏览器拦截
-    selectedRows.value.forEach((file, index) => {
-      const url = getFileDownloadUrl(file);
-      const ext = (() => {
-        if (file.fileType === 'panorama')
-          return (file.file_type && file.file_type.split('/')[1]) || 'jpg';
-        if (file.fileType === 'video')
-          return (file.file_type && file.file_type.split('/')[1]) || 'mp4';
-        if (file.fileType === 'kml') return 'kml';
-        return '';
-      })();
-      const name = (file.title || 'file') + (ext ? `.${ext}` : '');
-      setTimeout(() => triggerDownload(url, name), index * 200);
-    });
-  } finally {
-    setTimeout(() => {
-      downloading.value = false;
-    }, Math.min(selectedRows.value.length * 200 + 300, 3000));
-  }
-};
-
-// 生成 CSV 文本并触发下载
-const handleBatchDownloadStats = () => {
-  if (!selectedRows.value || selectedRows.value.length === 0) return;
-
-  // 表头：序号、类型、标题、描述、文件夹、经度、纬度
-  const headers = ['序号', '类型', '标题', '描述', '文件夹', '经度', '纬度'];
-
-  const escapeCSV = (text) => {
-    if (text === null || text === undefined) return '';
-    const str = String(text);
-    return /[",\n\r]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
-  };
-
-  const getTypeLabel = (t) => ({ panorama: '全景图', video: '视频', kml: 'KML文件' }[t] || '未知');
-
-  // 经纬度：全景图/视频可能有 lat,lng 或 latitude,longitude；KML 没有经纬度（置空）
-  const rows = selectedRows.value.map((file, idx) => {
-    const order = idx + 1;
-    const typeLabel = getTypeLabel(file.fileType);
-    const title = file.title || '';
-    const description = file.description || '';
-    const folder = file.folder_name || file.folderName || '默认文件夹';
-
-    // pick coordinates by type
-    let lon = '';
-    let lat = '';
-    if (file.fileType === 'panorama' || file.fileType === 'video') {
-      const latVal = file.lat ?? file.latitude;
-      const lonVal = file.lng ?? file.longitude;
-      if (latVal !== undefined && lonVal !== undefined && latVal !== null && lonVal !== null) {
-        // 保留原始值，不做格式化，方便后续统计
-        lat = latVal;
-        lon = lonVal;
-      }
-    }
-
-    return [
-      order,
-      escapeCSV(typeLabel),
-      escapeCSV(title),
-      escapeCSV(description),
-      escapeCSV(folder),
-      escapeCSV(lon),
-      escapeCSV(lat),
-    ].join(',');
-  });
-
-  const csv = [headers.join(','), ...rows].join('\r\n');
-
-  // 触发下载
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `文件统计_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-// 上传成功
-const handleUploadSuccess = async () => {
-  await loadFileList();
-  // 通知侧边栏KML组件刷新列表
-  window.dispatchEvent(new CustomEvent('kml-files-updated'));
-};
-
-// 显示 KML 文件视图并刷新列表
-// event.detail 可包含 { basemapOnly: boolean, includeBasemap: boolean }
-const handleShowKmlFiles = async (event) => {
-  try {
-    const detail = (event && event.detail) || {};
-    // 切换搜索为 KML 类型并重载
-    searchForm.fileType = 'kml';
-    // 透传 basemap 相关参数到 searchForm
-    searchForm.basemapOnly = !!detail.basemapOnly;
-    searchForm.includeBasemap = !!detail.includeBasemap;
-    selectedFolder.value = null;
-    pagination.page = 1;
-    await loadFileList();
-  } catch (error) {
-    void console.error('切换到KML列表失败:', error);
-  }
-};
-
-// 编辑成功
-const handleEditSuccess = async () => {
-  await loadFileList();
-};
-
-// 刷新：重新拉取当前条件下的列表
-const onRefresh = async () => {
-  await loadFileList();
-};
+  handleUploadSuccess,
+  handleEditSuccess,
+  onRefresh,
+} = useFileManagePage();
 </script>
 
 <style lang="scss" scoped>
