@@ -14,7 +14,9 @@
       <el-form-item label="坐标系说明">
         <div class="coordinate-info">
           <el-icon><InfoFilled /></el-icon>
-          <span>KML文件使用WGS-84坐标系，Excel文件中的经纬度也应使用WGS-84坐标系，系统将自动转换为适合地图显示的坐标</span>
+          <span
+            >KML文件使用WGS-84坐标系，Excel文件中的经纬度也应使用WGS-84坐标系，系统将自动转换为适合地图显示的坐标</span
+          >
         </div>
       </el-form-item>
 
@@ -29,11 +31,7 @@
 
       <!-- 作为底图选项（仅KML文件显示） -->
       <el-form-item v-if="form && isKmlFile" label="作为底图">
-        <el-switch
-          v-model="form.isBasemap"
-          active-text="是"
-          inactive-text="否"
-        />
+        <el-switch v-model="form.isBasemap" active-text="是" inactive-text="否" />
         <div v-if="form.isBasemap" class="basemap-hint">
           <el-icon><InfoFilled /></el-icon>
           <span>底图文件将在地图底层显示，通常用于参考线路或区域边界</span>
@@ -45,7 +43,6 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ElMessage } from 'element-plus';
 import { InfoFilled } from '@element-plus/icons-vue';
 import BaseUploadDialog from './BaseUploadDialog.vue';
 import PointUploadArea from './PointUploadArea.vue';
@@ -145,17 +142,19 @@ const handleKmlUpload = async (form, { setProgress }) => {
 const handleExcelUpload = async (form, { setProgress }) => {
   // 构建点位数据
   const points = validationResult.value.points || [];
-  
+
   if (points.length === 0) {
     throw new Error('没有找到有效的点位数据');
   }
 
   // 创建KML格式的数据发送到后端
   const kmlData = generateKmlFromPoints(points, form.title, form.description);
-  
+
   // 创建虚拟的KML文件
   const kmlBlob = new Blob([kmlData], { type: 'application/vnd.google-earth.kml+xml' });
-  const kmlFile = new File([kmlBlob], `${form.title}.kml`, { type: 'application/vnd.google-earth.kml+xml' });
+  const kmlFile = new File([kmlBlob], `${form.title}.kml`, {
+    type: 'application/vnd.google-earth.kml+xml',
+  });
 
   const formData = new FormData();
   formData.append('file', kmlFile);
@@ -181,14 +180,18 @@ const handleExcelUpload = async (form, { setProgress }) => {
 
 // 从Excel点位数据生成KML格式
 const generateKmlFromPoints = (points, title, description) => {
-  const placemarks = points.map(point => `
+  const placemarks = points
+    .map(
+      (point) => `
     <Placemark>
       <name><![CDATA[${point.name}]]></name>
       <description><![CDATA[${point.description || description || ''}]]></description>
       <Point>
         <coordinates>${point.longitude},${point.latitude},0</coordinates>
       </Point>
-    </Placemark>`).join('');
+    </Placemark>`
+    )
+    .join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">

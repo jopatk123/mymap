@@ -93,11 +93,12 @@ class ConfigService {
                 _t: Date.now(),
               };
               const text = JSON.stringify(payload);
-              
+
               let sentCount = 0;
               wss.clients.forEach((client) => {
                 try {
-                  if (client.readyState === 1) { // WebSocket.OPEN
+                  if (client.readyState === 1) {
+                    // WebSocket.OPEN
                     client.send(text);
                     sentCount++;
                   }
@@ -105,7 +106,7 @@ class ConfigService {
                   // 单个客户端发送失败，不影响其他客户端
                 }
               });
-              
+
               const Logger = require('../utils/logger');
               Logger.info(`初始显示设置已广播到 ${sentCount} 个WebSocket客户端`);
             }

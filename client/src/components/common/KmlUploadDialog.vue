@@ -1,9 +1,9 @@
 <template>
   <BaseUploadDialog
     :model-value="modelValue"
-  title="添加点位"
-  title-placeholder="请输入点位标题"
-  description-placeholder="请输入点位描述"
+    title="添加点位"
+    title-placeholder="请输入点位标题"
+    description-placeholder="请输入点位描述"
     :submit-handler="handleKmlUpload"
     :external-can-submit="kmlCanSubmit"
     @update:model-value="$emit('update:modelValue', $event)"
@@ -28,7 +28,7 @@
 
       <!-- 作为底图 选项 -->
       <el-form-item v-if="form" label="作为底图">
-  <!-- Checkbox for marking as basemap removed per UX change -->
+        <!-- Checkbox for marking as basemap removed per UX change -->
       </el-form-item>
 
       <!-- 地标预览 -->

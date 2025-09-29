@@ -29,15 +29,15 @@ export function useMapInstance(containerId) {
       keepBuffer: 2, // 保持更多瓦片缓存
     };
 
-    const mapOptions = { 
-      ...defaultOptions, 
-      ...animationSafeDefaults, 
+    const mapOptions = {
+      ...defaultOptions,
+      ...animationSafeDefaults,
       // 降低滚轮缩放频率与开销
       wheelDebounceTime: 40,
       wheelPxPerZoomLevel: 120,
       zoomAnimationThreshold: 4,
       bounceAtZoomLimits: false,
-      ...options 
+      ...options,
     };
     map.value = L.map(containerId, mapOptions);
 

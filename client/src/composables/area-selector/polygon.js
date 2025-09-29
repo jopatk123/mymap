@@ -24,8 +24,8 @@ export function createPolygonActions(context) {
     currentMode.value = 'polygon';
     isDrawingPolygon.value = true;
     polygonPoints.value = [];
-  // 已移除开始绘制多边形的提示
-  // ElMessage.info('点击地图绘制多边形区域，双击完成绘制');
+    // 已移除开始绘制多边形的提示
+    // ElMessage.info('点击地图绘制多边形区域，双击完成绘制');
     try {
       if (mapInstance.value.on) {
         mapInstance.value.on('click', handlePolygonClick);
@@ -35,7 +35,10 @@ export function createPolygonActions(context) {
           '[useAreaSelector] startPolygonSelection: mapInstance has no .on method',
           mapInstance.value
         );
-        ElMessage.error({ message: '地图对象不具备事件绑定方法 (on)，绘制功能可能不可用', duration: 1000 });
+        ElMessage.error({
+          message: '地图对象不具备事件绑定方法 (on)，绘制功能可能不可用',
+          duration: 1000,
+        });
       }
     } catch (err) {
       console.error('[useAreaSelector] startPolygonSelection bind error:', err);
@@ -97,8 +100,8 @@ export function createPolygonActions(context) {
       } catch (err) {
         console.warn('[useAreaSelector] completePolygonDrawing: failed to clear temp layers', err);
       }
-  // 已移除添加自定义区域成功提示
-  // ElMessage.success(`已添加自定义区域: ${autoName}`);
+      // 已移除添加自定义区域成功提示
+      // ElMessage.success(`已添加自定义区域: ${autoName}`);
     } catch (err) {
       console.error('[useAreaSelector] addCustomArea failed', err);
       ElMessage.error({ message: '添加自定义区域失败', duration: 1000 });

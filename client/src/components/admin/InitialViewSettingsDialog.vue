@@ -268,14 +268,14 @@ const handleSave = async () => {
     };
 
     // 使用 store 的 action 更新（action 内会调用 API、更新 state 并派发全局事件）
-  const appStore = useAppStore();
-  const returned = await appStore.updateInitialViewSettings(settings);
+    const appStore = useAppStore();
+    await appStore.updateInitialViewSettings(settings);
 
     // 保存成功
     ElMessage.success('初始显示设置保存成功');
     // 可见调试：把返回数据放到 window 上，便于在另一个 tab 或 context 检查
     try {
-  // Removed debug-only global exposure
+      // Removed debug-only global exposure
     } catch (e) {}
     emit('settings-updated');
     visible.value = false;

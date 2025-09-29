@@ -57,7 +57,7 @@ export class KMLPointsExportService {
       .map((point) => {
         // KML点位通常已经是WGS84坐标，但为了保险起见仍做转换检查
         let wgs84Lat, wgs84Lng;
-        
+
         if (point.latitude && point.longitude) {
           // KML点位的主要坐标字段
           wgs84Lat = point.latitude;
@@ -89,7 +89,7 @@ export class KMLPointsExportService {
   </Point>
 </Placemark>`;
       })
-      .filter(placemark => placemark) // 过滤掉空的placemark
+      .filter((placemark) => placemark) // 过滤掉空的placemark
       .join('');
 
     const kmlFooter = `
@@ -115,7 +115,7 @@ export class KMLPointsExportService {
       '海拔高度',
       '来源文件',
       '文件ID',
-      '点位类型'
+      '点位类型',
     ];
 
     const csvRows = [
@@ -123,7 +123,7 @@ export class KMLPointsExportService {
       ...kmlPoints.map((point) => {
         // 获取WGS84坐标
         let wgs84Lat, wgs84Lng;
-        
+
         if (point.latitude && point.longitude) {
           wgs84Lat = point.latitude;
           wgs84Lng = point.longitude;
@@ -149,9 +149,9 @@ export class KMLPointsExportService {
           point.altitude || 0,
           this.escapeCSV(point.sourceFile || ''),
           point.fileId || '',
-          this.escapeCSV(point.type || 'kml')
+          this.escapeCSV(point.type || 'kml'),
         ].join(',');
-      })
+      }),
     ];
 
     // 使用CRLF换行符以便更好地兼容Windows上的Excel
@@ -165,19 +165,19 @@ export class KMLPointsExportService {
    */
   generateKMLPointDescription(point) {
     const parts = [];
-    
+
     if (point.description || point.desc || point.note) {
       parts.push(point.description || point.desc || point.note);
     }
-    
+
     if (point.sourceFile) {
       parts.push(`来源文件: ${point.sourceFile}`);
     }
-    
+
     if (point.altitude) {
       parts.push(`海拔高度: ${point.altitude}米`);
     }
-    
+
     if (point.id) {
       parts.push(`点位ID: ${point.id}`);
     }
@@ -246,16 +246,18 @@ export class KMLPointsExportService {
       return { totalCount: 0, validCoordinatesCount: 0 };
     }
 
-    const validCoordinatesCount = kmlPoints.filter(point => {
-      return (point.latitude && point.longitude) ||
-             (point.wgs84_lat && point.wgs84_lng) ||
-             (point.gcj02Lat && point.gcj02Lng) ||
-             (point.lat && point.lng);
+    const validCoordinatesCount = kmlPoints.filter((point) => {
+      return (
+        (point.latitude && point.longitude) ||
+        (point.wgs84_lat && point.wgs84_lng) ||
+        (point.gcj02Lat && point.gcj02Lng) ||
+        (point.lat && point.lng)
+      );
     }).length;
 
     return {
       totalCount: kmlPoints.length,
-      validCoordinatesCount
+      validCoordinatesCount,
     };
   }
 }

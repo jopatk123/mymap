@@ -2,7 +2,6 @@ import {
   isPanoramaImage,
   extractTitleFromFilename,
   extractGPSFromImage,
-  compressImage,
   compressImageToTargetSize,
   getImageDimensions,
   isImageFile,
@@ -127,7 +126,7 @@ export class ImageProcessor {
         forceReencode
       ) {
         // 使用按目标字节多轮压缩的策略，先以给定 quality 进行一次压缩，再根据需要逐步降低 quality，目标为 5MB
-        const qualities = [0.85, 0.75, 0.65, 0.55, 0.45];
+        const qualities = Array.from(new Set([quality, 0.75, 0.65, 0.55, 0.45]));
         const targetBytes = 5 * 1024 * 1024; // 5MB
         const compressedFile = await compressImageToTargetSize(
           file,
@@ -141,7 +140,10 @@ export class ImageProcessor {
           compressed: true,
           originalDimensions: dimensions,
           // 实际新尺寸在前端不易直接得知，这里仅回显目标约束
-          newDimensions: { width: Math.min(dimensions.width, maxWidth), height: Math.min(dimensions.height, maxHeight) },
+          newDimensions: {
+            width: Math.min(dimensions.width, maxWidth),
+            height: Math.min(dimensions.height, maxHeight),
+          },
         };
       }
 

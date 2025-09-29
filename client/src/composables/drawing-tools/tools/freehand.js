@@ -18,7 +18,9 @@ export function startFreehand(deactivateTool) {
     points = [e.latlng];
     const [wgsLng, wgsLat] = gcj02ToWgs84(e.latlng.lng, e.latlng.lat);
     wgsPoints = [[wgsLng, wgsLat]];
-    polyline = L.polyline(points, { color: '#ff6600', weight: 4, smoothFactor: 1 }).addTo(state.drawingLayer);
+    polyline = L.polyline(points, { color: '#ff6600', weight: 4, smoothFactor: 1 }).addTo(
+      state.drawingLayer
+    );
     L.DomEvent.stopPropagation(e.originalEvent);
   };
 
@@ -37,7 +39,12 @@ export function startFreehand(deactivateTool) {
 
   const onDblClick = () => {
     if (polyline && points.length > 1) {
-      drawings.value.push({ type: 'Freehand', coordinates: wgsPoints, coordinateSystem: 'wgs84', layer: polyline });
+      drawings.value.push({
+        type: 'Freehand',
+        coordinates: wgsPoints,
+        coordinateSystem: 'wgs84',
+        layer: polyline,
+      });
       ElMessage.success('画笔绘制完成');
     }
     cleanup();

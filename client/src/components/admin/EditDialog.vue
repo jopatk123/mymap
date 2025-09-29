@@ -24,7 +24,7 @@
 
       <!-- KML: 作为底图 复选框 -->
       <el-form-item v-if="isKml.value" label="作为底图">
-  <!-- Checkbox for marking as basemap removed per UX change -->
+        <!-- Checkbox for marking as basemap removed per UX change -->
       </el-form-item>
 
       <el-form-item v-if="showCoordinate" label="坐标">

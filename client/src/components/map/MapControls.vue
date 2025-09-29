@@ -7,7 +7,10 @@
 
         <!-- 搜索工具（赤红色） -->
         <div class="priority search-wrapper btn-search">
-          <SearchTool @locate-kml-point="$emit('locate-kml-point', $event)" @locate-address="$emit('locate-address', $event)" />
+          <SearchTool
+            @locate-kml-point="$emit('locate-kml-point', $event)"
+            @locate-address="$emit('locate-address', $event)"
+          />
         </div>
 
         <!-- 区域选择（按钮颜色在 AreaControls 中定义） -->
@@ -46,11 +49,9 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup>
-import { Tools, Location, List, View } from '@element-plus/icons-vue';
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
 import ExportControls from './ExportControls.vue';
@@ -82,7 +83,7 @@ defineProps({
   },
   visibleKMLPoints: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
 });
 
@@ -99,11 +100,11 @@ defineEmits([
 <style scoped lang="scss">
 .map-controls {
   .toolbar {
-  position: absolute;
-  top: 12px; /* 减小顶部间距 */
-  right: 170px; /* 与右侧绘图工具保持距离 */
-  z-index: 1000;
-  max-width: calc(100vw - 200px); /* 防止超出屏幕 */
+    position: absolute;
+    top: 12px; /* 减小顶部间距 */
+    right: 170px; /* 与右侧绘图工具保持距离 */
+    z-index: 1000;
+    max-width: calc(100vw - 200px); /* 防止超出屏幕 */
 
     display: flex;
     gap: 0;
@@ -189,7 +190,7 @@ defineEmits([
       line-height: 36px !important;
       min-width: 0 !important; /* 允许按钮宽度收缩到文本宽度 */
       width: auto !important;
-      
+
       /* 优化悬停效果 */
       &:hover {
         transform: translateY(-1px); /* 减小悬停位移 */
@@ -222,7 +223,7 @@ defineEmits([
     /* 防止按钮组变暗 */
     .controls-group {
       opacity: 1 !important;
-      
+
       &:focus-within {
         opacity: 1 !important;
       }
@@ -230,7 +231,7 @@ defineEmits([
 
     .controls-group > * {
       opacity: 1 !important;
-      
+
       &:focus,
       &:active,
       &:hover {
@@ -241,10 +242,10 @@ defineEmits([
     /* 覆盖Element Plus可能的变暗效果 */
     .el-button-group {
       opacity: 1 !important;
-      
+
       .el-button {
         opacity: 1 !important;
-        
+
         &:focus,
         &:active,
         &:hover {
@@ -265,14 +266,14 @@ defineEmits([
       display: inline-flex !important;
       align-items: center !important;
       height: 36px !important;
-      
+
       .buttons-wrapper {
         height: 36px;
-        
+
         .el-button-group {
           display: inline-flex !important;
           height: 36px !important;
-          
+
           .el-button {
             height: 36px !important;
             border-radius: 0 !important;
@@ -289,7 +290,7 @@ defineEmits([
       display: inline-flex !important;
       align-items: center !important;
       height: 36px !important;
-      
+
       .btn-export-data {
         height: 36px !important;
         border-radius: 0 !important;
@@ -377,7 +378,5 @@ defineEmits([
       }
     }
   }
-
-
 }
 </style>

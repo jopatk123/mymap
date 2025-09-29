@@ -87,12 +87,12 @@
     </el-form-item>
 
     <!-- 验证状态和结果 -->
-    <div v-if="validationResult" class="validation-section">
+    <div v-if="validationState" class="validation-section">
       <!-- 验证失败 -->
-      <el-form-item v-if="!validationResult.valid" label="验证结果">
+      <el-form-item v-if="!validationState.valid" label="验证结果">
         <el-alert type="error" :closable="false" show-icon>
           <template #title>文件验证失败</template>
-          <div class="error-content">{{ validationResult.error }}</div>
+          <div class="error-content">{{ validationState.error }}</div>
         </el-alert>
       </el-form-item>
 
@@ -103,26 +103,30 @@
           <div class="parse-stats">
             <el-tag type="success" size="large">
               <el-icon><Check /></el-icon>
-              成功解析 {{ validationResult.pointCount || validationResult.placemarkCount || 0 }} 个点位
+              成功解析
+              {{ validationState.pointCount || validationState.placemarkCount || 0 }} 个点位
             </el-tag>
-            <span v-if="validationResult.errors && validationResult.errors.length > 0">
+            <span v-if="validationState.errors && validationState.errors.length > 0">
               <el-tag type="warning" size="large">
-                {{ validationResult.errors.length }} 个数据问题已跳过
+                {{ validationState.errors.length }} 个数据问题已跳过
               </el-tag>
             </span>
           </div>
         </el-form-item>
 
         <!-- Excel错误信息 -->
-        <el-form-item v-if="validationResult.errors && validationResult.errors.length > 0" label="数据问题">
+        <el-form-item
+          v-if="validationState.errors && validationState.errors.length > 0"
+          label="数据问题"
+        >
           <el-alert type="warning" :closable="false">
             <template #title>以下数据行存在问题已跳过：</template>
             <ul class="error-list">
-              <li v-for="(error, index) in validationResult.errors.slice(0, 5)" :key="index">
+              <li v-for="(error, index) in validationState.errors.slice(0, 5)" :key="index">
                 {{ error }}
               </li>
-              <li v-if="validationResult.errors.length > 5">
-                ...还有 {{ validationResult.errors.length - 5 }} 个问题
+              <li v-if="validationState.errors.length > 5">
+                ...还有 {{ validationState.errors.length - 5 }} 个问题
               </li>
             </ul>
           </el-alert>
@@ -132,11 +136,24 @@
         <el-form-item label="点位预览">
           <div class="points-preview">
             <div class="preview-header">
-              <span>前 {{ Math.min(5, (validationResult.previewPoints || validationResult.placemarks || []).length) }} 个点位：</span>
+              <span
+                >前
+                {{
+                  Math.min(
+                    5,
+                    (validationState.previewPoints || validationState.placemarks || []).length
+                  )
+                }}
+                个点位：</span
+              >
             </div>
             <div class="point-list">
               <div
-                v-for="(point, index) in (validationResult.previewPoints || validationResult.placemarks || []).slice(0, 5)"
+                v-for="(point, index) in (
+                  validationState.previewPoints ||
+                  validationState.placemarks ||
+                  []
+                ).slice(0, 5)"
                 :key="index"
                 class="point-item"
               >
@@ -162,24 +179,27 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { 
-  Upload, Document, Tickets, Delete, InfoFilled, Check
-} from '@element-plus/icons-vue';
+import { Upload, Document, Tickets, Delete, InfoFilled, Check } from '@element-plus/icons-vue';
 import { useKmlProcessor } from '@/composables/use-file-processor';
 import { useExcelProcessor } from '@/composables/use-excel-processor';
 
 const props = defineProps({
   modelValue: {
     type: Object,
-    default: null
+    default: null,
   },
   validationResult: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 });
 
-const emit = defineEmits(['update:modelValue', 'update:validationResult', 'file-change', 'file-remove']);
+const emit = defineEmits([
+  'update:modelValue',
+  'update:validationResult',
+  'file-change',
+  'file-remove',
+]);
 
 // 文件类型和处理器
 const selectedFileType = ref('kml');
@@ -195,34 +215,34 @@ const COLUMN_HINTS = {
   name: ['点位名称', '名称', '标题', 'name', 'title'],
   longitude: ['经度', 'lng', 'lon', 'longitude', 'x'],
   latitude: ['纬度', 'lat', 'latitude', 'y'],
-  description: ['备注', '描述', '说明', 'description', 'note']
+  description: ['备注', '描述', '说明', 'description', 'note'],
 };
 
 // 计算属性
-const validationResult = computed(() => {
-  return selectedFileType.value === 'kml' 
-    ? kmlProcessor.validationResult.value 
+const rawValidationResult = computed(() => {
+  return selectedFileType.value === 'kml'
+    ? kmlProcessor.validationResult.value
     : excelProcessor.validationResult.value;
 });
+
+const validationState = computed(() => props.validationResult ?? rawValidationResult.value);
 
 const fileTypeText = computed(() => {
   return selectedFileType.value === 'kml' ? 'KML文件' : 'Excel文件';
 });
 
 const acceptedFileTypes = computed(() => {
-  return selectedFileType.value === 'kml' 
-    ? '.kml,.kmz'
-    : '.xlsx,.xls,.csv';
+  return selectedFileType.value === 'kml' ? '.kml,.kmz' : '.xlsx,.xls,.csv';
 });
 
 const acceptHint = computed(() => {
-  return selectedFileType.value === 'kml' 
+  return selectedFileType.value === 'kml'
     ? '支持 .kml, .kmz 格式'
     : '支持 .xlsx, .xls, .csv 格式，大小不超过10MB';
 });
 
 // 监听验证结果变化
-watch(validationResult, (newVal) => {
+watch(rawValidationResult, (newVal) => {
   emit('update:validationResult', newVal);
 });
 
@@ -239,7 +259,7 @@ const handleBeforeUpload = (file) => {
 };
 
 // 文件选择处理
-const handleFileChange = async (uploadFile, uploadFiles) => {
+const handleFileChange = async (uploadFile) => {
   // Element Plus el-upload 的 on-change 事件传递的是 UploadFile 对象
   // 需要从中提取原始 File 对象
   const file = uploadFile.raw;
@@ -248,13 +268,12 @@ const handleFileChange = async (uploadFile, uploadFiles) => {
   try {
     uploading.value = true;
     currentFile.value = file;
-    
+
     const processor = selectedFileType.value === 'kml' ? kmlProcessor : excelProcessor;
     await processor.processFile(file);
-    
+
     emit('update:modelValue', file);
     emit('file-change', file);
-    
   } catch (error) {
     ElMessage.error('文件处理失败: ' + (error?.message || error));
     removeFile();
@@ -269,7 +288,7 @@ const removeFile = () => {
   kmlProcessor.validationResult.value = null;
   excelProcessor.validationResult.value = null;
   excelProcessor.previewData.value = [];
-  
+
   emit('update:modelValue', null);
   emit('file-remove');
 };
@@ -315,7 +334,7 @@ const formatFileSize = (bytes) => {
 
 // 暴露引用给父组件
 defineExpose({
-  uploadRef: ref(null)
+  uploadRef: ref(null),
 });
 </script>
 
@@ -355,7 +374,7 @@ defineExpose({
 
     .column-group {
       margin-bottom: 4px;
-      
+
       &:last-child {
         margin-bottom: 0;
       }

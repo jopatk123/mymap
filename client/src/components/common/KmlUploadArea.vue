@@ -93,7 +93,7 @@ const handleFileChange = async (file) => {
   }
 
   if (!isLt10M) {
-  ElMessage.error('文件大小不能超过 50MB!');
+    ElMessage.error('文件大小不能超过 50MB!');
     return false;
   }
 

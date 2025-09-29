@@ -25,7 +25,9 @@ export function usePanoramaModal() {
   const copyCoordinate = async (panorama) => {
     if (!panorama) return;
 
-    const coordinate = `${parseFloat(panorama.lng).toFixed(6)},${parseFloat(panorama.lat).toFixed(6)}`;
+    const coordinate = `${parseFloat(panorama.lng).toFixed(6)},${parseFloat(panorama.lat).toFixed(
+      6
+    )}`;
 
     try {
       await navigator.clipboard.writeText(coordinate);

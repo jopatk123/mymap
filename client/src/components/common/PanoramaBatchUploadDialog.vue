@@ -122,7 +122,7 @@ const loadFolders = async () => {
   try {
     // 使用全局 store 获取文件夹数据
     await folderStore.fetchFolders();
-    
+
     if (folders.value.length > 0 && folderId.value == null) {
       const defaultFolder = folders.value.find((f) => f.name === '默认文件夹');
       folderId.value = defaultFolder ? defaultFolder.id : folders.value[0].id;
@@ -133,12 +133,16 @@ const loadFolders = async () => {
 };
 
 // 监听文件夹数据变化，自动设置默认文件夹
-watch(folders, (newFolders) => {
-  if (newFolders.length > 0 && folderId.value == null) {
-    const defaultFolder = newFolders.find((f) => f.name === '默认文件夹');
-    folderId.value = defaultFolder ? defaultFolder.id : newFolders[0].id;
-  }
-}, { immediate: true });
+watch(
+  folders,
+  (newFolders) => {
+    if (newFolders.length > 0 && folderId.value == null) {
+      const defaultFolder = newFolders.find((f) => f.name === '默认文件夹');
+      folderId.value = defaultFolder ? defaultFolder.id : newFolders[0].id;
+    }
+  },
+  { immediate: true }
+);
 
 // state
 const items = reactive([]); // {id, file, title, lat, lng, previewUrl}

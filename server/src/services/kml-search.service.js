@@ -80,7 +80,8 @@ class KMLSearchService {
         // 解析坐标JSON（有些历史数据可能是字符串）
         let coords = {};
         try {
-          coords = typeof r.coordinates === 'string' ? JSON.parse(r.coordinates) : r.coordinates || {};
+          coords =
+            typeof r.coordinates === 'string' ? JSON.parse(r.coordinates) : r.coordinates || {};
         } catch (_) {
           coords = {};
         }
@@ -154,7 +155,8 @@ class KMLSearchService {
       return filtered.map((r) => {
         let coords = {};
         try {
-          coords = typeof r.coordinates === 'string' ? JSON.parse(r.coordinates) : r.coordinates || {};
+          coords =
+            typeof r.coordinates === 'string' ? JSON.parse(r.coordinates) : r.coordinates || {};
         } catch (_) {
           coords = {};
         }

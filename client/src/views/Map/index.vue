@@ -298,26 +298,6 @@ const handleLocateAddress = ({ lat, lng, tip }) => {
   const label = tip?.name || '搜索地址';
   mapRef.value?.setSearchMarker?.(lat, lng, label);
 };
-
-// 调试：监听 mapRef 和地图实例的变化（使用共享 dlog）
-import { watch } from 'vue';
-// import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
-
-watch(
-  () => mapRef.value,
-  (newMapRef) => {
-    // dlog('主视图: mapRef 变化:', newMapRef);
-  },
-  { immediate: true }
-);
-
-watch(
-  () => mapRef.value?.map,
-  (newMap) => {
-    // dlog('主视图: mapRef.map 变化:', newMap);
-  },
-  { immediate: true }
-);
 </script>
 
 <style lang="scss" scoped>

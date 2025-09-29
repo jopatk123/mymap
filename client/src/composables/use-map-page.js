@@ -156,7 +156,7 @@ export function useMapPage() {
         kmlFiles.map(async (file) => {
           let retryCount = 0;
           const maxRetries = 3;
-          
+
           while (retryCount < maxRetries) {
             try {
               const styleResponse = await kmlApi.getKmlFileStyles(file.id);
@@ -164,15 +164,18 @@ export function useMapPage() {
               return { ...file, styleConfig: styleResponse.data };
             } catch (error) {
               retryCount++;
-              console.warn(`加载KML文件 ${file.id} 的样式失败 (尝试 ${retryCount}/${maxRetries}):`, error);
-              
+              console.warn(
+                `加载KML文件 ${file.id} 的样式失败 (尝试 ${retryCount}/${maxRetries}):`,
+                error
+              );
+
               if (retryCount >= maxRetries) {
                 // 所有重试都失败了，返回原始文件信息并附带空样式配置
                 return { ...file, styleConfig: null };
               }
-              
+
               // 等待一段时间后重试（指数退避）
-              await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 100));
+              await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retryCount) * 100));
             }
           }
         })

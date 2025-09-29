@@ -75,7 +75,7 @@
     </el-tooltip>
 
     <!-- 分割线 -->
-    <div class="divider"></div>
+    <div class="divider" />
 
     <!-- 清除工具 -->
     <el-tooltip content="清除所有" placement="left">
@@ -92,24 +92,23 @@
 
     <!-- 导出工具（下拉：KML / CSV） -->
     <el-tooltip content="导出" placement="left">
-      <el-dropdown :disabled="!hasDrawings" @command="handleExport" placement="left" trigger="click">
-        <el-button
-          type="success"
-          :disabled="!hasDrawings"
-          circle
-          class="btn-export"
-        >
+      <el-dropdown
+        :disabled="!hasDrawings"
+        placement="left"
+        trigger="click"
+        @command="handleExport"
+      >
+        <el-button type="success" :disabled="!hasDrawings" circle class="btn-export">
           <el-icon><Download /></el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="kml">导出为KML (WGS84)</el-dropdown-item>
-            <el-dropdown-item command="csv">导出为CSV</el-dropdown-item>
+            <el-dropdown-item command="kml"> 导出为KML (WGS84) </el-dropdown-item>
+            <el-dropdown-item command="csv"> 导出为CSV </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
     </el-tooltip>
-
   </div>
 </template>
 

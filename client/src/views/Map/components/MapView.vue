@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import MapContainer from '@/components/map/MapContainer.vue';
 
 defineProps({
@@ -29,16 +29,6 @@ defineProps({
 defineEmits(['panorama-click', 'map-click']);
 
 const mapRef = ref(null);
-
-// 调试：观察 mapRef.value.map 何时被设置（使用共享 dlog）
-// import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
-watch(
-  () => mapRef.value?.map,
-  (v) => {
-    // dlog('MapView: mapRef.value?.map 变化:', v);
-  },
-  { immediate: true }
-);
 
 // 暴露方法给父组件
 defineExpose({

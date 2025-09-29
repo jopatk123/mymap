@@ -24,7 +24,7 @@
             placeholder="选择文件夹（留空表示移动到根目录）"
             clearable
             style="width: 100%"
-            @update:model-value="$emit('update:moveToFolderId', $event)"
+            @update:model-value="$emit('update:move-to-folder-id', $event)"
           >
             <el-option
               v-for="folder in validFolders"
@@ -79,9 +79,10 @@ const props = defineProps({
 const emit = defineEmits([
   'file-updated',
   'file-deleted',
+  'edit-file',
   'move-confirm',
-  'update:moveToFolderId',
-  'update:actionDialogs',
+  'update:move-to-folder-id',
+  'update:action-dialogs',
 ]);
 
 // local reactive copy to avoid mutating props directly
@@ -98,7 +99,7 @@ watch(
 watch(
   localDialogs,
   (v) => {
-    emit('update:actionDialogs', { ...v });
+    emit('update:action-dialogs', { ...v });
   },
   { deep: true }
 );

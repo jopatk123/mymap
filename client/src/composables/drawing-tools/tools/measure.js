@@ -36,25 +36,41 @@ export function startMeasure(deactivateTool) {
     } else {
       measureLine.setLatLngs(points);
       const seg = points[points.length - 2].distanceTo(points[points.length - 1]);
-      const segOutput = seg > 1000 ? `${Math.round((seg / 1000) * 100) / 100} km` : `${Math.round(seg * 100) / 100} m`;
+      const segOutput =
+        seg > 1000
+          ? `${Math.round((seg / 1000) * 100) / 100} km`
+          : `${Math.round(seg * 100) / 100} m`;
       const midPoint = L.latLng(
         (points[points.length - 2].lat + points[points.length - 1].lat) / 2,
-        (points[points.length - 2].lng + points[points.length - 1].lng) / 2,
+        (points[points.length - 2].lng + points[points.length - 1].lng) / 2
       );
-      const segmentTooltip = L.tooltip({ permanent: true, direction: 'center', className: 'segment-distance-tooltip' })
+      const segmentTooltip = L.tooltip({
+        permanent: true,
+        direction: 'center',
+        className: 'segment-distance-tooltip',
+      })
         .setLatLng(midPoint)
         .setContent(segOutput)
         .addTo(state.mapInstance);
       segmentTooltips.push(segmentTooltip);
 
       totalDistance = 0;
-      for (let i = 0; i < points.length - 1; i++) totalDistance += points[i].distanceTo(points[i + 1]);
+      for (let i = 0; i < points.length - 1; i++)
+        totalDistance += points[i].distanceTo(points[i + 1]);
 
-      const totalOutput = `总距离: ${totalDistance > 1000 ? `${Math.round((totalDistance / 1000) * 100) / 100} km` : `${Math.round(totalDistance * 100) / 100} m`}`;
+      const totalOutput = `总距离: ${
+        totalDistance > 1000
+          ? `${Math.round((totalDistance / 1000) * 100) / 100} km`
+          : `${Math.round(totalDistance * 100) / 100} m`
+      }`;
       if (state.measureTooltip) {
         state.measureTooltip.setLatLng(e.latlng).setContent(totalOutput);
       } else {
-        state.measureTooltip = L.tooltip({ permanent: true, direction: 'top', className: 'total-distance-tooltip' })
+        state.measureTooltip = L.tooltip({
+          permanent: true,
+          direction: 'top',
+          className: 'total-distance-tooltip',
+        })
           .setLatLng(e.latlng)
           .setContent(totalOutput)
           .addTo(state.mapInstance);

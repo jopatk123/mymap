@@ -50,15 +50,15 @@ const startServer = async () => {
       wss.on('connection', (ws, req) => {
         const clientIp = req.socket.remoteAddress;
         Logger.info(`WebSocket 客户端已连接: ${clientIp}`);
-        
+
         // 心跳检测
         ws.isAlive = true;
         ws.on('pong', () => (ws.isAlive = true));
-        
+
         ws.on('close', () => {
           Logger.info(`WebSocket 客户端已断开: ${clientIp}`);
         });
-        
+
         ws.on('error', (err) => {
           Logger.warn(`WebSocket 客户端错误 ${clientIp}:`, err.message);
         });

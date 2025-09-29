@@ -4,7 +4,10 @@
       <el-button :type="mapType === 'normal' ? 'primary' : ''" @click="$emit('change', 'normal')">
         普通
       </el-button>
-      <el-button :type="mapType === 'satellite' ? 'primary' : ''" @click="$emit('change', 'satellite')">
+      <el-button
+        :type="mapType === 'satellite' ? 'primary' : ''"
+        @click="$emit('change', 'satellite')"
+      >
         卫星
       </el-button>
     </el-button-group>

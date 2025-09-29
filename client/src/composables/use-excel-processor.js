@@ -10,12 +10,12 @@ export function useExcelProcessor() {
   const REQUIRED_COLUMNS = {
     name: ['点位名称', '名称', '标题', 'name', 'title', '地名'],
     longitude: ['经度', 'lng', 'lon', 'longitude', 'x', '东经'],
-    latitude: ['纬度', 'lat', 'latitude', 'y', '北纬']
+    latitude: ['纬度', 'lat', 'latitude', 'y', '北纬'],
   };
 
   // 可选的列名
   const OPTIONAL_COLUMNS = {
-    description: ['备注', '描述', '说明', 'description', 'note', 'remark', 'desc']
+    description: ['备注', '描述', '说明', 'description', 'note', 'remark', 'desc'],
   };
 
   // 读取Excel文件
@@ -38,12 +38,12 @@ export function useExcelProcessor() {
 
   // 查找匹配的列名
   const findColumnIndex = (headers, possibleNames) => {
-    const normalizedHeaders = headers.map(h => (h || '').toString().trim());
-    
+    const normalizedHeaders = headers.map((h) => (h || '').toString().trim());
+
     for (let i = 0; i < possibleNames.length; i++) {
-      const index = normalizedHeaders.findIndex(header => 
-        header === possibleNames[i] || 
-        header.toLowerCase() === possibleNames[i].toLowerCase()
+      const index = normalizedHeaders.findIndex(
+        (header) =>
+          header === possibleNames[i] || header.toLowerCase() === possibleNames[i].toLowerCase()
       );
       if (index !== -1) {
         return { index, name: normalizedHeaders[index] };
@@ -106,11 +106,12 @@ export function useExcelProcessor() {
       if (missingColumns.length > 0) {
         return {
           valid: false,
-          error: `缺少必需的列: ${missingColumns.join('、')}。请确保Excel文件包含以下列名之一：\n` +
-                 `• 点位名称: ${REQUIRED_COLUMNS.name.join('、')}\n` +
-                 `• 经度: ${REQUIRED_COLUMNS.longitude.join('、')}\n` +
-                 `• 纬度: ${REQUIRED_COLUMNS.latitude.join('、')}\n` +
-                 `• 备注(可选): ${OPTIONAL_COLUMNS.description.join('、')}`
+          error:
+            `缺少必需的列: ${missingColumns.join('、')}。请确保Excel文件包含以下列名之一：\n` +
+            `• 点位名称: ${REQUIRED_COLUMNS.name.join('、')}\n` +
+            `• 经度: ${REQUIRED_COLUMNS.longitude.join('、')}\n` +
+            `• 纬度: ${REQUIRED_COLUMNS.latitude.join('、')}\n` +
+            `• 备注(可选): ${OPTIONAL_COLUMNS.description.join('、')}`,
         };
       }
 
@@ -118,12 +119,12 @@ export function useExcelProcessor() {
         valid: true,
         columnMapping,
         headers,
-        range
+        range,
       };
     } catch (error) {
       return {
         valid: false,
-        error: '解析Excel文件结构失败: ' + error.message
+        error: '解析Excel文件结构失败: ' + error.message,
       };
     }
   };
@@ -139,10 +140,13 @@ export function useExcelProcessor() {
       try {
         // 获取各列的值
         const nameCell = worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.name.index })];
-        const lngCell = worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.longitude.index })];
-        const latCell = worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.latitude.index })];
-        const descCell = columnMapping.description ? 
-          worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.description.index })] : null;
+        const lngCell =
+          worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.longitude.index })];
+        const latCell =
+          worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.latitude.index })];
+        const descCell = columnMapping.description
+          ? worksheet[XLSX.utils.encode_cell({ r: row, c: columnMapping.description.index })]
+          : null;
 
         const name = nameCell ? String(nameCell.v).trim() : '';
         const lngStr = lngCell ? String(lngCell.v).trim() : '';
@@ -186,9 +190,8 @@ export function useExcelProcessor() {
           longitude,
           latitude,
           description: description || fileName || '从Excel文件导入',
-          pointType: 'Point'
+          pointType: 'Point',
         });
-
       } catch (error) {
         errors.push(`第${row + 1}行: 数据解析错误 - ${error.message}`);
       }
@@ -209,7 +212,7 @@ export function useExcelProcessor() {
       }
 
       const workbook = await readExcelFile(file);
-      
+
       // 获取第一个工作表
       const sheetNames = workbook.SheetNames;
       if (sheetNames.length === 0) {
@@ -220,7 +223,7 @@ export function useExcelProcessor() {
       }
 
       const worksheet = workbook.Sheets[sheetNames[0]];
-      
+
       // 验证文件结构
       const structureValidation = validateExcelStructure(worksheet);
       if (!structureValidation.valid) {
@@ -249,7 +252,7 @@ export function useExcelProcessor() {
         points: points,
         previewPoints: previewData.value,
         errors: errors.slice(0, 10), // 只显示前10个错误
-        columnMapping: structureValidation.columnMapping
+        columnMapping: structureValidation.columnMapping,
       };
 
       validationResult.value = result;
@@ -262,7 +265,6 @@ export function useExcelProcessor() {
       ElMessage.success(message);
 
       return result;
-
     } catch (error) {
       const errorMsg = 'Excel文件解析失败: ' + (error?.message || error);
       validationResult.value = { valid: false, error: errorMsg };
@@ -295,12 +297,13 @@ export function useExcelProcessor() {
 
     // 检查文件扩展名和MIME类型（临时支持CSV用于测试）
     const fileName = file.name.toLowerCase();
-    const isExcel = fileName.endsWith('.xlsx') || 
-                   fileName.endsWith('.xls') || 
-                   fileName.endsWith('.csv') ||
-                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                   file.type === 'application/vnd.ms-excel' ||
-                   file.type === 'text/csv';
+    const isExcel =
+      fileName.endsWith('.xlsx') ||
+      fileName.endsWith('.xls') ||
+      fileName.endsWith('.csv') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel' ||
+      file.type === 'text/csv';
 
     if (!isExcel) {
       ElMessage.error('只能上传Excel文件(.xlsx, .xls, .csv)!');
@@ -321,6 +324,6 @@ export function useExcelProcessor() {
     previewData,
     validateFile,
     processFile,
-    validateExcelFile
+    validateExcelFile,
   };
 }

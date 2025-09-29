@@ -1,11 +1,11 @@
 <template>
   <div class="search-tool">
     <!-- 搜索按钮 -->
-    <el-button 
-      type="primary" 
-      title="综合搜索" 
+    <el-button
+      type="primary"
+      title="综合搜索"
+      style="pointer-events: auto !important; z-index: 1000 !important"
       @click.stop="toggleSearchDialog"
-      style="pointer-events: auto !important; z-index: 1000 !important;"
     >
       搜索
     </el-button>
@@ -352,7 +352,7 @@ watch(searchType, () => {
     cursor: pointer !important;
     opacity: 1 !important;
     white-space: nowrap;
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);

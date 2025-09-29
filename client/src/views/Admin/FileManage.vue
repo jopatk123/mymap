@@ -21,7 +21,7 @@
         </div>
 
         <FileSearchBar
-          v-model:searchForm="searchForm"
+          v-model:search-form="searchForm"
           :selected-count="selectedRows.length"
           :loading="loading"
           :downloading="downloading"
@@ -77,7 +77,7 @@
     <FileUploadDialogs
       :upload-dialogs="uploadDialogs"
       @upload-success="handleUploadSuccess"
-      @update:uploadDialogs="(v) => Object.assign(uploadDialogs, v)"
+      @update:upload-dialogs="(v) => Object.assign(uploadDialogs, v)"
     />
 
     <FileActionDialogs
@@ -90,7 +90,7 @@
       @file-deleted="() => handleFileDeleted(loadFileList)"
       @move-confirm="handleMoveConfirmWithCleanup"
       @update:move-to-folder-id="moveToFolderId = $event"
-      @update:actionDialogs="(v) => Object.assign(actionDialogs, v)"
+      @update:action-dialogs="(v) => Object.assign(actionDialogs, v)"
       @edit-file="(file) => editFile(file)"
     />
   </div>

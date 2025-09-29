@@ -32,7 +32,9 @@ class KmlFileStyleController {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        return res.status(200).json({ success: true, data: fallback, message: '返回默认KML样式配置' });
+        return res
+          .status(200)
+          .json({ success: true, data: fallback, message: '返回默认KML样式配置' });
       } catch (fallbackError) {
         Logger.error(`获取默认样式配置也失败 (ID: ${req.params.id}):`, fallbackError);
         res.status(500).json({

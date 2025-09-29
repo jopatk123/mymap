@@ -1,20 +1,16 @@
 <template>
   <div class="export-controls">
     <!-- 导出按钮和格式选择 -->
-    <el-dropdown 
-      :disabled="!hasExportableData" 
-      @command="handleExport"
+    <el-dropdown
+      :disabled="!hasExportableData"
       placement="bottom-start"
       trigger="click"
+      @command="handleExport"
     >
-      <el-button 
-        class="btn-export-data" 
-        :disabled="!hasExportableData"
-        :loading="exporting"
-      >
+      <el-button class="btn-export-data" :disabled="!hasExportableData" :loading="exporting">
         导出数据
       </el-button>
-      
+
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item command="kml">
@@ -34,15 +30,15 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Download, ArrowDown, DocumentCopy, Grid } from '@element-plus/icons-vue';
+import { DocumentCopy, Grid } from '@element-plus/icons-vue';
 import { kmlPointsExportService } from '@/services/panorama-export-service.js';
 
 const props = defineProps({
   // 当前可见的KML点位数据
   visibleKMLPoints: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 const exporting = ref(false);
@@ -104,7 +100,7 @@ const handleExport = async (format) => {
 
 // 暴露给父组件的方法（可选）
 defineExpose({
-  handleExport
+  handleExport,
 });
 </script>
 
@@ -123,12 +119,12 @@ defineExpose({
     border-radius: 0 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     white-space: nowrap;
-    
+
     background: linear-gradient(135deg, #4caf50, #388e3c) !important;
     border-color: #4caf50 !important;
     color: white !important;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-    
+
     &:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
@@ -144,7 +140,7 @@ defineExpose({
       outline: none !important;
       box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2) !important;
     }
-    
+
     &:disabled {
       background: linear-gradient(135deg, #c0c4cc, #a0a4a8) !important;
       border-color: #c0c4cc !important;
@@ -167,7 +163,7 @@ defineExpose({
 
   .export-status {
     white-space: nowrap;
-    
+
     .el-text {
       font-size: 12px;
     }
@@ -209,7 +205,7 @@ defineExpose({
         font-size: 13px;
       }
     }
-    
+
     .export-status .el-text {
       font-size: 11px;
     }

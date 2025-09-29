@@ -124,7 +124,9 @@ export const useAppStore = defineStore('app', {
           // 如果设置已启用，立即触发初始视图更新事件，确保地图应用正确的初始位置
           if (settings.enabled) {
             try {
-              window.dispatchEvent(new CustomEvent('initial-view-updated', { detail: this.initialViewSettings }));
+              window.dispatchEvent(
+                new CustomEvent('initial-view-updated', { detail: this.initialViewSettings })
+              );
             } catch (e) {
               console.warn('[app.store] failed to dispatch initial event:', e);
             }
@@ -146,7 +148,9 @@ export const useAppStore = defineStore('app', {
               const parsed = JSON.parse(raw);
               this.initialViewSettings = { ...parsed, loaded: true };
               try {
-                window.dispatchEvent(new CustomEvent('initial-view-updated', { detail: this.initialViewSettings }));
+                window.dispatchEvent(
+                  new CustomEvent('initial-view-updated', { detail: this.initialViewSettings })
+                );
               } catch (e) {}
               return;
             }
@@ -213,11 +217,11 @@ export const useAppStore = defineStore('app', {
 
     // 初始化应用
     async initApp() {
-  // 从本地存储加载 UI 设置（主题、侧栏等）作为初始状态
-  this.loadFromLocalStorage();
+      // 从本地存储加载 UI 设置（主题、侧栏等）作为初始状态
+      this.loadFromLocalStorage();
 
-  // 强制首先尝试从后端获取初始视图；若后端不可用则回退到 localStorage（allowLocalFallback=true）
-  await this.loadInitialViewSettings(true);
+      // 强制首先尝试从后端获取初始视图；若后端不可用则回退到 localStorage（allowLocalFallback=true）
+      await this.loadInitialViewSettings(true);
 
       // 监听在线状态
       this.setupOnlineStatusListener();
@@ -301,7 +305,7 @@ export const useAppStore = defineStore('app', {
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const host = window.location.host; // 包含端口
         const wsUrl = `${protocol}://${host}`;
-        
+
         const ws = new WebSocket(wsUrl);
 
         ws.addEventListener('message', (evt) => {
@@ -320,7 +324,10 @@ export const useAppStore = defineStore('app', {
               }
               // 尝试写入 localStorage（无痕模式可能不可用）
               try {
-                localStorage.setItem('initial-view-updated', JSON.stringify({ ...settings, _t: Date.now() }));
+                localStorage.setItem(
+                  'initial-view-updated',
+                  JSON.stringify({ ...settings, _t: Date.now() })
+                );
               } catch (e) {
                 /* ignore */
               }
@@ -330,7 +337,7 @@ export const useAppStore = defineStore('app', {
           }
         });
 
-        ws.addEventListener('close', (evt) => {
+        ws.addEventListener('close', () => {
           // 简单重连机制：5秒后重试（仅重试一次）
           if (!this._wsReconnectAttempted) {
             this._wsReconnectAttempted = true;

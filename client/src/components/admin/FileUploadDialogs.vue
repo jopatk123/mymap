@@ -42,7 +42,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['upload-success', 'update:uploadDialogs']);
+const emit = defineEmits(['upload-success', 'update:upload-dialogs']);
 
 // local reactive copy to avoid mutating prop directly
 const localDialogs = reactive({ ...(props.uploadDialogs || {}) });
@@ -60,7 +60,7 @@ watch(
 watch(
   localDialogs,
   (v) => {
-    emit('update:uploadDialogs', { ...v });
+    emit('update:upload-dialogs', { ...v });
   },
   { deep: true }
 );

@@ -42,7 +42,6 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       if (window.currentMarkers && window.currentMarkers.some((m) => m.id === point.id)) {
         return null;
       }
-
     } catch (err) {}
 
     // 使用坐标转换工具获取显示坐标
@@ -100,7 +99,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
           } catch (err) {}
         });
       } else {
-        marker.on('click', (e) => {
+        marker.on('click', () => {
           try {
             onMarkerClick.value(point);
           } catch (err) {}
@@ -182,7 +181,6 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         if (window.currentMarkers && window.currentMarkers.some((m) => m.id === p.id)) {
           continue;
         }
-
       } catch (err) {}
       const pointType = p.type || 'panorama';
       const coordinates = getDisplayCoordinates(p);
@@ -221,7 +219,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         });
       } else {
         // 无 popup 的标记：走全局处理器
-        marker.on('click', (e) => {
+        marker.on('click', () => {
           try {
             onMarkerClick.value(p);
           } catch (err) {}
@@ -253,8 +251,6 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       ensureZoomGuards();
     }
   };
-
-
 
   const removeMarker = (id) => {
     const markerIndex = markers.value.findIndex((m) => m.id === id);

@@ -2,7 +2,7 @@
   <div class="search-section">
     <el-form :model="localForm" inline>
       <el-form-item label="文件类型">
-  <el-select v-model="localForm.fileType" @change="$emit('search', { ...localForm })">
+        <el-select v-model="localForm.fileType" @change="$emit('search', { ...localForm })">
           <el-option label="全部" value="all" />
           <el-option label="全景图" value="panorama" />
           <el-option label="视频点位" value="video" />
@@ -26,7 +26,7 @@
         />
       </el-form-item>
       <el-form-item>
-  <el-button type="primary" @click="$emit('search', { ...localForm })">搜索</el-button>
+        <el-button type="primary" @click="$emit('search', { ...localForm })">搜索</el-button>
         <el-button @click="$emit('refresh')">刷新</el-button>
         <el-button
           type="danger"
@@ -62,7 +62,14 @@
         <el-dropdown
           trigger="click"
           :disabled="selectedCount === 0"
-          @command="(cmd) => cmd === 'download-selected' ? $emit('batch-download') : (cmd === 'download-stats' ? $emit('batch-download-stats') : null)"
+          @command="
+            (cmd) =>
+              cmd === 'download-selected'
+                ? $emit('batch-download')
+                : cmd === 'download-stats'
+                ? $emit('batch-download-stats')
+                : null
+          "
         >
           <el-button type="info" :loading="downloading">
             <el-icon><Download /></el-icon>
@@ -118,7 +125,7 @@ const emit = defineEmits([
   'batch-move',
   'batch-download',
   'batch-download-stats',
-  'update:searchForm',
+  'update:search-form',
 ]);
 
 // Use a local reactive copy to avoid mutating the incoming prop directly.
@@ -137,7 +144,7 @@ watch(
 watch(
   localForm,
   (v) => {
-    emit('update:searchForm', { ...v });
+    emit('update:search-form', { ...v });
   },
   { deep: true }
 );

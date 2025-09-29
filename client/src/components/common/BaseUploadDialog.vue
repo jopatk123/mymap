@@ -94,7 +94,6 @@ const {
   form,
   formRef,
   uploadRef,
-  folders,
   processing,
   processingText,
   uploading,

@@ -13,7 +13,7 @@ class Logger {
     console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, error);
   }
 
-  static debug(message, data = {}) {
+  static debug(message, _data = {}) {
     // debug disabled
   }
 }

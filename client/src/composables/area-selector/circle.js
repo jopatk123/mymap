@@ -48,8 +48,8 @@ export function createCircleActions(context) {
     }
     currentMode.value = 'circle';
     isDrawingCircle.value = true;
-  // 已移除点击地图选择圆心的提示
-  // ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`);
+    // 已移除点击地图选择圆心的提示
+    // ElMessage.info(`点击地图选择圆心位置，当前半径: ${circleRadius.value}米`);
     try {
       if (mapInstance.value.on) {
         mapInstance.value.on('click', handleCircleClick);
@@ -58,7 +58,10 @@ export function createCircleActions(context) {
           '[useAreaSelector] startCircleSelection: mapInstance has no .on method',
           mapInstance.value
         );
-        ElMessage.error({ message: '地图对象不具备事件绑定方法 (on)，绘制功能可能不可用', duration: 1000 });
+        ElMessage.error({
+          message: '地图对象不具备事件绑定方法 (on)，绘制功能可能不可用',
+          duration: 1000,
+        });
       }
     } catch (err) {
       console.error('[useAreaSelector] startCircleSelection bind error:', err);
@@ -99,8 +102,8 @@ export function createCircleActions(context) {
       console.warn('[useAreaSelector] failed to draw preview circle:', err);
     }
     completeCircleDrawing();
-  // 已移除添加圆形区域成功提示
-  // ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`);
+    // 已移除添加圆形区域成功提示
+    // ElMessage.success(`已添加圆形区域，半径 ${circleRadius.value}米`);
   };
 
   const completeCircleDrawing = () => {

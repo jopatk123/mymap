@@ -337,8 +337,6 @@ router.delete('/:fileId', async (req, res) => {
     }
 
     const fileUrl = file.file_url || file.fileUrl || '';
-    // ensure relative path
-    const filePath = path.join(process.cwd(), (fileUrl || '').replace(/^\//, ''));
 
     // 使用事务：仅删除数据库记录（点位与文件），不在事务中删除物理文件，避免外部 IO 问题导致回滚
     try {
@@ -382,7 +380,5 @@ router.delete('/:fileId', async (req, res) => {
     res.status(500).json({ success: false, message: '删除失败' });
   }
 });
-
-
 
 module.exports = router;

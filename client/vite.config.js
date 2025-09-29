@@ -25,7 +25,12 @@ export default defineConfig({
             if (id.includes('leaflet')) {
               return 'leaflet';
             }
-            if (id.includes('vue') || id.includes('@vue') || id.includes('vue-router') || id.includes('pinia')) {
+            if (
+              id.includes('vue') ||
+              id.includes('@vue') ||
+              id.includes('vue-router') ||
+              id.includes('pinia')
+            ) {
               return 'vue-vendor';
             }
             // 其他第三方库放入 vendor

@@ -8,7 +8,6 @@
     <div id="map" class="map-view"></div>
     <!-- 地图类型切换（右上角） -->
     <MapTypeSwitch :map-type="mapType" @change="handleMapTypeChange" />
-
   </div>
 </template>
 
@@ -22,7 +21,12 @@ import { createPopupContent } from '@/composables/kml-point-renderer.js';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 let setMapInstance, setMarkersData;
 let onInitialViewUpdated;
-import { addStyleListener, removeStyleListener, addRefreshListener, removeRefreshListener } from '@/utils/style-events.js';
+import {
+  addStyleListener,
+  removeStyleListener,
+  addRefreshListener,
+  removeRefreshListener,
+} from '@/utils/style-events.js';
 // import { dlog } from '@/composables/drawing-tools/utils/debug.js'; // 已删除debug工具
 import MapTypeSwitch from './MapTypeSwitch.vue';
 import { useSearchMarker } from '@/composables/use-search-marker.js';
@@ -137,7 +141,8 @@ onMounted(async () => {
     try {
       const isKml =
         !!point &&
-        (String(point.id || '').includes('kml-') || String(point.type || '').toLowerCase() === 'kml');
+        (String(point.id || '').includes('kml-') ||
+          String(point.type || '').toLowerCase() === 'kml');
       if (isKml) {
         // 构造与 kml-point-renderer 一致的 feature 以生成弹窗内容
         const wgsLat =
@@ -164,10 +169,9 @@ onMounted(async () => {
 
         // 从全局尝试找到来源 KML 文件（用于弹窗里显示信息用，可选）
         const kmlFiles = (window && window.allKmlFiles) || [];
-        const kmlFile =
-          kmlFiles.find(
-            (f) => f.id === point.fileId || f.id === point.file_id || f.name === point.sourceFile
-          ) || { title: '' };
+        const kmlFile = kmlFiles.find(
+          (f) => f.id === point.fileId || f.id === point.file_id || f.name === point.sourceFile
+        ) || { title: '' };
 
         const popupContent = createPopupContent(feature, kmlFile);
 
@@ -198,7 +202,10 @@ onMounted(async () => {
                 const coords = getDisplayCoordinates(point);
                 if (coords && coords.length === 2) {
                   const [displayLng, displayLat] = coords;
-                  L.popup().setLatLng([displayLat, displayLng]).setContent(popupContent).openOn(map.value);
+                  L.popup()
+                    .setLatLng([displayLat, displayLng])
+                    .setContent(popupContent)
+                    .openOn(map.value);
                 }
               }
             }, 30);

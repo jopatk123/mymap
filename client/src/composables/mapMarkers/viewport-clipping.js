@@ -241,7 +241,7 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
           } catch (err) {}
         });
       } else {
-        marker.on('click', (e) => {
+        marker.on('click', () => {
           try {
             onMarkerClick.value(point);
           } catch (err) {}

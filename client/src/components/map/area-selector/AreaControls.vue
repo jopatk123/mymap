@@ -1,9 +1,10 @@
 <template>
   <div class="area-controls">
-    <div class="status-wrapper" v-if="visiblePointsCount > 0">
+    <div v-if="visiblePointsCount > 0 || areasCount > 0" class="status-wrapper">
       <el-text type="success" size="small">
         <el-icon><CircleCheck /></el-icon>
         已选中 {{ visiblePointsCount }} 个点位
+        <template v-if="areasCount > 0"> · 已绘制 {{ areasCount }} 个区域</template>
       </el-text>
     </div>
 
@@ -12,17 +13,13 @@
         <el-button
           class="btn-circle"
           :loading="isDrawingCircle"
+          style="pointer-events: auto !important; z-index: 1000 !important"
           @click.stop="handleCircleAreaClick"
-          style="pointer-events: auto !important; z-index: 1000 !important;"
         >
           圆形区域
         </el-button>
 
-        <el-button
-          class="btn-custom"
-          :loading="isDrawingPolygon"
-          @click="handleCustomAreaClick"
-        >
+        <el-button class="btn-custom" :loading="isDrawingPolygon" @click="handleCustomAreaClick">
           自定义区域
         </el-button>
 
@@ -34,10 +31,10 @@
       </el-button-group>
     </div>
 
-    <el-dialog 
-      v-model="radiusDialogVisible" 
-      title="设置圆形区域半径" 
-      width="400px" 
+    <el-dialog
+      v-model="radiusDialogVisible"
+      title="设置圆形区域半径"
+      width="400px"
       :close-on-click-modal="false"
       :z-index="2000"
       :append-to-body="true"
@@ -45,7 +42,14 @@
       <div class="radius-setting">
         <el-form label-width="80px">
           <el-form-item label="半径">
-            <el-input-number v-model="tempRadius" :min="50" :max="50000" :step="100" controls-position="right" style="width: 200px" />
+            <el-input-number
+              v-model="tempRadius"
+              :min="50"
+              :max="50000"
+              :step="100"
+              controls-position="right"
+              style="width: 200px"
+            />
             <span style="margin-left: 8px">米</span>
           </el-form-item>
         </el-form>
@@ -53,7 +57,13 @@
         <div class="radius-presets">
           <span class="preset-label">常用半径:</span>
           <el-button-group size="small">
-            <el-button v-for="preset in radiusPresets" :key="preset" :type="tempRadius === preset ? 'primary' : ''" @click="tempRadius = preset">{{ preset }}m</el-button>
+            <el-button
+              v-for="preset in radiusPresets"
+              :key="preset"
+              :type="tempRadius === preset ? 'primary' : ''"
+              @click="tempRadius = preset"
+              >{{ preset }}m</el-button
+            >
           </el-button-group>
         </div>
       </div>
@@ -71,7 +81,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Compass, Crop, Delete, CircleCheck } from '@element-plus/icons-vue';
+import { CircleCheck } from '@element-plus/icons-vue';
 import { useAreaSelector } from '@/composables/use-area-selector.js';
 import { useKMLBaseMapStore } from '@/store/kml-basemap.js';
 
@@ -84,7 +94,6 @@ const {
   isDrawingCircle,
   isDrawingPolygon,
   isDrawing,
-  areas,
   areasCount,
   setMapInstance,
   startCircleSelection,
@@ -103,9 +112,13 @@ const radiusPresets = [500, 1000, 2000, 5000, 10000];
 
 const visiblePointsCount = computed(() => store.visiblePointsCount);
 
-watch(() => props.mapInstance, (mapInstance) => {
-  if (mapInstance) setMapInstance(mapInstance);
-}, { immediate: true });
+watch(
+  () => props.mapInstance,
+  (mapInstance) => {
+    if (mapInstance) setMapInstance(mapInstance);
+  },
+  { immediate: true }
+);
 
 const handleCircleAreaClick = () => {
   // debug: 圆形区域按钮被点击
@@ -126,9 +139,13 @@ const confirmRadiusAndStartDrawing = () => {
 
 const handleCustomAreaClick = () => startPolygonSelection();
 const handleClearAreas = () => clearAllAreas();
-const handleFinishDrawing = async () => { await finishDrawing(); };
+const handleFinishDrawing = async () => {
+  await finishDrawing();
+};
 
-const _handleRemoveArea = (areaId, areaName) => { removeArea(areaId, areaName); };
+const _handleRemoveArea = (areaId, areaName) => {
+  removeArea(areaId, areaName);
+};
 void _handleRemoveArea;
 </script>
 
@@ -186,11 +203,11 @@ void _handleRemoveArea;
   cursor: pointer !important;
   opacity: 1 !important;
   white-space: nowrap;
-  
+
   &:last-child {
     border-right: none !important;
   }
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);

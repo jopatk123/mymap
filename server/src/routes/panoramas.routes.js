@@ -212,7 +212,7 @@ router.get('/:id/download', async (req, res) => {
     // 根据标题生成下载文件名（UTF-8 兼容），并选择合适扩展名
     const rawTitle = (pano.title || `panorama-${id}`).toString();
     const safeBase = rawTitle
-      .replace(/[\/:*?"<>|]/g, ' ') // 去除非法文件名字符
+      .replace(/[:*?"<>|/]/g, ' ') // 去除非法文件名字符
       .replace(/\s+/g, ' ') // 合并空格
       .trim();
     const origExt = path.extname(fileName).replace(/^\./, '').toLowerCase();
@@ -228,7 +228,9 @@ router.get('/:id/download', async (req, res) => {
       const makeAsciiFilename = (name) => {
         if (!name) return `panorama-${id}`;
         // 去掉 CR/LF 和双引号等可能破坏 header 的字符
-        let s = String(name).replace(/[\r\n"]/g, ' ').trim();
+        let s = String(name)
+          .replace(/[\r\n"]/g, ' ')
+          .trim();
         // 将连续空格合并
         s = s.replace(/\s+/g, ' ');
         // 将非可打印 ASCII 字符替换为下划线（0x20-0x7E 是常见可打印字符范围）
@@ -250,7 +252,7 @@ router.get('/:id/download', async (req, res) => {
     const isJpeg = /image\/(jpeg|jpg)/i.test(mime) || /\.jpe?g$/i.test(fileName);
     if (!isJpeg) {
       // 非 JPEG 原样返回，并尽量沿用原扩展名
-      const ext = origExt || (mime.split('/')[1] || 'bin');
+      const ext = origExt || mime.split('/')[1] || 'bin';
       setDownloadHeaders(suggestName(ext), mime);
       return res.send(buffer);
     }

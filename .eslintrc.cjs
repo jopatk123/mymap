@@ -47,6 +47,13 @@ module.exports = {
       rules: {
         'vue/no-mutating-props': 'warn',
         'vue/multi-word-component-names': 'off',
+        'vue/max-attributes-per-line': 'off',
+        'vue/singleline-html-element-content-newline': 'off',
+        'vue/multiline-html-element-content-newline': 'off',
+        'vue/html-self-closing': 'off',
+        'vue/first-attribute-linebreak': 'off',
+        'vue/html-closing-bracket-newline': 'off',
+        'vue/html-indent': 'off',
       },
     },
     {
@@ -70,7 +77,12 @@ module.exports = {
       },
     },
     {
-      files: ['**/*.config.{js,cjs,mjs}', '**/vite.config.js', '**/vite.config.cjs', '**/eslint.config.{js,cjs,mjs}'],
+      files: [
+        '**/*.config.{js,cjs,mjs}',
+        '**/vite.config.js',
+        '**/vite.config.cjs',
+        '**/eslint.config.{js,cjs,mjs}',
+      ],
       env: {
         browser: false,
         node: true,

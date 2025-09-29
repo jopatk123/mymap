@@ -33,7 +33,10 @@ export function useBatchOperations() {
   const togglePanoramaVisibility = async (panorama, onSuccess) => {
     try {
       await panoramaStore.updatePanoramaVisibility(panorama.id, !panorama.is_visible);
-      ElMessage.success({ message: `全景图已${panorama.is_visible ? '隐藏' : '显示'}`, duration: 1000 });
+      ElMessage.success({
+        message: `全景图已${panorama.is_visible ? '隐藏' : '显示'}`,
+        duration: 1000,
+      });
       onSuccess?.();
     } catch (error) {
       ElMessage.error({ message: '更新可见性失败: ' + error.message, duration: 1000 });
@@ -85,7 +88,10 @@ export function useBatchOperations() {
       onSuccess?.();
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error({ message: `批量${isVisible ? '显示' : '隐藏'}失败: ` + error.message, duration: 1000 });
+        ElMessage.error({
+          message: `批量${isVisible ? '显示' : '隐藏'}失败: ` + error.message,
+          duration: 1000,
+        });
       }
     }
   };

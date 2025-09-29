@@ -1,7 +1,7 @@
 <template>
   <div class="button-test-view">
     <h2>按钮UI优化测试页面</h2>
-    
+
     <!-- 模拟地图控件 -->
     <div class="test-section">
       <h3>优化后的按钮组</h3>
@@ -13,50 +13,46 @@
               <el-icon><Search /></el-icon>
               搜索
             </el-button>
-            
+
             <!-- 区域控制按钮组 -->
             <el-button class="btn-circle">
               <el-icon><Compass /></el-icon>
               圆形区域
             </el-button>
-            
+
             <el-button class="btn-custom">
               <el-icon><Crop /></el-icon>
               自定义区域
             </el-button>
-            
+
             <el-button class="btn-clear">
               <el-icon><Delete /></el-icon>
               清除
             </el-button>
-            
+
             <!-- 导出按钮 -->
             <el-button class="btn-export">
               <el-icon><Download /></el-icon>
               导出数据
             </el-button>
-            
+
             <!-- KML设置 -->
             <el-button class="btn-kml-settings">
               <el-icon><Tools /></el-icon>
               KML设置
             </el-button>
-            
+
             <!-- 点位图标 -->
             <el-button class="btn-point-icons">
               <el-icon><Location /></el-icon>
               点位图标
             </el-button>
-            
+
             <!-- 显示列表 -->
-            <el-button class="btn-show-list">
-              显示列表
-            </el-button>
-            
+            <el-button class="btn-show-list"> 显示列表 </el-button>
+
             <!-- 隐藏KML图层 -->
-            <el-button class="btn-toggle-kml">
-              显示KML图层
-            </el-button>
+            <el-button class="btn-toggle-kml"> 显示KML图层 </el-button>
           </div>
         </div>
       </div>
@@ -73,7 +69,7 @@
         <li>✅ 统一的视觉风格和间距</li>
         <li>✅ 无障碍访问支持</li>
       </ul>
-      
+
       <h3>响应式断点</h3>
       <ul>
         <li><strong>超宽屏 (≥1440px):</strong> 更大的按钮和图标</li>
@@ -87,15 +83,7 @@
 </template>
 
 <script setup>
-import { 
-  Search, 
-  Compass, 
-  Crop, 
-  Delete, 
-  Download, 
-  Tools, 
-  Location 
-} from '@element-plus/icons-vue';
+import { Search, Compass, Crop, Delete, Download, Tools, Location } from '@element-plus/icons-vue';
 </script>
 
 <style lang="scss" scoped>
@@ -104,7 +92,8 @@ import {
   max-width: 1200px;
   margin: 0 auto;
 
-  h2, h3 {
+  h2,
+  h3 {
     color: #333;
     margin-bottom: 16px;
   }

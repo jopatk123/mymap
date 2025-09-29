@@ -82,16 +82,23 @@ export function showPointEditDialog(pointData, mapInstance, options = {}) {
         pointData.name = newName;
         pointData.description = newDesc;
 
-        const coordsChanged = pointData.coordinates[0] !== newLng || pointData.coordinates[1] !== newLat;
+        const coordsChanged =
+          pointData.coordinates[0] !== newLng || pointData.coordinates[1] !== newLat;
         if (coordsChanged) {
           pointData.coordinates = [newLng, newLat];
           if (typeof options.onPositionChange === 'function') {
-            try { options.onPositionChange(newLng, newLat); } catch (_) {}
+            try {
+              options.onPositionChange(newLng, newLat);
+            } catch (_) {}
           } else {
             // 回退：按 WGS84 直接更新图层（仅当底图非高德或无需转换时）
             const newLatLng = L.latLng(newLat, newLng);
-            try { pointData.layer.setLatLng(newLatLng); } catch (_) {}
-            try { mapInstance.setView(newLatLng, mapInstance.getZoom()); } catch (_) {}
+            try {
+              pointData.layer.setLatLng(newLatLng);
+            } catch (_) {}
+            try {
+              mapInstance.setView(newLatLng, mapInstance.getZoom());
+            } catch (_) {}
           }
         }
 
@@ -114,7 +121,9 @@ export function showPointEditDialog(pointData, mapInstance, options = {}) {
         const lat = parseFloat(document.getElementById('point-lat').value);
         const coordsText = `${lng.toFixed(6)},${lat.toFixed(6)}`;
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(coordsText).then(() => ElMessage.success('经纬度已复制到剪贴板'));
+          navigator.clipboard
+            .writeText(coordsText)
+            .then(() => ElMessage.success('经纬度已复制到剪贴板'));
         } else {
           const textArea = document.createElement('textarea');
           textArea.value = coordsText;
@@ -143,7 +152,9 @@ export function showPointEditDialog(pointData, mapInstance, options = {}) {
         try {
           [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat);
         } catch (_) {}
-        const url = `https://uri.amap.com/marker?position=${gcjLng},${gcjLat}&name=${encodeURIComponent(pointData.name || '标记')}`;
+        const url = `https://uri.amap.com/marker?position=${gcjLng},${gcjLat}&name=${encodeURIComponent(
+          pointData.name || '标记'
+        )}`;
         window.open(url, '_blank');
       };
     }
@@ -164,7 +175,11 @@ export function showPointEditDialog(pointData, mapInstance, options = {}) {
         try {
           [bdLng, bdLat] = wgs84ToBd09(lng, lat);
         } catch (_) {}
-        const url = `https://api.map.baidu.com/marker?location=${bdLat},${bdLng}&title=${encodeURIComponent(pointData.name || '标记')}&content=${encodeURIComponent(pointData.description || '')}&output=html&src=webapp.baidu.openAPIdemo`;
+        const url = `https://api.map.baidu.com/marker?location=${bdLat},${bdLng}&title=${encodeURIComponent(
+          pointData.name || '标记'
+        )}&content=${encodeURIComponent(
+          pointData.description || ''
+        )}&output=html&src=webapp.baidu.openAPIdemo`;
         window.open(url, '_blank');
       };
     }

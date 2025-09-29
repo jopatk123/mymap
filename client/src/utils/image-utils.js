@@ -218,11 +218,13 @@ export function compressImage(
           resolve(compressedFile || file);
         },
         // 输出格式尽量保持与原始一致（仅在 JPEG/WebP 时使用质量参数）
-        /^image\/(jpeg|jpg|webp)$/i.test(file.type) ? (() => {
-          if (/^image\/(jpeg|jpg)$/i.test(file.type)) return 'image/jpeg';
-          if (/^image\/webp$/i.test(file.type)) return 'image/webp';
-          return file.type;
-        })() : file.type,
+        /^image\/(jpeg|jpg|webp)$/i.test(file.type)
+          ? (() => {
+              if (/^image\/(jpeg|jpg)$/i.test(file.type)) return 'image/jpeg';
+              if (/^image\/webp$/i.test(file.type)) return 'image/webp';
+              return file.type;
+            })()
+          : file.type,
         quality
       );
     };

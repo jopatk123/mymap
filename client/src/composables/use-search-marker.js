@@ -3,14 +3,18 @@ import L from 'leaflet';
 // Simple HTML escape to avoid injection in popups
 function escapeHtml(str) {
   if (!str) return '';
-  return String(str).replace(/[&<>"'`]/g, (s) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-    '`': '&#96;',
-  })[s]);
+  return String(str).replace(
+    /[&<>"'`]/g,
+    (s) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '`': '&#96;',
+      }[s])
+  );
 }
 
 export function useSearchMarker(mapRef) {

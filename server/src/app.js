@@ -155,12 +155,16 @@ if (config.server.env !== 'production') {
 }
 
 // API路由（为防缓存增加 no-store/no-cache）
-app.use('/api', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-}, routes);
+app.use(
+  '/api',
+  (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  },
+  routes
+);
 
 // 静态文件服务（前端构建文件）
 const distDir = path.join(__dirname, '../../client/dist');

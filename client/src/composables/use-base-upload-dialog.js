@@ -9,7 +9,7 @@ export function useBaseUploadDialog(props, emit) {
   const uploadProgress = ref(0);
   const processing = ref(false);
   const processingText = ref('');
-  
+
   // 使用全局 store
   let folderStore = null;
   const folders = ref([]);
@@ -91,24 +91,27 @@ export function useBaseUploadDialog(props, emit) {
     try {
       const { useFolderStore } = await import('@/store/folder.js');
       folderStore = useFolderStore();
-      
+
       // 使用全局 store 获取文件夹数据
       await folderStore.fetchFolders();
-      
-      // 创建对 store 数据的响应式引用
-      watch(() => folderStore.flatFolders, (newFolders) => {
-        folders.value = newFolders || [];
-        // 如果用户还没有选择文件夹，自动设置默认文件夹
-        if (newFolders && newFolders.length > 0 && form.folderId === null) {
-          const defaultFolder = newFolders.find((folder) => folder.name === '默认文件夹');
-          if (defaultFolder) {
-            form.folderId = defaultFolder.id;
-          } else {
-            form.folderId = newFolders[0].id;
-          }
-        }
-      }, { immediate: true });
 
+      // 创建对 store 数据的响应式引用
+      watch(
+        () => folderStore.flatFolders,
+        (newFolders) => {
+          folders.value = newFolders || [];
+          // 如果用户还没有选择文件夹，自动设置默认文件夹
+          if (newFolders && newFolders.length > 0 && form.folderId === null) {
+            const defaultFolder = newFolders.find((folder) => folder.name === '默认文件夹');
+            if (defaultFolder) {
+              form.folderId = defaultFolder.id;
+            } else {
+              form.folderId = newFolders[0].id;
+            }
+          }
+        },
+        { immediate: true }
+      );
     } catch (error) {
       console.error('加载文件夹失败:', error);
       folders.value = [];
