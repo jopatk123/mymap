@@ -15,7 +15,7 @@ class KmlPointModel {
   }) {
     try {
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude);
-      const result = await SQLiteAdapter.all(
+      const [result] = await SQLiteAdapter.execute(
         `INSERT INTO kml_points (
           kml_file_id, name, description, latitude, longitude, 
           gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data
@@ -70,8 +70,8 @@ class KmlPointModel {
         kml_file_id, name, description, latitude, longitude, 
         gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data
       ) VALUES ${values.join(', ')}`;
-      const result = await SQLiteAdapter.all(sql, params);
-      return result.affectedRows;
+      const result = await SQLiteAdapter.run(sql, params);
+      return result.changes || 0;
     } catch (error) {
       const Logger = require('../utils/logger');
       Logger.error('批量创建KML点位失败:', error);
@@ -148,9 +148,10 @@ class KmlPointModel {
 
   static async deleteByKmlFileId(kmlFileId) {
     try {
-      const result = await SQLiteAdapter.all('DELETE FROM kml_points WHERE kml_file_id = ?', [
-        kmlFileId,
-      ]);
+      const [result] = await SQLiteAdapter.execute(
+        'DELETE FROM kml_points WHERE kml_file_id = ?',
+        [kmlFileId]
+      );
       return result.affectedRows;
     } catch (error) {
       const Logger = require('../utils/logger');

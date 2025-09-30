@@ -88,7 +88,8 @@ class QueryBuilder {
     return {
       selectDistance: `${distanceFormula} AS distance`,
       havingCondition: 'distance <= ?',
-      params: [lat, lng, lat, radius],
+      params: [lat, lng, lat],
+      havingParam: radius,
     };
   }
 

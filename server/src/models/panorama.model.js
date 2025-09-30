@@ -118,7 +118,10 @@ class PanoramaModel {
       ORDER BY distance ASC
     `;
 
-    const [rows] = await SQLiteAdapter.execute(sql, [...nearbyQuery.params, radius]);
+    const [rows] = await SQLiteAdapter.execute(sql, [
+      ...nearbyQuery.params,
+      nearbyQuery.havingParam,
+    ]);
     return rows;
   }
 
@@ -351,11 +354,10 @@ class PanoramaModel {
 
       if (conditions.length > 0) {
         sql += ` WHERE ${conditions.join(' AND ')} HAVING ${nearbyQuery.havingCondition}`;
-        finalParams.push(radius);
       } else {
         sql += ` HAVING ${nearbyQuery.havingCondition}`;
-        finalParams.push(radius);
       }
+      finalParams.push(nearbyQuery.havingParam);
       sql += ' ORDER BY distance ASC';
     } else {
       if (conditions.length > 0) {
@@ -379,7 +381,7 @@ class PanoramaModel {
         ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''}
         HAVING ${nearbyQuery.havingCondition}
       ) as filtered`;
-      countParams = [...nearbyQuery.params, ...countParams, radius];
+      countParams = [...nearbyQuery.params, ...countParams, nearbyQuery.havingParam];
     } else if (conditions.length > 0) {
       countSql += ` WHERE ${conditions.join(' AND ')}`;
     }
@@ -450,11 +452,16 @@ class PanoramaModel {
     const { includeHidden = false, sortBy = 'sort_order', sortOrder = 'ASC' } = options;
 
     const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'p');
-    let sql = `SELECT p.* FROM panoramas p WHERE ${folderCondition.conditions.join(' AND ')}`;
-    const params = folderCondition.params;
+    const conditions = [...folderCondition.conditions];
+    const params = [...folderCondition.params];
 
     if (!includeHidden) {
-      sql += ' AND p.is_visible = TRUE';
+      conditions.push('p.is_visible = TRUE');
+    }
+
+    let sql = 'SELECT p.* FROM panoramas p';
+    if (conditions.length > 0) {
+      sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     const allowedSortFields = ['created_at', 'title', 'sort_order'];

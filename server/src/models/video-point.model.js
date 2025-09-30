@@ -133,12 +133,14 @@ class VideoPointModel {
   static async findByFolder(folderId, { includeHidden = false } = {}) {
     try {
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'vp');
-      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`;
-      let params = folderCondition.params;
+      const conditions = [...folderCondition.conditions];
+      const params = [...folderCondition.params];
 
       if (!includeHidden) {
-        whereClause += ' AND vp.is_visible = TRUE';
+        conditions.push('vp.is_visible = TRUE');
       }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const [rows] = await SQLiteAdapter.execute(
         `SELECT vp.*, f.name as folder_name 

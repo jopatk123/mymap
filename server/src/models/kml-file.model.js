@@ -131,12 +131,14 @@ class KmlFileModel {
   static async findByFolder(folderId, { includeHidden = false } = {}) {
     try {
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf');
-      let whereClause = `WHERE ${folderCondition.conditions.join(' AND ')}`;
-      let params = folderCondition.params;
+      const conditions = [...folderCondition.conditions];
+      const params = [...folderCondition.params];
 
       if (!includeHidden) {
-        whereClause += ' AND kf.is_visible = TRUE';
+        conditions.push('kf.is_visible = TRUE');
       }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       const [rows] = await SQLiteAdapter.execute(
         `SELECT kf.*, f.name as folder_name,
