@@ -140,13 +140,23 @@ ecosystem.config.js
 test-results/
 coverage/
 
-# Debug and test files
-*-debug.js
-*-test.js
-*-spec.js
-test-*.js
-*.test.js
-*.spec.js
+# # Debug and test files
+# *-debug.js
+# *-test.js
+# *-spec.js
+# test-*.js
+# *.test.js
+# *.spec.js
+
+# Allow committed server test files
+!server/src/__tests__/app.routes.test.js
+!server/src/__tests__/sanity.test.js
+!server/src/utils/__tests__/coordinate-transform.test.js
+!server/src/services/__tests__/config.service.test.js
+!server/src/services/__tests__/config.repository.test.js
+!server/src/services/__tests__/config.broadcaster.test.js
+!server/src/middleware/__tests__/error.middleware.test.js
+!server/src/utils/__tests__/response.test.js
 
 # Temporary and backup files
 *.tmp
