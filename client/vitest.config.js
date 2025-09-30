@@ -1,21 +1,24 @@
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-const rootDir = dirname(fileURLToPath(new URL('.', import.meta.url)));
+const srcDir = fileURLToPath(new URL('./src', import.meta.url));
+const setupFile = fileURLToPath(new URL('./src/setupTests.js', import.meta.url));
 
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': resolve(rootDir, 'src'),
+      '@': srcDir,
     },
   },
   test: {
+    alias: {
+      '@': srcDir,
+    },
+    setupFiles: [setupFile],
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
+    exclude: ['**/node_modules/**', '../server/**', '../tmp/**'],
     clearMocks: true,
     restoreMocks: true,
     coverage: {

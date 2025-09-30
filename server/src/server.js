@@ -3,6 +3,7 @@ const config = require('./config');
 const { testConnection, initTables, closeDatabase } = require('./config/database');
 const { initDefaultFolder } = require('./init/init-default-folder');
 const Logger = require('./utils/logger');
+const ConfigService = require('./services/config.service');
 
 // 启动服务器
 const startServer = async () => {
@@ -42,8 +43,9 @@ const startServer = async () => {
     try {
       const WebSocket = require('ws');
       const wss = new WebSocket.Server({ server });
-      // 把 wss 暴露到 app.locals，便于其他模块（如 ConfigService）使用
+      // 保留向 app.locals 暴露 wss 的兼容行为
       app.locals.wss = wss;
+      ConfigService.attachWebSocketServer(wss);
 
       Logger.info('WebSocket 服务已启动，监听配置更新广播');
 
