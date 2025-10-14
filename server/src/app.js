@@ -70,8 +70,11 @@ if (fs.existsSync(geoDataDir)) {
       setHeaders: (res, _filePath) => {
         res.set('Access-Control-Allow-Origin', '*');
         res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.set('Access-Control-Allow-Headers', 'Content-Type');
-        res.set('Cache-Control', 'public, max-age=86400, immutable');
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Range');
+        res.set('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
+        // GeoTIFF 数据基本不会改变，设置 1 年缓存
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        res.set('Accept-Ranges', 'bytes');
       },
     })
   );

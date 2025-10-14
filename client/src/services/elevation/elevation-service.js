@@ -104,6 +104,20 @@ export function createElevationService(options = {}) {
   const tileLoader = tileLoaderFactory(tileLoaderOptions);
   const contourCache = new Map();
 
+  const resolveContourSettings = (overrides = {}) => {
+    const thresholdStep = overrides.thresholdStep ?? contourOptions.thresholdStep ?? 20;
+    const sampleSize = overrides.sampleSize ?? contourOptions.sampleSize ?? 512;
+    const maxContours = overrides.maxContours ?? contourOptions.maxContours ?? 50;
+    return {
+      thresholdStep,
+      sampleSize,
+      maxContours,
+    };
+  };
+
+  const buildContourCacheKey = (tileId, settings) =>
+    `${tileId}|step:${settings.thresholdStep}|sample:${settings.sampleSize}|max:${settings.maxContours}`;
+
   const ensureTileRecord = async (tile) => {
     if (!tile) return null;
     return tileLoader.loadTile(tile);
@@ -117,7 +131,6 @@ export function createElevationService(options = {}) {
       findTileByCoordinate(lat, lng, manifest) ||
       manifest.find((entry) => entry.contains?.(lat, lng));
     if (!tile) {
-      void console.log('[ElevationService] No tile found for:', { lat, lng });
       return {
         hasData: false,
         elevation: null,
@@ -128,10 +141,8 @@ export function createElevationService(options = {}) {
     }
 
     try {
-      void console.log('[ElevationService] Found tile:', tile.id, 'for coords:', { lat, lng });
       const record = await ensureTileRecord(tile);
       if (!record) {
-        void console.warn('[ElevationService] Failed to load tile record:', tile.id);
         return {
           hasData: false,
           elevation: null,
@@ -145,7 +156,6 @@ export function createElevationService(options = {}) {
       const readResult = await readWindow(record.image, window);
       const { values, valid } = flattenWindowValues(readResult, record.meta.noDataValue);
       if (!valid) {
-        void console.log('[ElevationService] Invalid pixel values for:', { lat, lng, tile: tile.id });
         return {
           hasData: false,
           elevation: null,
@@ -161,7 +171,6 @@ export function createElevationService(options = {}) {
         values,
         record.meta.noDataValue
       );
-      void console.log('[ElevationService] Computed elevation:', elevation, 'for:', { lat, lng });
       return {
         hasData: elevation !== null,
         elevation: elevation !== null ? roundElevation(elevation) : null,
@@ -170,7 +179,6 @@ export function createElevationService(options = {}) {
         lng: formatCoordinate(lng),
       };
     } catch (error) {
-      void console.error('[ElevationService] Error getting elevation:', error);
       return {
         hasData: false,
         elevation: null,
@@ -183,18 +191,19 @@ export function createElevationService(options = {}) {
 
   const getTileContours = async (tile, overrides = {}) => {
     if (!tile) return [];
-    if (!overrides.force && contourCache.has(tile.id)) {
-      return contourCache.get(tile.id);
+    const settings = resolveContourSettings(overrides);
+    const cacheKey = buildContourCacheKey(tile.id, settings);
+    if (!overrides.force && contourCache.has(cacheKey)) {
+      return contourCache.get(cacheKey);
     }
     const record = await ensureTileRecord(tile);
     if (!record) {
-      contourCache.set(tile.id, []);
+      contourCache.set(cacheKey, []);
       return [];
     }
-    const sampleSize = overrides.sampleSize ?? contourOptions.sampleSize ?? 512;
     const aspect = record.meta.height / record.meta.width;
-    const width = sampleSize;
-    const height = Math.max(1, Math.round(sampleSize * aspect));
+    const width = settings.sampleSize;
+    const height = Math.max(1, Math.round(settings.sampleSize * aspect));
     const raster = await record.image.readRasters({
       width,
       height,
@@ -208,8 +217,8 @@ export function createElevationService(options = {}) {
       values: raster,
       bbox: record.meta.bbox,
       noDataValue: record.meta.noDataValue,
-      thresholdStep: overrides.thresholdStep ?? contourOptions.thresholdStep ?? 50,
-      maxContours: overrides.maxContours ?? contourOptions.maxContours ?? 12,
+      thresholdStep: settings.thresholdStep,
+      maxContours: settings.maxContours,
     }).map((feature) => ({
       ...feature,
       properties: {
@@ -217,26 +226,28 @@ export function createElevationService(options = {}) {
         tileId: tile.id,
       },
     }));
-    contourCache.set(tile.id, features);
+    contourCache.set(cacheKey, features);
     return features;
   };
 
   const getContoursForBounds = async (bounds, overrides = {}) => {
     if (!bounds) {
-      return [];
+      return { type: 'FeatureCollection', features: [], tiles: [] };
     }
     const normalizedBounds = normalizeBounds(bounds);
-    void console.log('[ElevationService] Getting contours for bounds:', normalizedBounds);
     const tiles = overrides.tiles ?? tilesIntersectingBounds(normalizedBounds, manifest);
     if (!tiles.length) {
-      void console.log('[ElevationService] No tiles found for bounds');
-      return [];
+      return { type: 'FeatureCollection', features: [], tiles: [] };
     }
 
     const contourPromises = tiles.map((tile) => getTileContours(tile, overrides));
     const allContours = await Promise.all(contourPromises);
-    void console.log('[ElevationService] Generated contours from', tiles.length, 'tiles');
-    return allContours.flat();
+    const features = allContours.flat();
+    return {
+      type: 'FeatureCollection',
+      features,
+      tiles: tiles.map((t) => t.id),
+    };
   };
 
   const clearCaches = () => {

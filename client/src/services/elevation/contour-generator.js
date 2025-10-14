@@ -5,37 +5,68 @@ function collectValidRange(values, noDataValue) {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
   let count = 0;
+  const validValues = [];
+
   for (const value of values) {
     if (value === undefined || value === null || Number.isNaN(value)) continue;
-    if (
-      noDataValue !== undefined &&
-      noDataValue !== null &&
-      Number(value) === Number(noDataValue)
-    ) {
+
+    const numeric = Number(value);
+
+    // 过滤明显的无效值
+    if (numeric < -10000 || numeric > 10000) continue; // 地球海拔范围约 -430m 到 8850m
+    if (noDataValue !== undefined && noDataValue !== null && numeric === Number(noDataValue)) {
       continue;
     }
-    const numeric = Number(value);
-    if (numeric < min) min = numeric;
-    if (numeric > max) max = numeric;
-    count += 1;
+
+    validValues.push(numeric);
   }
+
+  if (validValues.length === 0) {
+    return null;
+  }
+
+  // 使用分位数来排除异常值
+  validValues.sort((a, b) => a - b);
+  const p1 = Math.floor(validValues.length * 0.01); // 1% 分位
+  const p99 = Math.floor(validValues.length * 0.99); // 99% 分位
+
+  for (let i = p1; i < p99; i++) {
+    const value = validValues[i];
+    if (value < min) min = value;
+    if (value > max) max = value;
+    count++;
+  }
+
   if (count === 0) {
     return null;
   }
+
   return { min, max };
 }
 
-function buildThresholds(range, step = 50, maxCount = 12) {
-  if (!range) return [];
-  const safeStep = step <= 0 ? 50 : step;
+function buildThresholds(range, step = 20, maxCount = 50) {
+  if (!range) {
+    return { thresholds: [], step: step > 0 ? step : 20 };
+  }
+
+  const safeStep = step > 0 ? step : 20;
   const start = Math.floor(range.min / safeStep) * safeStep;
   const end = Math.ceil(range.max / safeStep) * safeStep;
+  const span = end - start;
+  const limit = Math.max(1, maxCount);
+  const rawCount = span <= 0 ? 1 : Math.floor(span / safeStep) + 1;
+  const multiplier = Math.max(1, Math.ceil(rawCount / limit));
+  const adjustedStep = safeStep * multiplier;
+
   const thresholds = [];
-  for (let value = start; value <= end; value += safeStep) {
+  for (let value = start; value <= end; value += adjustedStep) {
     thresholds.push(value);
-    if (thresholds.length >= maxCount) break;
+    if (thresholds.length >= limit) {
+      break;
+    }
   }
-  return thresholds;
+
+  return { thresholds, step: adjustedStep };
 }
 
 function pixelToWorld(x, y, width, height, bbox) {
@@ -46,7 +77,7 @@ function pixelToWorld(x, y, width, height, bbox) {
   return [gcjLng, gcjLat];
 }
 
-function contourToFeature(contour, width, height, bbox) {
+function contourToFeature(contour, width, height, bbox, spacing) {
   const lines = [];
   for (const polygon of contour.coordinates) {
     for (const ring of polygon) {
@@ -68,6 +99,7 @@ function contourToFeature(contour, width, height, bbox) {
     type: 'Feature',
     properties: {
       elevation: contour.value,
+      spacing,
     },
     geometry: {
       type: 'MultiLineString',
@@ -82,8 +114,8 @@ export function generateContourFeatures({
   values,
   bbox,
   noDataValue,
-  thresholdStep = 50,
-  maxContours = 12,
+  thresholdStep = 20,
+  maxContours = 50,
 }) {
   if (!values || !width || !height || !bbox) {
     return [];
@@ -92,11 +124,30 @@ export function generateContourFeatures({
   const dataArray = Array.isArray(values) ? values : Array.from(values);
 
   const range = collectValidRange(dataArray, noDataValue);
-  const thresholds = buildThresholds(range, thresholdStep, maxContours);
+  const { thresholds, step } = buildThresholds(range, thresholdStep, maxContours);
+  
+  // eslint-disable-next-line no-console
+  console.log('[contour-gen] 数据:', {
+    range,
+    thresholds: thresholds.length,
+    step,
+    thresholdRange: thresholds.length > 0 ? [thresholds[0], thresholds[thresholds.length - 1]] : [],
+  });
+
   if (!thresholds.length) return [];
 
   const contourBuilder = d3Contours().size([width, height]).smooth(true).thresholds(thresholds);
   const contours = contourBuilder(dataArray);
 
-  return contours.map((contour) => contourToFeature(contour, width, height, bbox)).filter(Boolean);
+  const features = contours
+    .map((contour) => contourToFeature(contour, width, height, bbox, step))
+    .filter(Boolean);
+
+  // eslint-disable-next-line no-console
+  console.log('[contour-gen] 结果:', {
+    contours: contours.length,
+    features: features.length,
+  });
+
+  return features;
 }
