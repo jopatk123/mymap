@@ -65,6 +65,9 @@ export function startFreehand(deactivateTool) {
     }
   };
 
+  // 保存清理函数，以便在切换工具时调用
+  state.currentCleanup = cleanup;
+
   state.mapInstance.on('mousedown', onMouseDown);
   state.mapInstance.on('mousemove', onMouseMove);
   state.mapInstance.on('mouseup', onMouseUp);

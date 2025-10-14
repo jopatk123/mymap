@@ -22,17 +22,25 @@ export function useDrawingTools() {
 
   const deactivateTool = () => {
     const map = state.mapInstance;
+    
+    // 调用当前工具的清理函数（如果存在）
+    if (state.currentCleanup && typeof state.currentCleanup === 'function') {
+      try {
+        state.currentCleanup();
+      } catch (err) {
+        console.warn('[drawing-tools] cleanup error:', err);
+      }
+      state.currentCleanup = null;
+    }
+    
+    // 不再在这里统一移除事件监听器，由各个工具自己清理
+    // 这样可以避免移除其他功能（如pointer-tracker）的监听器
     if (map) {
-      map.off('click');
-      map.off('mousemove');
-      map.off('mousedown');
-      map.off('mouseup');
-      map.off('dblclick');
       if (map.dragging && !map.dragging.enabled()) {
         map.dragging.enable();
       }
     }
-    if (state.measureTooltip) {
+    if (state.measureTooltip && map) {
       map.removeLayer(state.measureTooltip);
       state.measureTooltip = null;
     }

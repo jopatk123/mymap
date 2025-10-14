@@ -61,6 +61,9 @@ export function startDrawCircle(deactivateTool) {
         state.mapInstance.off('click', onClick);
       };
 
+      // 保存清理函数，以便在切换工具时调用
+      state.currentCleanup = cleanup;
+
       state.mapInstance.on('click', onClick);
     })
     .catch(() => {

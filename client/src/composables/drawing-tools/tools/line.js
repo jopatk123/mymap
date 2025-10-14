@@ -40,6 +40,9 @@ export function startDrawLine(deactivateTool) {
     state.mapInstance.off('dblclick', onDblClick);
   };
 
+  // 保存清理函数，以便在切换工具时调用
+  state.currentCleanup = cleanup;
+
   state.mapInstance.on('click', onClick);
   state.mapInstance.on('dblclick', onDblClick);
 }

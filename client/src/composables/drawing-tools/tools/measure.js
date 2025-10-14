@@ -57,35 +57,19 @@ export function startMeasure(deactivateTool) {
 
       totalDistance = seg;
 
-      const totalOutput = `总距离: ${
-        totalDistance > 1000
-          ? `${Math.round((totalDistance / 1000) * 100) / 100} km`
-          : `${Math.round(totalDistance * 100) / 100} m`
-      }`;
-      
-      state.measureTooltip = L.tooltip({
-        permanent: true,
-        direction: 'top',
-        className: 'total-distance-tooltip',
-      })
-        .setLatLng(e.latlng)
-        .setContent(totalOutput)
-        .addTo(state.mapInstance);
-
-      // 保存测距结果
+      // 保存测距结果（不再创建总距离提示框）
       drawings.value.push({
         type: 'Measure',
         coordinates: wgsPoints, // 存储为 WGS84
         coordinateSystem: 'wgs84',
         layer: measureLine,
         distance: totalDistance,
-        tooltips: [...segmentTooltips, state.measureTooltip],
+        tooltips: [...segmentTooltips], // 只保存段距离提示框
         pointMarkers,
       });
 
       segmentTooltips = [];
       pointMarkers = [];
-      state.measureTooltip = null;
       cleanup();
       ElMessage.success('测距完成');
       deactivateTool?.();
@@ -95,6 +79,9 @@ export function startMeasure(deactivateTool) {
   const cleanup = () => {
     state.mapInstance.off('click', onClick);
   };
+
+  // 保存清理函数，以便在切换工具时调用
+  state.currentCleanup = cleanup;
 
   state.mapInstance.on('click', onClick);
 }
