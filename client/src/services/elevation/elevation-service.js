@@ -117,6 +117,7 @@ export function createElevationService(options = {}) {
       findTileByCoordinate(lat, lng, manifest) ||
       manifest.find((entry) => entry.contains?.(lat, lng));
     if (!tile) {
+      void console.log('[ElevationService] No tile found for:', { lat, lng });
       return {
         hasData: false,
         elevation: null,
@@ -126,43 +127,58 @@ export function createElevationService(options = {}) {
       };
     }
 
-    const record = await ensureTileRecord(tile);
-    if (!record) {
+    try {
+      void console.log('[ElevationService] Found tile:', tile.id, 'for coords:', { lat, lng });
+      const record = await ensureTileRecord(tile);
+      if (!record) {
+        void console.warn('[ElevationService] Failed to load tile record:', tile.id);
+        return {
+          hasData: false,
+          elevation: null,
+          tileId: tile.id,
+          lat: formatCoordinate(lat),
+          lng: formatCoordinate(lng),
+        };
+      }
+
+      const { ratios, window } = extractPixelWindow(record.meta, lat, lng);
+      const readResult = await readWindow(record.image, window);
+      const { values, valid } = flattenWindowValues(readResult, record.meta.noDataValue);
+      if (!valid) {
+        void console.log('[ElevationService] Invalid pixel values for:', { lat, lng, tile: tile.id });
+        return {
+          hasData: false,
+          elevation: null,
+          tileId: tile.id,
+          lat: formatCoordinate(lat),
+          lng: formatCoordinate(lng),
+        };
+      }
+
+      const elevation = bilinearInterpolation(
+        ratios.xRatio,
+        ratios.yRatio,
+        values,
+        record.meta.noDataValue
+      );
+      void console.log('[ElevationService] Computed elevation:', elevation, 'for:', { lat, lng });
       return {
-        hasData: false,
-        elevation: null,
+        hasData: elevation !== null,
+        elevation: elevation !== null ? roundElevation(elevation) : null,
         tileId: tile.id,
         lat: formatCoordinate(lat),
         lng: formatCoordinate(lng),
       };
-    }
-
-    const { ratios, window } = extractPixelWindow(record.meta, lat, lng);
-    const readResult = await readWindow(record.image, window);
-    const { values, valid } = flattenWindowValues(readResult, record.meta.noDataValue);
-    if (!valid) {
+    } catch (error) {
+      void console.error('[ElevationService] Error getting elevation:', error);
       return {
         hasData: false,
         elevation: null,
-        tileId: tile.id,
+        tileId: tile?.id ?? null,
         lat: formatCoordinate(lat),
         lng: formatCoordinate(lng),
       };
     }
-
-    const elevation = bilinearInterpolation(
-      ratios.xRatio,
-      ratios.yRatio,
-      values,
-      record.meta.noDataValue
-    );
-    return {
-      hasData: elevation !== null,
-      elevation: elevation !== null ? roundElevation(elevation) : null,
-      tileId: tile.id,
-      lat: formatCoordinate(lat),
-      lng: formatCoordinate(lng),
-    };
   };
 
   const getTileContours = async (tile, overrides = {}) => {
@@ -206,17 +222,21 @@ export function createElevationService(options = {}) {
   };
 
   const getContoursForBounds = async (bounds, overrides = {}) => {
-    const normalizedBounds = normalizeBounds(bounds);
-  const tiles = overrides.tiles ?? tilesIntersectingBounds(normalizedBounds, manifest);
-    if (!tiles || tiles.length === 0) {
-      return { type: 'FeatureCollection', features: [] };
+    if (!bounds) {
+      return [];
     }
-    const results = await Promise.all(tiles.map((tile) => getTileContours(tile, overrides)));
-    return {
-      type: 'FeatureCollection',
-      features: results.flat(),
-      tiles: tiles.map((tile) => tile.id),
-    };
+    const normalizedBounds = normalizeBounds(bounds);
+    void console.log('[ElevationService] Getting contours for bounds:', normalizedBounds);
+    const tiles = overrides.tiles ?? tilesIntersectingBounds(normalizedBounds, manifest);
+    if (!tiles.length) {
+      void console.log('[ElevationService] No tiles found for bounds');
+      return [];
+    }
+
+    const contourPromises = tiles.map((tile) => getTileContours(tile, overrides));
+    const allContours = await Promise.all(contourPromises);
+    void console.log('[ElevationService] Generated contours from', tiles.length, 'tiles');
+    return allContours.flat();
   };
 
   const clearCaches = () => {
