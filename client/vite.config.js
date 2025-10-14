@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['element-plus', 'vue', 'vue-router', 'pinia'],
+    include: ['element-plus', 'vue', 'vue-router', 'pinia', 'geotiff', 'd3-contour'],
   },
   build: {
     chunkSizeWarningLimit: 1000, // 增加到1MB警告限制
@@ -50,6 +50,10 @@ export default defineConfig({
           changeOrigin: true,
         },
         '/uploads': {
+          target: backend,
+          changeOrigin: true,
+        },
+        '/geo': {
           target: backend,
           changeOrigin: true,
         },

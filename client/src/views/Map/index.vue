@@ -38,12 +38,15 @@
       :is-online="isOnline"
       :map-instance="mapRef?.map"
       :visible-k-m-l-points="visibleKMLPoints"
+      :contours-visible="contoursVisible"
+      :contours-loading="contoursLoading"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
       @show-kml-settings="showKmlSettings = true"
       @show-point-settings="showPointSettings = true"
       @locate-kml-point="handleLocateKMLPoint"
       @locate-address="handleLocateAddress"
+      @toggle-contours="toggleContours"
     />
 
     <!-- 绘图工具栏 -->
@@ -102,6 +105,8 @@ import { useKMLBaseMapStore } from '@/store/kml-basemap.js';
 import { storeToRefs } from 'pinia';
 import { useMapInitializer } from './composables/map-initializer';
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
+import { useContourOverlay } from '@/composables/use-contour-overlay.js';
+import { ElMessage } from 'element-plus';
 
 import MapView from './components/MapView.vue';
 import MapSidebar from '@/components/map/MapSidebar.vue';
@@ -196,6 +201,11 @@ const {
   showVideoModal,
   showPanoramaViewer,
   openViewer
+);
+
+const { contoursVisible, contoursLoading, toggleContours } = useContourOverlay(
+  computed(() => mapRef.value?.map),
+  { message: ElMessage }
 );
 
 // 事件处理器

@@ -197,3 +197,6 @@ mymap_image.tar
 
 # exported images archive (created by build_mymap_images_tar.sh)
 images/
+
+# Geo files
+geo

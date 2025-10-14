@@ -61,6 +61,22 @@ app.use(
   })
 );
 
+// 地形数据静态访问（供前端按需获取 GeoTIFF 切片）
+const geoDataDir = path.join(__dirname, '../../geo');
+if (fs.existsSync(geoDataDir)) {
+  app.use(
+    '/geo',
+    express.static(geoDataDir, {
+      setHeaders: (res, _filePath) => {
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.set('Access-Control-Allow-Headers', 'Content-Type');
+        res.set('Cache-Control', 'public, max-age=86400, immutable');
+      },
+    })
+  );
+}
+
 // 设置信任代理（用于获取真实IP）
 app.set('trust proxy', true);
 

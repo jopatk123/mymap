@@ -53,6 +53,11 @@ export function useMapInstance(containerId) {
         map.value.getPane('videoPane').style.zIndex = '600';
         map.value.getPane('videoPane').style.pointerEvents = 'auto';
       }
+      if (!map.value.getPane('contourPane')) {
+        map.value.createPane('contourPane');
+        map.value.getPane('contourPane').style.zIndex = '590';
+        map.value.getPane('contourPane').style.pointerEvents = 'none';
+      }
       if (!map.value.getPane('panoramaPane')) {
         map.value.createPane('panoramaPane');
         map.value.getPane('panoramaPane').style.zIndex = '620';

@@ -8,11 +8,13 @@
     <div id="map" class="map-view"></div>
     <!-- 地图类型切换（右上角） -->
     <MapTypeSwitch :map-type="mapType" @change="handleMapTypeChange" />
+    <MapMouseInfo :state="pointerState" />
   </div>
 </template>
 
 <script setup>
 import MapTypeSwitch from './MapTypeSwitch.vue';
+import MapMouseInfo from './MapMouseInfo.vue';
 import { useMapContainer } from '@/composables/use-map-container.js';
 
 const props = defineProps({
@@ -32,7 +34,10 @@ const props = defineProps({
 
 const emit = defineEmits(['panorama-click', 'map-click']);
 
-const { mapType, isLoading, handleMapTypeChange, expose } = useMapContainer(props, emit);
+const { mapType, isLoading, handleMapTypeChange, pointerState, expose } = useMapContainer(
+  props,
+  emit
+);
 
 defineExpose(expose);
 </script>

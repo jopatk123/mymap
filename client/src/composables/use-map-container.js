@@ -14,6 +14,7 @@ import { createMarkerSync } from './map-container/marker-sync.js';
 import { registerExternalEvents } from './map-container/external-events.js';
 import { setupMapContainerWatchers } from './map-container/map-watchers.js';
 import { createGeolocationController } from './map-container/geolocation.js';
+import { createPointerTracker } from './map-container/pointer-tracker.js';
 
 const defaultGlobal = typeof window !== 'undefined' ? window : undefined;
 
@@ -58,6 +59,12 @@ export function useMapContainer(props, emit, injected = {}) {
   } = useMapImpl('map');
 
   const { setSearchMarker, clearSearchMarker } = useSearchMarkerImpl(map);
+
+  const pointerTracker = createPointerTracker({
+    map,
+    elevationProvider: injected.elevationService,
+    throttleMs: injected.pointerThrottleMs,
+  });
 
   const ensureMarkerRefreshModule = async () => {
     if (!markerRefreshModule) {
@@ -123,6 +130,8 @@ export function useMapContainer(props, emit, injected = {}) {
         emit('map-click', e.latlng);
       };
       mapInstance.on('click', mapClickHandler);
+
+      pointerTracker.attach();
     } catch (error) {
       // 地图初始化失败则不继续执行后续逻辑
     }
@@ -161,6 +170,7 @@ export function useMapContainer(props, emit, injected = {}) {
   onUnmounted(() => {
     cleanupExternalEvents();
     cleanupWatchers();
+    pointerTracker.detach();
     if (cleanupInitialViewSync) {
       try {
         cleanupInitialViewSync();
@@ -191,6 +201,7 @@ export function useMapContainer(props, emit, injected = {}) {
     setCenter,
     fitBounds,
     locating,
+    pointerState: pointerTracker.state,
     expose: {
       setCenter,
       fitBounds,
@@ -202,6 +213,7 @@ export function useMapContainer(props, emit, injected = {}) {
       setSearchMarker,
       clearSearchMarker,
       map,
+      pointerState: pointerTracker.state,
       _locateUser: locateUser,
       _fitAllMarkers: fitAllMarkers,
     },
