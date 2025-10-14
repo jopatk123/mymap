@@ -33,16 +33,17 @@ export function startMeasure(deactivateTool) {
         weight: 2,
         dashArray: '5, 5',
       }).addTo(state.drawingLayer);
-    } else {
+    } else if (points.length === 2) {
+      // 当点击第2个点时，完成测距
       measureLine.setLatLngs(points);
-      const seg = points[points.length - 2].distanceTo(points[points.length - 1]);
+      const seg = points[0].distanceTo(points[1]);
       const segOutput =
         seg > 1000
           ? `${Math.round((seg / 1000) * 100) / 100} km`
           : `${Math.round(seg * 100) / 100} m`;
       const midPoint = L.latLng(
-        (points[points.length - 2].lat + points[points.length - 1].lat) / 2,
-        (points[points.length - 2].lng + points[points.length - 1].lng) / 2
+        (points[0].lat + points[1].lat) / 2,
+        (points[0].lng + points[1].lng) / 2
       );
       const segmentTooltip = L.tooltip({
         permanent: true,
@@ -54,32 +55,24 @@ export function startMeasure(deactivateTool) {
         .addTo(state.mapInstance);
       segmentTooltips.push(segmentTooltip);
 
-      totalDistance = 0;
-      for (let i = 0; i < points.length - 1; i++)
-        totalDistance += points[i].distanceTo(points[i + 1]);
+      totalDistance = seg;
 
       const totalOutput = `总距离: ${
         totalDistance > 1000
           ? `${Math.round((totalDistance / 1000) * 100) / 100} km`
           : `${Math.round(totalDistance * 100) / 100} m`
       }`;
-      if (state.measureTooltip) {
-        state.measureTooltip.setLatLng(e.latlng).setContent(totalOutput);
-      } else {
-        state.measureTooltip = L.tooltip({
-          permanent: true,
-          direction: 'top',
-          className: 'total-distance-tooltip',
-        })
-          .setLatLng(e.latlng)
-          .setContent(totalOutput)
-          .addTo(state.mapInstance);
-      }
-    }
-  };
+      
+      state.measureTooltip = L.tooltip({
+        permanent: true,
+        direction: 'top',
+        className: 'total-distance-tooltip',
+      })
+        .setLatLng(e.latlng)
+        .setContent(totalOutput)
+        .addTo(state.mapInstance);
 
-  const onDblClick = () => {
-    if (measureLine) {
+      // 保存测距结果
       drawings.value.push({
         type: 'Measure',
         coordinates: wgsPoints, // 存储为 WGS84
@@ -89,20 +82,19 @@ export function startMeasure(deactivateTool) {
         tooltips: [...segmentTooltips, state.measureTooltip],
         pointMarkers,
       });
+
+      segmentTooltips = [];
+      pointMarkers = [];
+      state.measureTooltip = null;
+      cleanup();
+      ElMessage.success('测距完成');
+      deactivateTool?.();
     }
-    segmentTooltips = [];
-    pointMarkers = [];
-    state.measureTooltip = null;
-    cleanup();
-    ElMessage.success('测距完成');
-    deactivateTool?.();
   };
 
   const cleanup = () => {
     state.mapInstance.off('click', onClick);
-    state.mapInstance.off('dblclick', onDblClick);
   };
 
   state.mapInstance.on('click', onClick);
-  state.mapInstance.on('dblclick', onDblClick);
 }

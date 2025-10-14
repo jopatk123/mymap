@@ -46,6 +46,16 @@ function generateKMLForDrawings(wgsDrawings, title = '地图绘制导出') {
     if (drawing.type === 'Point') {
       const c = drawing.coordinates;
       kmlContent += `      <Point>\n        <coordinates>${c[0]},${c[1]},0</coordinates>\n      </Point>\n`;
+    } else if (drawing.type === 'Circle') {
+      // 对于圆形，导出为点并添加描述信息
+      const c = drawing.coordinates;
+      const radiusKm = drawing.radius ? (drawing.radius / 1000).toFixed(2) : '0';
+      const extendedDesc = `${description} (半径: ${radiusKm} km)`;
+      kmlContent = kmlContent.replace(
+        `<description>${description}</description>`,
+        `<description>${extendedDesc}</description>`
+      );
+      kmlContent += `      <Point>\n        <coordinates>${c[0]},${c[1]},0</coordinates>\n      </Point>\n`;
     } else if (
       drawing.type === 'LineString' ||
       drawing.type === 'Freehand' ||
@@ -105,6 +115,12 @@ function generateCSVForDrawings(wgsDrawings) {
         lon = drawing.coordinates[0];
         lat = drawing.coordinates[1];
         coordsStr = `${lat} ${lon}`; // lat lon for consistency
+      } else if (drawing.type === 'Circle' && Array.isArray(drawing.coordinates)) {
+        // 圆形：中心点坐标
+        lon = drawing.coordinates[0];
+        lat = drawing.coordinates[1];
+        const radiusKm = drawing.radius ? (drawing.radius / 1000).toFixed(2) : '0';
+        coordsStr = `${lat} ${lon} (半径: ${radiusKm} km)`;
       } else if (
         drawing.type === 'Polygon' &&
         Array.isArray(drawing.coordinates) &&
@@ -213,11 +229,21 @@ export function exportToKml(format = 'kml') {
       coordinateSystem: system,
     };
 
+    // 如果是Circle类型，保留半径信息
+    if (type === 'Circle' && d.radius) {
+      copy.radius = d.radius;
+    }
+
     // 如果没有可用坐标则跳过转换（后续生成时会忽略）
     if (!copy.coordinates) return copy;
 
-    // 执行坐标转换（支持点、线、面）
+    // 执行坐标转换（支持点、线、面、圆）
     if (copy.type === 'Point' && Array.isArray(copy.coordinates)) {
+      const [lng, lat] = copy.coordinates;
+      const [wgsLng, wgsLat] = convertCoord(lng, lat, system);
+      copy.coordinates = [wgsLng, wgsLat];
+    } else if (copy.type === 'Circle' && Array.isArray(copy.coordinates)) {
+      // Circle类型：转换圆心坐标
       const [lng, lat] = copy.coordinates;
       const [wgsLng, wgsLat] = convertCoord(lng, lat, system);
       copy.coordinates = [wgsLng, wgsLat];

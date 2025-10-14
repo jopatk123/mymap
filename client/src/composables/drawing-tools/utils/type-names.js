@@ -5,6 +5,7 @@ export function getDrawingTypeName(type) {
     Polygon: '面',
     Freehand: '画笔',
     Measure: '测距',
+    Circle: '圆形',
   };
   return typeNames[type] || type;
 }

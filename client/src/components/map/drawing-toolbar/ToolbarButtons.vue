@@ -74,6 +74,18 @@
       </el-button>
     </el-tooltip>
 
+    <!-- 画圆工具 -->
+    <el-tooltip content="画圆" placement="left">
+      <el-button
+        :type="activeTool === 'circle' ? 'primary' : 'default'"
+        :class="{ active: activeTool === 'circle' }"
+        circle
+        @click="$emit('toggle-tool', 'circle')"
+      >
+        <el-icon><CirclePlus /></el-icon>
+      </el-button>
+    </el-tooltip>
+
     <!-- 分割线 -->
     <div class="divider" />
 
@@ -121,6 +133,7 @@ import {
   Edit,
   Download,
   Delete,
+  CirclePlus,
 } from '@element-plus/icons-vue';
 
 defineProps({

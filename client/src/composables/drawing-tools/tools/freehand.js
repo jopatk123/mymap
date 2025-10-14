@@ -35,18 +35,23 @@ export function startFreehand(deactivateTool) {
 
   const onMouseUp = () => {
     state.isDrawing = false;
-  };
-
-  const onDblClick = () => {
+    
+    // 在鼠标松开时自动完成绘制
     if (polyline && points.length > 1) {
-      drawings.value.push({
-        type: 'Freehand',
-        coordinates: wgsPoints,
-        coordinateSystem: 'wgs84',
-        layer: polyline,
-      });
-      ElMessage.success('画笔绘制完成');
+      // 检查是否已经添加过（避免重复添加）
+      const alreadyAdded = drawings.value.some((d) => d.layer === polyline);
+      if (!alreadyAdded) {
+        drawings.value.push({
+          type: 'Freehand',
+          coordinates: wgsPoints,
+          coordinateSystem: 'wgs84',
+          layer: polyline,
+        });
+        ElMessage.success('画笔绘制完成');
+      }
     }
+    
+    // 清理事件并结束工具
     cleanup();
     deactivateTool?.();
   };
@@ -55,7 +60,6 @@ export function startFreehand(deactivateTool) {
     state.mapInstance.off('mousedown', onMouseDown);
     state.mapInstance.off('mousemove', onMouseMove);
     state.mapInstance.off('mouseup', onMouseUp);
-    state.mapInstance.off('dblclick', onDblClick);
     if (state.mapInstance.dragging && !state.mapInstance.dragging.enabled()) {
       state.mapInstance.dragging.enable();
     }
@@ -64,5 +68,4 @@ export function startFreehand(deactivateTool) {
   state.mapInstance.on('mousedown', onMouseDown);
   state.mapInstance.on('mousemove', onMouseMove);
   state.mapInstance.on('mouseup', onMouseUp);
-  state.mapInstance.on('dblclick', onDblClick);
 }

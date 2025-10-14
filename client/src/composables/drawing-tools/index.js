@@ -7,6 +7,7 @@ import { startDrawPoint } from './tools/point.js';
 import { startDrawLine } from './tools/line.js';
 import { startDrawPolygon } from './tools/polygon.js';
 import { startFreehand } from './tools/freehand.js';
+import { startDrawCircle } from './tools/circle.js';
 import { exportToKml } from './export/kml.js';
 
 export function useDrawingTools() {
@@ -59,6 +60,9 @@ export function useDrawingTools() {
         break;
       case 'draw':
         startFreehand(deactivateTool);
+        break;
+      case 'circle':
+        startDrawCircle(deactivateTool);
         break;
     }
   };
