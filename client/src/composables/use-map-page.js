@@ -86,6 +86,7 @@ export function useMapPage(injected = {}) {
     kmlLayersVisible: state.kmlLayersVisible,
     showKmlSettings: state.showKmlSettings,
     showPointSettings: state.showPointSettings,
+    showContourDialog: state.showContourDialog,
 
     initializePage,
     loadInitialData,

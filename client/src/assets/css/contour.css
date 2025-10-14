@@ -1,0 +1,28 @@
+/* 等高线标签样式 */
+.contour-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.contour-label-text {
+  background: transparent;
+  color: #ff6d00;
+  font-size: 10px;
+  font-weight: normal;
+  padding: 0;
+  border: none;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8),
+               -1px -1px 2px rgba(255, 255, 255, 0.8),
+               1px -1px 2px rgba(255, 255, 255, 0.8),
+               -1px 1px 2px rgba(255, 255, 255, 0.8);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+/* 确保标签在合适的层级 */
+.leaflet-contour-pane .contour-label {
+  z-index: 600;
+}

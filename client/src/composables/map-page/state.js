@@ -23,6 +23,7 @@ export function createMapPageState({ panoramaStore, appStore }) {
   const kmlLayersVisible = ref(true);
   const showKmlSettings = ref(false);
   const showPointSettings = ref(false);
+  const showContourDialog = ref(false);
 
   const totalCount = computed(() =>
     Array.isArray(panoramaRefs.panoramas.value) ? panoramaRefs.panoramas.value.length : 0
@@ -45,6 +46,7 @@ export function createMapPageState({ panoramaStore, appStore }) {
     kmlLayersVisible,
     showKmlSettings,
     showPointSettings,
+    showContourDialog,
     totalCount,
   };
 }

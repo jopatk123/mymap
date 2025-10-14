@@ -90,6 +90,14 @@
 
     <!-- 点位样式设置对话框 -->
     <PointStyleDialog v-model="showPointSettings" @styles-updated="handlePointStylesUpdated" />
+
+    <!-- 等高线间距设置对话框 -->
+    <ContourIntervalDialog
+      v-model="showContourDialog"
+      :default-interval="50"
+      @confirm="handleContourIntervalConfirm"
+      @cancel="handleContourIntervalCancel"
+    />
   </div>
 </template>
 
@@ -117,6 +125,7 @@ import VideoModal from '@/components/map/VideoModal.vue';
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue';
 import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue';
 import PointStyleDialog from '@/components/map/PointStyleDialog.vue';
+import ContourIntervalDialog from '@/components/map/ContourIntervalDialog.vue';
 
 // 使用组合式函数
 const {
@@ -148,6 +157,7 @@ const {
   kmlLayersVisible,
   showKmlSettings,
   showPointSettings,
+  showContourDialog,
 
   // 方法
   initializePage,
@@ -205,8 +215,32 @@ const {
 
 const { contoursVisible, contoursLoading, toggleContours } = useContourOverlay(
   computed(() => mapRef.value?.map),
-  { message: ElMessage }
+  {
+    message: ElMessage,
+    onRequestInterval: (callback) => {
+      // 打开对话框
+      showContourDialog.value = true;
+      // 保存回调以便在用户确认时调用
+      window.__contourIntervalCallback = callback;
+    },
+  }
 );
+
+// 处理等高线间距确认
+const handleContourIntervalConfirm = (interval) => {
+  if (window.__contourIntervalCallback) {
+    window.__contourIntervalCallback(interval);
+    window.__contourIntervalCallback = null;
+  }
+};
+
+// 处理等高线间距取消
+const handleContourIntervalCancel = () => {
+  if (window.__contourIntervalCallback) {
+    window.__contourIntervalCallback(null);
+    window.__contourIntervalCallback = null;
+  }
+};
 
 // 事件处理器
 const { handleFolderVisibilityChanged, handleKmlStylesUpdated, handlePointStylesUpdated } =

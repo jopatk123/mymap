@@ -24,6 +24,7 @@ RUN apt-get update \
 COPY --from=server-deps /app/server/node_modules ./server/node_modules
 COPY server ./server
 COPY --from=client-build /app/client/dist ./client/dist
+COPY geo ./geo
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 

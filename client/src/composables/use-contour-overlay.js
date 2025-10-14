@@ -7,6 +7,9 @@ const defaultStyle = {
   color: '#ff6d00',
   weight: 1.5,
   opacity: 0.8,
+  dashArray: '5, 5', // 虚线：5px 实线，5px 空白
+  lineCap: 'round',
+  lineJoin: 'round', // 圆角连接，更平滑
   pane: 'contourPane',
 };
 
@@ -85,15 +88,17 @@ const clipLineByPolygon = (lineString, polygonPoints, bounds) => {
 };
 
 export function useContourOverlay(mapRef, options = {}) {
-  const { service = elevationService, message } = options;
+  const { service = elevationService, message, onRequestInterval } = options;
 
   const visible = ref(false);
   const loading = ref(false);
   const error = ref(null);
   const layerRef = ref(null);
+  const labelsLayerRef = ref(null); // 用于高程标签
   const cachedFeatures = ref(null);
   const activeTileIds = ref([]);
   const drawRegion = ref(null); // 用户绘制的区域
+  const contourInterval = ref(50); // 等高线间距，默认 50 米
 
   // 初始化区域绘制工具
   const polygonDrawer = usePolygonDrawer(mapRef, {
@@ -113,11 +118,66 @@ export function useContourOverlay(mapRef, options = {}) {
       }
     }
     layerRef.value = null;
+
+    // 移除标签图层
+    if (map && labelsLayerRef.value) {
+      try {
+        map.removeLayer(labelsLayerRef.value);
+      } catch (_error) {
+        // ignore remove errors
+      }
+    }
+    labelsLayerRef.value = null;
   };
 
   const clearOverlay = (map) => {
     removeLayer(map);
     visible.value = false;
+  };
+
+  // 创建等高线标签
+  const createContourLabels = (map, features) => {
+    if (!map || !features || features.length === 0) return;
+
+    const labels = [];
+
+    features.forEach((feature) => {
+      const elevation = feature.properties?.elevation;
+      if (elevation === undefined || elevation === null) return;
+
+      // 从每个等高线的中间位置提取一个点作为标签位置
+      const coordinates = feature.geometry?.coordinates;
+      if (!coordinates || coordinates.length === 0) return;
+
+      // 选择第一条线段的中间点
+      const firstLine = coordinates[0];
+      if (!firstLine || firstLine.length < 2) return;
+
+      const midIndex = Math.floor(firstLine.length / 2);
+      const [lng, lat] = firstLine[midIndex];
+
+      // 创建标签
+      const labelIcon = L.divIcon({
+        className: 'contour-label',
+        html: `<div class="contour-label-text">${Math.round(elevation)}</div>`,
+        iconSize: [50, 20],
+        iconAnchor: [25, 10],
+      });
+
+      const marker = L.marker([lat, lng], {
+        icon: labelIcon,
+        interactive: false,
+        pane: 'contourPane',
+      });
+
+      labels.push(marker);
+    });
+
+    // 创建图层组
+    if (labels.length > 0) {
+      labelsLayerRef.value = L.layerGroup(labels);
+      labelsLayerRef.value.addTo(map);
+    }
   };
 
   const clipFeatureToPolygon = (feature, polygonLatLngs) => {
@@ -211,6 +271,10 @@ export function useContourOverlay(mapRef, options = {}) {
     });
 
     layerRef.value.addTo(map);
+
+    // 添加高程标签
+    createContourLabels(map, features);
+
     // eslint-disable-next-line no-console
     console.log('[renderLayer] 已添加', features.length, '个等高线特征到地图');
 
@@ -234,13 +298,14 @@ export function useContourOverlay(mapRef, options = {}) {
           east: region.bounds.getEast?.() ?? region.bounds.maxLng,
         },
         points: region.latLngs?.length,
+        interval: contourInterval.value,
       });
 
-      // 使用20米间距
+      // 使用用户设置的间距
       const result = await service.getContoursForBounds(region.bounds, {
-        thresholdStep: 20,
+        thresholdStep: contourInterval.value,
         sampleSize: 512,
-        maxContours: 50, // 增加最大数量，因为间距更小
+        maxContours: 100, // 增加最大数量
       });
 
       if (!result.features?.length) {
@@ -317,6 +382,48 @@ export function useContourOverlay(mapRef, options = {}) {
       visible.value = renderLayer(map, cachedFeatures.value, drawRegion.value.latLngs);
       return;
     }
+
+    // 弹窗输入等高线间距
+    const promptInterval = () => {
+      return new Promise((resolve) => {
+        // 如果提供了外部对话框回调，使用它
+        if (onRequestInterval) {
+          onRequestInterval((value) => {
+            if (value !== null && value !== undefined) {
+              resolve(value);
+            } else {
+              resolve(null);
+            }
+          });
+          return;
+        }
+
+        // 否则使用原生 prompt
+        const input = window.prompt('请输入等高线间距（米）：', contourInterval.value);
+        if (input === null) {
+          resolve(null);
+          return;
+        }
+        const value = Number(input);
+        if (Number.isNaN(value) || value <= 0) {
+          if (message?.warning) {
+            message.warning('请输入有效的间距值');
+          }
+          resolve(null);
+          return;
+        }
+        resolve(value);
+      });
+    };
+
+    const interval = await promptInterval();
+    if (interval === null) {
+      // 用户取消了输入
+      return;
+    }
+
+    // 更新间距
+    contourInterval.value = interval;
 
     // 开始绘制模式
     polygonDrawer.startDrawing();
