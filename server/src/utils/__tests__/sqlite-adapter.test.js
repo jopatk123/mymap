@@ -27,9 +27,10 @@ describe('SQLiteAdapter integration', () => {
       );
       expect(updateResult.affectedRows).toBe(1);
 
-      const reloaded = await SQLiteAdapter.all('SELECT is_visible, sort_order FROM folders WHERE id = ?', [
-        insertResult.insertId,
-      ]);
+      const reloaded = await SQLiteAdapter.all(
+        'SELECT is_visible, sort_order FROM folders WHERE id = ?',
+        [insertResult.insertId]
+      );
       expect(reloaded[0]).toEqual({ is_visible: true, sort_order: 3 });
 
       const runResult = await SQLiteAdapter.run(
@@ -44,7 +45,7 @@ describe('SQLiteAdapter integration', () => {
     await withTempDatabase(async ({ load }) => {
       const SQLiteAdapter = load('utils/sqlite-adapter');
       const original =
-        "UPDATE panoramas SET updated_at = CURRENT_TIMESTAMP, created_at = DATE_SUB(NOW(), INTERVAL 5 DAY) WHERE id = 1";
+        'UPDATE panoramas SET updated_at = CURRENT_TIMESTAMP, created_at = DATE_SUB(NOW(), INTERVAL 5 DAY) WHERE id = 1';
       const adapted = SQLiteAdapter.adaptSQL(original);
 
       expect(adapted).toContain("datetime('now')");

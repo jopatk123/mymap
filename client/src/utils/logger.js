@@ -22,25 +22,21 @@ function shouldLog(levelName) {
 export const logger = {
   debug: (...args) => {
     if (shouldLog('debug')) {
-      // eslint-disable-next-line no-console
       console.debug(...args);
     }
   },
   info: (...args) => {
     if (shouldLog('info')) {
-      // eslint-disable-next-line no-console
       console.info(...args);
     }
   },
   warn: (...args) => {
     if (shouldLog('warn')) {
-      // eslint-disable-next-line no-console
       console.warn(...args);
     }
   },
   error: (...args) => {
     if (shouldLog('error')) {
-      // eslint-disable-next-line no-console
       console.error(...args);
     }
   },

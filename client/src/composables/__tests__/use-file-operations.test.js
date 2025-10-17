@@ -149,9 +149,7 @@ describe('useFileOperations', () => {
   });
 
   it('falls back to placeholder image when load fails', async () => {
-    const {
-      useFileOperations,
-    } = await bootstrap();
+    const { useFileOperations } = await bootstrap();
 
     const { handleImageError } = useFileOperations();
     const event = { target: { src: '' } };

@@ -6,7 +6,11 @@ describe('FolderModel database interactions', () => {
       const FolderModel = load('models/folder.model');
 
       const parent = await FolderModel.create({ name: '父目录', sortOrder: 5 });
-      const child = await FolderModel.create({ name: '子目录', parentId: parent.id, isVisible: false });
+      const child = await FolderModel.create({
+        name: '子目录',
+        parentId: parent.id,
+        isVisible: false,
+      });
 
       const tree = await FolderModel.findAll();
       const fetchedParent = tree.find((node) => node.id === parent.id);

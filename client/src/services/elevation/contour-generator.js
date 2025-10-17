@@ -126,8 +126,9 @@ export function generateContourFeatures({
 
   const range = collectValidRange(dataArray, noDataValue);
   const { thresholds, step } = buildThresholds(range, thresholdStep, maxContours);
-  
-  const thresholdRange = thresholds.length > 0 ? [thresholds[0], thresholds[thresholds.length - 1]] : [];
+
+  const thresholdRange =
+    thresholds.length > 0 ? [thresholds[0], thresholds[thresholds.length - 1]] : [];
   logger.debug('[contour-gen] 数据:', {
     range,
     thresholds: thresholds.length,

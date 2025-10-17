@@ -37,7 +37,6 @@ export function debugCoordinateTransform() {
  */
 export function debugFeatureBounds(features) {
   if (!features || features.length === 0) {
-    // eslint-disable-next-line no-console
     console.warn('[debug] 没有特征');
     return null;
   }
@@ -102,7 +101,7 @@ export function debugContourRendering(region, features) {
   const featureBounds = debugFeatureBounds(features);
 
   if (region.bounds && featureBounds) {
-  logger.debug('3. 重叠检查:');
+    logger.debug('3. 重叠检查:');
     debugOverlap(
       {
         minLng: region.bounds.getWest?.() ?? region.bounds.minLng,

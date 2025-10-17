@@ -15,7 +15,9 @@ describe('API routing smoke tests', () => {
         }),
       }),
     });
-    expect(response.headers['cache-control']).toBe('no-store, no-cache, must-revalidate, proxy-revalidate');
+    expect(response.headers['cache-control']).toBe(
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
   });
 
   test('GET /api/health exposes runtime information', async () => {

@@ -18,8 +18,8 @@ describe('bilinearInterpolation', () => {
   });
 
   it('produces expected value for regular grid', () => {
-  const result = bilinearInterpolation(0.25, 0.5, [100, 200, 150, 250], null);
-  expect(result).toBeCloseTo(150, 5);
+    const result = bilinearInterpolation(0.25, 0.5, [100, 200, 150, 250], null);
+    expect(result).toBeCloseTo(150, 5);
   });
 });
 

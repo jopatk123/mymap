@@ -148,10 +148,9 @@ class KmlPointModel {
 
   static async deleteByKmlFileId(kmlFileId) {
     try {
-      const [result] = await SQLiteAdapter.execute(
-        'DELETE FROM kml_points WHERE kml_file_id = ?',
-        [kmlFileId]
-      );
+      const [result] = await SQLiteAdapter.execute('DELETE FROM kml_points WHERE kml_file_id = ?', [
+        kmlFileId,
+      ]);
       return result.affectedRows;
     } catch (error) {
       const Logger = require('../utils/logger');

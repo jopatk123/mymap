@@ -4,8 +4,8 @@ const {
   gcj02ToWgs84,
   gcj02ToBd09,
   bd09ToGcj02,
-  wgs84ToBd09,
-  bd09ToWgs84,
+  _wgs84ToBd09,
+  _bd09ToWgs84,
   calculateDistance,
   convertCoordinate,
 } = require('../coordinate-transform');
@@ -31,8 +31,8 @@ describe('coordinate-transform utilities', () => {
   test('converts between GCJ02 and BD09', () => {
     const gcj = wgs84ToGcj02(...beijingWgs84);
     const bd = gcj02ToBd09(...gcj);
-  expect(bd[0]).toBeCloseTo(116.4166, 3);
-  expect(bd[1]).toBeCloseTo(39.9227, 3);
+    expect(bd[0]).toBeCloseTo(116.4166, 3);
+    expect(bd[1]).toBeCloseTo(39.9227, 3);
 
     const gcjRecovered = bd09ToGcj02(...bd);
     expect(gcjRecovered[0]).toBeCloseTo(gcj[0], 3);
@@ -53,7 +53,12 @@ describe('coordinate-transform utilities', () => {
   test('calculates haversine distance in meters', () => {
     const forbiddenCity = [39.9163, 116.3971];
     const tiananmen = [39.9087, 116.3975];
-    const distance = calculateDistance(forbiddenCity[0], forbiddenCity[1], tiananmen[0], tiananmen[1]);
+    const distance = calculateDistance(
+      forbiddenCity[0],
+      forbiddenCity[1],
+      tiananmen[0],
+      tiananmen[1]
+    );
 
     expect(distance).toBeGreaterThan(700);
     expect(distance).toBeLessThan(900);

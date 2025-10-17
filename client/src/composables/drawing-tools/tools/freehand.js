@@ -35,7 +35,7 @@ export function startFreehand(deactivateTool) {
 
   const onMouseUp = () => {
     state.isDrawing = false;
-    
+
     // 在鼠标松开时自动完成绘制
     if (polyline && points.length > 1) {
       // 检查是否已经添加过（避免重复添加）
@@ -50,7 +50,7 @@ export function startFreehand(deactivateTool) {
         ElMessage.success('画笔绘制完成');
       }
     }
-    
+
     // 清理事件并结束工具
     cleanup();
     deactivateTool?.();

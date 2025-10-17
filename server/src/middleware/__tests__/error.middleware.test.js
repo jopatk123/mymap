@@ -48,17 +48,17 @@ describe('error middleware', () => {
     res.status.mockClear();
     res.json.mockClear();
 
-  errorHandler({ name: 'ValidationError', message: 'bad' }, baseReq, res, jest.fn());
+    errorHandler({ name: 'ValidationError', message: 'bad' }, baseReq, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(400);
 
     res.status.mockClear();
     res.json.mockClear();
 
-  const syntaxErr = new SyntaxError('Unexpected token');
-  syntaxErr.status = 400;
-  syntaxErr.body = {};
+    const syntaxErr = new SyntaxError('Unexpected token');
+    syntaxErr.status = 400;
+    syntaxErr.body = {};
 
-  errorHandler(syntaxErr, baseReq, res, jest.fn());
+    errorHandler(syntaxErr, baseReq, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(400);
   });
 

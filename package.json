@@ -8,7 +8,7 @@
     "dev:server": "cd server && npm run dev",
     "build": "cd client && npm run build",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-  "lint": "eslint . --ext .js,.cjs,.mjs,.vue --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext .js,.cjs,.mjs,.vue --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext .js,.cjs,.mjs,.vue --fix",
     "format": "prettier --write \"**/*.{js,cjs,mjs,vue,json,md}\""
   },

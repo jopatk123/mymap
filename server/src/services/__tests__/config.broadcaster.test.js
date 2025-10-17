@@ -42,6 +42,9 @@ describe('ConfigBroadcaster', () => {
     const result = broadcaster.broadcastInitialView({ enabled: false });
 
     expect(result).toEqual({ sent: 0 });
-    expect(logger.warn).toHaveBeenCalledWith('[ConfigBroadcaster] Failed to send update', expect.any(Error));
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[ConfigBroadcaster] Failed to send update',
+      expect.any(Error)
+    );
   });
 });

@@ -22,7 +22,7 @@ export function useDrawingTools() {
 
   const deactivateTool = () => {
     const map = state.mapInstance;
-    
+
     // 调用当前工具的清理函数（如果存在）
     if (state.currentCleanup && typeof state.currentCleanup === 'function') {
       try {
@@ -32,7 +32,7 @@ export function useDrawingTools() {
       }
       state.currentCleanup = null;
     }
-    
+
     // 不再在这里统一移除事件监听器，由各个工具自己清理
     // 这样可以避免移除其他功能（如pointer-tracker）的监听器
     if (map) {

@@ -24,7 +24,7 @@ Cache-Control: public, max-age=31536000, immutable
 Accept-Ranges: bytes
 ```
 
-- `max-age=31536000`：缓存 1 年（365天）
+- `max-age=31536000`：缓存 1 年（365 天）
 - `immutable`：告诉浏览器文件永远不会改变
 - `Accept-Ranges: bytes`：支持 HTTP Range 请求，提高加载效率
 

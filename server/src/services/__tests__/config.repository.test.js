@@ -57,7 +57,9 @@ describe('ConfigRepository', () => {
         unlink: jest.fn(() => Promise.resolve()),
         access: jest.fn(() => Promise.resolve()),
         mkdir: jest.fn(() => Promise.resolve()),
-        stat: jest.fn(() => Promise.reject(Object.assign(new Error('missing'), { code: 'ENOENT' }))),
+        stat: jest.fn(() =>
+          Promise.reject(Object.assign(new Error('missing'), { code: 'ENOENT' }))
+        ),
         readFile: jest.fn(),
       },
       logger: { error: (message, err) => errors.push({ message, err }) },
