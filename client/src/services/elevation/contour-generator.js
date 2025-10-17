@@ -1,5 +1,6 @@
 import { contours as d3Contours } from 'd3-contour';
 import { wgs84ToGcj02 } from '@/utils/coordinate-transform.js';
+import logger from '@/utils/logger.js';
 
 function collectValidRange(values, noDataValue) {
   let min = Number.POSITIVE_INFINITY;
@@ -126,12 +127,12 @@ export function generateContourFeatures({
   const range = collectValidRange(dataArray, noDataValue);
   const { thresholds, step } = buildThresholds(range, thresholdStep, maxContours);
   
-  // eslint-disable-next-line no-console
-  console.log('[contour-gen] 数据:', {
+  const thresholdRange = thresholds.length > 0 ? [thresholds[0], thresholds[thresholds.length - 1]] : [];
+  logger.debug('[contour-gen] 数据:', {
     range,
     thresholds: thresholds.length,
     step,
-    thresholdRange: thresholds.length > 0 ? [thresholds[0], thresholds[thresholds.length - 1]] : [],
+    thresholdRange,
   });
 
   if (!thresholds.length) return [];
@@ -143,8 +144,7 @@ export function generateContourFeatures({
     .map((contour) => contourToFeature(contour, width, height, bbox, step))
     .filter(Boolean);
 
-  // eslint-disable-next-line no-console
-  console.log('[contour-gen] 结果:', {
+  logger.debug('[contour-gen] 结果:', {
     contours: contours.length,
     features: features.length,
   });

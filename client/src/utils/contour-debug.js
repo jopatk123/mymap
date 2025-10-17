@@ -4,13 +4,13 @@
  */
 
 import { wgs84ToGcj02 } from '@/utils/coordinate-transform.js';
+import logger from '@/utils/logger.js';
 
 /**
  * 检查坐标转换
  */
 export function debugCoordinateTransform() {
-  // eslint-disable-next-line no-console
-  console.log('=== 坐标转换测试 ===');
+  logger.debug('=== 坐标转换测试 ===');
 
   // 测试点：上海中心区域 (WGS84)
   const testPoints = [
@@ -23,8 +23,7 @@ export function debugCoordinateTransform() {
     const [gcjLng, gcjLat] = wgs84ToGcj02(lng, lat);
     const deltaLng = gcjLng - lng;
     const deltaLat = gcjLat - lat;
-    // eslint-disable-next-line no-console
-    console.log(`${name}:`, {
+    logger.debug(`${name}:`, {
       wgs84: [lng, lat],
       gcj02: [gcjLng, gcjLat],
       delta: [deltaLng, deltaLat],
@@ -62,8 +61,7 @@ export function debugFeatureBounds(features) {
   });
 
   const bounds = { minLng, maxLng, minLat, maxLat };
-  // eslint-disable-next-line no-console
-  console.log('[debug] 特征边界:', bounds);
+  logger.debug('[debug] 特征边界:', bounds);
   return bounds;
 }
 
@@ -71,10 +69,8 @@ export function debugFeatureBounds(features) {
  * 检查多边形和特征是否重叠
  */
 export function debugOverlap(polygonBounds, featureBounds) {
-  // eslint-disable-next-line no-console
-  console.log('[debug] 多边形边界:', polygonBounds);
-  // eslint-disable-next-line no-console
-  console.log('[debug] 特征边界:', featureBounds);
+  logger.debug('[debug] 多边形边界:', polygonBounds);
+  logger.debug('[debug] 特征边界:', featureBounds);
 
   const overlapsLng =
     polygonBounds.minLng <= featureBounds.maxLng && polygonBounds.maxLng >= featureBounds.minLng;
@@ -83,8 +79,7 @@ export function debugOverlap(polygonBounds, featureBounds) {
 
   const overlaps = overlapsLng && overlapsLat;
 
-  // eslint-disable-next-line no-console
-  console.log('[debug] 是否重叠:', {
+  logger.debug('[debug] 是否重叠:', {
     overlaps,
     overlapsLng,
     overlapsLat,
@@ -97,26 +92,17 @@ export function debugOverlap(polygonBounds, featureBounds) {
  * 打印完整的调试信息
  */
 export function debugContourRendering(region, features) {
-  // eslint-disable-next-line no-console
-  console.log('=== 等高线渲染调试 ===');
-
-  // eslint-disable-next-line no-console
-  console.log('1. 绘制区域信息:');
-  // eslint-disable-next-line no-console
-  console.log('   - 点数:', region.latLngs?.length);
-  // eslint-disable-next-line no-console
-  console.log('   - 边界:', region.bounds);
-
-  // eslint-disable-next-line no-console
-  console.log('2. 等高线特征信息:');
-  // eslint-disable-next-line no-console
-  console.log('   - 特征数:', features.length);
+  logger.debug('=== 等高线渲染调试 ===');
+  logger.debug('1. 绘制区域信息:');
+  logger.debug('   - 点数:', region.latLngs?.length);
+  logger.debug('   - 边界:', region.bounds);
+  logger.debug('2. 等高线特征信息:');
+  logger.debug('   - 特征数:', features.length);
 
   const featureBounds = debugFeatureBounds(features);
 
   if (region.bounds && featureBounds) {
-    // eslint-disable-next-line no-console
-    console.log('3. 重叠检查:');
+  logger.debug('3. 重叠检查:');
     debugOverlap(
       {
         minLng: region.bounds.getWest?.() ?? region.bounds.minLng,
@@ -128,6 +114,5 @@ export function debugContourRendering(region, features) {
     );
   }
 
-  // eslint-disable-next-line no-console
-  console.log('=== 调试结束 ===');
+  logger.debug('=== 调试结束 ===');
 }
