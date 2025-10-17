@@ -80,13 +80,4 @@ describe('createElevationService', () => {
     expect(result.hasData).toBe(false);
     expect(result.elevation).toBeNull();
   });
-
-  it('generates reusable contour features', async () => {
-    const bounds = { minLat: 0, maxLat: 10, minLng: 0, maxLng: 10 };
-    const first = await service.getContoursForBounds(bounds, { sampleSize: 8, thresholdStep: 10 });
-    const second = await service.getContoursForBounds(bounds, { sampleSize: 8, thresholdStep: 10 });
-    expect(first.features.length).toBeGreaterThan(0);
-    expect(second.features.length).toBe(first.features.length);
-    expect(tileLoader.loadTile).toHaveBeenCalledTimes(1);
-  });
 });

@@ -1,11 +1,6 @@
 import { createTileLoader } from './tile-loader.js';
-import {
-  elevationTileManifest,
-  findTileByCoordinate,
-  tilesIntersectingBounds,
-} from './manifest.js';
+import { elevationTileManifest, findTileByCoordinate } from './manifest.js';
 import { bilinearInterpolation, formatCoordinate, roundElevation } from './interpolation.js';
-import { generateContourFeatures } from './contour-generator.js';
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -98,25 +93,9 @@ export function createElevationService(options = {}) {
     manifest = elevationTileManifest,
     tileLoaderFactory = createTileLoader,
     tileLoaderOptions,
-    contourOptions = {},
   } = options;
 
   const tileLoader = tileLoaderFactory(tileLoaderOptions);
-  const contourCache = new Map();
-
-  const resolveContourSettings = (overrides = {}) => {
-    const thresholdStep = overrides.thresholdStep ?? contourOptions.thresholdStep ?? 20;
-    const sampleSize = overrides.sampleSize ?? contourOptions.sampleSize ?? 512;
-    const maxContours = overrides.maxContours ?? contourOptions.maxContours ?? 50;
-    return {
-      thresholdStep,
-      sampleSize,
-      maxContours,
-    };
-  };
-
-  const buildContourCacheKey = (tileId, settings) =>
-    `${tileId}|step:${settings.thresholdStep}|sample:${settings.sampleSize}|max:${settings.maxContours}`;
 
   const ensureTileRecord = async (tile) => {
     if (!tile) return null;
@@ -189,76 +168,12 @@ export function createElevationService(options = {}) {
     }
   };
 
-  const getTileContours = async (tile, overrides = {}) => {
-    if (!tile) return [];
-    const settings = resolveContourSettings(overrides);
-    const cacheKey = buildContourCacheKey(tile.id, settings);
-    if (!overrides.force && contourCache.has(cacheKey)) {
-      return contourCache.get(cacheKey);
-    }
-    const record = await ensureTileRecord(tile);
-    if (!record) {
-      contourCache.set(cacheKey, []);
-      return [];
-    }
-    const aspect = record.meta.height / record.meta.width;
-    const width = settings.sampleSize;
-    const height = Math.max(1, Math.round(settings.sampleSize * aspect));
-    const raster = await record.image.readRasters({
-      width,
-      height,
-      samples: [0],
-      interleave: true,
-      resampleMethod: 'bilinear',
-    });
-    const features = generateContourFeatures({
-      width,
-      height,
-      values: raster,
-      bbox: record.meta.bbox,
-      noDataValue: record.meta.noDataValue,
-      thresholdStep: settings.thresholdStep,
-      maxContours: settings.maxContours,
-    }).map((feature) => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        tileId: tile.id,
-      },
-    }));
-    contourCache.set(cacheKey, features);
-    return features;
-  };
-
-  const getContoursForBounds = async (bounds, overrides = {}) => {
-    if (!bounds) {
-      return { type: 'FeatureCollection', features: [], tiles: [] };
-    }
-    const normalizedBounds = normalizeBounds(bounds);
-    const tiles = overrides.tiles ?? tilesIntersectingBounds(normalizedBounds, manifest);
-    if (!tiles.length) {
-      return { type: 'FeatureCollection', features: [], tiles: [] };
-    }
-
-    const contourPromises = tiles.map((tile) => getTileContours(tile, overrides));
-    const allContours = await Promise.all(contourPromises);
-    const features = allContours.flat();
-    return {
-      type: 'FeatureCollection',
-      features,
-      tiles: tiles.map((t) => t.id),
-    };
-  };
-
   const clearCaches = () => {
     tileLoader.clear();
-    contourCache.clear();
   };
 
   return {
     getElevation,
-    getContoursForBounds,
-    getTileContours,
     clearCaches,
     manifest,
   };

@@ -46,16 +46,6 @@
         >
           {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
         </el-button>
-
-        <!-- 等高线开关 -->
-        <el-button
-          class="btn-toggle-contours"
-          :loading="contoursLoading"
-          :title="contoursVisible ? '隐藏等高线' : '显示等高线'"
-          @click.stop="$emit('toggle-contours')"
-        >
-          {{ contoursVisible ? '隐藏等高线' : '显示等高线' }}
-        </el-button>
       </div>
     </div>
   </div>
@@ -95,14 +85,6 @@ defineProps({
     type: Array,
     default: () => [],
   },
-  contoursVisible: {
-    type: Boolean,
-    default: false,
-  },
-  contoursLoading: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 defineEmits([
@@ -112,7 +94,6 @@ defineEmits([
   'show-point-settings',
   'locate-kml-point',
   'locate-address',
-  'toggle-contours',
 ]);
 </script>
 
