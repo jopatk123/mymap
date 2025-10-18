@@ -5,21 +5,21 @@
       "point_color": "#ff4757",
       "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 8,
+      "point_label_size": 15,
       "point_label_color": "#000000",
       "point_icon_type": "marker",
       "cluster_enabled": true,
-      "cluster_color": "#ff4757",
-      "cluster_icon_color": "#ff4757"
+      "cluster_color": "rgb(158, 198, 14)",
+      "cluster_icon_color": "rgb(158, 198, 14)"
     },
     "video": {
       "point_color": "#ff4757",
       "point_size": 8,
       "point_opacity": 1,
-      "point_label_size": 8,
+      "point_label_size": 9,
       "point_label_color": "#000000",
       "point_icon_type": "marker",
-      "cluster_enabled": false,
+      "cluster_enabled": true,
       "cluster_color": "#ff4757",
       "cluster_icon_color": "#ff4757"
     }
@@ -110,22 +110,39 @@
     }
   },
   "mapSettings": {
-    "defaultCenter": [116.4074, 39.9042],
+    "defaultCenter": [
+      116.4074,
+      39.9042
+    ],
     "defaultZoom": 12,
     "minZoom": 3,
     "maxZoom": 18,
     "mapType": "normal",
     "initialView": {
       "enabled": true,
-      "center": [119.3, 26],
+      "center": [
+        119.3,
+        26
+      ],
       "zoom": 12
     }
   },
   "uploadSettings": {
     "maxFileSize": 104857600,
-    "allowedImageTypes": ["jpg", "jpeg", "png"],
-    "allowedVideoTypes": ["mp4", "avi", "mov"],
-    "allowedKmlTypes": ["kml", "kmz"],
+    "allowedImageTypes": [
+      "jpg",
+      "jpeg",
+      "png"
+    ],
+    "allowedVideoTypes": [
+      "mp4",
+      "avi",
+      "mov"
+    ],
+    "allowedKmlTypes": [
+      "kml",
+      "kmz"
+    ],
     "thumbnailSize": {
       "width": 300,
       "height": 200

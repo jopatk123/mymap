@@ -2,7 +2,6 @@
   <div class="page-header">
     <h2>文件管理</h2>
     <div class="header-actions">
-      <el-button class="legacy-open-btn" @click="openLegacyPointSystem"> 打开选点系统 </el-button>
       <el-button class="new-open-btn" @click="openPointSystem"> 打开点位展示系统 </el-button>
       <el-button type="primary" @click="$emit('upload-request', 'panorama')">
         <el-icon><Plus /></el-icon>
@@ -114,9 +113,7 @@ const openPointSystem = () => {
   window.open(href, '_blank');
 };
 
-const openLegacyPointSystem = () => {
-  window.open('http://43.163.120.212/', '_blank');
-};
+// legacy point system removed: openLegacyPointSystem intentionally deleted
 </script>
 
 <style lang="scss" scoped>
@@ -138,12 +135,6 @@ const openLegacyPointSystem = () => {
 .header-actions {
   display: flex;
   gap: 8px;
-
-  .legacy-open-btn {
-    background-color: #909399; /* info 灰 */
-    color: #fff;
-    border-color: #909399;
-  }
 
   .new-open-btn {
     background-color: #409eff; /* primary 蓝 */

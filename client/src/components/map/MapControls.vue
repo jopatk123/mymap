@@ -26,7 +26,7 @@
 
         <!-- 点位图标（紫色） -->
         <el-button class="btn-point-icons priority" @click.stop="$emit('show-point-settings')">
-          点位图标
+          点位设置
         </el-button>
 
         <!-- 显示/隐藏列表（粉色） -->
