@@ -141,6 +141,21 @@ export function useMapContainer(props, emit, injected = {}) {
     await setupMarkerRefreshBridge();
     markerSync.registerMarkerClick();
 
+    // 监听全局清除搜索标记事件（由其它模块触发，例如区域清除时）
+    try {
+      if (windowRef && typeof windowRef.addEventListener === 'function') {
+        windowRef.addEventListener('clear-search-marker', () => {
+          try {
+            if (typeof clearSearchMarker === 'function') clearSearchMarker();
+          } catch (err) {
+            // ignore
+          }
+        });
+      }
+    } catch (err) {
+      // ignore
+    }
+
     cleanupExternalEvents = registerExternalEvents({
       addStyleListener,
       removeStyleListener,
@@ -181,6 +196,13 @@ export function useMapContainer(props, emit, injected = {}) {
 
     if (map.value && mapClickHandler) {
       map.value.off('click', mapClickHandler);
+    }
+    try {
+      if (windowRef && typeof windowRef.removeEventListener === 'function') {
+        windowRef.removeEventListener('clear-search-marker', () => {});
+      }
+    } catch (err) {
+      // ignore
     }
   });
 

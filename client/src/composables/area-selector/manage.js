@@ -45,15 +45,22 @@ export function createManageActions(context, circle, polygon) {
 
   const clearAllAreas = async () => {
     if (store.areas.length === 0) {
-      ElMessage.info({ message: '没有可清除的区域', duration: 1000 });
+      // 没有区域但仍然尝试清除搜索临时标记
+      try {
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('clear-search-marker'));
+        }
+      } catch (err) {
+        console.warn(
+          '[useAreaSelector] clearAllAreas: failed to dispatch clear-search-marker',
+          err
+        );
+      }
+      ElMessage.info({ message: '没有可清除的区域（已尝试清除搜索标记）', duration: 1000 });
       return;
     }
+    // 直接清除所有区域（已移除二次确认），并同时清除任何绘制的临时图层与搜索临时标记
     try {
-      await ElMessageBox.confirm(`确定要清除所有 ${store.areas.length} 个区域吗？`, '确认清除', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      });
       store.clearAllAreas();
       try {
         clearTempLayers();
@@ -65,10 +72,22 @@ export function createManageActions(context, circle, polygon) {
       } catch (err) {
         console.warn('[useAreaSelector] clearAllAreas: failed to clear circle temp layers', err);
       }
+      // 触发全局事件以请求清除搜索临时标记（地图容器会监听并执行实际清除）
+      try {
+        if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('clear-search-marker'));
+        }
+      } catch (err) {
+        console.warn(
+          '[useAreaSelector] clearAllAreas: failed to dispatch clear-search-marker',
+          err
+        );
+      }
       // 已移除清除所有区域成功提示
       // ElMessage.success('已清除所有区域');
-    } catch (_) {
-      /* 用户取消 */
+    } catch (err) {
+      /* 捕获并记录意外错误（非用户取消） */
+      console.error('[useAreaSelector] clearAllAreas failed', err);
     }
   };
 

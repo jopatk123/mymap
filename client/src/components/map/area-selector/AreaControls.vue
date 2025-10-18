@@ -23,7 +23,7 @@
           自定义区域
         </el-button>
 
-        <el-button class="btn-clear" :disabled="areasCount === 0" @click="handleClearAreas">
+        <el-button class="btn-clear" :disabled="isDrawing" @click="handleClearAreas">
           清除
         </el-button>
 
