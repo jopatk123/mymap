@@ -1,7 +1,7 @@
 <template>
   <BaseUploadDialog
     :model-value="modelValue"
-    title="添加点位"
+    title="添加图层点位"
     title-placeholder="请输入点位标题"
     description-placeholder="请输入点位描述"
     :submit-handler="handleKmlUpload"
