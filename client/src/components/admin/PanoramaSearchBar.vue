@@ -35,7 +35,8 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, onUnmounted } from 'vue';
+import { debounce } from 'lodash-es';
 import { Delete } from '@element-plus/icons-vue';
 
 defineProps({
@@ -65,6 +66,29 @@ const resetSearch = () => {
   searchForm.includeHidden = false;
   emit('reset');
 };
+
+// Debounced auto-search when keyword changes
+const emitSearchDebounced = debounce(() => {
+  emit('search', { ...searchForm });
+}, 300);
+
+// watch reactive object by using a simple interval-free approach: use a Mutation observer via Vue watch is possible,
+// but to keep minimal changes, we use a manual reactive watch via setInterval alternative isn't necessary —
+// instead, we hook into the input @input handler in template? Simpler: use a watcher on the reactive property by adding
+// a small microtask poll — but since <el-input> already updates the reactive property, a Vue watch is cleaner.
+// However this file is script-setup; we can use a reactive watcher using import of 'watch' is missing; we keep small change:
+import { watch } from 'vue';
+
+watch(
+  () => searchForm.keyword,
+  () => {
+    emitSearchDebounced();
+  }
+);
+
+onUnmounted(() => {
+  emitSearchDebounced.cancel && emitSearchDebounced.cancel();
+});
 </script>
 
 <style lang="scss" scoped>

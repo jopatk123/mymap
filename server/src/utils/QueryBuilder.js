@@ -48,10 +48,14 @@ class QueryBuilder {
       }
     }
 
-    // 关键词搜索
-    if (options.keyword) {
+    // 关键词搜索（忽略仅包含空白的关键词）
+    const keyword =
+      options.keyword !== undefined && options.keyword !== null
+        ? String(options.keyword).trim()
+        : '';
+    if (keyword) {
       conditions.push('(p.title LIKE ? OR p.description LIKE ?)');
-      params.push(`%${options.keyword}%`, `%${options.keyword}%`);
+      params.push(`%${keyword}%`, `%${keyword}%`);
     }
 
     // 地图边界筛选

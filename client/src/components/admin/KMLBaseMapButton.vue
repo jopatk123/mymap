@@ -1,7 +1,7 @@
 <template>
   <div class="kml-basemap-button">
-    <!-- 添加KML底图按钮 -->
-    <el-button type="info" :loading="uploading" @click="openUploadDialog">
+    <!-- 添加KML底图按钮，可通过 hideTrigger 隐藏触发器（父组件可能只想使用 dialog 功能） -->
+    <el-button v-if="!hideTrigger" type="info" :loading="uploading" @click="openUploadDialog">
       <el-icon><Document /></el-icon>
       添加KML底图
     </el-button>
@@ -107,10 +107,14 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, defineProps, defineExpose } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Document, UploadFilled } from '@element-plus/icons-vue';
 import { useKMLBaseMap } from '@/composables/use-kml-basemap.js';
+
+const props = defineProps({
+  hideTrigger: { type: Boolean, default: false },
+});
 
 const {
   uploadDialogVisible,
@@ -218,6 +222,11 @@ watch(
     }, 0);
   }
 );
+
+// expose openUploadDialog to parent
+defineExpose({
+  openUploadDialog,
+});
 </script>
 
 <style lang="scss" scoped>

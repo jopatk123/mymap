@@ -3,20 +3,24 @@
     <h2>文件管理</h2>
     <div class="header-actions">
       <el-button class="new-open-btn" @click="openPointSystem"> 打开点位展示系统 </el-button>
-      <el-button type="primary" @click="$emit('upload-request', 'panorama')">
-        <el-icon><Plus /></el-icon>
-        添加全景图
-      </el-button>
-      <el-button type="success" @click="$emit('upload-request', 'video')">
-        <el-icon><VideoPlay /></el-icon>
-        添加视频点位
-      </el-button>
-      <el-button type="warning" @click="$emit('upload-request', 'kml')">
-        <el-icon><Document /></el-icon>
-        添加图层点位
-      </el-button>
-      <!-- 新增KML底图按钮 -->
-      <KMLBaseMapButton />
+      <!-- 合并入口：添加点位 下拉菜单（包含 全景/视频/图层/KML底图） -->
+      <el-dropdown @command="handleAddPointCommand">
+        <el-button type="primary">
+          <el-icon><Plus /></el-icon>
+          添加点位
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="panorama">添加全景图</el-dropdown-item>
+            <el-dropdown-item command="video">添加视频点位</el-dropdown-item>
+            <el-dropdown-item command="kml">添加图层点位</el-dropdown-item>
+            <el-dropdown-item command="kml-basemap">添加KML底图</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <!-- 隐藏触发器的 KMLBaseMapButton 作为 dialog 的宿主，父组件可通过 ref 调用其 openUploadDialog -->
+      <KMLBaseMapButton ref="kmlBaseMapRef" :hide-trigger="true" />
 
       <!-- 初始显示设置按钮 -->
       <el-button type="info" @click="showInitialViewDialog = true">
@@ -59,12 +63,12 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { Plus, VideoPlay, Document, Setting, ArrowDown, Location } from '@element-plus/icons-vue';
+import { Plus, Setting, ArrowDown, Location } from '@element-plus/icons-vue';
 import KMLBaseMapButton from './KMLBaseMapButton.vue';
 import KmlStyleDialog from '../map/KmlStyleDialog.vue';
 import InitialViewSettingsDialog from './InitialViewSettingsDialog.vue';
 
-defineEmits(['upload-request']);
+const emit = defineEmits(['upload-request']);
 
 const router = useRouter();
 
@@ -111,6 +115,27 @@ const handleStylesUpdated = () => {
 const openPointSystem = () => {
   const { href } = router.resolve({ name: 'Home' });
   window.open(href, '_blank');
+};
+
+// ref to KMLBaseMapButton 子组件（用于打开 KML 底图上传对话框）
+import { ref as vueRef } from 'vue';
+const kmlBaseMapRef = vueRef(null);
+
+// 处理添加点位下拉的命令
+const handleAddPointCommand = (command) => {
+  if (command === 'kml-basemap') {
+    // 调用子组件暴露的方法打开上传对话框
+    if (kmlBaseMapRef.value && typeof kmlBaseMapRef.value.openUploadDialog === 'function') {
+      kmlBaseMapRef.value.openUploadDialog();
+    } else {
+      // 回退：触发事件以便其他监听者打开对话框
+      window.dispatchEvent(new CustomEvent('open-kml-basemap'));
+    }
+    return;
+  }
+
+  // 其他类型仍然沿用原有 emit
+  emit('upload-request', command);
 };
 
 // legacy point system removed: openLegacyPointSystem intentionally deleted

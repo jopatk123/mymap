@@ -31,8 +31,11 @@ export function useFileManagement() {
     try {
       loading.value = true;
       const folderId = selectedFolder.value?.id || 0;
+      const keyword =
+        typeof searchForm.keyword === 'string' ? searchForm.keyword.trim() : searchForm.keyword;
+
       const response = await folderApi.getFolderContents(folderId, {
-        keyword: searchForm.keyword,
+        keyword: keyword,
         includeHidden: searchForm.includeHidden,
         fileType: searchForm.fileType,
         // 将 basemap 参数透传给后端

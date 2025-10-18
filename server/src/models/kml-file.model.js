@@ -58,9 +58,10 @@ class KmlFileModel {
       let whereConditions = [];
       let params = [];
 
-      if (keyword) {
+      const kw = keyword !== undefined && keyword !== null ? String(keyword).trim() : '';
+      if (kw) {
         whereConditions.push('(kf.title LIKE ? OR kf.description LIKE ?)');
-        params.push(`%${keyword}%`, `%${keyword}%`);
+        params.push(`%${kw}%`, `%${kw}%`);
       }
 
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf');

@@ -95,7 +95,8 @@
 
 <script setup>
 import { Delete, Hide, FolderOpened, View, Download } from '@element-plus/icons-vue';
-import { reactive, watch } from 'vue';
+import { reactive, watch, onUnmounted } from 'vue';
+import { debounce } from 'lodash-es';
 
 const props = defineProps({
   searchForm: {
@@ -148,6 +149,22 @@ watch(
   },
   { deep: true }
 );
+
+// Debounced auto-search when keyword changes (improves UX so user doesn't need to press Enter)
+const emitSearchDebounced = debounce(() => {
+  emit('search', { ...localForm });
+}, 300);
+
+watch(
+  () => localForm.keyword,
+  () => {
+    emitSearchDebounced();
+  }
+);
+
+onUnmounted(() => {
+  emitSearchDebounced.cancel && emitSearchDebounced.cancel();
+});
 </script>
 
 <style lang="scss" scoped>

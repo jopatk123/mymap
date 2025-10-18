@@ -278,10 +278,14 @@ class FolderController {
         fileType = 'all', // all, panorama, video, kml
       } = req.query;
 
+      // 规范化 keyword：去除首尾空白，防止仅为空格时误触发模糊匹配
+      const normalizedKeyword =
+        keyword !== undefined && keyword !== null ? String(keyword).trim() : '';
+
       const searchParams = {
         page: 1, // 先获取所有数据，然后统一分页
         pageSize: 1000, // 设置一个较大的值获取所有数据
-        keyword,
+        keyword: normalizedKeyword,
         folderId: folderId === '0' ? 0 : parseInt(folderId) || null,
         includeHidden: includeHidden === 'true',
       };
