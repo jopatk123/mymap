@@ -14,20 +14,39 @@
         添加
       </el-button>
 
-      <el-button type="warning" @click="$emit('show-kml-settings')">
-        <el-icon><Tools /></el-icon>
-        KML设置
-      </el-button>
-      <el-button type="info" @click="$emit('show-point-settings')">
-        <el-icon><Location /></el-icon>
-        点位图标
-      </el-button>
+      <el-dropdown trigger="click" @command="handleToolbarPointCommand">
+        <template #default>
+            <el-button type="info" class="btn-point-settings">
+            <el-icon><Location /></el-icon>
+            点位设置
+            <el-icon style="margin-left:6px"><ArrowDown /></el-icon>
+          </el-button>
+        </template>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="kml"><el-icon><Tools /></el-icon> KML设置</el-dropdown-item>
+            <el-dropdown-item command="point"><el-icon><Location /></el-icon> 点位图标设置</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </el-button-group>
   </div>
 </template>
 
 <script setup>
-import { Plus, View, Hide, Tools, Location } from '@element-plus/icons-vue';
+import { Plus, View, Hide, Tools, Location, ArrowDown } from '@element-plus/icons-vue';
+
+const emit = defineEmits([
+  'toggle-panorama-list',
+  'show-upload',
+  'show-kml-settings',
+  'show-point-settings',
+]);
+
+function handleToolbarPointCommand(command) {
+  if (command === 'kml') emit('show-kml-settings');
+  else if (command === 'point') emit('show-point-settings');
+}
 
 defineProps({
   panoramaListVisible: {
@@ -40,7 +59,7 @@ defineProps({
   },
 });
 
-defineEmits(['toggle-panorama-list', 'show-upload', 'show-kml-settings', 'show-point-settings']);
+// emits defined above
 </script>
 
 <style lang="scss" scoped>
@@ -75,5 +94,19 @@ defineEmits(['toggle-panorama-list', 'show-upload', 'show-kml-settings', 'show-p
   line-height: 36px !important;
   min-width: 0 !important;
   width: auto !important;
+}
+
+/* 点位设置（淡蓝色） */
+.btn-point-settings {
+  background: linear-gradient(135deg, #1976d2, #1565c0) !important; /* 深蓝渐变 */
+  border-color: #1565c0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.18);
+  border-radius: 0 !important;
+}
+
+/* 确保下拉包装器内的按钮没有圆角 */
+.toolbar ::v-deep .el-dropdown .el-button {
+  border-radius: 0 !important;
 }
 </style>
