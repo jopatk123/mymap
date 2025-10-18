@@ -36,23 +36,28 @@
               导出数据
             </el-button>
 
-            <!-- KML设置 -->
-            <el-button class="btn-kml-settings">
-              <el-icon><Tools /></el-icon>
-              KML设置
-            </el-button>
-
-            <!-- 点位图标 -->
-            <el-button class="btn-point-icons">
-              <el-icon><Location /></el-icon>
-              点位图标
-            </el-button>
+            <!-- 点位设置 下拉示例 -->
+            <el-dropdown trigger="click">
+              <template #default>
+                <el-button class="btn-point-icons">
+                  <el-icon><Location /></el-icon>
+                  点位设置
+                  <el-icon style="margin-left:6px"><ArrowDown /></el-icon>
+                </el-button>
+              </template>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item>KML设置</el-dropdown-item>
+                  <el-dropdown-item>点位图标设置</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
 
             <!-- 显示列表 -->
             <el-button class="btn-show-list"> 显示列表 </el-button>
 
-            <!-- 隐藏KML图层 -->
-            <el-button class="btn-toggle-kml"> 显示KML图层 </el-button>
+            <!-- 隐藏图层 -->
+            <el-button class="btn-toggle-kml"> 隐藏图层 </el-button>
           </div>
         </div>
       </div>
@@ -83,7 +88,15 @@
 </template>
 
 <script setup>
-import { Search, Compass, Crop, Delete, Download, Tools, Location } from '@element-plus/icons-vue';
+import {
+  Search,
+  Compass,
+  Crop,
+  Delete,
+  Download,
+  Location,
+  ArrowDown,
+} from '@element-plus/icons-vue';
 </script>
 
 <style lang="scss" scoped>

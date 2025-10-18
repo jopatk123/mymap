@@ -19,15 +19,27 @@
         <!-- 导出控件（绿色） -->
         <ExportControls class="export-controls-inline" :visible-k-m-l-points="visibleKMLPoints" />
 
-        <!-- KML设置（蓝色） -->
-        <el-button class="btn-kml-settings priority" @click.stop="$emit('show-kml-settings')">
-          KML设置
-        </el-button>
+        <!-- 点位设置（下拉：包含 KML设置 与 点位图标设置） -->
+        <el-dropdown
+          class="btn-point-settings-dropdown priority"
+          trigger="click"
+          @command="handlePointSettingsCommand"
+        >
+          <template #default>
+            <el-button class="btn-point-settings">
+              点位设置
+              <el-icon style="margin-left:6px"><ArrowDown /></el-icon>
+            </el-button>
+          </template>
 
-        <!-- 点位图标（紫色） -->
-        <el-button class="btn-point-icons priority" @click.stop="$emit('show-point-settings')">
-          点位设置
-        </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="kml">KML设置</el-dropdown-item>
+              <el-dropdown-item command="point">点位图标设置</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        
+        </el-dropdown>
 
         <!-- 显示/隐藏列表（粉色） -->
         <el-button
@@ -41,10 +53,10 @@
         <!-- 隐藏/显示 KML 图层（白色） -->
         <el-button
           class="btn-toggle-kml"
-          :title="kmlLayersVisible ? '隐藏KML图层' : '显示KML图层'"
+          :title="kmlLayersVisible ? '隐藏图层' : '显示KML图层'"
           @click.stop="$emit('toggle-kml-layers')"
         >
-          {{ kmlLayersVisible ? '隐藏KML图层' : '显示KML图层' }}
+          {{ kmlLayersVisible ? '隐藏图层' : '显示KML图层' }}
         </el-button>
       </div>
     </div>
@@ -55,6 +67,24 @@
 import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
 import ExportControls from './ExportControls.vue';
+import { ArrowDown } from '@element-plus/icons-vue';
+// handler for dropdown commands
+const emit = defineEmits([
+  'toggle-panorama-list',
+  'toggle-kml-layers',
+  'show-kml-settings',
+  'show-point-settings',
+  'locate-kml-point',
+  'locate-address',
+]);
+
+function handlePointSettingsCommand(command) {
+  if (command === 'kml') {
+    emit('show-kml-settings');
+  } else if (command === 'point') {
+    emit('show-point-settings');
+  }
+}
 
 defineProps({
   panoramaListVisible: {
@@ -87,14 +117,7 @@ defineProps({
   },
 });
 
-defineEmits([
-  'toggle-panorama-list',
-  'toggle-kml-layers',
-  'show-kml-settings',
-  'show-point-settings',
-  'locate-kml-point',
-  'locate-address',
-]);
+// defineEmits handled above where needed
 </script>
 
 <style scoped lang="scss">
@@ -321,6 +344,24 @@ defineEmits([
       border-color: #2196f3 !important;
       color: #fff !important;
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    }
+
+    /* 点位设置（蓝底白字） */
+    .btn-point-settings {
+      background: linear-gradient(135deg, #1976d2, #1565c0) !important; /* 深蓝渐变 */
+      border-color: #1565c0 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(21, 101, 192, 0.18);
+      border-radius: 0 !important;
+      border-top-left-radius: 0 !important;
+      border-bottom-left-radius: 0 !important;
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+
+    /* 确保下拉包装器内的按钮没有圆角 */
+    .btn-point-settings-dropdown ::v-deep .el-button {
+      border-radius: 0 !important;
     }
 
     .btn-point-icons {
