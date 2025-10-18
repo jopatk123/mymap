@@ -41,6 +41,7 @@ defineExpose({
   clearKmlLayers: () => mapRef.value?.clearKmlLayers(),
   setSearchMarker: (lat, lng, label) => mapRef.value?.setSearchMarker(lat, lng, label),
   clearSearchMarker: () => mapRef.value?.clearSearchMarker(),
+  setMarkerClickDisabled: (disabled) => mapRef.value?.setMarkerClickDisabled?.(disabled),
   // 将内部 map 实例直接暴露，便于上层组件通过 mapRef?.map 访问
   // 使用 computed 返回底层 map 对象（自动解包），避免暴露为函数或未解包的 ref
   map: computed(() => {

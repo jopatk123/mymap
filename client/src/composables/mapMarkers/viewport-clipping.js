@@ -2,7 +2,13 @@ import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 import { createPointMarker } from '@/utils/map-utils.js';
 
 // 管理视口裁剪逻辑（空间网格、差异更新、事件绑定）
-export function createViewportClipping(map, clusterManager, markers, onMarkerClick) {
+export function createViewportClipping(
+  map,
+  clusterManager,
+  markers,
+  onMarkerClick,
+  markerClickDisabled
+) {
   const state = {
     enabled: false,
     bufferPad: 0.2,
@@ -85,6 +91,8 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
   };
 
   const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
+
+  const isInteractionDisabled = () => Boolean(markerClickDisabled?.value);
 
   const scheduleViewportUpdate = () => {
     if (state.throttleTimer) return;
@@ -232,6 +240,9 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
     try {
       if (typeof marker.getPopup === 'function' && marker.getPopup()) {
         marker.on('click', (e) => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             // 确保 popup 被打开，并阻止事件向上冒泡到全局处理器
             marker.openPopup && marker.openPopup();
@@ -242,6 +253,9 @@ export function createViewportClipping(map, clusterManager, markers, onMarkerCli
         });
       } else {
         marker.on('click', () => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             onMarkerClick.value(point);
           } catch (err) {}

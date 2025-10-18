@@ -5,11 +5,13 @@ export function useMapState() {
   const kmlLayers = ref([]);
   const isLoading = ref(false);
   const onMarkerClick = ref(() => {});
+  const markerClickDisabled = ref(false);
 
   return {
     markers,
     kmlLayers,
     isLoading,
     onMarkerClick,
+    markerClickDisabled,
   };
 }

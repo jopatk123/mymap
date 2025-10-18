@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useDrawingTools } from '@/composables/drawing-tools.js';
 import ToolbarButtons from './ToolbarButtons.vue';
 
@@ -34,6 +34,10 @@ import ToolbarButtons from './ToolbarButtons.vue';
 const props = defineProps({
   mapInstance: {
     type: Object,
+    default: null,
+  },
+  setMarkerInteractivity: {
+    type: Function,
     default: null,
   },
 });
@@ -46,6 +50,7 @@ const {
   activeTool,
   hasDrawings,
   initializeTools,
+  setMarkerInteractivityHandler,
   activateTool,
   deactivateTool,
   clearAllDrawings,
@@ -76,14 +81,22 @@ const exportKml = (format) => {
 };
 
 // 监听地图实例变化，初始化绘图工具
-import { watch } from 'vue';
-
 watch(
   () => props.mapInstance,
   (newMapInstance) => {
     if (newMapInstance) {
-      initializeTools(newMapInstance);
+      initializeTools(newMapInstance, {
+        setMarkerInteractivity: props.setMarkerInteractivity,
+      });
     }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.setMarkerInteractivity,
+  (handler) => {
+    setMarkerInteractivityHandler(handler);
   },
   { immediate: true }
 );

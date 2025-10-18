@@ -9,7 +9,7 @@ export function useMap(containerId) {
     useMapInstance(containerId);
 
   // 共享状态
-  const { markers, kmlLayers, isLoading, onMarkerClick } = useMapState();
+  const { markers, kmlLayers, isLoading, onMarkerClick, markerClickDisabled } = useMapState();
 
   // 点位标记管理
   const {
@@ -20,7 +20,7 @@ export function useMap(containerId) {
     removeMarker,
     clearMarkers: clearMarkersLogic,
     fitBounds,
-  } = useMapMarkers(map, markers, onMarkerClick);
+  } = useMapMarkers(map, markers, onMarkerClick, markerClickDisabled);
 
   // KML图层管理
   const {
@@ -51,6 +51,7 @@ export function useMap(containerId) {
     kmlLayers,
     isLoading,
     onMarkerClick,
+    markerClickDisabled,
 
     // Map Instance
     initMap,

@@ -13,11 +13,18 @@ import { exportToKml } from './export/kml.js';
 export function useDrawingTools() {
   const hasDrawings = computed(() => drawings.value.length > 0);
 
-  const initializeTools = (map) => {
+  const initializeTools = (map, options = {}) => {
     state.mapInstance = map;
+    if (options && typeof options.setMarkerInteractivity === 'function') {
+      state.setMarkerInteractivity = options.setMarkerInteractivity;
+    }
     if (!state.drawingLayer) {
       state.drawingLayer = L.layerGroup().addTo(state.mapInstance);
     }
+  };
+
+  const setMarkerInteractivityHandler = (handler) => {
+    state.setMarkerInteractivity = typeof handler === 'function' ? handler : null;
   };
 
   const deactivateTool = () => {
@@ -46,6 +53,8 @@ export function useDrawingTools() {
     }
     state.currentPath = null;
     state.isDrawing = false;
+    // 恢复点位交互
+    state.setMarkerInteractivity?.(false);
     activeTool.value = null;
   };
 
@@ -103,6 +112,7 @@ export function useDrawingTools() {
     hasDrawings,
     drawings,
     initializeTools,
+    setMarkerInteractivityHandler,
     activateTool,
     deactivateTool,
     clearAllDrawings,

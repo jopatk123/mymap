@@ -12,4 +12,5 @@ export const state = {
   isDrawing: false,
   measureTooltip: null,
   currentCleanup: null, // 保存当前工具的清理函数
+  setMarkerInteractivity: null,
 };

@@ -7,7 +7,7 @@ import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 import { createClusterManager } from './mapMarkers/cluster-manager.js';
 import { createViewportClipping } from './mapMarkers/viewport-clipping.js';
 
-export function useMapMarkers(map, markers, onMarkerClick) {
+export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) {
   // Threshold that triggers viewport-clipping mode. Increase for temporary testing to bypass clipping.
   const VIEWPORT_THRESHOLD = 100000; // original: 1200
   // 子模块实例
@@ -18,7 +18,7 @@ export function useMapMarkers(map, markers, onMarkerClick) {
     disable: disableViewportClipping,
     scheduleViewportUpdate,
     removeMarkersBatch: vpRemoveMarkersBatch,
-  } = createViewportClipping(map, clusterManager, markers, onMarkerClick);
+  } = createViewportClipping(map, clusterManager, markers, onMarkerClick, markerClickDisabled);
   // mark intentionally unused helper as referenced for linter
   void vpRemoveMarkersBatch;
 
@@ -28,6 +28,8 @@ export function useMapMarkers(map, markers, onMarkerClick) {
 
   // 降噪：缩放期间调整 marker 行为，避免动画访问已移除图层
   const ensureZoomGuards = () => clusterManager.ensureZoomGuards();
+
+  const isInteractionDisabled = () => Boolean(markerClickDisabled?.value);
 
   const addPointMarker = (point) => {
     if (!map.value) return null;
@@ -79,6 +81,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       if (String(point.id).includes('kml-')) {
         // KML 点位：阻止冒泡并交给全局处理器打开 popup
         marker.on('click', (e) => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             if (L && L.DomEvent) {
               L.DomEvent.stop(e);
@@ -91,6 +96,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         });
       } else if (typeof marker.getPopup === 'function' && marker.getPopup()) {
         marker.on('click', (e) => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             marker.openPopup && marker.openPopup();
           } catch (err) {}
@@ -100,6 +108,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
         });
       } else {
         marker.on('click', () => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             onMarkerClick.value(point);
           } catch (err) {}
@@ -198,6 +209,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       // KML 点位：阻止冒泡并交给全局处理器打开 popup（避免 map click 立即关闭弹窗）
       if (String(p.id).includes('kml-')) {
         marker.on('click', (e) => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             // 同时阻止默认与冒泡，避免地图 click 事件关闭刚打开的 popup
             L.DomEvent.stop(e);
@@ -210,6 +224,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       } else if (typeof marker.getPopup === 'function' && marker.getPopup()) {
         // 其他有 popup 的标记：只阻止冒泡并打开自身 popup
         marker.on('click', (e) => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             marker.openPopup && marker.openPopup();
           } catch (err) {}
@@ -220,6 +237,9 @@ export function useMapMarkers(map, markers, onMarkerClick) {
       } else {
         // 无 popup 的标记：走全局处理器
         marker.on('click', () => {
+          if (isInteractionDisabled()) {
+            return;
+          }
           try {
             onMarkerClick.value(p);
           } catch (err) {}

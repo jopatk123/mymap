@@ -56,6 +56,7 @@ export function useMapContainer(props, emit, injected = {}) {
     fitBounds,
     setCenter,
     onMarkerClick,
+    markerClickDisabled,
   } = useMapImpl('map');
 
   const { setSearchMarker, clearSearchMarker } = useSearchMarkerImpl(map);
@@ -65,6 +66,38 @@ export function useMapContainer(props, emit, injected = {}) {
     elevationProvider: injected.elevationService,
     throttleMs: injected.pointerThrottleMs,
   });
+
+  const panePointerCache = new Map();
+
+  const setMarkerClickDisabled = (disabled) => {
+    const shouldDisable = Boolean(disabled);
+    if (markerClickDisabled) {
+      markerClickDisabled.value = shouldDisable;
+    }
+
+    const mapInstance = map.value;
+    if (!mapInstance || typeof mapInstance.getPane !== 'function') {
+      return;
+    }
+
+    const paneNames = ['markerPane', 'videoPane', 'panoramaPane', 'kmlPane'];
+    for (const name of paneNames) {
+      const pane = mapInstance.getPane(name);
+      if (!pane) continue;
+      if (!panePointerCache.has(name)) {
+        panePointerCache.set(name, pane.style.pointerEvents || '');
+      }
+      pane.style.pointerEvents = shouldDisable ? 'none' : panePointerCache.get(name) || '';
+    }
+
+    let container = null;
+    if (typeof mapInstance.getContainer === 'function') {
+      container = mapInstance.getContainer();
+    }
+    if (container && container.classList) {
+      container.classList.toggle('marker-click-disabled', shouldDisable);
+    }
+  };
 
   const ensureMarkerRefreshModule = async () => {
     if (!markerRefreshModule) {
@@ -132,6 +165,8 @@ export function useMapContainer(props, emit, injected = {}) {
       mapInstance.on('click', mapClickHandler);
 
       pointerTracker.attach();
+      // 确保地图加载完成后应用当前交互状态
+      setMarkerClickDisabled(markerClickDisabled?.value);
     } catch (error) {
       // 地图初始化失败则不继续执行后续逻辑
     }
@@ -224,6 +259,7 @@ export function useMapContainer(props, emit, injected = {}) {
     fitBounds,
     locating,
     pointerState: pointerTracker.state,
+    setMarkerClickDisabled,
     expose: {
       setCenter,
       fitBounds,
@@ -238,6 +274,7 @@ export function useMapContainer(props, emit, injected = {}) {
       pointerState: pointerTracker.state,
       _locateUser: locateUser,
       _fitAllMarkers: fitAllMarkers,
+      setMarkerClickDisabled,
     },
   };
 }

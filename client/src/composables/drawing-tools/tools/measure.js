@@ -7,6 +7,8 @@ import { gcj02ToWgs84 } from '@/utils/coordinate-transform.js';
 export function startMeasure(deactivateTool) {
   if (!state.mapInstance) return;
 
+  state.setMarkerInteractivity?.(true);
+
   let measureLine = null;
   let totalDistance = 0;
   let points = [];
@@ -78,6 +80,7 @@ export function startMeasure(deactivateTool) {
 
   const cleanup = () => {
     state.mapInstance.off('click', onClick);
+    state.setMarkerInteractivity?.(false);
   };
 
   // 保存清理函数，以便在切换工具时调用

@@ -47,7 +47,10 @@
     />
 
     <!-- 绘图工具栏 -->
-    <DrawingToolbar :map-instance="mapRef?.map" />
+    <DrawingToolbar
+      :map-instance="mapRef?.map"
+      :set-marker-interactivity="mapRef?.setMarkerClickDisabled"
+    />
 
     <!-- 对话框组 -->
     <MapDialogs
