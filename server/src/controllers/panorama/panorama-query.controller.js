@@ -25,7 +25,8 @@ class PanoramaQueryController {
         includeHidden: includeHidden === 'true',
       };
 
-      const result = await PanoramaQueryService.getPanoramas(options);
+  const ownerId = req.user?.id;
+  const result = await PanoramaQueryService.getPanoramas({ ...options, ownerId });
       res.json(successResponse(result, '获取全景图列表成功'));
     } catch (error) {
       Logger.error('获取全景图列表失败:', error);
@@ -39,7 +40,7 @@ class PanoramaQueryController {
       if (!id || isNaN(id)) {
         return res.status(400).json(errorResponse('无效的全景图ID'));
       }
-      const panorama = await PanoramaQueryService.getPanoramaById(parseInt(id));
+  const panorama = await PanoramaQueryService.getPanoramaById(parseInt(id), req.user?.id);
       res.json(successResponse(panorama, '获取全景图详情成功'));
     } catch (error) {
       Logger.error('获取全景图详情失败:', error);
@@ -66,7 +67,7 @@ class PanoramaQueryController {
       if (bounds.north <= bounds.south || bounds.east <= bounds.west) {
         return res.status(400).json(errorResponse('边界参数不合理'));
       }
-      const panoramas = await PanoramaQueryService.getPanoramasByBounds(bounds);
+  const panoramas = await PanoramaQueryService.getPanoramasByBounds(bounds, req.user?.id);
       res.json(successResponse(panoramas, '根据边界获取全景图成功'));
     } catch (error) {
       Logger.error('根据边界获取全景图失败:', error);
@@ -89,7 +90,8 @@ class PanoramaQueryController {
       const panoramas = await PanoramaQueryService.getNearbyPanoramas(
         latitude,
         longitude,
-        searchRadius
+        searchRadius,
+        req.user?.id
       );
       res.json(successResponse(panoramas, '获取附近全景图成功'));
     } catch (error) {
@@ -131,7 +133,10 @@ class PanoramaQueryController {
       }
       if (dateFrom) searchParams.dateFrom = dateFrom;
       if (dateTo) searchParams.dateTo = dateTo;
-      const result = await PanoramaQueryService.searchPanoramas(searchParams);
+      const result = await PanoramaQueryService.searchPanoramas({
+        ...searchParams,
+        ownerId: req.user?.id,
+      });
       res.json(successResponse(result, '搜索全景图成功'));
     } catch (error) {
       Logger.error('搜索全景图失败:', error);
@@ -141,7 +146,7 @@ class PanoramaQueryController {
 
   static async getStats(req, res) {
     try {
-      const stats = await PanoramaQueryService.getStats();
+      const stats = await PanoramaQueryService.getStats(req.user?.id);
       res.json(successResponse(stats, '获取统计信息成功'));
     } catch (error) {
       Logger.error('获取统计信息失败:', error);

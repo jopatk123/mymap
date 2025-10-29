@@ -1,5 +1,4 @@
 import { createApp } from 'vue';
-import { createPinia } from 'pinia';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import router from './router';
@@ -13,6 +12,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import L from 'leaflet';
 import 'leaflet.markercluster';
+import pinia, { useAuthStore } from './store';
 
 // 防御性补丁：避免 Leaflet 在动画缩放时对已移除的 Marker 调用 _animateZoom 导致报错
 // 某些聚合/移除的时机下，marker._map 可能为 null，但仍收到 zoomanim 事件
@@ -50,7 +50,6 @@ try {
 }
 
 const app = createApp(App);
-const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
@@ -61,4 +60,12 @@ app.use(ElementPlus, {
   },
 });
 
-app.mount('#app');
+const authStore = useAuthStore(pinia);
+authStore
+  .loadUser()
+  .catch(() => {
+    // 未登录时忽略错误
+  })
+  .finally(() => {
+    app.mount('#app');
+  });

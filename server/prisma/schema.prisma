@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int                   @id @default(autoincrement())
+  username           String                @unique
+  hashedPassword     String                @map("hashed_password")
+  salt               String
+  displayName        String?               @map("display_name")
+  role               String                @default("user")
+  isActive           Boolean               @default(true) @map("is_active")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  sessions           Session[]
+  passwordResetTokens PasswordResetToken[]
+  folders            Folder[]
+  panoramas          Panorama[]
+  kmlFiles           KmlFile[]
+  kmlPoints          KmlPoint[]
+  videoPoints        VideoPoint[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  sid       String   @unique
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  data      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sessions")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+
+model Folder {
+  id         Int        @id @default(autoincrement())
+  name       String
+  parentId   Int?       @map("parent_id")
+  parent     Folder?    @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children   Folder[]   @relation("FolderHierarchy")
+  isVisible  Boolean    @default(true) @map("is_visible")
+  sortOrder  Int        @default(0) @map("sort_order")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @default(now()) @map("updated_at")
+  ownerId    Int?       @map("owner_id")
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  panoramas  Panorama[]
+  kmlFiles   KmlFile[]
+  videoPoints VideoPoint[]
+
+  @@map("folders")
+  @@index([parentId])
+  @@index([sortOrder])
+  @@index([name])
+  @@index([ownerId])
+}
+
+model Panorama {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  imageUrl    String    @map("image_url")
+  thumbnailUrl String?  @map("thumbnail_url")
+  latitude    Float
+  longitude   Float
+  gcj02Lat    Float?    @map("gcj02_lat")
+  gcj02Lng    Float?    @map("gcj02_lng")
+  fileSize    Int?      @map("file_size")
+  fileType    String?   @map("file_type")
+  folderId    Int?      @map("folder_id")
+  folder      Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  isVisible   Boolean   @default(true) @map("is_visible")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @map("updated_at")
+  ownerId     Int?      @map("owner_id")
+  owner       User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@map("panoramas")
+  @@index([latitude, longitude])
+  @@index([gcj02Lat, gcj02Lng])
+  @@index([folderId])
+  @@index([isVisible])
+  @@index([createdAt])
+  @@index([title])
+  @@index([sortOrder])
+  @@index([ownerId])
+}
+
+model KmlFile {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  fileUrl     String     @map("file_url")
+  fileSize    Int?       @map("file_size")
+  isBasemap   Boolean    @default(false) @map("is_basemap")
+  folderId    Int?       @map("folder_id")
+  folder      Folder?    @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  isVisible   Boolean    @default(true) @map("is_visible")
+  sortOrder   Int        @default(0) @map("sort_order")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @map("updated_at")
+  ownerId     Int?       @map("owner_id")
+  owner       User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  points      KmlPoint[]
+
+  @@map("kml_files")
+  @@index([folderId])
+  @@index([isVisible])
+  @@index([createdAt])
+  @@index([title])
+  @@index([sortOrder])
+  @@index([ownerId])
+}
+
+model KmlPoint {
+  id          Int       @id @default(autoincrement())
+  kmlFileId   Int       @map("kml_file_id")
+  kmlFile     KmlFile   @relation(fields: [kmlFileId], references: [id], onDelete: Cascade)
+  name        String?
+  description String?
+  latitude    Float
+  longitude   Float
+  gcj02Lat    Float?    @map("gcj02_lat")
+  gcj02Lng    Float?    @map("gcj02_lng")
+  altitude    Float?    @default(0) @map("altitude")
+  pointType   String?   @default("Point") @map("point_type")
+  coordinates String?   @map("coordinates")
+  styleData   String?   @map("style_data")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @map("updated_at")
+  ownerId     Int?      @map("owner_id")
+  owner       User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@map("kml_points")
+  @@index([kmlFileId])
+  @@index([latitude, longitude])
+  @@index([gcj02Lat, gcj02Lng])
+  @@index([pointType])
+  @@index([ownerId])
+}
+
+model VideoPoint {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  videoUrl     String    @map("video_url")
+  thumbnailUrl String?   @map("thumbnail_url")
+  latitude     Float
+  longitude    Float
+  gcj02Lat     Float?    @map("gcj02_lat")
+  gcj02Lng     Float?    @map("gcj02_lng")
+  fileSize     Int?      @map("file_size")
+  fileType     String?   @map("file_type")
+  duration     Int?      @map("duration")
+  folderId     Int?      @map("folder_id")
+  folder       Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  isVisible    Boolean   @default(true) @map("is_visible")
+  sortOrder    Int       @default(0) @map("sort_order")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+  ownerId      Int?      @map("owner_id")
+  owner        User?     @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@map("video_points")
+  @@index([latitude, longitude])
+  @@index([gcj02Lat, gcj02Lng])
+  @@index([folderId])
+  @@index([isVisible])
+  @@index([createdAt])
+  @@index([title])
+  @@index([sortOrder])
+  @@index([ownerId])
+}

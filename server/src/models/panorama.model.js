@@ -66,14 +66,17 @@ class PanoramaModel {
   }
 
   // 根据ID获取全景图
-  static async findById(id) {
-    const sql = 'SELECT * FROM panoramas WHERE id = ?';
-    const [rows] = await SQLiteAdapter.execute(sql, [id]);
+  static async findById(id, ownerId = null) {
+    const sql = ownerId
+      ? 'SELECT * FROM panoramas WHERE id = ? AND owner_id = ?'
+      : 'SELECT * FROM panoramas WHERE id = ?';
+    const params = ownerId ? [id, ownerId] : [id];
+    const [rows] = await SQLiteAdapter.execute(sql, params);
     return rows[0] || null;
   }
 
   // 根据边界获取全景图
-  static async findByBounds(bounds) {
+  static async findByBounds(bounds, ownerId = null) {
     const { north, south, east, west, includeHidden = false, visibleFolderIds = null } = bounds;
 
     let conditions = ['latitude BETWEEN ? AND ?', 'longitude BETWEEN ? AND ?'];
@@ -97,6 +100,11 @@ class PanoramaModel {
       }
     }
 
+    if (ownerId) {
+      conditions.push('owner_id = ?');
+      params.push(ownerId);
+    }
+
     const sql = `
       SELECT * FROM panoramas 
       WHERE ${conditions.join(' AND ')}
@@ -108,20 +116,23 @@ class PanoramaModel {
   }
 
   // 获取附近的全景图
-  static async findNearby(lat, lng, radius = 1000) {
+  static async findNearby(lat, lng, radius = 1000, ownerId = null) {
     const nearbyQuery = QueryBuilder.buildNearbyQuery(lat, lng, radius);
 
+    const filterClause = ownerId ? 'WHERE owner_id = ?' : '';
     const sql = `
       SELECT *, ${nearbyQuery.selectDistance}
       FROM panoramas
+      ${filterClause}
       HAVING ${nearbyQuery.havingCondition}
       ORDER BY distance ASC
     `;
 
-    const [rows] = await SQLiteAdapter.execute(sql, [
-      ...nearbyQuery.params,
-      nearbyQuery.havingParam,
-    ]);
+    const params = ownerId
+      ? [...nearbyQuery.params, ownerId, nearbyQuery.havingParam]
+      : [...nearbyQuery.params, nearbyQuery.havingParam];
+
+    const [rows] = await SQLiteAdapter.execute(sql, params);
     return rows;
   }
 
@@ -141,14 +152,15 @@ class PanoramaModel {
       folderId,
       isVisible = true,
       sortOrder = 0,
+      ownerId = null,
     } = panoramaData;
 
     const sql = `
       INSERT INTO panoramas (
         title, description, image_url, thumbnail_url,
         latitude, longitude, gcj02_lat, gcj02_lng,
-        file_size, file_type, folder_id, is_visible, sort_order
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        file_size, file_type, folder_id, is_visible, sort_order, owner_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -165,6 +177,7 @@ class PanoramaModel {
       folderId || null,
       isVisible,
       sortOrder,
+      ownerId,
     ];
 
     const [result] = await SQLiteAdapter.execute(sql, params);
@@ -333,6 +346,7 @@ class PanoramaModel {
       dateTo = null,
       page = 1,
       pageSize = 20,
+      ownerId = null,
     } = searchParams;
 
     // 使用QueryBuilder构建查询条件
@@ -341,6 +355,7 @@ class PanoramaModel {
       dateFrom,
       dateTo,
       includeHidden: true, // 搜索时包含隐藏项
+      ownerId,
     });
 
     let sql = 'SELECT * FROM panoramas';
@@ -399,13 +414,19 @@ class PanoramaModel {
   }
 
   // 获取统计信息
-  static async getStats() {
-    const totalSql = 'SELECT COUNT(*) as total FROM panoramas';
-    const recentSql =
-      'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+  static async getStats(ownerId = null) {
+    const totalSql = ownerId
+      ? 'SELECT COUNT(*) as total FROM panoramas WHERE owner_id = ?'
+      : 'SELECT COUNT(*) as total FROM panoramas';
+    const recentSql = ownerId
+      ? 'SELECT COUNT(*) as recent FROM panoramas WHERE owner_id = ? AND created_at >= datetime("now", "-7 day")'
+      : 'SELECT COUNT(*) as recent FROM panoramas WHERE created_at >= datetime("now", "-7 day")';
 
-    const [totalResult] = await SQLiteAdapter.execute(totalSql);
-    const [recentResult] = await SQLiteAdapter.execute(recentSql);
+    const totalParams = ownerId ? [ownerId] : [];
+    const recentParams = ownerId ? [ownerId] : [];
+
+    const [totalResult] = await SQLiteAdapter.execute(totalSql, totalParams);
+    const [recentResult] = await SQLiteAdapter.execute(recentSql, recentParams);
 
     return {
       total: totalResult[0].total,

@@ -8,6 +8,10 @@ const config = require('./config');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
 const { loggerMiddleware } = require('./middleware/logger.middleware');
+const session = require('express-session');
+const { PrismaSessionStore } = require('@quixo3/prisma-session-store');
+const { getPrisma } = require('./config/prisma');
+const { attachUser } = require('./middleware/auth.middleware');
 
 // 创建Express应用
 const app = express();
@@ -30,10 +34,26 @@ app.use(
 );
 
 // CORS配置
+const allowAllOrigins = config.security.corsOrigin === '*';
+const allowedOrigins = allowAllOrigins
+  ? []
+  : config.security.corsOrigin
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
 app.use(
   cors({
-    origin: config.security.corsOrigin,
-    credentials: true,
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowAllOrigins || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: !allowAllOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
@@ -44,6 +64,35 @@ app.use(compression());
 
 // 请求日志
 app.use(loggerMiddleware);
+
+// Session 配置（使用 Prisma 持久化）
+const prisma = getPrisma();
+const sessionStoreOptions = {
+  dbRecordIdIsSessionId: true,
+};
+
+if (config.server.env !== 'test') {
+  sessionStoreOptions.checkPeriod = 2 * 60 * 1000;
+}
+
+const sessionStore = new PrismaSessionStore(prisma, sessionStoreOptions);
+
+app.use(
+  session({
+    name: config.session.name,
+    secret: config.session.secret,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    store: sessionStore,
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: config.server.env === 'production',
+      maxAge: config.session.maxAge,
+    },
+  })
+);
 
 // 解析请求体
 app.use(express.json({ limit: '10mb' }));
@@ -176,6 +225,7 @@ if (config.server.env !== 'production') {
 // API路由（为防缓存增加 no-store/no-cache）
 app.use(
   '/api',
+  attachUser,
   (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');

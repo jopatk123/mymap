@@ -4,6 +4,7 @@ const { testConnection, initTables, closeDatabase } = require('./config/database
 const { initDefaultFolder } = require('./init/init-default-folder');
 const Logger = require('./utils/logger');
 const ConfigService = require('./services/config.service');
+const { getPrisma } = require('./config/prisma');
 
 // 启动服务器
 const startServer = async () => {
@@ -93,6 +94,11 @@ const startServer = async () => {
       server.close(async () => {
         // 关闭数据库连接
         await closeDatabase();
+        try {
+          await getPrisma().$disconnect();
+        } catch (err) {
+          Logger.warn('关闭 Prisma 连接失败:', err.message);
+        }
 
         process.exit(0);
       });

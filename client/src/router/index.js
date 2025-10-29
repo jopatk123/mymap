@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import pinia, { useAuthStore } from '@/store';
 
 const routes = [
   {
@@ -7,6 +8,7 @@ const routes = [
     component: () => import('@/views/Map/index.vue'),
     meta: {
       title: '点位展示系统',
+      requiresAuth: true,
     },
   },
   {
@@ -14,6 +16,7 @@ const routes = [
     component: () => import('@/views/Admin/index.vue'),
     meta: {
       title: '管理后台',
+      requiresAuth: true,
     },
     children: [
       {
@@ -27,6 +30,7 @@ const routes = [
         component: () => import('@/views/Admin/FileManage.vue'),
         meta: {
           title: '文件管理',
+          requiresAuth: true,
         },
       },
     ],
@@ -37,6 +41,7 @@ const routes = [
     component: () => import('@/views/PanoramaViewer.vue'),
     meta: {
       title: '全景图查看',
+      requiresAuth: true,
     },
   },
   {
@@ -45,6 +50,7 @@ const routes = [
     component: () => import('@/views/StyleDebugView.vue'),
     meta: {
       title: '样式调试',
+      requiresAuth: true,
     },
   },
   {
@@ -53,6 +59,25 @@ const routes = [
     component: () => import('@/views/ButtonTestView.vue'),
     meta: {
       title: '按钮UI测试',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: {
+      title: '登录',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/RegisterView.vue'),
+    meta: {
+      title: '注册',
+      requiresAuth: false,
     },
   },
   {
@@ -61,6 +86,7 @@ const routes = [
     component: () => import('@/views/NotFound.vue'),
     meta: {
       title: '页面未找到',
+      requiresAuth: false,
     },
   },
 ];
@@ -78,20 +104,29 @@ const router = createRouter({
 });
 
 // 全局前置守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
     document.title = to.meta.title;
   }
 
-  // 检查是否需要认证
-  if (to.meta.requiresAuth) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      // 跳转到登录页面或显示提示
-      alert('需要登录才能访问此页面');
-      return next('/'); // 重定向到首页
+  const authStore = useAuthStore(pinia);
+
+  if (!authStore.initialized) {
+    try {
+      await authStore.loadUser();
+    } catch (_) {
+      // ignore, 401 handled via redirect below
     }
+  }
+
+  if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
+    return next({ name: 'Login', query: { redirect: to.fullPath } });
+  }
+
+  if (['Login', 'Register'].includes(to.name) && authStore.isAuthenticated) {
+    const redirectTarget = typeof to.query.redirect === 'string' ? to.query.redirect : '/';
+    return next(redirectTarget);
   }
 
   next();

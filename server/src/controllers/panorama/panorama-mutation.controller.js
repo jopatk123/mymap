@@ -32,7 +32,8 @@ class PanoramaMutationController {
       ) {
         return res.status(400).json(errorResponse('坐标参数超出有效范围'));
       }
-      const panorama = await PanoramaMutationService.createPanorama(panoramaData);
+      const ownerId = req.user.id;
+      const panorama = await PanoramaMutationService.createPanorama(ownerId, panoramaData);
       res.status(201).json(successResponse(panorama, '创建全景图成功'));
     } catch (error) {
       const Logger = require('../../utils/logger');
@@ -83,7 +84,11 @@ class PanoramaMutationController {
           return res.status(400).json(errorResponse('坐标参数超出有效范围'));
         }
       }
-      const panorama = await PanoramaMutationService.updatePanorama(parseInt(id), panoramaData);
+      const panorama = await PanoramaMutationService.updatePanorama(
+        req.user.id,
+        parseInt(id),
+        panoramaData
+      );
       res.json(successResponse(panorama, '更新全景图成功'));
     } catch (error) {
       const Logger = require('../../utils/logger');
@@ -102,7 +107,7 @@ class PanoramaMutationController {
       if (!id || isNaN(id)) {
         return res.status(400).json(errorResponse('无效的全景图ID'));
       }
-      const result = await PanoramaMutationService.deletePanorama(parseInt(id));
+      const result = await PanoramaMutationService.deletePanorama(req.user.id, parseInt(id));
       res.json(successResponse(result, '删除全景图成功'));
     } catch (error) {
       const Logger = require('../../utils/logger');
@@ -125,7 +130,7 @@ class PanoramaMutationController {
       if (validIds.length === 0) {
         return res.status(400).json(errorResponse('没有有效的ID'));
       }
-      const result = await PanoramaMutationService.batchDeletePanoramas(validIds);
+      const result = await PanoramaMutationService.batchDeletePanoramas(req.user.id, validIds);
       res.json(successResponse(result, '批量删除全景图成功'));
     } catch (error) {
       const Logger = require('../../utils/logger');
@@ -142,6 +147,7 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('无效的全景图ID'));
       }
       const panorama = await PanoramaMutationService.movePanoramaToFolder(
+        req.user.id,
         parseInt(id),
         folderId || null
       );
@@ -168,6 +174,7 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('没有有效的ID'));
       }
       const result = await PanoramaMutationService.batchMovePanoramasToFolder(
+        req.user.id,
         validIds,
         folderId || null
       );
@@ -190,6 +197,7 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('isVisible必须是布尔值'));
       }
       const panorama = await PanoramaMutationService.updatePanoramaVisibility(
+        req.user.id,
         parseInt(id),
         isVisible
       );
@@ -219,6 +227,7 @@ class PanoramaMutationController {
         return res.status(400).json(errorResponse('没有有效的ID'));
       }
       const result = await PanoramaMutationService.batchUpdatePanoramaVisibility(
+        req.user.id,
         validIds,
         isVisible
       );

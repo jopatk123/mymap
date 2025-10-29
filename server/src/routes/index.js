@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const panoramaRoutes = require('./panoramas.routes');
+const authRoutes = require('./auth.routes');
 
 // API版本信息
 router.get('/', (req, res) => {
@@ -35,6 +36,9 @@ router.get('/health', (req, res) => {
     },
   });
 });
+
+// 认证路由
+router.use('/auth', authRoutes);
 
 // 全景图相关路由
 router.use('/panoramas', panoramaRoutes);

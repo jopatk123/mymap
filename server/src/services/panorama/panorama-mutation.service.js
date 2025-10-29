@@ -4,13 +4,16 @@ const path = require('path');
 const fs = require('fs').promises;
 
 class PanoramaMutationService {
-  static async createPanorama(data) {
+  static async createPanorama(ownerId, data) {
     try {
+      if (!ownerId) {
+        throw new Error('缺少用户信息，无法创建记录');
+      }
       const { transaction } = require('../../config/database');
       let insertedId = null;
       try {
         await transaction(async (db) => {
-          const sql = `INSERT INTO panoramas (title, description, image_url, thumbnail_url, latitude, longitude, gcj02_lat, gcj02_lng, file_size, file_type, folder_id, is_visible, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
+          const sql = `INSERT INTO panoramas (title, description, image_url, thumbnail_url, latitude, longitude, gcj02_lat, gcj02_lng, file_size, file_type, folder_id, is_visible, sort_order, owner_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
           const params = [
             data.title,
             data.description || null,
@@ -25,6 +28,7 @@ class PanoramaMutationService {
             data.folderId || null,
             1,
             0,
+            ownerId,
           ];
           const res = await db.run(sql, params);
           insertedId = res.lastID;
@@ -55,13 +59,16 @@ class PanoramaMutationService {
     }
   }
 
-  static async updatePanorama(id, updateData) {
+  static async updatePanorama(ownerId, id, updateData) {
     try {
       const mapped = { ...updateData };
       // 读取当前记录，确保未提供时保留关键归属/状态字段
       const current = await PanoramaModel.findById(parseInt(id));
       if (!current) {
         throw new Error('全景图不存在');
+      }
+      if (ownerId && current.owner_id !== ownerId) {
+        throw new Error('无权操作该全景图');
       }
       if (!Object.prototype.hasOwnProperty.call(mapped, 'folderId')) {
         mapped.folderId = current.folder_id;
@@ -96,11 +103,14 @@ class PanoramaMutationService {
     }
   }
 
-  static async deletePanorama(id) {
+  static async deletePanorama(ownerId, id) {
     try {
       const panorama = await PanoramaModel.findById(parseInt(id));
       if (!panorama) {
         throw new Error('全景图不存在');
+      }
+      if (ownerId && panorama.owner_id !== ownerId) {
+        throw new Error('无权操作该全景图');
       }
 
       const { transaction } = require('../../config/database');
@@ -155,7 +165,7 @@ class PanoramaMutationService {
     }
   }
 
-  static async batchDeletePanoramas(ids) {
+  static async batchDeletePanoramas(ownerId, ids) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) return 0;
 
@@ -163,18 +173,22 @@ class PanoramaMutationService {
       for (const pid of ids) {
         try {
           const p = await PanoramaModel.findById(parseInt(pid));
-          if (p) panoramasToDelete.push(p);
+          if (p && (!ownerId || p.owner_id === ownerId)) panoramasToDelete.push(p);
         } catch (e) {
           Logger.warn(`获取全景图信息失败 (ID: ${pid})`, e);
         }
       }
+
+      const targetIds = ownerId ? panoramasToDelete.map((item) => item.id) : ids;
+
+      if (!targetIds || targetIds.length === 0) return 0;
 
       const { transaction } = require('../../config/database');
       try {
         let affected = 0;
         await transaction(async (db) => {
           // 删除数据库记录
-          const { clause, params } = require('../../utils/QueryBuilder').buildInClause(ids);
+          const { clause, params } = require('../../utils/QueryBuilder').buildInClause(targetIds);
           const delRes = await db.run(`DELETE FROM panoramas WHERE id ${clause}`, params);
           affected = delRes.changes || 0;
 
@@ -213,8 +227,15 @@ class PanoramaMutationService {
     }
   }
 
-  static async movePanoramaToFolder(id, folderId) {
+  static async movePanoramaToFolder(ownerId, id, folderId) {
     try {
+      const panorama = await PanoramaModel.findById(parseInt(id));
+      if (!panorama) {
+        throw new Error('全景图不存在');
+      }
+      if (ownerId && panorama.owner_id !== ownerId) {
+        throw new Error('无权操作该全景图');
+      }
       return await PanoramaModel.update(id, { folderId });
     } catch (error) {
       Logger.error('移动全景图失败', error);
@@ -222,17 +243,36 @@ class PanoramaMutationService {
     }
   }
 
-  static async batchMovePanoramasToFolder(ids, folderId) {
+  static async batchMovePanoramasToFolder(ownerId, ids, folderId) {
     try {
-      return await PanoramaModel.batchMoveToFolder(ids, folderId);
+      let targetIds = ids;
+      if (ownerId) {
+        const allowed = [];
+        for (const pid of ids) {
+          const panorama = await PanoramaModel.findById(parseInt(pid));
+          if (panorama && panorama.owner_id === ownerId) {
+            allowed.push(panorama.id);
+          }
+        }
+        targetIds = allowed;
+      }
+      if (!targetIds || targetIds.length === 0) return 0;
+      return await PanoramaModel.batchMoveToFolder(targetIds, folderId);
     } catch (error) {
       Logger.error('批量移动全景图失败', error);
       throw error;
     }
   }
 
-  static async updatePanoramaVisibility(id, isVisible) {
+  static async updatePanoramaVisibility(ownerId, id, isVisible) {
     try {
+      const panorama = await PanoramaModel.findById(parseInt(id));
+      if (!panorama) {
+        throw new Error('全景图不存在');
+      }
+      if (ownerId && panorama.owner_id !== ownerId) {
+        throw new Error('无权操作该全景图');
+      }
       return await PanoramaModel.update(id, { is_visible: isVisible });
     } catch (error) {
       Logger.error('更新全景图可见性失败', error);
@@ -240,9 +280,21 @@ class PanoramaMutationService {
     }
   }
 
-  static async batchUpdatePanoramaVisibility(ids, isVisible) {
+  static async batchUpdatePanoramaVisibility(ownerId, ids, isVisible) {
     try {
-      return await PanoramaModel.batchUpdateVisibility(ids, isVisible);
+      let targetIds = ids;
+      if (ownerId) {
+        const allowed = [];
+        for (const pid of ids) {
+          const panorama = await PanoramaModel.findById(parseInt(pid));
+          if (panorama && panorama.owner_id === ownerId) {
+            allowed.push(panorama.id);
+          }
+        }
+        targetIds = allowed;
+      }
+      if (!targetIds || targetIds.length === 0) return 0;
+      return await PanoramaModel.batchUpdateVisibility(targetIds, isVisible);
     } catch (error) {
       Logger.error('批量更新全景图可见性失败', error);
       throw error;

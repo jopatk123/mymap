@@ -20,10 +20,10 @@ class PanoramaQueryService {
     }
   }
 
-  static async getPanoramaById(id) {
+  static async getPanoramaById(id, ownerId = null) {
     try {
       Logger.debug('根据ID获取全景图', { id });
-      const panorama = await PanoramaModel.findById(id);
+      const panorama = await PanoramaModel.findById(id, ownerId || undefined);
       if (!panorama) {
         throw new Error(PANORAMA.NOT_FOUND.message);
       }
@@ -34,10 +34,10 @@ class PanoramaQueryService {
     }
   }
 
-  static async getPanoramasByBounds(bounds) {
+  static async getPanoramasByBounds(bounds, ownerId = null) {
     try {
       Logger.debug('根据边界获取全景图', bounds);
-      const panoramas = await PanoramaModel.findByBounds(bounds);
+      const panoramas = await PanoramaModel.findByBounds(bounds, ownerId || undefined);
       return Formatters.formatPanoramas(panoramas);
     } catch (error) {
       Logger.error('根据边界获取全景图失败', error);
@@ -45,10 +45,10 @@ class PanoramaQueryService {
     }
   }
 
-  static async getNearbyPanoramas(lat, lng, radius = 1000) {
+  static async getNearbyPanoramas(lat, lng, radius = 1000, ownerId = null) {
     try {
       Logger.debug('获取附近全景图', { lat, lng, radius });
-      const panoramas = await PanoramaModel.findNearby(lat, lng, radius);
+      const panoramas = await PanoramaModel.findNearby(lat, lng, radius, ownerId || undefined);
       return Formatters.formatPanoramas(panoramas);
     } catch (error) {
       Logger.error('获取附近全景图失败', error);
@@ -67,10 +67,10 @@ class PanoramaQueryService {
     }
   }
 
-  static async getStats() {
+  static async getStats(ownerId = null) {
     try {
       Logger.debug('获取统计信息');
-      return await PanoramaModel.getStats();
+      return await PanoramaModel.getStats(ownerId || undefined);
     } catch (error) {
       Logger.error('获取统计信息失败', error);
       throw new Error(`获取统计信息失败: ${error.message}`);

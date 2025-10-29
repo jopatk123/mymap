@@ -1,4 +1,29 @@
 require('dotenv').config();
+const path = require('path');
+
+const projectRoot = path.resolve(__dirname, '..', '..');
+
+const resolveDbPath = (inputPath) => {
+  if (!inputPath) {
+    return path.join(projectRoot, 'data', 'panorama_map.db');
+  }
+  return path.isAbsolute(inputPath) ? inputPath : path.resolve(projectRoot, inputPath);
+};
+
+const resolveDbUrl = (inputUrl, resolvedPath) => {
+  if (!inputUrl) {
+    return `file:${resolvedPath}`;
+  }
+  if (!inputUrl.startsWith('file:')) {
+    return inputUrl;
+  }
+  const rawPath = inputUrl.slice(5);
+  const absolutePath = path.isAbsolute(rawPath) ? rawPath : path.resolve(projectRoot, rawPath);
+  return `file:${absolutePath}`;
+};
+
+const resolvedDbPath = resolveDbPath(process.env.DB_PATH);
+const resolvedDbUrl = resolveDbUrl(process.env.DATABASE_URL, resolvedDbPath);
 
 const config = {
   // 服务器配置
@@ -9,7 +34,8 @@ const config = {
 
   // 数据库配置
   database: {
-    path: process.env.DB_PATH || './data/panorama_map.db',
+    path: resolvedDbPath,
+    url: resolvedDbUrl,
   },
 
   // 文件上传配置
@@ -41,7 +67,14 @@ const config = {
   security: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
     // 允许所有来源在生产环境中访问
-    corsOrigin: process.env.CORS_ORIGIN || '*',
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    passwordPepper: process.env.PASSWORD_PEPPER || 'dev-pepper',
+  },
+
+  session: {
+    secret: process.env.SESSION_SECRET || 'dev-session-secret',
+    name: process.env.SESSION_NAME || 'mymap.sid',
+    maxAge: parseInt(process.env.SESSION_MAX_AGE, 10) || 30 * 60 * 1000,
   },
 
   // 日志配置

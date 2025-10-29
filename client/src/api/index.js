@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus';
 const api = axios.create({
   baseURL: '/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,11 +14,6 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
-    // 可以在这里添加token等认证信息
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -63,7 +59,13 @@ api.interceptors.response.use(
       switch (status) {
         case 401:
           ElMessage.error('未授权，请重新登录');
-          // 可以在这里处理登录跳转
+          if (typeof window !== 'undefined') {
+            const current = window.location.pathname + window.location.search;
+            const redirect = encodeURIComponent(current);
+            if (!window.location.pathname.startsWith('/login')) {
+              window.location.href = `/login?redirect=${redirect}`;
+            }
+          }
           break;
         case 403:
           ElMessage.error('权限不足');

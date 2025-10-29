@@ -13,6 +13,10 @@
           <!-- 不依赖额外图标，简单文本切换 -->
           切换侧栏
         </el-button>
+        <el-button link :loading="isLoggingOut" @click="handleLogout">
+          <el-icon><SwitchButton /></el-icon>
+          退出登入
+        </el-button>
       </div>
     </div>
 
@@ -36,10 +40,13 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { HomeFilled, Folder } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { HomeFilled, Folder, SwitchButton } from '@element-plus/icons-vue';
+import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const activeMenu = computed(() => route.path);
 
@@ -52,6 +59,23 @@ const sidebarVisible = ref(false);
 
 const toggleSidebar = () => {
   sidebarVisible.value = !sidebarVisible.value;
+};
+
+const isLoggingOut = ref(false);
+
+const handleLogout = async () => {
+  if (isLoggingOut.value) {
+    return;
+  }
+  isLoggingOut.value = true;
+  try {
+    await authStore.logout();
+    router.replace('/login');
+  } catch (error) {
+    ElMessage.error(error?.response?.data?.message ?? '退出登入失败');
+  } finally {
+    isLoggingOut.value = false;
+  }
 };
 </script>
 

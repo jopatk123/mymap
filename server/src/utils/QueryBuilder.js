@@ -28,6 +28,11 @@ class QueryBuilder {
       conditions.push('p.is_visible = TRUE');
     }
 
+    if (options.ownerId) {
+      conditions.push('p.owner_id = ?');
+      params.push(options.ownerId);
+    }
+
     // 文件夹筛选
     if (options.folderId !== null && options.folderId !== undefined) {
       const folderConditions = this.buildFolderCondition(options.folderId, 'p');

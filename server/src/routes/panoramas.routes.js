@@ -15,6 +15,10 @@ const path = require('path');
 const fs = require('fs').promises;
 const PanoramaModel = require('../models/panorama.model');
 const { errorResponse } = require('../utils/response');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// 认证保护
+router.use(requireAuth);
 
 // 获取全景图列表
 router.get('/', PanoramaController.getPanoramas);
