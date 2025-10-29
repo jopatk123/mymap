@@ -52,10 +52,26 @@ api.interceptors.response.use(
   (error) => {
     void console.error('响应错误:', error);
 
-    // 处理不同的错误状态
     if (error.response) {
       const { status, data } = error.response;
+      const requestUrl = error.config?.url || '';
 
+      if (requestUrl.includes('/auth/login')) {
+        const defaultLoginMessage = (() => {
+          switch (status) {
+            case 404:
+              return '用户名不存在';
+            case 401:
+              return '密码错误，请重新输入';
+            default:
+              return '登录失败，请稍后重试';
+          }
+        })();
+        const loginMessage = data?.message || defaultLoginMessage;
+        return Promise.reject(new Error(loginMessage));
+      }
+
+      // 处理不同的错误状态
       switch (status) {
         case 401:
           ElMessage.error('未授权，请重新登录');
