@@ -8,7 +8,7 @@ export function useExcelProcessor() {
 
   // 必需的列名（支持多种变体）
   const REQUIRED_COLUMNS = {
-    name: ['点位名称', '名称', '标题', 'name', 'title', '地名'],
+    name: ['点位名称', '站点名称', '名称', '标题', 'name', 'title', '地名'],
     longitude: ['经度', 'lng', 'lon', 'longitude', 'x', '东经'],
     latitude: ['纬度', 'lat', 'latitude', 'y', '北纬'],
   };
