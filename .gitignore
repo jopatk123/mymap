@@ -1,5 +1,8 @@
 # Node
 node_modules/
+package-lock.json
+client/package-lock.json
+server/package-lock.json
 
 # Build
 client/dist/
@@ -132,21 +135,14 @@ server/uploads/thumbnails/*
 *.sqlite
 *.sqlite3
 *.db
-
+*.db-journal
+server/prisma/data/panorama_map.db-journal
 # PM2 files
 ecosystem.config.js
 
 # Test files
 test-results/
 coverage/
-
-# # Debug and test files
-# *-debug.js
-# *-test.js
-# *-spec.js
-# test-*.js
-# *.test.js
-# *.spec.js
 
 # Allow committed server test files
 !server/src/__tests__/app.routes.test.js
