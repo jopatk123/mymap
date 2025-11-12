@@ -14,11 +14,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY server/package*.json ./
 RUN npm ci --omit=dev
+COPY server/prisma ./prisma
+RUN npx prisma generate
 
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=server-deps /app/server/node_modules ./server/node_modules
 COPY server ./server
