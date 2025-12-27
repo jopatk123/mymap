@@ -297,15 +297,15 @@ function createPopupContent(feature, kmlFile) {
     amapLng && amapLat
       ? `https://uri.amap.com/marker?position=${amapLng.toFixed(6)},${amapLat.toFixed(
           6
-        )}&name=${encodeURIComponent(feature.properties.name || '')}`
+        )}&name=${encodeURIComponent(feature.properties.name || '')}&coordinate=gaode`
       : '';
   const bmapUrl =
-    bmapLng && bmapLat
-      ? `https://api.map.baidu.com/marker?location=${bmapLat.toFixed(6)},${bmapLng.toFixed(
+    amapLng && amapLat
+      ? `https://api.map.baidu.com/marker?location=${amapLat.toFixed(6)},${amapLng.toFixed(
           6
         )}&title=${encodeURIComponent(feature.properties.name || '')}&content=${encodeURIComponent(
           kmlFile.title || ''
-        )}&coord_type=bd09ll&output=html`
+        )}&coord_type=gcj02&output=html`
       : '';
   return `
     <div style="max-width: 240px;">

@@ -23,13 +23,14 @@ const startServer = async () => {
     void _defaultFolderId;
 
     // 启动HTTP服务器
-    const server = app.listen(config.server.port, () => {
+    const server = app.listen(config.server.port, '0.0.0.0', () => {
       Logger.info(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                    地图全景系统服务器                          ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 环境: ${config.server.env.padEnd(20)} ║
 ║ 端口: ${config.server.port.toString().padEnd(20)} ║
+║ 监听: 0.0.0.0 (所有网卡)           ║
 ║ 数据库: SQLite (${config.database.path.padEnd(15)}) ║
 ║ 上传目录: ${config.upload.dir.padEnd(18)} ║
 ╠══════════════════════════════════════════════════════════════╣
