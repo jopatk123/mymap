@@ -299,6 +299,7 @@ class FolderController {
         keyword: normalizedKeyword,
         folderId: folderId === '0' ? 0 : parseInt(folderId) || null,
         includeHidden: includeHidden === 'true',
+        ownerId: req.user?.id, // 添加 ownerId 以确保数据隔离
       };
 
       let allResults = [];

@@ -435,36 +435,64 @@ class PanoramaModel {
   }
 
   // 移动全景图到文件夹
-  static async moveToFolder(id, folderId) {
-    const sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-    await SQLiteAdapter.execute(sql, [folderId, id]);
-    return await this.findById(id);
+  static async moveToFolder(id, folderId, ownerId = null) {
+    let sql = 'UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    const params = [folderId, id];
+    
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    
+    await SQLiteAdapter.execute(sql, params);
+    return await this.findById(id, ownerId);
   }
 
   // 批量移动全景图到文件夹
-  static async batchMoveToFolder(ids, folderId) {
+  static async batchMoveToFolder(ids, folderId, ownerId = null) {
     if (!ids || ids.length === 0) return 0;
 
     const { clause, params } = QueryBuilder.buildInClause(ids);
-    const sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
-    const [result] = await SQLiteAdapter.execute(sql, [folderId, ...params]);
+    let sql = `UPDATE panoramas SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+    const sqlParams = [folderId, ...params];
+
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      sqlParams.push(ownerId);
+    }
+
+    const [result] = await SQLiteAdapter.execute(sql, sqlParams);
     return result.affectedRows;
   }
 
   // 更新可见性
-  static async updateVisibility(id, isVisible) {
-    const sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-    await SQLiteAdapter.execute(sql, [isVisible, id]);
-    return await this.findById(id);
+  static async updateVisibility(id, isVisible, ownerId = null) {
+    let sql = 'UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    const params = [isVisible, id];
+
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+
+    await SQLiteAdapter.execute(sql, params);
+    return await this.findById(id, ownerId);
   }
 
   // 批量更新可见性
-  static async batchUpdateVisibility(ids, isVisible) {
+  static async batchUpdateVisibility(ids, isVisible, ownerId = null) {
     if (!ids || ids.length === 0) return 0;
 
     const { clause, params } = QueryBuilder.buildInClause(ids);
-    const sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
-    const [result] = await SQLiteAdapter.execute(sql, [isVisible, ...params]);
+    let sql = `UPDATE panoramas SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+    const sqlParams = [isVisible, ...params];
+
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      sqlParams.push(ownerId);
+    }
+
+    const [result] = await SQLiteAdapter.execute(sql, sqlParams);
     return result.affectedRows;
   }
 

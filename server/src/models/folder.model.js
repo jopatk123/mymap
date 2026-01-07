@@ -63,6 +63,14 @@ class FolderModel {
   static async create(folderData) {
     const { name, parentId = null, isVisible = true, sortOrder = 0, ownerId = null } = folderData;
 
+    // 安全检查：如果指定了父文件夹，且有 ownerId，必须确保父文件夹也属于该 owner
+    if (parentId && ownerId) {
+      const parent = await this.findById(parentId, ownerId);
+      if (!parent) {
+        throw new Error('父文件夹不存在或无权访问');
+      }
+    }
+
     const sql = `
       INSERT INTO folders (name, parent_id, is_visible, sort_order, owner_id)
       VALUES (?, ?, ?, ?, ?)
@@ -81,6 +89,14 @@ class FolderModel {
       const folder = await this.findById(id, ownerId);
       if (!folder) {
         throw new Error('文件夹不存在或无权操作');
+      }
+      
+      // 如果尝试更改父文件夹，检查目标父文件夹权限
+      if (parentId && parentId !== folder.parentId) {
+        const parent = await this.findById(parentId, ownerId);
+        if (!parent) {
+          throw new Error('父文件夹不存在或无权访问');
+        }
       }
     }
 
@@ -144,6 +160,14 @@ class FolderModel {
       const folder = await this.findById(id, ownerId);
       if (!folder) {
         throw new Error('文件夹不存在或无权操作');
+      }
+
+      // 检查目标父文件夹权限
+      if (newParentId) {
+        const parent = await this.findById(newParentId, ownerId);
+        if (!parent) {
+          throw new Error('目标父文件夹不存在或无权访问');
+        }
       }
     }
 

@@ -116,19 +116,28 @@ export function useBatchOperations() {
       const videos = selectedRows.filter((row) => row.fileType === 'video').map((row) => row.id);
       const kmls = selectedRows.filter((row) => row.fileType === 'kml').map((row) => row.id);
 
-      const deletePromises = [];
+      // 串行执行可避免 SQLite 并发事务导致的数据库锁错误
+      const deleteTasks = [];
 
       if (panoramas.length > 0) {
-        deletePromises.push(panoramaApi.batchDeletePanoramas(panoramas));
+        deleteTasks.push(() => panoramaApi.batchDeletePanoramas(panoramas));
       }
       if (videos.length > 0) {
-        deletePromises.push(videoApi.batchDeleteVideoPoints(videos));
+        deleteTasks.push(() => videoApi.batchDeleteVideoPoints(videos));
       }
       if (kmls.length > 0) {
-        deletePromises.push(kmlApi.batchDeleteKmlFiles(kmls));
+        deleteTasks.push(() => kmlApi.batchDeleteKmlFiles(kmls));
       }
 
-      const results = await Promise.allSettled(deletePromises);
+      const results = [];
+      for (const task of deleteTasks) {
+        try {
+          await task();
+          results.push({ status: 'fulfilled' });
+        } catch (err) {
+          results.push({ status: 'rejected', reason: err });
+        }
+      }
       const failedDeletes = results.filter((result) => result.status === 'rejected');
 
       if (failedDeletes.length > 0) {

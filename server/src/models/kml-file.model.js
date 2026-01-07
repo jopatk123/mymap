@@ -248,24 +248,19 @@ class KmlFileModel {
         throw new Error('无效的ID列表');
       }
 
-      // 如果有 ownerId，先过滤出属于该用户的记录
+      // 优化：直接使用 SQL 过滤 owner_id，避免循环 findById
       let targetIds = ids;
+      const { clause, params } = QueryBuilder.buildInClause(ids);
+      const sqlParams = [...params];
+
+      let sql = `DELETE FROM kml_files WHERE id ${clause}`;
+      
       if (ownerId) {
-        const validIds = [];
-        for (const id of ids) {
-          const existing = await this.findById(id, ownerId);
-          if (existing) validIds.push(id);
-        }
-        targetIds = validIds;
+        sql += ' AND owner_id = ?';
+        sqlParams.push(ownerId);
       }
 
-      if (targetIds.length === 0) return 0;
-
-      const placeholders = targetIds.map(() => '?').join(',');
-      const [result] = await SQLiteAdapter.execute(
-        `DELETE FROM kml_files WHERE id IN (${placeholders})`,
-        targetIds
-      );
+      const [result] = await SQLiteAdapter.execute(sql, sqlParams);
       return result.affectedRows;
     } catch (error) {
       Logger.error('批量删除KML文件失败:', error);
@@ -279,24 +274,17 @@ class KmlFileModel {
         throw new Error('无效的ID列表');
       }
 
-      // 如果有 ownerId，先过滤出属于该用户的记录
-      let targetIds = ids;
+      const { clause, params } = QueryBuilder.buildInClause(ids);
+      const sqlParams = [isVisible, ...params];
+
+      let sql = `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+
       if (ownerId) {
-        const validIds = [];
-        for (const id of ids) {
-          const existing = await this.findById(id, ownerId);
-          if (existing) validIds.push(id);
-        }
-        targetIds = validIds;
+        sql += ' AND owner_id = ?';
+        sqlParams.push(ownerId);
       }
 
-      if (targetIds.length === 0) return 0;
-
-      const placeholders = targetIds.map(() => '?').join(',');
-      const [result] = await SQLiteAdapter.execute(
-        `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [isVisible, ...targetIds]
-      );
+      const [result] = await SQLiteAdapter.execute(sql, sqlParams);
       return result.affectedRows;
     } catch (error) {
       Logger.error('批量更新KML文件可见性失败:', error);
@@ -310,24 +298,17 @@ class KmlFileModel {
         throw new Error('无效的ID列表');
       }
 
-      // 如果有 ownerId，先过滤出属于该用户的记录
-      let targetIds = ids;
+      const { clause, params } = QueryBuilder.buildInClause(ids);
+      const sqlParams = [folderId, ...params];
+
+      let sql = `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id ${clause}`;
+
       if (ownerId) {
-        const validIds = [];
-        for (const id of ids) {
-          const existing = await this.findById(id, ownerId);
-          if (existing) validIds.push(id);
-        }
-        targetIds = validIds;
+        sql += ' AND owner_id = ?';
+        sqlParams.push(ownerId);
       }
 
-      if (targetIds.length === 0) return 0;
-
-      const placeholders = targetIds.map(() => '?').join(',');
-      const [result] = await SQLiteAdapter.execute(
-        `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [folderId, ...targetIds]
-      );
+      const [result] = await SQLiteAdapter.execute(sql, sqlParams);
       return result.affectedRows;
     } catch (error) {
       Logger.error('批量移动KML文件到文件夹失败:', error);

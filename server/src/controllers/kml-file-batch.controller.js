@@ -6,6 +6,7 @@ class KmlFileBatchController {
   static async batchDeleteKmlFiles(req, res) {
     try {
       const { ids } = req.body;
+      const ownerId = req.user?.id;
 
       const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
@@ -18,7 +19,7 @@ class KmlFileBatchController {
       const kmlFilesToDelete = [];
       for (const id of ids) {
         try {
-          const kmlFile = await KmlFileModel.findById(parseInt(id));
+          const kmlFile = await KmlFileModel.findById(parseInt(id), ownerId);
           if (kmlFile) {
             kmlFilesToDelete.push(kmlFile);
           }
@@ -27,7 +28,7 @@ class KmlFileBatchController {
         }
       }
 
-      const affectedRows = await KmlFileModel.batchDelete(ids);
+      const affectedRows = await KmlFileModel.batchDelete(ids, ownerId);
 
       // 事务性删除数据库记录后再删除物理文件，物理删除失败不应回滚数据库
       try {
@@ -56,6 +57,7 @@ class KmlFileBatchController {
   static async batchUpdateKmlFileVisibility(req, res) {
     try {
       const { ids, isVisible } = req.body;
+      const ownerId = req.user?.id;
 
       const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
@@ -65,7 +67,7 @@ class KmlFileBatchController {
         });
       }
 
-      const affectedRows = await KmlFileModel.batchUpdateVisibility(ids, isVisible);
+      const affectedRows = await KmlFileModel.batchUpdateVisibility(ids, isVisible, ownerId);
 
       res.json({
         success: true,
@@ -84,6 +86,7 @@ class KmlFileBatchController {
   static async batchMoveKmlFilesToFolder(req, res) {
     try {
       const { ids, folderId } = req.body;
+      const ownerId = req.user?.id;
 
       const validation = KmlFileUtils.validateIdList(ids);
       if (!validation.valid) {
@@ -93,7 +96,7 @@ class KmlFileBatchController {
         });
       }
 
-      const affectedRows = await KmlFileModel.batchMoveToFolder(ids, folderId);
+      const affectedRows = await KmlFileModel.batchMoveToFolder(ids, folderId, ownerId);
 
       res.json({
         success: true,

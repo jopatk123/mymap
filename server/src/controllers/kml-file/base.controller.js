@@ -160,7 +160,7 @@ class KmlFileBaseController {
               const params = [];
               for (const p of chunk) {
                 const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(p.longitude, p.latitude);
-                values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
                 params.push(
                   insertedFileId,
                   p.name || '',
@@ -172,10 +172,11 @@ class KmlFileBaseController {
                   p.altitude || 0,
                   p.pointType || 'Point',
                   JSON.stringify(p.coordinates || {}),
-                  JSON.stringify(p.styleData || {})
+                  JSON.stringify(p.styleData || {}),
+                  ownerId || null
                 );
               }
-              const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data) VALUES ${values.join(
+              const insertPointsSql = `INSERT INTO kml_points (kml_file_id, name, description, latitude, longitude, gcj02_lat, gcj02_lng, altitude, point_type, coordinates, style_data, owner_id) VALUES ${values.join(
                 ','
               )}`;
               await db.run(insertPointsSql, params);
