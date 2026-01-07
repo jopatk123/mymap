@@ -24,7 +24,7 @@ const startServer = async () => {
     void _defaultFolderId;
 
     // 启动HTTP服务器
-    const server = app.listen(config.server.port, () => {
+    const server = app.listen(config.server.port, '0.0.0.0', () => {
       Logger.info(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                    地图全景系统服务器                          ║

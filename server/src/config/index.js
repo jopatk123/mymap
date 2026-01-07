@@ -66,8 +66,8 @@ const config = {
   // 安全配置
   security: {
     jwtSecret: process.env.JWT_SECRET || 'default-secret-key',
-    // 允许所有来源在生产环境中访问
-    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    // 允许所有来源访问（开发环境）- 生产环境应通过CORS_ORIGIN环境变量指定具体域名
+    corsOrigin: process.env.CORS_ORIGIN || '*',
     passwordPepper: process.env.PASSWORD_PEPPER || 'dev-pepper',
   },
 
