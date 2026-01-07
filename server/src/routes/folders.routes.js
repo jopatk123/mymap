@@ -1,7 +1,11 @@
 const express = require('express');
 const FolderController = require('../controllers/folder.controller');
+const { requireAuth } = require('../middleware/auth.middleware');
 
 const router = express.Router();
+
+// 认证保护
+router.use(requireAuth);
 
 // 获取文件夹树
 router.get('/', FolderController.getFolders);

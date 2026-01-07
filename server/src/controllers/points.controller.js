@@ -16,6 +16,7 @@ class PointsController {
         includeHidden = false,
         respectFolderVisibility = true, // 新增参数，控制是否考虑文件夹可见性
       } = req.query;
+      const ownerId = req.user?.id;
 
       let searchParams = {
         page: 1,
@@ -23,12 +24,13 @@ class PointsController {
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
         includeHidden: includeHidden === 'true',
+        ownerId,
       };
 
       // 如果需要考虑文件夹可见性，获取可见文件夹列表
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
         try {
-          const visibleFolderIds = await FolderModel.getVisibleFolderIds();
+          const visibleFolderIds = await FolderModel.getVisibleFolderIds(ownerId);
           searchParams.visibleFolderIds = visibleFolderIds;
         } catch (folderError) {
           Logger.warn('获取可见文件夹ID失败，使用默认设置:', folderError);
@@ -108,6 +110,7 @@ class PointsController {
         includeHidden = false,
         respectFolderVisibility = true,
       } = req.query;
+      const ownerId = req.user?.id;
 
       const bounds = {
         north: parseFloat(north),
@@ -115,11 +118,12 @@ class PointsController {
         east: parseFloat(east),
         west: parseFloat(west),
         includeHidden: includeHidden === 'true',
+        ownerId,
       };
 
       // 如果需要考虑文件夹可见性，获取可见文件夹列表
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
-        const visibleFolderIds = await FolderModel.getVisibleFolderIds();
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds(ownerId);
         bounds.visibleFolderIds = visibleFolderIds;
       }
 
@@ -173,16 +177,18 @@ class PointsController {
   static async getVisibleKmlFiles(req, res) {
     try {
       const { respectFolderVisibility = true } = req.query;
+      const ownerId = req.user?.id;
 
       let searchParams = {
         page: 1,
         pageSize: 1000,
         includeHidden: false, // KML文件本身必须是可见的
+        ownerId,
       };
 
       // 如果需要考虑文件夹可见性，获取可见文件夹列表
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
-        const visibleFolderIds = await FolderModel.getVisibleFolderIds();
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds(ownerId);
         searchParams.visibleFolderIds = visibleFolderIds;
       }
 
@@ -212,9 +218,10 @@ class PointsController {
   // 获取点位统计信息
   static async getPointsStats(req, res) {
     try {
+      const ownerId = req.user?.id;
       const [panoramaStats, videoStats] = await Promise.all([
-        PanoramaModel.getStats(),
-        VideoPointModel.getStats(),
+        PanoramaModel.getStats(ownerId),
+        VideoPointModel.getStats(ownerId),
       ]);
 
       const stats = {

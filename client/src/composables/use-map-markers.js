@@ -194,6 +194,7 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
         }
       } catch (err) {}
       const pointType = p.type || 'panorama';
+      const paneName = getPaneNameByType(pointType);
       const coordinates = getDisplayCoordinates(p);
       if (!coordinates) continue;
       const [displayLng, displayLat] = coordinates;
@@ -203,6 +204,7 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
         {
           title: p.title || (pointType === 'video' ? '视频点位' : '全景图'),
           updateWhenZoom: false,
+          pane: paneName,
         },
         p.styleConfig || null
       );

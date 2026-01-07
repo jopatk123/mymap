@@ -6,14 +6,15 @@ class FolderController {
   // 获取文件夹树
   static async getFolders(req, res) {
     try {
-      const folders = await FolderModel.findAll();
+      const ownerId = req.user?.id;
+      const folders = await FolderModel.findAll(ownerId);
 
       // 为每个文件夹添加内容数量
       const addContentCount = async (folderList) => {
         for (const folder of folderList) {
-          folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id));
-          folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id));
-          folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id));
+          folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id, ownerId));
+          folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id, ownerId));
+          folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id, ownerId));
           folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount;
           if (folder.children) {
             await addContentCount(folder.children);
@@ -39,13 +40,14 @@ class FolderController {
   // 获取文件夹列表（平铺）
   static async getFoldersFlat(req, res) {
     try {
-      const folders = await FolderModel.findAllFlat();
+      const ownerId = req.user?.id;
+      const folders = await FolderModel.findAllFlat(ownerId);
 
       // 为每个文件夹添加内容计数
       for (const folder of folders) {
-        folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id));
-        folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id));
-        folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id));
+        folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id, ownerId));
+        folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id, ownerId));
+        folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id, ownerId));
         folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount;
       }
 
@@ -66,6 +68,7 @@ class FolderController {
   static async createFolder(req, res) {
     try {
       const { name, parentId, isVisible = true, sortOrder = 0 } = req.body;
+      const ownerId = req.user?.id;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({
@@ -79,6 +82,7 @@ class FolderController {
         parentId: parentId || null,
         isVisible,
         sortOrder,
+        ownerId,
       });
 
       res.json({
@@ -100,6 +104,7 @@ class FolderController {
     try {
       const { id } = req.params;
       const { name, parentId, isVisible, sortOrder } = req.body;
+      const ownerId = req.user?.id;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({
@@ -113,7 +118,7 @@ class FolderController {
         parentId: parentId || null,
         isVisible,
         sortOrder,
-      });
+      }, ownerId);
 
       if (!folder) {
         return res.status(404).json({
@@ -140,8 +145,9 @@ class FolderController {
   static async deleteFolder(req, res) {
     try {
       const { id } = req.params;
+      const ownerId = req.user?.id;
 
-      const success = await FolderModel.delete(id);
+      const success = await FolderModel.delete(id, ownerId);
 
       if (!success) {
         return res.status(404).json({
@@ -168,8 +174,9 @@ class FolderController {
     try {
       const { id } = req.params;
       const { parentId } = req.body;
+      const ownerId = req.user?.id;
 
-      const folder = await FolderModel.move(id, parentId || null);
+      const folder = await FolderModel.move(id, parentId || null, ownerId);
 
       res.json({
         success: true,
@@ -190,8 +197,9 @@ class FolderController {
     try {
       const { id } = req.params;
       const { isVisible } = req.body;
+      const ownerId = req.user?.id;
 
-      const folder = await FolderModel.updateVisibility(id, isVisible);
+      const folder = await FolderModel.updateVisibility(id, isVisible, ownerId);
 
       if (!folder) {
         return res.status(404).json({
@@ -219,9 +227,11 @@ class FolderController {
     try {
       const { id } = req.params;
       const { includeHidden = false } = req.query;
+      const ownerId = req.user?.id;
 
       const panoramas = await PanoramaModel.findByFolder(id, {
         includeHidden: includeHidden === 'true',
+        ownerId,
       });
 
       res.json({
@@ -242,6 +252,7 @@ class FolderController {
     try {
       const { folderId } = req.params;
       const { panoramaIds } = req.body;
+      const ownerId = req.user?.id;
 
       if (!Array.isArray(panoramaIds) || panoramaIds.length === 0) {
         return res.status(400).json({
@@ -250,7 +261,7 @@ class FolderController {
         });
       }
 
-      const affectedRows = await PanoramaModel.batchMoveToFolder(panoramaIds, folderId || null);
+      const affectedRows = await PanoramaModel.batchMoveToFolder(panoramaIds, folderId || null, ownerId);
 
       res.json({
         success: true,

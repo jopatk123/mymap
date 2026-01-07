@@ -16,6 +16,7 @@ class KmlFileBaseController {
         includeBasemap = false,
         basemapOnly = false,
       } = req.query;
+      const ownerId = req.user?.id;
 
       let searchParams = {
         page: parseInt(page),
@@ -25,11 +26,12 @@ class KmlFileBaseController {
         includeHidden: includeHidden === 'true',
         includeBasemap: includeBasemap === 'true',
         basemapOnly: basemapOnly === 'true',
+        ownerId,
       };
 
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
         const FolderModel = require('../../models/folder.model');
-        const visibleFolderIds = await FolderModel.getVisibleFolderIds();
+        const visibleFolderIds = await FolderModel.getVisibleFolderIds(ownerId);
         searchParams.visibleFolderIds = visibleFolderIds;
       }
 
@@ -58,7 +60,8 @@ class KmlFileBaseController {
   static async getKmlFileById(req, res) {
     try {
       const { id } = req.params;
-      const kmlFile = await KmlFileModel.findById(parseInt(id));
+      const ownerId = req.user?.id;
+      const kmlFile = await KmlFileModel.findById(parseInt(id), ownerId);
 
       if (!kmlFile) {
         return res.status(404).json({
@@ -90,6 +93,7 @@ class KmlFileBaseController {
     try {
       const { uploadedFile } = req;
       const { title, description, folderId } = req.body;
+      const ownerId = req.user?.id;
 
       // 延迟加载工具以避免可能的循环依赖导致的初始化问题
       const KmlFileUtils = require('../../utils/kml-file-utils');
@@ -126,7 +130,7 @@ class KmlFileBaseController {
         let insertedFileId = null;
         await transaction(async (db) => {
           // 插入 kml_files
-          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
+          const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, owner_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
           const fileRes = await db.run(insertFileSql, [
             title,
             description || '',
@@ -136,6 +140,7 @@ class KmlFileBaseController {
             1,
             0,
             isBasemapFlag ? 1 : 0,
+            ownerId || null,
           ]);
           insertedFileId = fileRes.lastID;
 
@@ -210,12 +215,13 @@ class KmlFileBaseController {
     try {
       const { id } = req.params;
       const { isBasemap } = req.body;
+      const ownerId = req.user?.id;
       if (typeof isBasemap === 'undefined') {
         return res.status(400).json({ success: false, message: '请提供 isBasemap 字段' });
       }
 
       const KmlFileModel = require('../../models/kml-file.model');
-      const updated = await KmlFileModel.update(parseInt(id), { is_basemap: isBasemap ? 1 : 0 });
+      const updated = await KmlFileModel.update(parseInt(id), { is_basemap: isBasemap ? 1 : 0 }, ownerId);
       if (!updated) return res.status(404).json({ success: false, message: 'KML 文件不存在' });
       res.json({ success: true, data: updated });
     } catch (error) {
@@ -252,7 +258,8 @@ class KmlFileBaseController {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      const kmlFile = await KmlFileModel.update(parseInt(id), updateData);
+      const ownerId = req.user?.id;
+      const kmlFile = await KmlFileModel.update(parseInt(id), updateData, ownerId);
 
       if (!kmlFile) {
         return res.status(404).json({
@@ -279,7 +286,8 @@ class KmlFileBaseController {
   static async deleteKmlFile(req, res) {
     try {
       const { id } = req.params;
-      const kmlFile = await KmlFileModel.findById(parseInt(id));
+      const ownerId = req.user?.id;
+      const kmlFile = await KmlFileModel.findById(parseInt(id), ownerId);
       if (!kmlFile) {
         return res.status(404).json({
           success: false,
@@ -333,7 +341,8 @@ class KmlFileBaseController {
 
   static async getKmlFileStats(req, res) {
     try {
-      const stats = await KmlFileModel.getStats();
+      const ownerId = req.user?.id;
+      const stats = await KmlFileModel.getStats(ownerId);
       res.json({ success: true, data: stats });
     } catch (error) {
       Logger.error('获取KML文件统计失败:', error);

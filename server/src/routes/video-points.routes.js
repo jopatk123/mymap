@@ -7,6 +7,10 @@ const {
   validateBatchIds,
   validateBoundsParams,
 } = require('../middleware/validator.middleware');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// 认证保护
+router.use(requireAuth);
 
 // 获取视频点位列表
 router.get('/', VideoPointController.getVideoPoints);

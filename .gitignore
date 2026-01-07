@@ -136,7 +136,11 @@ server/uploads/thumbnails/*
 *.sqlite3
 *.db
 *.db-journal
-server/prisma/data/panorama_map.db-journal
+# SQLite runtime artifacts (dev)
+server/data/panorama_map.db-journal
+server/data/panorama_map.db-wal
+server/data/panorama_map.db-shm
+server/data/*.corrupt-*
 # PM2 files
 ecosystem.config.js
 

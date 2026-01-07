@@ -12,14 +12,15 @@ class KmlFileModel {
     isVisible = true,
     sortOrder = 0,
     isBasemap = 0,
+    ownerId = null,
   }) {
     try {
       const [result] = await SQLiteAdapter.execute(
         `INSERT INTO kml_files (
           title, description, file_url, file_size, 
-      folder_id, is_visible, sort_order, is_basemap
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [title, description, fileUrl, fileSize, folderId, isVisible, sortOrder, isBasemap]
+      folder_id, is_visible, sort_order, is_basemap, owner_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [title, description, fileUrl, fileSize, folderId, isVisible, sortOrder, isBasemap, ownerId]
       );
       return await this.findById(result.insertId);
     } catch (error) {
@@ -28,15 +29,18 @@ class KmlFileModel {
     }
   }
 
-  static async findById(id) {
+  static async findById(id, ownerId = null) {
     try {
-      const [rows] = await SQLiteAdapter.execute(
-        `SELECT kf.*, f.name as folder_name 
+      let sql = `SELECT kf.*, f.name as folder_name 
          FROM kml_files kf 
          LEFT JOIN folders f ON kf.folder_id = f.id 
-         WHERE kf.id = ?`,
-        [id]
-      );
+         WHERE kf.id = ?`;
+      const params = [id];
+      if (ownerId) {
+        sql += ' AND kf.owner_id = ?';
+        params.push(ownerId);
+      }
+      const [rows] = await SQLiteAdapter.execute(sql, params);
       return rows[0] || null;
     } catch (error) {
       Logger.error('查找KML文件失败:', error);
@@ -53,10 +57,17 @@ class KmlFileModel {
     visibleFolderIds = null,
     includeBasemap = false,
     basemapOnly = false,
+    ownerId = null,
   } = {}) {
     try {
       let whereConditions = [];
       let params = [];
+
+      // 用户数据隔离
+      if (ownerId) {
+        whereConditions.push('kf.owner_id = ?');
+        params.push(ownerId);
+      }
 
       const kw = keyword !== undefined && keyword !== null ? String(keyword).trim() : '';
       if (kw) {
@@ -129,11 +140,16 @@ class KmlFileModel {
     }
   }
 
-  static async findByFolder(folderId, { includeHidden = false } = {}) {
+  static async findByFolder(folderId, { includeHidden = false, ownerId = null } = {}) {
     try {
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'kf');
       const conditions = [...folderCondition.conditions];
       const params = [...folderCondition.params];
+
+      if (ownerId) {
+        conditions.push('kf.owner_id = ?');
+        params.push(ownerId);
+      }
 
       if (!includeHidden) {
         conditions.push('kf.is_visible = TRUE');
@@ -158,8 +174,16 @@ class KmlFileModel {
     }
   }
 
-  static async update(id, updateData) {
+  static async update(id, updateData, ownerId = null) {
     try {
+      // 先检查权限
+      if (ownerId) {
+        const existing = await this.findById(id, ownerId);
+        if (!existing) {
+          throw new Error('KML文件不存在或无权操作');
+        }
+      }
+
       const allowedFields = [
         'title',
         'description',
@@ -200,8 +224,16 @@ class KmlFileModel {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, ownerId = null) {
     try {
+      // 先检查权限
+      if (ownerId) {
+        const existing = await this.findById(id, ownerId);
+        if (!existing) {
+          throw new Error('KML文件不存在或无权操作');
+        }
+      }
+
       const [result] = await SQLiteAdapter.execute('DELETE FROM kml_files WHERE id = ?', [id]);
       return result.affectedRows > 0;
     } catch (error) {
@@ -210,16 +242,29 @@ class KmlFileModel {
     }
   }
 
-  static async batchDelete(ids) {
+  static async batchDelete(ids, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
 
-      const placeholders = ids.map(() => '?').join(',');
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `DELETE FROM kml_files WHERE id IN (${placeholders})`,
-        ids
+        targetIds
       );
       return result.affectedRows;
     } catch (error) {
@@ -228,16 +273,29 @@ class KmlFileModel {
     }
   }
 
-  static async batchUpdateVisibility(ids, isVisible) {
+  static async batchUpdateVisibility(ids, isVisible, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
 
-      const placeholders = ids.map(() => '?').join(',');
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [isVisible, ...ids]
+        [isVisible, ...targetIds]
       );
       return result.affectedRows;
     } catch (error) {
@@ -246,15 +304,29 @@ class KmlFileModel {
     }
   }
 
-  static async batchMoveToFolder(ids, folderId) {
+  static async batchMoveToFolder(ids, folderId, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
-      const placeholders = ids.map(() => '?').join(',');
+
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE kml_files SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [folderId, ...ids]
+        [folderId, ...targetIds]
       );
       return result.affectedRows;
     } catch (error) {
@@ -263,16 +335,22 @@ class KmlFileModel {
     }
   }
 
-  static async getStats() {
+  static async getStats(ownerId = null) {
     try {
-      const [rows] = await SQLiteAdapter.execute(`
+      let sql = `
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,
           COUNT(CASE WHEN is_visible = FALSE THEN 1 END) as hidden,
-          (SELECT COUNT(*) FROM kml_points) as total_points
+          (SELECT COUNT(*) FROM kml_points${ownerId ? ' WHERE owner_id = ?' : ''}) as total_points
         FROM kml_files
-      `);
+      `;
+      const params = [];
+      if (ownerId) {
+        sql += ' WHERE owner_id = ?';
+        params.push(ownerId, ownerId);
+      }
+      const [rows] = await SQLiteAdapter.execute(sql, params);
       return rows[0];
     } catch (error) {
       Logger.error('获取KML文件统计失败:', error);

@@ -11,6 +11,7 @@ class VideoPointService {
       keyword = '',
       folderId = null,
       includeHidden = false,
+      ownerId = null,
     } = options;
     return await VideoPointModel.findAll({
       page: parseInt(page),
@@ -18,18 +19,19 @@ class VideoPointService {
       keyword,
       folderId: folderId ? parseInt(folderId) : null,
       includeHidden: includeHidden === true || includeHidden === 'true',
+      ownerId,
     });
   }
 
-  static async getVideoPointById(id) {
+  static async getVideoPointById(id, ownerId = null) {
     if (!id || isNaN(id)) throw new Error('无效的视频点位ID');
-    const vp = await VideoPointModel.findById(parseInt(id));
+    const vp = await VideoPointModel.findById(parseInt(id), ownerId);
     if (!vp) throw new Error('视频点位不存在');
     return vp;
   }
 
   static async getVideoPointsByBounds(bounds) {
-    const { north, south, east, west, includeHidden = false } = bounds;
+    const { north, south, east, west, includeHidden = false, ownerId = null } = bounds;
     if (!north || !south || !east || !west) throw new Error('缺少边界参数');
     const data = {
       north: parseFloat(north),
@@ -37,17 +39,18 @@ class VideoPointService {
       east: parseFloat(east),
       west: parseFloat(west),
       includeHidden: includeHidden === true || includeHidden === 'true',
+      ownerId,
     };
     if (data.north <= data.south || data.east <= data.west) throw new Error('边界参数不合理');
     return await VideoPointModel.findByBounds(data);
   }
 
-  static async getStats() {
-    return await VideoPointModel.getStats();
+  static async getStats(ownerId = null) {
+    return await VideoPointModel.getStats(ownerId);
   }
 
   static async createVideoPoint(data) {
-    const { uploadedFile, title, description, lat, lng, folderId, duration } = data;
+    const { uploadedFile, title, description, lat, lng, folderId, duration, ownerId } = data;
     if (!uploadedFile) throw new Error('请上传视频文件');
     if (!title || !lat || !lng) throw new Error('标题、纬度和经度为必填项');
     // 使用事务：先在事务内插入记录，事务失败时回滚；若事务外部失败则尝试删除已上载的物理文件
@@ -58,8 +61,8 @@ class VideoPointService {
         const sql = `INSERT INTO video_points (
           title, description, video_url, thumbnail_url,
           latitude, longitude, gcj02_lat, gcj02_lng,
-          file_size, file_type, duration, folder_id, is_visible, sort_order, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
+          file_size, file_type, duration, folder_id, is_visible, sort_order, owner_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
 
         // 计算 gcj02 坐标若需要可以在 model 层做，这里尽量保持行为一致但在事务内直接写入基本字段
         const params = [
@@ -77,6 +80,7 @@ class VideoPointService {
           folderId && parseInt(folderId) !== 0 ? parseInt(folderId) : null,
           1,
           0,
+          ownerId || null,
         ];
 
         const res = await db.run(sql, params);
@@ -84,7 +88,7 @@ class VideoPointService {
         if (!insertedId) throw new Error('创建视频点位记录失败');
       });
 
-      return await VideoPointModel.findById(insertedId);
+      return await VideoPointModel.findById(insertedId, ownerId);
     } catch (txErr) {
       // 事务或插入后处理失败，尝试删除已上载的物理文件以避免孤儿文件
       const fs = require('fs').promises;
@@ -99,21 +103,28 @@ class VideoPointService {
     }
   }
 
-  static async updateVideoPoint(id, updateData) {
+  static async updateVideoPoint(id, updateData, ownerId = null) {
     if (!id || isNaN(id)) throw new Error('无效的视频点位ID');
-    const vp = await VideoPointModel.update(parseInt(id), updateData);
+    const vp = await VideoPointModel.update(parseInt(id), updateData, ownerId);
     if (!vp) throw new Error('视频点位不存在');
     return vp;
   }
 
-  static async deleteVideoPoint(id) {
+  static async deleteVideoPoint(id, ownerId = null) {
     if (!id || isNaN(id)) throw new Error('无效的视频点位ID');
-    const vp = await VideoPointModel.findById(parseInt(id));
+    const vp = await VideoPointModel.findById(parseInt(id), ownerId);
     if (!vp) throw new Error('视频点位不存在');
     // 使用事务：删除数据库记录并在事务体内删除物理文件，文件删除失败（非 ENOENT）将触发回滚
     const { transaction } = require('../config/database');
     await transaction(async (db) => {
-      const delRes = await db.run('DELETE FROM video_points WHERE id = ?', [parseInt(id)]);
+      // 构建删除条件，加入 owner_id 检查
+      let sql = 'DELETE FROM video_points WHERE id = ?';
+      const params = [parseInt(id)];
+      if (ownerId) {
+        sql += ' AND owner_id = ?';
+        params.push(ownerId);
+      }
+      const delRes = await db.run(sql, params);
       if (!delRes || delRes.changes === 0) {
         throw new Error('删除数据库记录失败');
       }
@@ -139,12 +150,12 @@ class VideoPointService {
     return true;
   }
 
-  static async batchDeleteVideoPoints(ids) {
+  static async batchDeleteVideoPoints(ids, ownerId = null) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
     const toDelete = [];
     for (const id of ids) {
       try {
-        const vp = await VideoPointModel.findById(parseInt(id));
+        const vp = await VideoPointModel.findById(parseInt(id), ownerId);
         if (vp) toDelete.push(vp);
       } catch (e) {
         Logger.warn(`获取视频点位信息失败 (ID: ${id})`, e);
@@ -155,7 +166,13 @@ class VideoPointService {
     let affected = 0;
     await transaction(async (db) => {
       const { clause, params } = require('../utils/QueryBuilder').buildInClause(ids);
-      const delRes = await db.run(`DELETE FROM video_points WHERE id ${clause}`, params);
+      // 加入 owner_id 检查
+      let sql = `DELETE FROM video_points WHERE id ${clause}`;
+      if (ownerId) {
+        sql += ' AND owner_id = ?';
+        params.push(ownerId);
+      }
+      const delRes = await db.run(sql, params);
       affected = delRes.changes || 0;
 
       const fs = require('fs').promises;
@@ -175,26 +192,26 @@ class VideoPointService {
     return affected;
   }
 
-  static async batchUpdateVideoPointVisibility(ids, isVisible) {
+  static async batchUpdateVideoPointVisibility(ids, isVisible, ownerId = null) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
-    return await VideoPointModel.batchUpdateVisibility(ids, isVisible);
+    return await VideoPointModel.batchUpdateVisibility(ids, isVisible, ownerId);
   }
 
-  static async batchMoveVideoPointsToFolder(ids, folderId) {
+  static async batchMoveVideoPointsToFolder(ids, folderId, ownerId = null) {
     if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
-    return await VideoPointModel.batchMoveToFolder(ids, folderId);
+    return await VideoPointModel.batchMoveToFolder(ids, folderId, ownerId);
   }
 
-  static async updateVideoPointVisibility(id, isVisible) {
+  static async updateVideoPointVisibility(id, isVisible, ownerId = null) {
     if (!id || isNaN(id)) throw new Error('无效的视频点位ID');
-    const vp = await VideoPointModel.update(parseInt(id), { is_visible: isVisible });
+    const vp = await VideoPointModel.update(parseInt(id), { is_visible: isVisible }, ownerId);
     if (!vp) throw new Error('视频点位不存在');
     return vp;
   }
 
-  static async moveVideoPointToFolder(id, folderId) {
+  static async moveVideoPointToFolder(id, folderId, ownerId = null) {
     if (!id || isNaN(id)) throw new Error('无效的视频点位ID');
-    const vp = await VideoPointModel.update(parseInt(id), { folder_id: folderId });
+    const vp = await VideoPointModel.update(parseInt(id), { folder_id: folderId }, ownerId);
     if (!vp) throw new Error('视频点位不存在');
     return vp;
   }

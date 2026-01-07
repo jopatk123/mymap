@@ -17,6 +17,7 @@ class VideoPointModel {
     folderId = null,
     isVisible = true,
     sortOrder = 0,
+    ownerId = null,
   }) {
     try {
       const [gcj02Lng, gcj02Lat] = wgs84ToGcj02(longitude, latitude);
@@ -24,8 +25,8 @@ class VideoPointModel {
         `INSERT INTO video_points (
           title, description, video_url, thumbnail_url,
           latitude, longitude, gcj02_lat, gcj02_lng,
-          file_size, file_type, duration, folder_id, is_visible, sort_order
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          file_size, file_type, duration, folder_id, is_visible, sort_order, owner_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           title,
           description,
@@ -41,6 +42,7 @@ class VideoPointModel {
           folderId,
           isVisible,
           sortOrder,
+          ownerId,
         ]
       );
       return await this.findById(result.insertId);
@@ -50,15 +52,18 @@ class VideoPointModel {
     }
   }
 
-  static async findById(id) {
+  static async findById(id, ownerId = null) {
     try {
-      const [rows] = await SQLiteAdapter.execute(
-        `SELECT vp.*, f.name as folder_name 
+      let sql = `SELECT vp.*, f.name as folder_name 
          FROM video_points vp 
          LEFT JOIN folders f ON vp.folder_id = f.id 
-         WHERE vp.id = ?`,
-        [id]
-      );
+         WHERE vp.id = ?`;
+      const params = [id];
+      if (ownerId) {
+        sql += ' AND vp.owner_id = ?';
+        params.push(ownerId);
+      }
+      const [rows] = await SQLiteAdapter.execute(sql, params);
       return rows[0] || null;
     } catch (error) {
       Logger.error('查找视频点位失败:', error);
@@ -73,10 +78,17 @@ class VideoPointModel {
     folderId = null,
     includeHidden = false,
     visibleFolderIds = null,
+    ownerId = null,
   } = {}) {
     try {
       let whereConditions = [];
       let params = [];
+
+      // 用户数据隔离
+      if (ownerId) {
+        whereConditions.push('vp.owner_id = ?');
+        params.push(ownerId);
+      }
 
       if (keyword && keyword.trim()) {
         whereConditions.push('(vp.title LIKE ? OR vp.description LIKE ?)');
@@ -130,11 +142,16 @@ class VideoPointModel {
     }
   }
 
-  static async findByFolder(folderId, { includeHidden = false } = {}) {
+  static async findByFolder(folderId, { includeHidden = false, ownerId = null } = {}) {
     try {
       const folderCondition = QueryBuilder.buildFolderCondition(folderId, 'vp');
       const conditions = [...folderCondition.conditions];
       const params = [...folderCondition.params];
+
+      if (ownerId) {
+        conditions.push('vp.owner_id = ?');
+        params.push(ownerId);
+      }
 
       if (!includeHidden) {
         conditions.push('vp.is_visible = TRUE');
@@ -164,10 +181,17 @@ class VideoPointModel {
     west,
     includeHidden = false,
     visibleFolderIds = null,
+    ownerId = null,
   } = {}) {
     try {
       let whereConditions = ['vp.gcj02_lat BETWEEN ? AND ?', 'vp.gcj02_lng BETWEEN ? AND ?'];
       let params = [south, north, west, east];
+
+      // 用户数据隔离
+      if (ownerId) {
+        whereConditions.push('vp.owner_id = ?');
+        params.push(ownerId);
+      }
 
       if (!includeHidden) {
         whereConditions.push('vp.is_visible = TRUE');
@@ -199,8 +223,16 @@ class VideoPointModel {
     }
   }
 
-  static async update(id, updateData) {
+  static async update(id, updateData, ownerId = null) {
     try {
+      // 先检查权限
+      if (ownerId) {
+        const existing = await this.findById(id, ownerId);
+        if (!existing) {
+          throw new Error('视频点位不存在或无权操作');
+        }
+      }
+
       const allowedFields = [
         'title',
         'description',
@@ -245,8 +277,16 @@ class VideoPointModel {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, ownerId = null) {
     try {
+      // 先检查权限
+      if (ownerId) {
+        const existing = await this.findById(id, ownerId);
+        if (!existing) {
+          throw new Error('视频点位不存在或无权操作');
+        }
+      }
+
       const [result] = await SQLiteAdapter.execute('DELETE FROM video_points WHERE id = ?', [id]);
       return result.affectedRows > 0;
     } catch (error) {
@@ -255,15 +295,29 @@ class VideoPointModel {
     }
   }
 
-  static async batchDelete(ids) {
+  static async batchDelete(ids, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
-      const placeholders = ids.map(() => '?').join(',');
+
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `DELETE FROM video_points WHERE id IN (${placeholders})`,
-        ids
+        targetIds
       );
       return result.affectedRows;
     } catch (error) {
@@ -272,15 +326,29 @@ class VideoPointModel {
     }
   }
 
-  static async batchUpdateVisibility(ids, isVisible) {
+  static async batchUpdateVisibility(ids, isVisible, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
-      const placeholders = ids.map(() => '?').join(',');
+
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE video_points SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [isVisible, ...ids]
+        [isVisible, ...targetIds]
       );
       return result.affectedRows;
     } catch (error) {
@@ -289,15 +357,29 @@ class VideoPointModel {
     }
   }
 
-  static async batchMoveToFolder(ids, folderId) {
+  static async batchMoveToFolder(ids, folderId, ownerId = null) {
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('无效的ID列表');
       }
-      const placeholders = ids.map(() => '?').join(',');
+
+      // 如果有 ownerId，先过滤出属于该用户的记录
+      let targetIds = ids;
+      if (ownerId) {
+        const validIds = [];
+        for (const id of ids) {
+          const existing = await this.findById(id, ownerId);
+          if (existing) validIds.push(id);
+        }
+        targetIds = validIds;
+      }
+
+      if (targetIds.length === 0) return 0;
+
+      const placeholders = targetIds.map(() => '?').join(',');
       const [result] = await SQLiteAdapter.execute(
         `UPDATE video_points SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
-        [folderId, ...ids]
+        [folderId, ...targetIds]
       );
       return result.affectedRows;
     } catch (error) {
@@ -306,15 +388,21 @@ class VideoPointModel {
     }
   }
 
-  static async getStats() {
+  static async getStats(ownerId = null) {
     try {
-      const [rows] = await SQLiteAdapter.execute(`
+      let sql = `
         SELECT 
           COUNT(*) as total,
           COUNT(CASE WHEN is_visible = TRUE THEN 1 END) as visible,
           COUNT(CASE WHEN is_visible = FALSE THEN 1 END) as hidden
         FROM video_points
-      `);
+      `;
+      const params = [];
+      if (ownerId) {
+        sql += ' WHERE owner_id = ?';
+        params.push(ownerId);
+      }
+      const [rows] = await SQLiteAdapter.execute(sql, params);
       return rows[0];
     } catch (error) {
       Logger.error('获取视频点位统计失败:', error);

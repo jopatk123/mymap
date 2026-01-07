@@ -1,10 +1,14 @@
 const express = require('express');
 const KMLSearchController = require('../controllers/kml-search.controller');
+const { requireAuth } = require('../middleware/auth.middleware');
 const router = express.Router();
 
 /**
  * KML搜索相关路由
  */
+
+// 认证保护
+router.use(requireAuth);
 
 // 搜索KML点位
 router.get('/search', KMLSearchController.searchKMLPoints);

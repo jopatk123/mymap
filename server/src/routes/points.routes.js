@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const PointsController = require('../controllers/points.controller');
 const { validateBoundsParams } = require('../middleware/validator.middleware');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// 认证保护
+router.use(requireAuth);
 
 // 获取所有点位列表（全景图 + 视频点位）
 router.get('/', PointsController.getAllPoints);

@@ -9,6 +9,10 @@ const Logger = require('../utils/logger');
 const KmlFileModel = require('../models/kml-file.model');
 const KmlPointModel = require('../models/kml-point.model');
 const { transaction } = require('../config/database');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+// 认证保护
+router.use(requireAuth);
 
 // 配置文件上传
 const storage = multer.diskStorage({
@@ -166,8 +170,9 @@ router.post('/upload', multerUploadWrapper, async (req, res) => {
 
     try {
       let insertedId = null;
+      const ownerId = req.user?.id || null;
       await transaction(async (db) => {
-        const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
+        const insertFileSql = `INSERT INTO kml_files (title, description, file_url, file_size, folder_id, is_visible, sort_order, is_basemap, owner_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`;
         const insertRes = await db.run(insertFileSql, [
           title || originalName || uploadedFile.originalname,
           description || '',
@@ -177,6 +182,7 @@ router.post('/upload', multerUploadWrapper, async (req, res) => {
           1,
           0,
           1,
+          ownerId,
         ]);
         insertedId = insertRes.lastID;
 

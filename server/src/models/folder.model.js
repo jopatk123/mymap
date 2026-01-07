@@ -2,59 +2,87 @@ const SQLiteAdapter = require('../utils/sqlite-adapter');
 
 class FolderModel {
   // 获取所有文件夹（树形结构）
-  static async findAll() {
-    const sql = `
-      SELECT id, name, parent_id, is_visible, sort_order, created_at, updated_at
+  static async findAll(ownerId = null) {
+    let sql = `
+      SELECT id, name, parent_id, is_visible, sort_order, owner_id, created_at, updated_at
       FROM folders 
-      ORDER BY parent_id ASC, sort_order ASC, name ASC
     `;
-    const rows = await SQLiteAdapter.all(sql);
+    const params = [];
+    if (ownerId) {
+      sql += ' WHERE owner_id = ? ';
+      params.push(ownerId);
+    }
+    sql += ' ORDER BY parent_id ASC, sort_order ASC, name ASC';
+    const rows = await SQLiteAdapter.all(sql, params);
     return this.buildTree(rows);
   }
 
   // 获取文件夹列表（平铺结构）
-  static async findAllFlat() {
-    const sql = `
-      SELECT id, name, parent_id, is_visible, sort_order, created_at, updated_at
+  static async findAllFlat(ownerId = null) {
+    let sql = `
+      SELECT id, name, parent_id, is_visible, sort_order, owner_id, created_at, updated_at
       FROM folders 
-      ORDER BY parent_id ASC, sort_order ASC, name ASC
     `;
-    return await SQLiteAdapter.all(sql);
+    const params = [];
+    if (ownerId) {
+      sql += ' WHERE owner_id = ? ';
+      params.push(ownerId);
+    }
+    sql += ' ORDER BY parent_id ASC, sort_order ASC, name ASC';
+    return await SQLiteAdapter.all(sql, params);
   }
 
   // 根据ID获取文件夹
-  static async findById(id) {
-    const sql = 'SELECT * FROM folders WHERE id = ?';
-    const rows = await SQLiteAdapter.all(sql, [id]);
+  static async findById(id, ownerId = null) {
+    let sql = 'SELECT * FROM folders WHERE id = ?';
+    const params = [id];
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    const rows = await SQLiteAdapter.all(sql, params);
     return rows[0] || null;
   }
 
   // 获取子文件夹
-  static async findChildren(parentId) {
-    const sql = `
+  static async findChildren(parentId, ownerId = null) {
+    let sql = `
       SELECT * FROM folders 
       WHERE parent_id = ? 
-      ORDER BY sort_order ASC, name ASC
     `;
-    return await SQLiteAdapter.all(sql, [parentId]);
+    const params = [parentId];
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    sql += ' ORDER BY sort_order ASC, name ASC';
+    return await SQLiteAdapter.all(sql, params);
   }
 
   // 创建文件夹
   static async create(folderData) {
-    const { name, parentId = null, isVisible = true, sortOrder = 0 } = folderData;
+    const { name, parentId = null, isVisible = true, sortOrder = 0, ownerId = null } = folderData;
 
     const sql = `
-      INSERT INTO folders (name, parent_id, is_visible, sort_order)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO folders (name, parent_id, is_visible, sort_order, owner_id)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
-    const [result] = await SQLiteAdapter.execute(sql, [name, parentId, isVisible, sortOrder]);
+    const [result] = await SQLiteAdapter.execute(sql, [name, parentId, isVisible, sortOrder, ownerId]);
     return await this.findById(result.insertId);
   }
 
   // 更新文件夹
-  static async update(id, folderData) {
+  static async update(id, folderData, ownerId = null) {
     const { name, parentId, isVisible, sortOrder } = folderData;
+
+    // 先检查权限
+    if (ownerId) {
+      const folder = await this.findById(id, ownerId);
+      if (!folder) {
+        throw new Error('文件夹不存在或无权操作');
+      }
+    }
 
     const sql = `
       UPDATE folders SET
@@ -71,7 +99,15 @@ class FolderModel {
   }
 
   // 删除文件夹
-  static async delete(id) {
+  static async delete(id, ownerId = null) {
+    // 先检查权限
+    if (ownerId) {
+      const folder = await this.findById(id, ownerId);
+      if (!folder) {
+        throw new Error('文件夹不存在或无权操作');
+      }
+    }
+
     // 检查是否有子文件夹
     const children = await this.findChildren(id);
     if (children.length > 0) {
@@ -79,19 +115,19 @@ class FolderModel {
     }
 
     // 检查是否有全景图
-    const panoramaCount = await this.getPanoramaCount(id);
+    const panoramaCount = await this.getPanoramaCount(id, ownerId);
     if (panoramaCount > 0) {
       throw new Error('无法删除包含全景图的文件夹');
     }
 
     // 检查是否有视频点位
-    const videoPointCount = await this.getVideoPointCount(id);
+    const videoPointCount = await this.getVideoPointCount(id, ownerId);
     if (videoPointCount > 0) {
       throw new Error('无法删除包含视频点位的文件夹');
     }
 
     // 检查是否有KML文件
-    const kmlFileCount = await this.getKmlFileCount(id);
+    const kmlFileCount = await this.getKmlFileCount(id, ownerId);
     if (kmlFileCount > 0) {
       throw new Error('无法删除包含KML文件的文件夹');
     }
@@ -102,7 +138,15 @@ class FolderModel {
   }
 
   // 移动文件夹
-  static async move(id, newParentId) {
+  static async move(id, newParentId, ownerId = null) {
+    // 先检查权限
+    if (ownerId) {
+      const folder = await this.findById(id, ownerId);
+      if (!folder) {
+        throw new Error('文件夹不存在或无权操作');
+      }
+    }
+
     // 检查是否会形成循环引用
     if (await this.wouldCreateCycle(id, newParentId)) {
       throw new Error('无法移动文件夹：会形成循环引用');
@@ -114,56 +158,79 @@ class FolderModel {
   }
 
   // 更新可见性
-  static async updateVisibility(id, isVisible) {
+  static async updateVisibility(id, isVisible, ownerId = null) {
+    // 先检查权限
+    if (ownerId) {
+      const folder = await this.findById(id, ownerId);
+      if (!folder) {
+        throw new Error('文件夹不存在或无权操作');
+      }
+    }
+
     const sql = 'UPDATE folders SET is_visible = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
     await SQLiteAdapter.execute(sql, [isVisible, id]);
     return await this.findById(id);
   }
 
   // 获取文件夹中的全景图数量
-  static async getPanoramaCount(folderId) {
+  static async getPanoramaCount(folderId, ownerId = null) {
+    let sql, params;
     if (folderId === 0 || folderId === '0') {
-      const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id IS NULL';
-      const [{ count }] = await SQLiteAdapter.all(sql, []);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id IS NULL';
+      params = [];
     } else {
-      const sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?';
-      const [{ count }] = await SQLiteAdapter.all(sql, [folderId]);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM panoramas WHERE folder_id = ?';
+      params = [folderId];
     }
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    const [{ count }] = await SQLiteAdapter.all(sql, params);
+    return count;
   }
 
   // 获取文件夹中的视频点位数量
-  static async getVideoPointCount(folderId) {
+  static async getVideoPointCount(folderId, ownerId = null) {
+    let sql, params;
     if (folderId === 0 || folderId === '0') {
-      const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id IS NULL';
-      const [{ count }] = await SQLiteAdapter.all(sql, []);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id IS NULL';
+      params = [];
     } else {
-      const sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?';
-      const [{ count }] = await SQLiteAdapter.all(sql, [folderId]);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM video_points WHERE folder_id = ?';
+      params = [folderId];
     }
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    const [{ count }] = await SQLiteAdapter.all(sql, params);
+    return count;
   }
 
   // 获取文件夹中的KML文件数量
-  static async getKmlFileCount(folderId) {
+  static async getKmlFileCount(folderId, ownerId = null) {
+    let sql, params;
     if (folderId === 0 || folderId === '0') {
-      const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id IS NULL';
-      const [{ count }] = await SQLiteAdapter.all(sql, []);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id IS NULL';
+      params = [];
     } else {
-      const sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?';
-      const [{ count }] = await SQLiteAdapter.all(sql, [folderId]);
-      return count;
+      sql = 'SELECT COUNT(*) as count FROM kml_files WHERE folder_id = ?';
+      params = [folderId];
     }
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    const [{ count }] = await SQLiteAdapter.all(sql, params);
+    return count;
   }
 
   // 获取文件夹中的总内容数量（全景图 + 视频点位 + KML文件）
-  static async getTotalContentCount(folderId) {
-    const panoramaCount = await this.getPanoramaCount(folderId);
-    const videoPointCount = await this.getVideoPointCount(folderId);
-    const kmlFileCount = await this.getKmlFileCount(folderId);
+  static async getTotalContentCount(folderId, ownerId = null) {
+    const panoramaCount = await this.getPanoramaCount(folderId, ownerId);
+    const videoPointCount = await this.getVideoPointCount(folderId, ownerId);
+    const kmlFileCount = await this.getKmlFileCount(folderId, ownerId);
     return panoramaCount + videoPointCount + kmlFileCount;
   }
 
@@ -217,8 +284,8 @@ class FolderModel {
   }
 
   // 获取所有可见的文件夹ID（递归检查父文件夹）
-  static async getVisibleFolderIds() {
-    const allFolders = await this.findAllFlat();
+  static async getVisibleFolderIds(ownerId = null) {
+    const allFolders = await this.findAllFlat(ownerId);
     const visibleFolderIds = new Set();
 
     // 检查文件夹是否可见（包括其所有父文件夹）

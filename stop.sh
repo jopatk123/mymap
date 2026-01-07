@@ -58,7 +58,8 @@ kill_by_port() {
     log_warning "端口 ${port} 被占用，尝试终止进程: ${pids}"
     kill -TERM ${pids} 2>/dev/null || true
 
-    if ! wait_for_port_free "${port}" 8; then
+    # 后端服务有 10s 优雅关闭逻辑，这里给足时间，避免强杀造成 SQLite 文件损坏
+    if ! wait_for_port_free "${port}" 12; then
       log_warning "端口 ${port} 仍被占用，尝试强制终止: ${pids}"
       kill -KILL ${pids} 2>/dev/null || true
       # 再等一会确认释放
@@ -83,7 +84,17 @@ kill_by_pattern() {
     pids=$(pgrep -f "${pattern}" | tr '\n' ' ')
     log_warning "发现 ${label} 进程: ${pids}，发送 SIGTERM"
     kill -TERM ${pids} 2>/dev/null || true
-    sleep 2
+
+    # 等待优雅退出（最多 12s），避免强杀打断数据库写入
+    local waited=0
+    while pgrep -f "${pattern}" >/dev/null 2>&1; do
+      sleep 1
+      waited=$((waited + 1))
+      if [ "$waited" -ge 12 ]; then
+        break
+      fi
+    done
+
     if pgrep -f "${pattern}" >/dev/null 2>&1; then
       pids=$(pgrep -f "${pattern}" | tr '\n' ' ')
       log_warning "${label} 仍在运行，发送 SIGKILL: ${pids}"

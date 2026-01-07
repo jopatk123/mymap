@@ -13,6 +13,7 @@ class VideoPointQueryController {
         folderId = null,
         includeHidden = false,
       } = req.query;
+      const ownerId = req.user?.id;
 
       const options = {
         page: parseInt(page),
@@ -20,6 +21,7 @@ class VideoPointQueryController {
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
         includeHidden: includeHidden === 'true',
+        ownerId,
       };
 
       const result = await VideoPointService.getVideoPoints(options);
@@ -35,12 +37,13 @@ class VideoPointQueryController {
   static async getVideoPointById(req, res) {
     try {
       const { id } = req.params;
+      const ownerId = req.user?.id;
 
       if (!id || isNaN(id)) {
         return res.status(400).json(errorResponse('无效的视频点位ID'));
       }
 
-      const videoPoint = await VideoPointService.getVideoPointById(parseInt(id));
+      const videoPoint = await VideoPointService.getVideoPointById(parseInt(id), ownerId);
 
       res.json(successResponse(videoPoint, '获取视频点位详情成功'));
     } catch (error) {
@@ -57,6 +60,7 @@ class VideoPointQueryController {
   static async getVideoPointsByBounds(req, res) {
     try {
       const { north, south, east, west, includeHidden = false } = req.query;
+      const ownerId = req.user?.id;
 
       // 验证边界参数
       if (!north || !south || !east || !west) {
@@ -69,6 +73,7 @@ class VideoPointQueryController {
         east: parseFloat(east),
         west: parseFloat(west),
         includeHidden: includeHidden === 'true',
+        ownerId,
       };
 
       // 验证边界值的合理性
@@ -88,7 +93,8 @@ class VideoPointQueryController {
   // 获取视频点位统计信息
   static async getVideoPointStats(req, res) {
     try {
-      const stats = await VideoPointService.getStats();
+      const ownerId = req.user?.id;
+      const stats = await VideoPointService.getStats(ownerId);
       res.json(successResponse(stats, '获取视频点位统计成功'));
     } catch (error) {
       Logger.error('获取视频点位统计失败:', error);

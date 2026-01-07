@@ -3,27 +3,40 @@ const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
 
-const resolveDbPath = (inputPath) => {
-  if (!inputPath) {
-    return path.join(projectRoot, 'data', 'panorama_map.db');
+const defaultDbPath = path.join(projectRoot, 'data', 'panorama_map.db');
+
+const resolveDbPathFromUrl = (databaseUrl) => {
+  if (!databaseUrl || !databaseUrl.startsWith('file:')) {
+    return defaultDbPath;
   }
-  return path.isAbsolute(inputPath) ? inputPath : path.resolve(projectRoot, inputPath);
+  const rawPath = databaseUrl.slice(5);
+  if (!rawPath) {
+    return defaultDbPath;
+  }
+  return path.isAbsolute(rawPath) ? rawPath : path.resolve(projectRoot, rawPath);
 };
 
-const resolveDbUrl = (inputUrl, resolvedPath) => {
-  if (!inputUrl) {
+const resolveDbUrl = (databaseUrl, resolvedPath) => {
+  if (!databaseUrl) {
     return `file:${resolvedPath}`;
   }
-  if (!inputUrl.startsWith('file:')) {
-    return inputUrl;
+  if (!databaseUrl.startsWith('file:')) {
+    return databaseUrl;
   }
-  const rawPath = inputUrl.slice(5);
-  const absolutePath = path.isAbsolute(rawPath) ? rawPath : path.resolve(projectRoot, rawPath);
+  const rawPath = databaseUrl.slice(5);
+  const absolutePath = rawPath
+    ? path.isAbsolute(rawPath)
+      ? rawPath
+      : path.resolve(projectRoot, rawPath)
+    : resolvedPath;
   return `file:${absolutePath}`;
 };
 
-const resolvedDbPath = resolveDbPath(process.env.DB_PATH);
-const resolvedDbUrl = resolveDbUrl(process.env.DATABASE_URL, resolvedDbPath);
+// Single source of truth: DATABASE_URL (required by Prisma).
+// Backward-compat: if only DB_PATH is provided, derive DATABASE_URL from it.
+const envDatabaseUrl = process.env.DATABASE_URL || (process.env.DB_PATH ? `file:${process.env.DB_PATH}` : undefined);
+const resolvedDbPath = resolveDbPathFromUrl(envDatabaseUrl);
+const resolvedDbUrl = resolveDbUrl(envDatabaseUrl, resolvedDbPath);
 
 const config = {
   // 服务器配置

@@ -8,12 +8,11 @@ const baseDir = path.join(__dirname, '..', '..');
 const resolveModule = (modulePath) => require(path.join(baseDir, modulePath));
 
 async function withTempDatabase(testFn, { autoInit = true } = {}) {
-  const originalDbPath = process.env.DB_PATH;
   const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalNodeEnv = process.env.NODE_ENV;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mymap-db-'));
-  process.env.DB_PATH = path.join(tempDir, 'test.db');
-  process.env.DATABASE_URL = `file:${process.env.DB_PATH}`;
+  const tempDbPath = path.join(tempDir, 'test.db');
+  process.env.DATABASE_URL = `file:${tempDbPath}`;
   process.env.SESSION_SECRET = 'test-session-secret';
   process.env.PASSWORD_PEPPER = 'test-pepper';
   process.env.NODE_ENV = 'test';
@@ -44,7 +43,6 @@ async function withTempDatabase(testFn, { autoInit = true } = {}) {
       // ignore disconnect errors in tests
     }
 
-    process.env.DB_PATH = originalDbPath;
     process.env.DATABASE_URL = originalDatabaseUrl;
     process.env.NODE_ENV = originalNodeEnv;
 
