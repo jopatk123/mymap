@@ -88,7 +88,8 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: config.server.env === 'production',
+      // Allow overriding secure flag via env so HTTP deployments (e.g., local docker) can keep sessions
+      secure: config.session.cookieSecure || config.server.env === 'production',
       maxAge: config.session.maxAge,
     },
   })

@@ -88,6 +88,8 @@ const config = {
     secret: process.env.SESSION_SECRET || 'dev-session-secret',
     name: process.env.SESSION_NAME || 'mymap.sid',
     maxAge: parseInt(process.env.SESSION_MAX_AGE, 10) || 30 * 60 * 1000,
+    // When deploying behind HTTPS, set SESSION_COOKIE_SECURE=1; otherwise keep false so cookies work on HTTP
+    cookieSecure: process.env.SESSION_COOKIE_SECURE === '1' || process.env.SESSION_COOKIE_SECURE === 'true',
   },
 
   // 日志配置
