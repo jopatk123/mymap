@@ -32,6 +32,14 @@ const resolveDbUrl = (databaseUrl, resolvedPath) => {
   return `file:${absolutePath}`;
 };
 
+const parseOptionalBooleanEnv = (value) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') return true;
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') return false;
+  return undefined;
+};
+
 // Single source of truth: DATABASE_URL (required by Prisma).
 // Backward-compat: if only DB_PATH is provided, derive DATABASE_URL from it.
 const envDatabaseUrl = process.env.DATABASE_URL || (process.env.DB_PATH ? `file:${process.env.DB_PATH}` : undefined);
@@ -89,7 +97,8 @@ const config = {
     name: process.env.SESSION_NAME || 'mymap.sid',
     maxAge: parseInt(process.env.SESSION_MAX_AGE, 10) || 30 * 60 * 1000,
     // When deploying behind HTTPS, set SESSION_COOKIE_SECURE=1; otherwise keep false so cookies work on HTTP
-    cookieSecure: process.env.SESSION_COOKIE_SECURE === '1' || process.env.SESSION_COOKIE_SECURE === 'true',
+    // Tri-state: true/false when explicitly configured, otherwise undefined (falls back by environment)
+    cookieSecure: parseOptionalBooleanEnv(process.env.SESSION_COOKIE_SECURE),
   },
 
   // 日志配置
