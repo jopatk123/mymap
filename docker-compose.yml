@@ -17,6 +17,10 @@ services:
       UPLOAD_DIR: uploads
       CORS_ORIGIN: "*"
       SESSION_COOKIE_SECURE: "0"
+      # 安全配置 - 生产环境请修改这些默认值
+      PASSWORD_PEPPER: "${PASSWORD_PEPPER:-dev-pepper}"
+      SESSION_SECRET: "${SESSION_SECRET:-dev-session-secret}"
+      JWT_SECRET: "${JWT_SECRET:-default-secret-key}"
     volumes:
       - mymap_data:/app/server/data
       - mymap_uploads:/app/server/uploads

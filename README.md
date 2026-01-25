@@ -126,6 +126,8 @@ cd server && npm run test:coverage   # 后端覆盖率
 | `ALLOWED_FILE_TYPES` | 见 `server/src/config/index.js` | 允许上传的 MIME 类型 |
 | `JWT_SECRET` | `default-secret-key` | 鉴权密钥（若启用认证） |
 | `LOG_LEVEL` | `info` | 日志级别 |
+| `PASSWORD_PEPPER` | `dev-pepper` | **密码加密全局密钥**（⚠️ 修改会导致所有用户无法登录） |
+| `SESSION_SECRET` | `dev-session-secret` | Session 会话密钥（⚠️ 生产环境必须修改） |
 | `VITE_API_BASE_URL` | （可选，默认通过 `/api` 代理） | 前端向后端发送 HTTP 请求时使用的基础地址（例如 `http://localhost:3002`）。 |
 | `VITE_WS_BASE_URL` | 自动推断 | WebSocket 根地址（例如 `ws://localhost:3002`），显式设置以在仅 HTTP 传输时避免端口不一致。 |
 | `VITE_WS_PATH` | 空 | WebSocket 路径前缀，服务端自定义握手路径时设置（例如 `/socket`）。 |
@@ -146,13 +148,36 @@ cd server && npm run test:coverage   # 后端覆盖率
 
 ## 📦 Docker 部署
 
+### 首次部署
+
 ```bash
-# 一键构建并启动容器（默认映射 50000 -> 3002）
+# 1. 复制环境变量配置文件
+cp .env.example .env
+
+# 2. ⚠️ 重要：编辑 .env 文件，修改安全密钥（生产环境必须修改）
+nano .env
+# 修改以下配置：
+#   PASSWORD_PEPPER=your-random-secret-key-here
+#   SESSION_SECRET=your-session-secret-here
+#   JWT_SECRET=your-jwt-secret-here
+
+# 3. 一键构建并启动容器（默认映射 50000 -> 3002）
 ./deploy.sh [host_port]
 
 # 或手动执行
 docker compose up -d --build
 ```
+
+### 更新部署
+
+```bash
+# 代码更新后重新部署
+docker compose up -d --build
+```
+
+⚠️ **重要提示**：
+- **首次部署后，不要修改 `PASSWORD_PEPPER`**，否则所有用户密码将失效！
+- 如需更换密钥，需要提前通知用户重置密码或迁移数据
 
 构建产物说明：
 
