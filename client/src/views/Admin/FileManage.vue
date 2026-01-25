@@ -254,12 +254,12 @@ const handleMobileFolderSelected = (folder) => {
 
 @media (max-width: 768px) {
   .file-manage {
-    padding: 12px;
+    padding: 8px;
     height: auto;
     min-height: 100vh;
 
     .mobile-folder-trigger {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
 
       .el-button {
         width: 100%;
@@ -270,18 +270,20 @@ const handleMobileFolderSelected = (folder) => {
     .page-content {
       flex-direction: column;
       gap: 0;
+      overflow: visible;
 
       .sidebar {
         display: none;
       }
 
       .main-content {
-        padding: 12px;
+        padding: 8px;
         border-radius: 8px;
+        overflow: visible;
 
         .breadcrumb-section {
-          margin-bottom: 12px;
-          padding-bottom: 8px;
+          margin-bottom: 8px;
+          padding-bottom: 4px;
 
           .el-breadcrumb {
             font-size: 12px;
@@ -289,6 +291,7 @@ const handleMobileFolderSelected = (folder) => {
         }
 
         .table-section {
+          overflow: visible;
           .pagination-section {
             margin-top: 16px;
 

@@ -178,18 +178,16 @@ defineProps({
 
     /* 移动设备修复：避免 toolbar 因右侧固定偏移或 max-width 被裁剪 */
     @media (max-width: 768px) {
-      .toolbar {
-        /* 在窄屏上把 toolbar 靠右的偏移缩小，利用屏幕更大比例的宽度 */
-        right: 12px !important;
-        left: 12px !important;
-        max-width: calc(100vw - 24px) !important;
-        overflow: visible !important; /* 允许内部横向滚动或换行显示 */
-        
-        /* 强制固定定位，防止随地图缩放移动 */
-        position: fixed !important;
-        transform: translate3d(0, 0, 0) !important;
-        -webkit-transform: translate3d(0, 0, 0) !important;
-      }
+      /* 在窄屏上把 toolbar 靠右的偏移缩小，利用屏幕更大比例的宽度 */
+      right: 12px !important;
+      left: 12px !important;
+      max-width: calc(100vw - 24px) !important;
+      overflow: visible !important; /* 允许内部横向滚动或换行显示 */
+      
+      /* 强制固定定位，防止随地图缩放移动 */
+      position: fixed !important;
+      transform: translate3d(0, 0, 0) !important;
+      -webkit-transform: translate3d(0, 0, 0) !important;
 
       .controls-group {
         /* 保持高度但允许横向滚动以避免内容被裁剪
