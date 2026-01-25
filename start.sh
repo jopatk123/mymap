@@ -32,17 +32,11 @@ log_error() {
 # 检查Node.js
 check_nodejs() {
     if ! command -v node &> /dev/null; then
-        log_error "Node.js 未安装，请先安装 Node.js 20.x"
+        log_error "Node.js 未安装，请先安装 Node.js"
         exit 1
     fi
     
-    local node_version=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-    if [ "$node_version" -lt 20 ] || [ "$node_version" -ge 21 ]; then
-        log_error "Node.js 版本需在 [20,21)，当前版本: $(node -v)"
-        exit 1
-    fi
-    
-    log_success "Node.js 版本检查通过: $(node -v)"
+    log_success "Node.js 检查通过: $(node -v)"
 }
 
 # 安装依赖
