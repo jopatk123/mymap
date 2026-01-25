@@ -161,6 +161,7 @@ const handleAddPointCommand = (command) => {
 .header-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 
   .new-open-btn {
     background-color: #409eff; /* primary 蓝 */
@@ -172,8 +173,42 @@ const handleAddPointCommand = (command) => {
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    align-items: stretch;
+    gap: 12px;
+
+    h2 {
+      font-size: 18px;
+      text-align: center;
+    }
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+
+    .el-button,
+    .el-dropdown {
+      width: 100%;
+    }
+
+    .el-dropdown .el-button {
+      width: 100%;
+    }
+
+    .new-open-btn {
+      grid-column: span 2;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .header-actions {
+    grid-template-columns: 1fr;
+
+    .new-open-btn {
+      grid-column: span 1;
+    }
   }
 }
 </style>

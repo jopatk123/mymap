@@ -1,10 +1,33 @@
 <template>
-  <div class="file-manage">
+  <div class="file-manage" :class="{ 'mobile-view': isMobile }">
     <FileManageHeader @upload-request="handleUploadRequest" />
 
+    <!-- 移动端文件夹按钮 -->
+    <div v-if="isMobile" class="mobile-folder-trigger">
+      <el-button type="primary" plain @click="showMobileSidebar = true">
+        <el-icon><Folder /></el-icon>
+        {{ selectedFolder?.name || '选择文件夹' }}
+      </el-button>
+    </div>
+
+    <!-- 移动端侧边栏抽屉 -->
+    <el-drawer
+      v-if="isMobile"
+      v-model="showMobileSidebar"
+      title="文件夹管理"
+      direction="ltr"
+      size="85%"
+      :with-header="true"
+    >
+      <FolderTree 
+        @folder-selected="handleMobileFolderSelected" 
+        @folder-updated="handleFolderUpdated" 
+      />
+    </el-drawer>
+
     <div class="page-content">
-      <!-- 左侧文件夹树 -->
-      <div class="sidebar">
+      <!-- 左侧文件夹树（桌面端） -->
+      <div v-if="!isMobile" class="sidebar">
         <FolderTree @folder-selected="handleFolderSelected" @folder-updated="handleFolderUpdated" />
       </div>
 
@@ -35,7 +58,7 @@
           @batch-download-stats="handleBatchDownloadStats"
         />
 
-        <!-- 文件列表表格 -->
+        <!-- 文件列表表格/卡片 -->
         <div class="table-section">
           <FileListTable
             :file-list="fileList"
@@ -44,6 +67,7 @@
             :get-file-thumbnail="getFileThumbnail"
             :format-coordinate="formatCoordinate"
             :format-date="formatDate"
+            :is-mobile="isMobile"
             @selection-change="handleSelectionChange"
             @view-file="viewFile"
             @edit-file="editFile"
@@ -97,6 +121,8 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Folder } from '@element-plus/icons-vue';
 import FileManageHeader from '@/components/admin/FileManageHeader.vue';
 import FileSearchBar from '@/components/admin/FileSearchBar.vue';
 import FileListTable from '@/components/admin/FileListTable.vue';
@@ -106,6 +132,23 @@ import FileActionDialogs from '@/components/admin/FileActionDialogs.vue';
 import FolderTree from '@/components/admin/FolderTree.vue';
 
 import { useFileManagePage } from './composables/useFileManagePage.js';
+
+// 移动端检测
+const windowWidth = ref(window.innerWidth);
+const isMobile = computed(() => windowWidth.value <= 768);
+const showMobileSidebar = ref(false);
+
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
 
 const {
   fileList,
@@ -146,6 +189,12 @@ const {
   handleEditSuccess,
   onRefresh,
 } = useFileManagePage();
+
+// 移动端文件夹选择处理
+const handleMobileFolderSelected = (folder) => {
+  handleFolderSelected(folder);
+  showMobileSidebar.value = false;
+};
 </script>
 
 <style lang="scss" scoped>
@@ -205,20 +254,65 @@ const {
 
 @media (max-width: 768px) {
   .file-manage {
-    padding: 16px;
+    padding: 12px;
+    height: auto;
+    min-height: 100vh;
+
+    .mobile-folder-trigger {
+      margin-bottom: 12px;
+
+      .el-button {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
 
     .page-content {
       flex-direction: column;
+      gap: 0;
 
       .sidebar {
-        width: 100%;
-        height: 300px;
+        display: none;
       }
 
       .main-content {
-        padding: 16px;
+        padding: 12px;
+        border-radius: 8px;
+
+        .breadcrumb-section {
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+
+          .el-breadcrumb {
+            font-size: 12px;
+          }
+        }
+
+        .table-section {
+          .pagination-section {
+            margin-top: 16px;
+
+            .el-pagination {
+              flex-wrap: wrap;
+              justify-content: center;
+              gap: 8px;
+
+              :deep(.el-pagination__sizes),
+              :deep(.el-pagination__jump) {
+                display: none;
+              }
+            }
+          }
+        }
       }
     }
+  }
+}
+
+// 移动端抽屉样式
+:deep(.el-drawer) {
+  .el-drawer__body {
+    padding: 0;
   }
 }
 </style>

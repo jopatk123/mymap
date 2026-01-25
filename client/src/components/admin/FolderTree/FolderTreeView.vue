@@ -138,4 +138,38 @@ const hideContextMenu = () => {
     }
   }
 }
+
+// 移动端优化
+@media (max-width: 768px) {
+  .folder-tree {
+    .tree-header {
+      padding: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      h3 {
+        font-size: 14px;
+        flex: 1;
+      }
+
+      .el-button {
+        font-size: 12px;
+      }
+    }
+
+    .tree-content {
+      padding: 12px;
+
+      // 优化树节点触摸区域
+      :deep(.el-tree-node__content) {
+        padding: 8px 4px;
+        min-height: 40px;
+      }
+
+      :deep(.el-tree-node__label) {
+        font-size: 14px;
+      }
+    }
+  }
+}
 </style>

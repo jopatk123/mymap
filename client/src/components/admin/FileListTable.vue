@@ -1,5 +1,7 @@
 <template>
+  <!-- 桌面端表格视图 -->
   <el-table
+    v-if="!isMobile"
     v-loading="loading"
     :data="fileList"
     style="width: 100%"
@@ -120,10 +122,100 @@
       </template>
     </el-table-column>
   </el-table>
+
+  <!-- 移动端卡片视图 -->
+  <div v-else class="mobile-file-list" v-loading="loading">
+    <!-- 全选控制 -->
+    <div class="mobile-select-all">
+      <el-checkbox
+        v-model="selectAll"
+        :indeterminate="isIndeterminate"
+        @change="handleSelectAllChange"
+      >
+        全选 ({{ selectedItems.length }}/{{ fileList.length }})
+      </el-checkbox>
+    </div>
+
+    <!-- 文件卡片列表 -->
+    <div class="card-list">
+      <div
+        v-for="file in fileList"
+        :key="file.id"
+        class="file-card"
+        :class="{ 'is-selected': isSelected(file), 'is-hidden': !file.is_visible }"
+        @click="toggleSelect(file)"
+      >
+        <!-- 选择框和缩略图 -->
+        <div class="card-left">
+          <el-checkbox
+            :model-value="isSelected(file)"
+            @click.stop
+            @change="toggleSelect(file)"
+          />
+          <div class="card-thumbnail">
+            <img
+              v-if="(file.fileType === 'panorama' || file.fileType === 'image-set') && (file.thumbnailUrl || file.imageUrl || file.cover_url)"
+              :src="getFileThumbnail(file)"
+              :alt="file.title"
+              @error="$emit('image-error', $event)"
+            />
+            <div v-else-if="file.fileType === 'video'" class="type-icon video">▶</div>
+            <div v-else-if="file.fileType === 'kml'" class="type-icon kml">📍</div>
+            <div v-else class="type-icon default">📄</div>
+          </div>
+        </div>
+
+        <!-- 文件信息 -->
+        <div class="card-content">
+          <div class="card-header">
+            <span class="card-title" :class="{ 'hidden-item': !file.is_visible }">
+              {{ file.title }}
+            </span>
+            <el-tag :type="getFileTypeColor(file.fileType)" size="small">
+              {{ getDisplayType(file.fileType) }}
+            </el-tag>
+          </div>
+          <div class="card-meta">
+            <span class="folder">📁 {{ file.folder_name || '默认' }}</span>
+            <el-tag :type="file.is_visible ? 'success' : 'info'" size="small">
+              {{ file.is_visible ? '显示' : '隐藏' }}
+            </el-tag>
+          </div>
+          <div class="card-info">
+            <span v-if="file.fileType === 'panorama' || file.fileType === 'video' || file.fileType === 'image-set'" class="location">
+              📍 {{ formatCoordinate(file.lat || file.latitude, file.lng || file.longitude) }}
+            </span>
+            <span v-else-if="file.fileType === 'kml'" class="points">
+              {{ file.point_count || 0 }} 个点位
+            </span>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="card-actions" @click.stop>
+          <el-button circle size="small" @click="$emit('view-file', file)">
+            <el-icon><View /></el-icon>
+          </el-button>
+          <el-button circle size="small" @click="$emit('edit-file', file)">
+            <el-icon><Edit /></el-icon>
+          </el-button>
+          <el-button circle size="small" type="danger" @click="$emit('delete-file', file)">
+            <el-icon><Delete /></el-icon>
+          </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <el-empty v-if="fileList.length === 0" description="暂无文件" />
+  </div>
 </template>
 
 <script setup>
-defineProps({
+import { ref, computed, watch } from 'vue';
+import { View, Edit, Delete } from '@element-plus/icons-vue';
+
+const props = defineProps({
   fileList: {
     type: Array,
     required: true,
@@ -148,9 +240,54 @@ defineProps({
     type: Function,
     required: true,
   },
+  isMobile: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-defineEmits(['selection-change', 'view-file', 'edit-file', 'delete-file', 'image-error']);
+const emit = defineEmits(['selection-change', 'view-file', 'edit-file', 'delete-file', 'image-error']);
+
+// 移动端选择状态管理
+const selectedItems = ref([]);
+
+const selectAll = computed({
+  get: () => selectedItems.value.length === props.fileList.length && props.fileList.length > 0,
+  set: () => {},
+});
+
+const isIndeterminate = computed(() => {
+  return selectedItems.value.length > 0 && selectedItems.value.length < props.fileList.length;
+});
+
+const isSelected = (file) => {
+  return selectedItems.value.some(item => item.id === file.id);
+};
+
+const toggleSelect = (file) => {
+  const index = selectedItems.value.findIndex(item => item.id === file.id);
+  if (index > -1) {
+    selectedItems.value.splice(index, 1);
+  } else {
+    selectedItems.value.push(file);
+  }
+  emit('selection-change', selectedItems.value);
+};
+
+const handleSelectAllChange = (val) => {
+  if (val) {
+    selectedItems.value = [...props.fileList];
+  } else {
+    selectedItems.value = [];
+  }
+  emit('selection-change', selectedItems.value);
+};
+
+// 当文件列表变化时清空选择
+watch(() => props.fileList, () => {
+  selectedItems.value = [];
+  emit('selection-change', []);
+}, { deep: true });
 
 // 获取显示类型
 const getDisplayType = (fileType) => {
@@ -282,5 +419,140 @@ const getDisplayType = (fileType) => {
 .hidden-item {
   color: #999;
   text-decoration: line-through;
+}
+
+// 移动端卡片视图样式
+.mobile-file-list {
+  min-height: 200px;
+
+  .mobile-select-all {
+    padding: 12px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .file-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &.is-selected {
+      border-color: #409eff;
+      background: #ecf5ff;
+    }
+
+    &.is-hidden {
+      opacity: 0.7;
+      background: #f5f5f5;
+    }
+
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+
+      .card-thumbnail {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f5f7fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .type-icon {
+          font-size: 20px;
+
+          &.video {
+            color: #28a745;
+          }
+
+          &.kml {
+            color: #ffa940;
+          }
+
+          &.default {
+            color: #909399;
+          }
+        }
+      }
+    }
+
+    .card-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .card-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #303133;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          flex: 1;
+        }
+      }
+
+      .card-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+
+        .folder {
+          color: #409eff;
+        }
+      }
+
+      .card-info {
+        font-size: 12px;
+        color: #909399;
+
+        .location,
+        .points {
+          display: block;
+        }
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+
+      .el-button {
+        margin: 0;
+      }
+    }
+  }
 }
 </style>
