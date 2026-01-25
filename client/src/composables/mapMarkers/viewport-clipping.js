@@ -240,7 +240,9 @@ export function createViewportClipping(
       [displayLat, displayLng],
       pointType,
       {
-        title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
+        title:
+          point.title ||
+          (pointType === 'video' ? '视频点位' : pointType === 'image-set' ? '图片集' : '全景图'),
         updateWhenZoom: false,
         pane: paneName,
       },

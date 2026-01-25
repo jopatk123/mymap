@@ -26,8 +26,8 @@
     "imageSet": {
       "cluster_enabled": false,
       "cluster_color": "#ff4757",
-      "point_color": "#ff4757",
-      "point_size": 11,
+      "point_color": "rgb(199, 212, 19)",
+      "point_size": 9,
       "point_opacity": 1,
       "point_icon_type": "marker",
       "point_label_size": 12,

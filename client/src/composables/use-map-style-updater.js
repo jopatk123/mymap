@@ -66,7 +66,12 @@ export function useMapStyleUpdater(map, markers) {
           }
 
           const pointType = pointData.type || markerInfo.type || 'panorama';
-          const paneName = pointType === 'video' ? 'videoPane' : 'panoramaPane';
+          const paneName =
+            pointType === 'video'
+              ? 'videoPane'
+              : pointType === 'image-set'
+              ? 'imageSetPane'
+              : 'panoramaPane';
 
           // 使用最新样式创建标记，优先使用点级 styleConfig（例如来自 KML 的 styleConfig）
           const marker = createPointMarker(
@@ -158,7 +163,8 @@ export function useMapStyleUpdater(map, markers) {
           }
 
           // 使用最新样式创建标记，传入点级 styleConfig
-          const paneName = type === 'video' ? 'videoPane' : 'panoramaPane';
+          const paneName =
+            type === 'video' ? 'videoPane' : type === 'image-set' ? 'imageSetPane' : 'panoramaPane';
           const marker = createPointMarker(
             [displayLat, displayLng],
             type,

@@ -123,7 +123,7 @@ export function useFileManagement() {
       panorama: 'primary',
       video: 'success',
       kml: 'warning',
-      'image-set': 'purple',
+      'image-set': 'danger',
     };
     return colors[fileType] || 'info';
   };

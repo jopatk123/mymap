@@ -80,7 +80,7 @@ export function useMapContainer(props, emit, injected = {}) {
       return;
     }
 
-    const paneNames = ['markerPane', 'videoPane', 'panoramaPane', 'kmlPane'];
+    const paneNames = ['markerPane', 'videoPane', 'imageSetPane', 'panoramaPane', 'kmlPane'];
     for (const name of paneNames) {
       const pane = mapInstance.getPane(name);
       if (!pane) continue;

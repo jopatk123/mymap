@@ -6,6 +6,7 @@ import { createClusterIcon } from '@/utils/map-utils.js';
 export function createClusterManager(map) {
   let panoramaClusterGroup = null;
   let videoClusterGroup = null;
+  let imageSetClusterGroup = null;
   let onZoomStart = null;
   let onZoomEnd = null;
 
@@ -54,6 +55,23 @@ export function createClusterManager(map) {
       }
       return videoClusterGroup;
     }
+    if (type === 'image-set') {
+      if (!imageSetClusterGroup) {
+        imageSetClusterGroup = L.markerClusterGroup({
+          iconCreateFunction,
+          chunkedLoading: true,
+          chunkInterval: 50,
+          chunkDelay: 20,
+          removeOutsideVisibleBounds: true,
+          disableClusteringAtZoom: 19,
+          spiderfyOnEveryClick: false,
+          animate: false,
+          pane: getPaneNameByType('image-set'),
+        });
+        map.value.addLayer(imageSetClusterGroup);
+      }
+      return imageSetClusterGroup;
+    }
     if (!panoramaClusterGroup) {
       panoramaClusterGroup = L.markerClusterGroup({
         iconCreateFunction,
@@ -77,10 +95,12 @@ export function createClusterManager(map) {
     onZoomStart = () => {
       if (panoramaClusterGroup) panoramaClusterGroup.options.animate = false;
       if (videoClusterGroup) videoClusterGroup.options.animate = false;
+      if (imageSetClusterGroup) imageSetClusterGroup.options.animate = false;
     };
     onZoomEnd = () => {
       if (panoramaClusterGroup) panoramaClusterGroup.options.animate = true;
       if (videoClusterGroup) videoClusterGroup.options.animate = true;
+      if (imageSetClusterGroup) imageSetClusterGroup.options.animate = true;
     };
     map.value.on('zoomstart', onZoomStart);
     map.value.on('zoomend', onZoomEnd);
@@ -97,6 +117,11 @@ export function createClusterManager(map) {
       if (map.value?.hasLayer(videoClusterGroup)) map.value.removeLayer(videoClusterGroup);
       videoClusterGroup = null;
     }
+    if (imageSetClusterGroup) {
+      imageSetClusterGroup.clearLayers();
+      if (map.value?.hasLayer(imageSetClusterGroup)) map.value.removeLayer(imageSetClusterGroup);
+      imageSetClusterGroup = null;
+    }
     if (map.value && onZoomStart && onZoomEnd) {
       map.value.off('zoomstart', onZoomStart);
       map.value.off('zoomend', onZoomEnd);
@@ -105,9 +130,10 @@ export function createClusterManager(map) {
     }
   };
 
-  const removeBatches = ({ video = [], pano = [] }) => {
+  const removeBatches = ({ video = [], pano = [], imageSet = [] }) => {
     if (video.length && videoClusterGroup) videoClusterGroup.removeLayers(video);
     if (pano.length && panoramaClusterGroup) panoramaClusterGroup.removeLayers(pano);
+    if (imageSet.length && imageSetClusterGroup) imageSetClusterGroup.removeLayers(imageSet);
   };
 
   return {
@@ -120,6 +146,9 @@ export function createClusterManager(map) {
     },
     get panoramaClusterGroup() {
       return panoramaClusterGroup;
+    },
+    get imageSetClusterGroup() {
+      return imageSetClusterGroup;
     },
   };
 }

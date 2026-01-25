@@ -190,17 +190,20 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
     }
     const videoStyles = window.videoPointStyles || {};
     const panoStyles = window.panoramaPointStyles || {};
+    const imageSetStyles = window.imageSetPointStyles || {};
     const videoClusterOn = Boolean(videoStyles.cluster_enabled);
     const panoClusterOn = Boolean(panoStyles.cluster_enabled);
+    const imageSetClusterOn = Boolean(imageSetStyles.cluster_enabled);
 
     // 如果两类都不开聚合，走原逻辑
-    if (!videoClusterOn && !panoClusterOn) {
+    if (!videoClusterOn && !panoClusterOn && !imageSetClusterOn) {
       points.forEach(addPointMarker);
       return;
     }
 
     const batchVideo = [];
     const batchPano = [];
+    const batchImageSet = [];
 
     for (const p of points) {
       // 跳过已由视口裁剪或其他模块创建的 marker（避免重复）
@@ -221,7 +224,9 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
         [displayLat, displayLng],
         pointType,
         {
-          title: p.title || (pointType === 'video' ? '视频点位' : '全景图'),
+          title:
+            p.title ||
+            (pointType === 'video' ? '视频点位' : pointType === 'image-set' ? '图片集' : '全景图'),
           updateWhenZoom: false,
           pane: paneName,
         },
@@ -276,6 +281,8 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
         batchVideo.push(marker);
       } else if (pointType === 'panorama' && panoClusterOn) {
         batchPano.push(marker);
+      } else if (pointType === 'image-set' && imageSetClusterOn) {
+        batchImageSet.push(marker);
       } else {
         marker.addTo(map.value);
       }
@@ -291,6 +298,11 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
       group.addLayers(batchPano);
       ensureZoomGuards();
     }
+    if (batchImageSet.length) {
+      const group = ensureClusterGroup('image-set');
+      group.addLayers(batchImageSet);
+      ensureZoomGuards();
+    }
   };
 
   const removeMarker = (id) => {
@@ -301,13 +313,19 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
       try {
         // 先尝试从聚合组中移除
         const styles =
-          type === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
+          type === 'video'
+            ? window.videoPointStyles || {}
+            : type === 'image-set'
+            ? window.imageSetPointStyles || {}
+            : window.panoramaPointStyles || {};
         const useCluster = Boolean(styles.cluster_enabled);
 
         if (useCluster) {
           const group =
             type === 'video'
               ? clusterManager.videoClusterGroup
+              : type === 'image-set'
+              ? clusterManager.imageSetClusterGroup
               : clusterManager.panoramaClusterGroup;
           if (group && group.hasLayer(marker)) {
             group.removeLayer(marker);
@@ -334,16 +352,22 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
     if (!Array.isArray(ids) || ids.length === 0) return;
     const videoToRemove = [];
     const panoToRemove = [];
+    const imageSetToRemove = [];
     const normalToRemove = [];
     for (const id of ids) {
       const info = viewportState.idToMarker.get(id);
       if (!info) continue;
       const { marker, type } = info;
       const styles =
-        type === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
+        type === 'video'
+          ? window.videoPointStyles || {}
+          : type === 'image-set'
+          ? window.imageSetPointStyles || {}
+          : window.panoramaPointStyles || {};
       const useCluster = Boolean(styles.cluster_enabled);
       if (useCluster) {
         if (type === 'video') videoToRemove.push(marker);
+        else if (type === 'image-set') imageSetToRemove.push(marker);
         else panoToRemove.push(marker);
       } else {
         normalToRemove.push(marker);
@@ -361,6 +385,8 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
         clusterManager.videoClusterGroup.removeLayers(videoToRemove);
       if (panoToRemove.length && clusterManager.panoramaClusterGroup)
         clusterManager.panoramaClusterGroup.removeLayers(panoToRemove);
+      if (imageSetToRemove.length && clusterManager.imageSetClusterGroup)
+        clusterManager.imageSetClusterGroup.removeLayers(imageSetToRemove);
       if (normalToRemove.length) {
         for (const m of normalToRemove) {
           try {
