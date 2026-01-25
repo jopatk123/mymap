@@ -29,7 +29,8 @@ describe('ImageSetUploadArea', () => {
     });
 
     expect(wrapper.find('.image-set-upload-area').exists()).toBe(true);
-    expect(wrapper.text()).toContain('点击或拖拽图片到此处');
+    // 组件使用 picture-card 模式，显示 Plus 图标而非文字提示
+    expect(wrapper.find('.upload-area').exists()).toBe(true);
   });
 
   it('has correct default props', () => {
