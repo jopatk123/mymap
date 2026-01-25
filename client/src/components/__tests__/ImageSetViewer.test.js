@@ -51,7 +51,7 @@ const mockImageSet = {
 const stubs = {
   'el-dialog': {
     template: '<div class="el-dialog-stub"><slot></slot><slot name="footer"></slot></div>',
-    props: ['modelValue', 'title', 'width', 'fullscreen', 'destroyOnClose'],
+    props: ['modelValue', 'title', 'width', 'fullscreen', 'destroyOnClose', 'class'],
   },
   'el-icon': { template: '<span class="el-icon-stub"><slot></slot></span>' },
   'el-button': { template: '<button class="el-button-stub"><slot></slot></button>' },
@@ -60,6 +60,7 @@ const stubs = {
   ArrowLeft: { template: '<span></span>' },
   ArrowRight: { template: '<span></span>' },
   Download: { template: '<span></span>' },
+  Loading: { template: '<span></span>' },
 };
 
 describe('ImageSetViewer', () => {

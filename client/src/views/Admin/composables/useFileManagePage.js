@@ -1,5 +1,5 @@
 import { reactive, computed, onMounted, onUnmounted, ref } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { storeToRefs } from 'pinia';
 
 import { useFileManagement } from '@/composables/use-file-management';
@@ -7,6 +7,7 @@ import { useFileOperations } from '@/composables/use-file-operations';
 import { useBatchOperations } from '@/composables/use-batch-operations';
 import { useFolderStore } from '@/store/folder.js';
 import { buildDownloadTasks, createCsvBlob } from './file-manage-downloads.js';
+import { downloadImageSetAsZip, isImageSetFile } from '@/utils/image-set-downloader.js';
 
 function triggerBrowserDownload(url, filename) {
   const anchor = document.createElement('a');
@@ -123,14 +124,40 @@ export function useFileManagePage() {
   const handleBatchDownload = async () => {
     if (!selectedRows.value || selectedRows.value.length === 0) return;
 
-    const tasks = buildDownloadTasks(selectedRows.value);
-    if (tasks.length === 0) return;
+    // 分离图片集和其他文件
+    const imageSets = selectedRows.value.filter(isImageSetFile);
+    const otherFiles = selectedRows.value.filter((f) => !isImageSetFile(f));
 
     try {
       downloading.value = true;
-      scheduleDownloadTasks(tasks);
+
+      // 处理图片集：压缩下载
+      if (imageSets.length > 0) {
+        for (const imageSet of imageSets) {
+          try {
+            ElMessage.info(`正在打包下载图片集: ${imageSet.title || '未命名'}`);
+            await downloadImageSetAsZip(imageSet, (progress, total, message) => {
+              // 可以在这里更新进度显示
+              if (progress === 100) {
+                ElMessage.success(`图片集 "${imageSet.title || '未命名'}" 下载完成`);
+              }
+            });
+          } catch (error) {
+            console.error('图片集下载失败:', error);
+            ElMessage.error(`图片集 "${imageSet.title || '未命名'}" 下载失败: ${error.message}`);
+          }
+        }
+      }
+
+      // 处理其他文件：普通下载
+      if (otherFiles.length > 0) {
+        const tasks = buildDownloadTasks(otherFiles);
+        if (tasks.length > 0) {
+          scheduleDownloadTasks(tasks);
+        }
+      }
     } finally {
-      const settleDelay = Math.min(tasks.length * 200 + 300, 3000);
+      const settleDelay = Math.min(selectedRows.value.length * 200 + 300, 3000);
       setTimeout(() => {
         downloading.value = false;
       }, settleDelay);

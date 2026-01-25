@@ -38,6 +38,8 @@ import { InfoFilled } from '@element-plus/icons-vue';
 import BaseUploadDialog from './BaseUploadDialog.vue';
 import ImageSetUploadArea from './ImageSetUploadArea.vue';
 import { imageSetApi } from '@/api/image-set.js';
+import { compressImages, formatFileSize } from '@/utils/image-compressor.js';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
   modelValue: Boolean,
@@ -47,9 +49,10 @@ const emit = defineEmits(['update:modelValue', 'success']);
 
 const uploadAreaRef = ref(null);
 const selectedFiles = ref([]);
+const isCompressing = ref(false);
 
 const canSubmit = computed(() => {
-  return selectedFiles.value.length > 0;
+  return selectedFiles.value.length > 0 && !isCompressing.value;
 });
 
 const handleFilesChange = (files) => {
@@ -59,8 +62,40 @@ const handleFilesChange = (files) => {
 const handleImageSetUpload = async (form, { setProgress }) => {
   const formData = new FormData();
 
+  // 压缩图片
+  isCompressing.value = true;
+  setProgress(0);
+  
+  let compressedFiles;
+  try {
+    const originalTotalSize = selectedFiles.value.reduce((sum, f) => sum + f.size, 0);
+    
+    compressedFiles = await compressImages(
+      selectedFiles.value,
+      { maxSizeKB: 1024, maxWidthOrHeight: 2560 },
+      (current, total) => {
+        // 压缩阶段占 0-30% 进度
+        setProgress(Math.round((current / total) * 30));
+      }
+    );
+    
+    const compressedTotalSize = compressedFiles.reduce((sum, f) => sum + f.size, 0);
+    
+    if (compressedTotalSize < originalTotalSize) {
+      ElMessage.success(
+        `图片已压缩: ${formatFileSize(originalTotalSize)} → ${formatFileSize(compressedTotalSize)}`
+      );
+    }
+  } catch (error) {
+    console.error('图片压缩失败:', error);
+    ElMessage.warning('部分图片压缩失败，将使用原图上传');
+    compressedFiles = selectedFiles.value;
+  } finally {
+    isCompressing.value = false;
+  }
+
   // 添加所有图片文件
-  selectedFiles.value.forEach((file) => {
+  compressedFiles.forEach((file) => {
     formData.append('files', file);
   });
 
@@ -75,7 +110,9 @@ const handleImageSetUpload = async (form, { setProgress }) => {
 
   return await imageSetApi.uploadImageSet(formData, (progressEvent) => {
     if (progressEvent.lengthComputable) {
-      setProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+      // 上传阶段占 30-100% 进度
+      const uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      setProgress(30 + Math.round(uploadProgress * 0.7));
     }
   });
 };

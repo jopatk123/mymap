@@ -87,8 +87,9 @@
 
     <!-- 图片集查看器 -->
     <ImageSetViewer
-      v-model:visible="showImageSetViewer"
-      :image-set="selectedImageSet"
+      v-model="showImageSetViewer"
+      :image-set-id="selectedImageSet?.id"
+      :initial-image-set="selectedImageSet"
       @close="handleImageSetViewerClose"
     />
 
