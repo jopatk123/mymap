@@ -112,6 +112,34 @@
             </el-descriptions-item>
           </el-descriptions>
         </div>
+
+        <!-- 图片集信息 -->
+        <div v-else-if="file.fileType === 'image-set'" class="image-set-info">
+          <h3>图片集信息</h3>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="坐标">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span>{{ formatCoordinate(file.lat || file.latitude, file.lng || file.longitude) }}</span>
+                <el-button type="text" size="small" @click="copyFileCoords(file)"
+                  >复制经纬度</el-button
+                >
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="图片数量">
+              {{ file.image_count || file.imageCount || 0 }} 张
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <div class="image-preview">
+            <h4>封面图</h4>
+            <img
+              :src="file.thumbnailUrl || file.coverUrl || file.cover_url"
+              :alt="file.title"
+              class="preview-image"
+              @error="handleImageError"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -153,6 +181,7 @@ const getFileTypeColor = (fileType) => {
     panorama: 'primary',
     video: 'success',
     kml: 'warning',
+    'image-set': '',
   };
   return colors[fileType] || 'info';
 };

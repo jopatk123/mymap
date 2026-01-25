@@ -19,6 +19,12 @@
       @success="$emit('upload-success')"
     />
 
+    <!-- 图片集上传对话框 -->
+    <ImageSetUploadDialog
+      v-model="localDialogs.showImageSetUploadDialog"
+      @success="$emit('upload-success')"
+    />
+
     <!-- 全景批量上传对话框 -->
     <PanoramaBatchUploadDialog
       v-model="localDialogs.showPanoramaBatchUploadDialog"
@@ -31,6 +37,7 @@
 import UploadDialog from '@/components/common/UploadDialog.vue';
 import VideoUploadDialog from '@/components/common/VideoUploadDialog.vue';
 import PointUploadDialog from '@/components/common/PointUploadDialog.vue';
+import ImageSetUploadDialog from '@/components/common/ImageSetUploadDialog.vue';
 import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue';
 
 import { reactive, watch } from 'vue';

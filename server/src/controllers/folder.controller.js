@@ -15,7 +15,8 @@ class FolderController {
           folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id, ownerId));
           folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id, ownerId));
           folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id, ownerId));
-          folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount;
+          folder.imageSetCount = parseInt(await FolderModel.getImageSetCount(folder.id, ownerId));
+          folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount + folder.imageSetCount;
           if (folder.children) {
             await addContentCount(folder.children);
           }
@@ -48,7 +49,8 @@ class FolderController {
         folder.panoramaCount = parseInt(await FolderModel.getPanoramaCount(folder.id, ownerId));
         folder.videoPointCount = parseInt(await FolderModel.getVideoPointCount(folder.id, ownerId));
         folder.kmlFileCount = parseInt(await FolderModel.getKmlFileCount(folder.id, ownerId));
-        folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount;
+        folder.imageSetCount = parseInt(await FolderModel.getImageSetCount(folder.id, ownerId));
+        folder.totalCount = folder.panoramaCount + folder.videoPointCount + folder.kmlFileCount + folder.imageSetCount;
       }
 
       res.json({
@@ -367,6 +369,25 @@ class FolderController {
         } catch (error) {
           Logger.error('获取KML文件数据失败:', error);
           Logger.error('KML文件查询失败，跳过: %s', error.message);
+        }
+      }
+
+      if (fileType === 'all' || fileType === 'image-set') {
+        try {
+          const ImageSetModel = require('../models/image-set.model');
+          const imageSetResult = await ImageSetModel.findAll(searchParams);
+          const imageSetsWithType = imageSetResult.data.map((item) => ({
+            ...item,
+            fileType: 'image-set',
+            displayType: '图片集',
+            type: 'image-set',
+            image_url: item.cover_url,
+            url: item.cover_url,
+          }));
+          allResults = allResults.concat(imageSetsWithType);
+        } catch (error) {
+          Logger.error('获取图片集数据失败:', error);
+          Logger.error('图片集查询失败，跳过: %s', error.message);
         }
       }
 

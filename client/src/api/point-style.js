@@ -23,3 +23,15 @@ export const panoramaPointStyleApi = {
     return api.delete('/point-styles/panorama');
   },
 };
+
+export const imageSetPointStyleApi = {
+  getStyles() {
+    return api.get('/point-styles/image-set');
+  },
+  updateStyles(styleConfig) {
+    return api.put('/point-styles/image-set', styleConfig);
+  },
+  resetStyles() {
+    return api.delete('/point-styles/image-set');
+  },
+};

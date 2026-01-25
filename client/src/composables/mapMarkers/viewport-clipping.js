@@ -90,7 +90,17 @@ export function createViewportClipping(
     }
   };
 
-  const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
+  const getPaneNameByType = (type) => {
+    switch (type) {
+      case 'video':
+        return 'videoPane';
+      case 'image-set':
+        return 'imageSetPane';
+      case 'panorama':
+      default:
+        return 'panoramaPane';
+    }
+  };
 
   const isInteractionDisabled = () => Boolean(markerClickDisabled?.value);
 

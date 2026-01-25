@@ -22,6 +22,17 @@
       "cluster_enabled": false,
       "cluster_color": "#ff4757",
       "cluster_icon_color": "#ff4757"
+    },
+    "imageSet": {
+      "cluster_enabled": false,
+      "cluster_color": "#ff4757",
+      "point_color": "#ff4757",
+      "point_size": 11,
+      "point_opacity": 1,
+      "point_icon_type": "marker",
+      "point_label_size": 12,
+      "point_label_color": "#000000",
+      "cluster_icon_color": "#ff4757"
     }
   },
   "kmlStyles": {

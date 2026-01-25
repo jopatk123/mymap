@@ -14,6 +14,7 @@
           <el-dropdown-menu>
             <el-dropdown-item command="panorama">添加全景图</el-dropdown-item>
             <el-dropdown-item command="video">添加视频点位</el-dropdown-item>
+            <el-dropdown-item command="image-set">添加图片集</el-dropdown-item>
             <el-dropdown-item command="kml">添加图层点位</el-dropdown-item>
             <el-dropdown-item command="kml-basemap">添加KML底图</el-dropdown-item>
           </el-dropdown-menu>

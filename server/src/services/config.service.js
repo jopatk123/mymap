@@ -290,6 +290,15 @@ class ConfigService {
           cluster_enabled: true,
           cluster_color: '#ff4757',
         },
+        imageSet: {
+          point_color: '#9b59b6',
+          point_size: 10,
+          point_opacity: 1.0,
+          point_label_size: 14,
+          point_label_color: '#000000',
+          cluster_enabled: true,
+          cluster_color: '#9b59b6',
+        },
       },
       kmlStyles: {
         default: {

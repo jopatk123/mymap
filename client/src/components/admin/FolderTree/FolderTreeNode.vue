@@ -9,7 +9,7 @@
         {{ data.name }}
       </span>
       <span class="panorama-count">
-        ({{ (data.panoramaCount || 0) + (data.videoPointCount || 0) + (data.kmlFileCount || 0) }})
+        ({{ (data.panoramaCount || 0) + (data.videoPointCount || 0) + (data.kmlFileCount || 0) + (data.imageSetCount || 0) }})
       </span>
     </div>
 

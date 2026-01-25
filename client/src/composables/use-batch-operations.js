@@ -3,6 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { usePanoramaStore } from '@/store/panorama.js';
 import { videoApi } from '@/api/video.js';
 import { kmlApi } from '@/api/kml.js';
+import { imageSetApi } from '@/api/image-set.js';
 import * as panoramaApi from '@/api/panorama.js';
 
 export function useBatchOperations() {
@@ -62,6 +63,9 @@ export function useBatchOperations() {
         .map((row) => row.id);
       const videos = selectedRows.filter((row) => row.fileType === 'video').map((row) => row.id);
       const kmls = selectedRows.filter((row) => row.fileType === 'kml').map((row) => row.id);
+      const imageSets = selectedRows
+        .filter((row) => row.fileType === 'image-set')
+        .map((row) => row.id);
 
       const updatePromises = [];
 
@@ -73,6 +77,9 @@ export function useBatchOperations() {
       }
       if (kmls.length > 0) {
         updatePromises.push(kmlApi.batchUpdateKmlFileVisibility(kmls, isVisible));
+      }
+      if (imageSets.length > 0) {
+        updatePromises.push(imageSetApi.batchUpdateVisibility(imageSets, isVisible));
       }
 
       const results = await Promise.allSettled(updatePromises);
@@ -115,6 +122,9 @@ export function useBatchOperations() {
         .map((row) => row.id);
       const videos = selectedRows.filter((row) => row.fileType === 'video').map((row) => row.id);
       const kmls = selectedRows.filter((row) => row.fileType === 'kml').map((row) => row.id);
+      const imageSets = selectedRows
+        .filter((row) => row.fileType === 'image-set')
+        .map((row) => row.id);
 
       // 串行执行可避免 SQLite 并发事务导致的数据库锁错误
       const deleteTasks = [];
@@ -127,6 +137,9 @@ export function useBatchOperations() {
       }
       if (kmls.length > 0) {
         deleteTasks.push(() => kmlApi.batchDeleteKmlFiles(kmls));
+      }
+      if (imageSets.length > 0) {
+        deleteTasks.push(() => imageSetApi.batchDeleteImageSets(imageSets));
       }
 
       const results = [];
@@ -166,6 +179,9 @@ export function useBatchOperations() {
         .map((row) => row.id);
       const videos = selectedRows.filter((row) => row.fileType === 'video').map((row) => row.id);
       const kmls = selectedRows.filter((row) => row.fileType === 'kml').map((row) => row.id);
+      const imageSets = selectedRows
+        .filter((row) => row.fileType === 'image-set')
+        .map((row) => row.id);
 
       const movePromises = [];
 
@@ -177,6 +193,9 @@ export function useBatchOperations() {
       }
       if (kmls.length > 0) {
         movePromises.push(kmlApi.batchMoveKmlFilesToFolder(kmls, targetFolderId));
+      }
+      if (imageSets.length > 0) {
+        movePromises.push(imageSetApi.batchMoveToFolder(imageSets, targetFolderId));
       }
 
       const results = await Promise.allSettled(movePromises);

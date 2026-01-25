@@ -17,7 +17,9 @@ export function useMapInteractions(
   selectedVideo,
   showVideoModal,
   showPanoramaViewer,
-  openPanoramaViewer
+  openPanoramaViewer,
+  selectedImageSet = { value: null },
+  showImageSetViewer = { value: false }
 ) {
   const panoramaStore = usePanoramaStore();
   const appStore = useAppStore();
@@ -108,6 +110,10 @@ export function useMapInteractions(
       // 视频点位 - 直接打开视频播放器
       selectedVideo.value = point;
       showVideoModal.value = true;
+    } else if (point.type === 'image-set' || point.imageCount !== undefined) {
+      // 图片集点位 - 直接打开图片集查看器
+      selectedImageSet.value = point;
+      showImageSetViewer.value = true;
     } else {
       // 全景图点位 - 直接打开全景图查看器
       selectedPanorama.value = point;

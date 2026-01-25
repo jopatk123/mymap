@@ -48,8 +48,8 @@ export function useFileManagement() {
       // 转换数据格式以适配现有组件
       fileList.value = response.data.map((item) => ({
         ...item,
-        fileType: item.fileType || item.type, // 'panorama', 'video', or 'kml'
-        imageUrl: item.image_url || item.url,
+        fileType: item.fileType || item.type, // 'panorama', 'video', 'kml', or 'image-set'
+        imageUrl: item.image_url || item.url || item.cover_url,
         thumbnailUrl: item.thumbnail_url,
         latitude: item.latitude || item.lat,
         longitude: item.longitude || item.lng,
@@ -123,6 +123,7 @@ export function useFileManagement() {
       panorama: 'primary',
       video: 'success',
       kml: 'warning',
+      'image-set': 'purple',
     };
     return colors[fileType] || 'info';
   };
@@ -141,6 +142,13 @@ export function useFileManagement() {
       );
     } else if (file.fileType === 'kml') {
       return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCA2MCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjRkFGQUZBIi8+CjxwYXRoIGQ9Ik0yNSA4TDM1IDEyTDMwIDIyTDIwIDIyTDI1IDhaTTMwIDEwTDI4IDEyTDMwIDE0TDMyIDEyTDMwIDEwWiIgZmlsbD0iIzMzOTlGRiIvPgo8dGV4dCB4PSIzMCIgeT0iMjUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5LTUzmlofku7Y8L3RleHQ+Cjwvc3ZnPgo=';
+    } else if (file.fileType === 'image-set') {
+      return (
+        file.thumbnailUrl ||
+        file.imageUrl ||
+        file.cover_url ||
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCA2MCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjgiIHk9IjYiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNCIgZmlsbD0iIzlCNTlCNiIgb3BhY2l0eT0iMC4zIi8+CjxyZWN0IHg9IjEyIiB5PSI4IiB3aWR0aD0iMTgiIGhlaWdodD0iMTQiIGZpbGw9IiM5QjU5QjYiIG9wYWNpdHk9IjAuNSIvPgo8cmVjdCB4PSIxNiIgeT0iMTAiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNCIgZmlsbD0iIzlCNTlCNiIvPgo8dGV4dCB4PSIzMCIgeT0iMjUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lm77niYfpm4Y8L3RleHQ+Cjwvc3ZnPgo='
+      );
     }
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCA2MCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjRjVGNUY1Ii8+CjxyZWN0IHg9IjIwIiB5PSI4IiB3aWR0aD0iMjAiIGhlaWdodD0iMTQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0NDQ0NDQyIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjx0ZXh0IHg9IjMwIiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuaWh+S7tjwvdGV4dD4KPHN2Zz4K';
   };

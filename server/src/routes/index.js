@@ -51,6 +51,10 @@ router.use('/folders', folderRoutes);
 const videoPointRoutes = require('./video-points.routes');
 router.use('/video-points', videoPointRoutes);
 
+// 图片集相关路由
+const imageSetRoutes = require('./image-sets.routes');
+router.use('/image-sets', imageSetRoutes);
+
 // KML文件相关路由
 const kmlFileRoutes = require('./kml-file.routes');
 router.use('/kml-files', kmlFileRoutes);

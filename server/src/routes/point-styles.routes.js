@@ -12,4 +12,9 @@ router.get('/panorama', PointStyleController.getPanoramaPointStyles);
 router.put('/panorama', PointStyleController.updatePanoramaPointStyles);
 router.delete('/panorama', PointStyleController.resetPanoramaPointStyles);
 
+// 图片集点位样式配置路由
+router.get('/image-set', PointStyleController.getImageSetPointStyles);
+router.put('/image-set', PointStyleController.updateImageSetPointStyles);
+router.delete('/image-set', PointStyleController.resetImageSetPointStyles);
+
 module.exports = router;

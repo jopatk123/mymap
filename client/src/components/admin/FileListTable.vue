@@ -43,6 +43,20 @@
             <span class="kml-text">KML</span>
           </div>
 
+          <div v-else-if="row.fileType === 'image-set'" class="image-set-thumbnail">
+            <img
+              v-if="row.thumbnailUrl || row.imageUrl || row.cover_url"
+              :src="row.thumbnailUrl || row.imageUrl || row.cover_url"
+              :alt="row.title"
+              class="thumbnail"
+              @error="$emit('image-error', $event)"
+            />
+            <div v-else class="image-set-placeholder">
+              <span class="image-set-icon">🖼️</span>
+              <span class="image-set-text">图集</span>
+            </div>
+          </div>
+
           <div v-else class="default-placeholder">
             <span>文件</span>
           </div>
@@ -75,7 +89,7 @@
     <!-- 根据文件类型显示不同的信息列 -->
     <el-table-column label="位置/信息" width="150">
       <template #default="{ row }">
-        <span v-if="row.fileType === 'panorama' || row.fileType === 'video'">
+        <span v-if="row.fileType === 'panorama' || row.fileType === 'video' || row.fileType === 'image-set'">
           {{ formatCoordinate(row.lat || row.latitude, row.lng || row.longitude) }}
         </span>
         <span v-else-if="row.fileType === 'kml'"> {{ row.point_count || 0 }} 个点位 </span>
@@ -144,6 +158,7 @@ const getDisplayType = (fileType) => {
     panorama: '全景图',
     video: '视频',
     kml: 'KML文件',
+    'image-set': '图片集',
   };
   return types[fileType] || '未知';
 };
@@ -211,6 +226,39 @@ const getDisplayType = (fileType) => {
 .kml-text {
   font-size: 8px;
   color: #ffa940;
+}
+
+.image-set-thumbnail {
+  width: 60px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-set-placeholder {
+  width: 60px;
+  height: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid #9b59b6;
+  background-color: #f9f0ff;
+  font-size: 10px;
+  color: #9b59b6;
+}
+
+.image-set-icon {
+  font-size: 12px;
+  color: #9b59b6;
+  margin-bottom: 2px;
+}
+
+.image-set-text {
+  font-size: 8px;
+  color: #9b59b6;
 }
 
 .default-placeholder {

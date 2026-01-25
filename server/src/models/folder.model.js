@@ -250,12 +250,31 @@ class FolderModel {
     return count;
   }
 
-  // 获取文件夹中的总内容数量（全景图 + 视频点位 + KML文件）
+  // 获取文件夹中的图片集数量
+  static async getImageSetCount(folderId, ownerId = null) {
+    let sql, params;
+    if (folderId === 0 || folderId === '0') {
+      sql = 'SELECT COUNT(*) as count FROM image_sets WHERE folder_id IS NULL';
+      params = [];
+    } else {
+      sql = 'SELECT COUNT(*) as count FROM image_sets WHERE folder_id = ?';
+      params = [folderId];
+    }
+    if (ownerId) {
+      sql += ' AND owner_id = ?';
+      params.push(ownerId);
+    }
+    const [{ count }] = await SQLiteAdapter.all(sql, params);
+    return count;
+  }
+
+  // 获取文件夹中的总内容数量（全景图 + 视频点位 + KML文件 + 图片集 + 图片集）
   static async getTotalContentCount(folderId, ownerId = null) {
     const panoramaCount = await this.getPanoramaCount(folderId, ownerId);
     const videoPointCount = await this.getVideoPointCount(folderId, ownerId);
     const kmlFileCount = await this.getKmlFileCount(folderId, ownerId);
-    return panoramaCount + videoPointCount + kmlFileCount;
+    const imageSetCount = await this.getImageSetCount(folderId, ownerId);
+    return panoramaCount + videoPointCount + kmlFileCount + imageSetCount;
   }
 
   // 构建树形结构

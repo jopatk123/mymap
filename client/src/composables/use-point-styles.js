@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 // import { dlog } from './drawing-tools/utils/debug.js'; // 已删除debug工具
-import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js';
+import { videoPointStyleApi, panoramaPointStyleApi, imageSetPointStyleApi } from '@/api/point-style.js';
 import styleManager from '@/utils/style-manager.js';
 
 // 使用共享 dlog
@@ -26,6 +26,14 @@ export function usePointStyles() {
     point_label_color: '#000000',
   });
 
+  const imageSetPointStyles = ref({
+    point_color: '#9b59b6',
+    point_size: 10,
+    point_opacity: 1.0,
+    point_label_size: 14,
+    point_label_color: '#000000',
+  });
+
   // 初始化本地存储缓存
   const initLocalCache = () => {
     try {
@@ -34,6 +42,7 @@ export function usePointStyles() {
         const styles = JSON.parse(cached);
         if (styles.video) videoPointStyles.value = styles.video;
         if (styles.panorama) panoramaPointStyles.value = styles.panorama;
+        if (styles.imageSet) imageSetPointStyles.value = styles.imageSet;
       }
     } catch (error) {
       void console.warn('读取本地样式缓存失败:', error);
@@ -46,6 +55,7 @@ export function usePointStyles() {
       const styles = {
         video: videoPointStyles.value,
         panorama: panoramaPointStyles.value,
+        imageSet: imageSetPointStyles.value,
         lastUpdated: Date.now(),
       };
       localStorage.setItem('pointStyles', JSON.stringify(styles));
@@ -130,11 +140,50 @@ export function usePointStyles() {
     }
   };
 
+  // 加载图片集点位样式
+  const loadImageSetPointStyles = async (useCache = true) => {
+    try {
+      // 检查本地缓存
+      if (useCache) {
+        const cached = localStorage.getItem('pointStyles');
+        if (cached) {
+          const styles = JSON.parse(cached);
+          const cacheAge = Date.now() - (styles.lastUpdated || 0);
+          if (cacheAge < 3600000 && styles.imageSet) {
+            imageSetPointStyles.value = styles.imageSet;
+            // 同步更新全局变量
+            window.imageSetPointStyles = { ...window.imageSetPointStyles, ...styles.imageSet };
+            return styles.imageSet;
+          }
+        }
+      }
+
+      loading.value = true;
+      const response = await imageSetPointStyleApi.getStyles();
+      imageSetPointStyles.value = response.data;
+
+      // 同步更新全局变量
+      window.imageSetPointStyles = { ...window.imageSetPointStyles, ...response.data };
+
+      saveToLocalCache();
+      return response.data;
+    } catch (error) {
+      void console.error('加载图片集点位样式失败:', error);
+      return imageSetPointStyles.value;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   // 加载所有点位样式
   const loadAllPointStyles = async (useCache = true) => {
     try {
       loading.value = true;
-      await Promise.all([loadVideoPointStyles(useCache), loadPanoramaPointStyles(useCache)]);
+      await Promise.all([
+        loadVideoPointStyles(useCache),
+        loadPanoramaPointStyles(useCache),
+        loadImageSetPointStyles(useCache),
+      ]);
     } catch (error) {
       void console.error('加载点位样式失败:', error);
     } finally {
@@ -147,6 +196,8 @@ export function usePointStyles() {
     switch (type) {
       case 'video':
         return videoPointStyles.value;
+      case 'image-set':
+        return imageSetPointStyles.value;
       case 'panorama':
       default:
         return panoramaPointStyles.value;
@@ -181,15 +232,17 @@ export function usePointStyles() {
 
   // 强制同步全局样式变量
   const syncGlobalStyles = () => {
-    styleManager.syncGlobalStyles(videoPointStyles.value, panoramaPointStyles.value);
+    styleManager.syncGlobalStyles(videoPointStyles.value, panoramaPointStyles.value, imageSetPointStyles.value);
   };
 
   return {
     loading,
     videoPointStyles,
     panoramaPointStyles,
+    imageSetPointStyles,
     loadVideoPointStyles,
     loadPanoramaPointStyles,
+    loadImageSetPointStyles,
     loadAllPointStyles,
     getPointStyles,
     updateVideoPointStyles,

@@ -70,6 +70,7 @@ export function useFileManagePage() {
   const uploadDialogs = reactive({
     showUploadDialog: false,
     showVideoUploadDialog: false,
+    showImageSetUploadDialog: false,
     showKmlUploadDialog: false,
     showPanoramaBatchUploadDialog: false,
   });
@@ -109,6 +110,9 @@ export function useFileManagePage() {
         break;
       case 'video':
         uploadDialogs.showVideoUploadDialog = true;
+        break;
+      case 'image-set':
+        uploadDialogs.showImageSetUploadDialog = true;
         break;
       case 'kml':
         uploadDialogs.showKmlUploadDialog = true;
@@ -171,6 +175,7 @@ export function useFileManagePage() {
 
   const handleUploadSuccess = async () => {
     await loadFileList();
+    await loadFolders(); // 刷新文件夹计数
     window.dispatchEvent(new CustomEvent('kml-files-updated'));
   };
 

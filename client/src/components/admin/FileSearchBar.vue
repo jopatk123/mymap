@@ -6,6 +6,7 @@
           <el-option label="全部" value="all" />
           <el-option label="全景图" value="panorama" />
           <el-option label="视频点位" value="video" />
+          <el-option label="图片集" value="image-set" />
           <el-option label="KML文件" value="kml" />
         </el-select>
       </el-form-item>

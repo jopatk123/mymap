@@ -231,7 +231,7 @@ export function createVideoMarker(latlng, options = {}, styleConfig = null) {
 /**
  * 根据点位类型创建对应的标记
  * @param {Array} latlng [lat, lng]
- * @param {string} type 点位类型 'panorama' | 'video'
+ * @param {string} type 点位类型 'panorama' | 'video' | 'image-set'
  * @param {Object} options 选项
  * @param {Object} styleConfig 样式配置
  * @returns {L.Marker}
@@ -240,10 +240,101 @@ export function createPointMarker(latlng, type, options = {}, styleConfig = null
   switch (type) {
     case 'video':
       return createVideoMarker(latlng, options, styleConfig);
+    case 'image-set':
+      return createImageSetMarker(latlng, options, styleConfig);
     case 'panorama':
     default:
       return createPanoramaMarker(latlng, options, styleConfig);
   }
+}
+
+/**
+ * 创建图片集标记
+ * @param {Array} latlng [lat, lng]
+ * @param {Object} options 选项
+ * @param {Object} styleConfig 样式配置
+ * @returns {L.Marker}
+ */
+export function createImageSetMarker(latlng, options = {}, styleConfig = null) {
+  // 图片集使用紫色作为默认颜色，与全景图(蓝色)和视频(红色)区分
+  if (!window.imageSetPointStyles) {
+    window.imageSetPointStyles = {
+      point_color: '#9b59b6',
+      point_size: 10,
+      point_opacity: 1.0,
+      point_icon_type: 'marker',
+      point_label_size: 14,
+      point_label_color: '#000000',
+      cluster_enabled: false,
+    };
+  }
+
+  const styles = styleConfig ?? window.imageSetPointStyles;
+  const labelText = options.title || '图片集';
+  const labelSize = Number(styles.point_label_size ?? 14);
+
+  if (labelSize === 0) {
+    const iconHtml = getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity);
+    const iconSize = [styles.point_size * 2, styles.point_size * 3.2];
+    const iconAnchor = [styles.point_size, styles.point_size * 3.2];
+    const icon = L.divIcon({
+      className: 'image-set-marker',
+      html: iconHtml,
+      iconSize: iconSize,
+      iconAnchor: iconAnchor,
+    });
+    return L.marker(latlng, { icon, ...options });
+  }
+
+  const getLabelPosition = (size, labelSize) => {
+    return { top: `-${size * 1.2 + labelSize + 4}px`, marginBottom: '2px' };
+  };
+
+  const labelPosition = getLabelPosition(styles.point_size, labelSize);
+  const iconHtml = `
+    <div style="position: relative; width: 100%; height: 100%; background: transparent !important; border: none !important;">
+      <div style="
+        position: absolute;
+        left: 50%;
+        top: ${labelPosition.top};
+        transform: translateX(-50%);
+        margin-bottom: ${labelPosition.marginBottom};
+        padding: 2px 5px;
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        white-space: nowrap;
+        font-weight: 500;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        font-size: ${labelSize}px;
+        color: ${styles.point_label_color};
+        writing-mode: horizontal-tb !important;
+        text-orientation: mixed !important;
+        display: inline-block !important;
+        font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+        z-index: 1000;
+      ">
+        ${labelText}
+      </div>
+      ${getIconShapeHtml(styles.point_size, styles.point_color, styles.point_opacity)}
+    </div>
+  `;
+
+  const iconHeight = styles.point_size * 3.2;
+  const totalHeight = iconHeight + labelSize + 8;
+  const iconSize = [styles.point_size * 2, totalHeight];
+
+  const anchorY = iconHeight + labelSize + 4;
+  const iconAnchor = [styles.point_size, anchorY];
+
+  const icon = L.divIcon({
+    className: 'image-set-marker',
+    html: iconHtml,
+    iconSize: iconSize,
+    iconAnchor: iconAnchor,
+  });
+
+  return L.marker(latlng, { icon, ...options });
 }
 
 /**

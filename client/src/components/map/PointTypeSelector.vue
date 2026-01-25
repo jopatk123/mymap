@@ -30,7 +30,8 @@
 </template>
 
 <script setup>
-import { VideoPlay, Camera } from '@element-plus/icons-vue';
+import { computed } from 'vue';
+import { VideoPlay, Camera, PictureFilled } from '@element-plus/icons-vue';
 import StylePreview from './styles/StylePreview.vue';
 
 const props = defineProps({
@@ -46,11 +47,15 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  imageSetStyles: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const emit = defineEmits(['update:selectedType']);
 
-const pointTypes = [
+const pointTypes = computed(() => [
   {
     value: 'video',
     name: '视频点位',
@@ -67,7 +72,15 @@ const pointTypes = [
     iconClass: 'panorama-icon',
     previewStyles: props.panoramaStyles,
   },
-];
+  {
+    value: 'image-set',
+    name: '图片集点位',
+    description: '设置图片集点位的图标和标签样式',
+    icon: PictureFilled,
+    iconClass: 'image-set-icon',
+    previewStyles: props.imageSetStyles,
+  },
+]);
 
 const selectType = (type) => {
   emit('update:selectedType', type);
@@ -130,6 +143,11 @@ const selectType = (type) => {
 
         &.panorama-icon {
           background-color: #2ed573;
+          color: white;
+        }
+
+        &.image-set-icon {
+          background-color: #9b59b6;
           color: white;
         }
       }

@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { videoPointStyleApi, panoramaPointStyleApi } from '@/api/point-style.js';
+import { videoPointStyleApi, panoramaPointStyleApi, imageSetPointStyleApi } from '@/api/point-style.js';
 import { notifyPointStyleUpdate, notifyMarkersRefresh } from '@/utils/style-events.js';
 import { convertFromApiFormat, convertToApiFormat } from '@/utils/styleConverters.js';
 
@@ -10,19 +10,22 @@ export function usePointStyle() {
   // 样式配置
   const videoStyles = ref({});
   const panoramaStyles = ref({});
+  const imageSetStyles = ref({});
   const currentStyles = reactive({});
   const originalStyles = ref({});
 
   // 加载所有样式配置
   const loadAllStyles = async () => {
     try {
-      const [videoResponse, panoramaResponse] = await Promise.all([
+      const [videoResponse, panoramaResponse, imageSetResponse] = await Promise.all([
         videoPointStyleApi.getStyles(),
         panoramaPointStyleApi.getStyles(),
+        imageSetPointStyleApi.getStyles(),
       ]);
 
       videoStyles.value = convertFromApiFormat(videoResponse.data);
       panoramaStyles.value = convertFromApiFormat(panoramaResponse.data);
+      imageSetStyles.value = convertFromApiFormat(imageSetResponse.data);
     } catch (error) {
       ElMessage.error('加载样式配置失败');
     }
@@ -30,7 +33,19 @@ export function usePointStyle() {
 
   // 设置当前样式
   const setCurrentStyles = (type) => {
-    const styles = type === 'video' ? videoStyles.value : panoramaStyles.value;
+    let styles;
+    switch (type) {
+      case 'video':
+        styles = videoStyles.value;
+        break;
+      case 'image-set':
+        styles = imageSetStyles.value;
+        break;
+      case 'panorama':
+      default:
+        styles = panoramaStyles.value;
+        break;
+    }
 
     // 清空当前样式对象，然后重新赋值
     Object.keys(currentStyles).forEach((key) => delete currentStyles[key]);
@@ -64,6 +79,13 @@ export function usePointStyle() {
 
         updateLocalCache('video', response.data);
         notifyPointStyleUpdate('video', response.data);
+      } else if (type === 'image-set') {
+        const response = await imageSetPointStyleApi.updateStyles(apiConfig);
+        imageSetStyles.value = { ...currentStyles };
+        window.imageSetPointStyles = response.data;
+
+        updateLocalCache('imageSet', response.data);
+        notifyPointStyleUpdate('image-set', response.data);
       } else {
         const response = await panoramaPointStyleApi.updateStyles(apiConfig);
         panoramaStyles.value = { ...currentStyles };
@@ -116,6 +138,15 @@ export function usePointStyle() {
 
           updateLocalCache('video', response.data);
           notifyPointStyleUpdate('video', response.data);
+        } else if (type === 'image-set') {
+          const response = await imageSetPointStyleApi.resetStyles();
+          imageSetStyles.value = convertFromApiFormat(response.data);
+          Object.keys(currentStyles).forEach((key) => delete currentStyles[key]);
+          Object.assign(currentStyles, imageSetStyles.value);
+          window.imageSetPointStyles = response.data;
+
+          updateLocalCache('imageSet', response.data);
+          notifyPointStyleUpdate('image-set', response.data);
         } else {
           const response = await panoramaPointStyleApi.resetStyles();
           panoramaStyles.value = convertFromApiFormat(response.data);
@@ -153,6 +184,8 @@ export function usePointStyle() {
       // 恢复预览样式
       if (type === 'video') {
         videoStyles.value = { ...originalStyles.value };
+      } else if (type === 'image-set') {
+        imageSetStyles.value = { ...originalStyles.value };
       } else if (type === 'panorama') {
         panoramaStyles.value = { ...originalStyles.value };
       }
@@ -184,6 +217,7 @@ export function usePointStyle() {
     saving,
     videoStyles,
     panoramaStyles,
+    imageSetStyles,
     currentStyles,
 
     // 方法

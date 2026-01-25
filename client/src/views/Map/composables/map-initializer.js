@@ -4,6 +4,7 @@ export function useMapInitializer(
   loadAllPointStyles,
   videoPointStyles,
   panoramaPointStyles,
+  imageSetPointStyles,
   initializePage,
   loadInitialData,
   handleFolderVisibilityChanged,
@@ -28,6 +29,14 @@ export function useMapInitializer(
       point_opacity: 1.0,
       point_icon_type: 'marker',
       point_label_size: 12,
+      point_label_color: '#000000',
+    };
+    window.imageSetPointStyles = imageSetPointStyles.value || {
+      point_color: '#9b59b6',
+      point_size: 10,
+      point_opacity: 1.0,
+      point_icon_type: 'marker',
+      point_label_size: 14,
       point_label_color: '#000000',
     };
   };

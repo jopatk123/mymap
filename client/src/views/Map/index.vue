@@ -85,6 +85,13 @@
       @reset-view="resetView"
     />
 
+    <!-- 图片集查看器 -->
+    <ImageSetViewer
+      v-model:visible="showImageSetViewer"
+      :image-set="selectedImageSet"
+      @close="handleImageSetViewerClose"
+    />
+
     <!-- KML样式设置对话框 -->
     <KmlStyleDialog v-model="showKmlSettings" @styles-updated="handleKmlStylesUpdated" />
 
@@ -113,6 +120,7 @@ import DrawingToolbar from '@/components/map/drawing-toolbar/DrawingToolbar.vue'
 import MapDialogs from './components/MapDialogs.vue';
 import VideoModal from '@/components/map/VideoModal.vue';
 import PanoramaViewer from '@/components/map/panorama/PanoramaViewer.vue';
+import ImageSetViewer from '@/components/common/ImageSetViewer.vue';
 import KmlStyleDialog from '@/components/map/KmlStyleDialog.vue';
 import PointStyleDialog from '@/components/map/PointStyleDialog.vue';
 
@@ -135,8 +143,10 @@ const {
   searchParams,
   selectedPanorama,
   selectedVideo,
+  selectedImageSet,
   showPanoramaModal,
   showVideoModal,
+  showImageSetViewer,
   showUploadDialog,
   showBatchUploadDialog,
 
@@ -170,7 +180,8 @@ void _isUpdating;
 void updateAllMarkerStyles;
 
 // 点位样式管理
-const { loadAllPointStyles, videoPointStyles, panoramaPointStyles } = usePointStyles();
+const { loadAllPointStyles, videoPointStyles, panoramaPointStyles, imageSetPointStyles } =
+  usePointStyles();
 
 // 全景图查看器相关方法
 const { openViewer, closeViewer, toggleAutoRotate, toggleFullscreen, resetView } =
@@ -198,7 +209,9 @@ const {
   selectedVideo,
   showVideoModal,
   showPanoramaViewer,
-  openViewer
+  openViewer,
+  selectedImageSet,
+  showImageSetViewer
 );
 
 // 事件处理器
@@ -217,6 +230,7 @@ const { cleanup } = useMapInitializer(
   loadAllPointStyles,
   videoPointStyles,
   panoramaPointStyles,
+  imageSetPointStyles,
   initializePage,
   loadInitialData,
   handleFolderVisibilityChanged,
@@ -233,6 +247,12 @@ window.mapMarkerClickHandler = handlePanoramaClick;
 const handleVideoModalClose = () => {
   selectedVideo.value = null;
   showVideoModal.value = false;
+};
+
+// 图片集查看器关闭处理
+const handleImageSetViewerClose = () => {
+  selectedImageSet.value = null;
+  showImageSetViewer.value = false;
 };
 
 // 关闭全景图查看器

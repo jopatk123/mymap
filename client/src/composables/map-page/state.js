@@ -13,8 +13,10 @@ export function createMapPageState({ panoramaStore, appStore }) {
 
   const selectedPanorama = ref(null);
   const selectedVideo = ref(null);
+  const selectedImageSet = ref(null);
   const showPanoramaModal = ref(false);
   const showVideoModal = ref(false);
+  const showImageSetViewer = ref(false);
   const showUploadDialog = ref(false);
   const showBatchUploadDialog = ref(false);
   const showPanoramaViewer = ref(false);
@@ -36,8 +38,10 @@ export function createMapPageState({ panoramaStore, appStore }) {
     searchParams,
     selectedPanorama,
     selectedVideo,
+    selectedImageSet,
     showPanoramaModal,
     showVideoModal,
+    showImageSetViewer,
     showUploadDialog,
     showBatchUploadDialog,
     showPanoramaViewer,

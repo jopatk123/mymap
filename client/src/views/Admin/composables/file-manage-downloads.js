@@ -4,6 +4,7 @@ const TYPE_LABEL_MAP = {
   panorama: '全景图',
   video: '视频',
   kml: 'KML文件',
+  'image-set': '图片集',
 };
 
 const CSV_HEADERS = ['序号', '类型', '标题', '描述', '文件夹', '经度', '纬度'];
@@ -33,6 +34,9 @@ export function resolveDownloadUrl(fileInput) {
       return file.video_url || null;
     case 'kml':
       return file.file_url || file.url || file.image_url || null;
+    case 'image-set':
+      // 图片集下载封面图
+      return file.cover_url || file.coverUrl || file.thumbnail_url || file.thumbnailUrl || null;
     default:
       return file.url || file.image_url || null;
   }
@@ -48,6 +52,8 @@ export function inferFileExtension(fileInput) {
       return file.file_type?.split?.('/')?.[1] || 'mp4';
     case 'kml':
       return 'kml';
+    case 'image-set':
+      return 'jpg';
     default:
       return '';
   }

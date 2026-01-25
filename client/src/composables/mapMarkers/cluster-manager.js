@@ -9,11 +9,31 @@ export function createClusterManager(map) {
   let onZoomStart = null;
   let onZoomEnd = null;
 
-  const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
+  const getPaneNameByType = (type) => {
+    switch (type) {
+      case 'video':
+        return 'videoPane';
+      case 'image-set':
+        return 'imageSetPane';
+      case 'panorama':
+      default:
+        return 'panoramaPane';
+    }
+  };
 
   const ensureClusterGroup = (type) => {
-    const styles =
-      type === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
+    const getStyles = (t) => {
+      switch (t) {
+        case 'video':
+          return window.videoPointStyles || {};
+        case 'image-set':
+          return window.imageSetPointStyles || {};
+        case 'panorama':
+        default:
+          return window.panoramaPointStyles || {};
+      }
+    };
+    const styles = getStyles(type);
     const color = styles.cluster_color || styles.point_color || '#3388ff';
     const iconCreateFunction = (cluster) => createClusterIcon(color, cluster.getChildCount());
 

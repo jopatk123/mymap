@@ -179,6 +179,87 @@ const createVideoPointsTable = async (database) => {
   );
 };
 
+/**
+ * 创建图片集表
+ * image_sets: 图片集主表，存储图片集的基本信息和位置
+ */
+const createImageSetsTable = async (database) => {
+  const sql = `
+      CREATE TABLE IF NOT EXISTS image_sets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        cover_url TEXT,
+        thumbnail_url TEXT,
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        gcj02_lat REAL,
+        gcj02_lng REAL,
+        image_count INTEGER DEFAULT 0,
+        total_size INTEGER DEFAULT 0,
+        folder_id INTEGER DEFAULT NULL,
+        is_visible INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        owner_id INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+      )
+    `;
+
+  await database.exec(sql);
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_location ON image_sets(latitude, longitude)'
+  );
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_gcj02_location ON image_sets(gcj02_lat, gcj02_lng)'
+  );
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_folder_id ON image_sets(folder_id)'
+  );
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_is_visible ON image_sets(is_visible)'
+  );
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_created_at ON image_sets(created_at)'
+  );
+  await database.exec('CREATE INDEX IF NOT EXISTS idx_image_sets_title ON image_sets(title)');
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_sets_sort_order ON image_sets(sort_order)'
+  );
+};
+
+/**
+ * 创建图片集图片表
+ * image_set_images: 存储图片集中的每张图片
+ */
+const createImageSetImagesTable = async (database) => {
+  const sql = `
+      CREATE TABLE IF NOT EXISTS image_set_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_set_id INTEGER NOT NULL,
+        image_url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        file_name TEXT,
+        file_size INTEGER,
+        file_type TEXT,
+        width INTEGER,
+        height INTEGER,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (image_set_id) REFERENCES image_sets(id) ON DELETE CASCADE
+      )
+    `;
+
+  await database.exec(sql);
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_set_images_set_id ON image_set_images(image_set_id)'
+  );
+  await database.exec(
+    'CREATE INDEX IF NOT EXISTS idx_image_set_images_sort_order ON image_set_images(sort_order)'
+  );
+};
+
 const createUsersTable = async (database) => {
   const sql = `
       CREATE TABLE IF NOT EXISTS users (
@@ -243,6 +324,8 @@ const initTables = async () => {
     await createKmlFilesTable(database);
     await createKmlPointsTable(database);
     await createVideoPointsTable(database);
+    await createImageSetsTable(database);
+    await createImageSetImagesTable(database);
     await createUsersTable(database);
     await createSessionsTable(database);
 

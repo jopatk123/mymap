@@ -98,6 +98,9 @@ const uploaders = {
   kml: createUploader(createStorage('kml', 'kml'), kmlFileFilter),
   // 底图KML上传（单独目录）
   basemapKml: createUploader(createStorage('kml-basemap', 'kmlbm'), kmlFileFilter),
+
+  // 图片集上传
+  imageSet: createUploader(createStorage('image-sets', 'imgset'), fileFilter, { files: 50 }),
 };
 
 module.exports = {

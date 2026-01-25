@@ -3,6 +3,8 @@ const {
   handleBatchUpload,
   handleKmlUpload,
   handleVideoUpload,
+  handleImageSetUpload,
+  handleImageSetAddImages,
 } = require('./upload/handlers');
 const { generateThumbnail, deleteFile, getFileInfo } = require('./upload/utils');
 
@@ -11,6 +13,8 @@ module.exports = {
   handleBatchUpload,
   handleKmlUpload,
   handleVideoUpload,
+  handleImageSetUpload,
+  handleImageSetAddImages,
   generateThumbnail,
   deleteFile,
   getFileInfo,

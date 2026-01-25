@@ -3,6 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { deletePanorama, batchMovePanoramasToFolder } from '@/api/panorama.js';
 import { videoApi } from '@/api/video.js';
 import { kmlApi } from '@/api/kml.js';
+import { imageSetApi } from '@/api/image-set.js';
 
 export function useFileOperations() {
   // 当前操作的文件
@@ -60,6 +61,10 @@ export function useFileOperations() {
           // debug: 调用KML删除API (suppressed)
           req = kmlApi.deleteKmlFile(file.id);
           break;
+        case 'image-set':
+          // debug: 调用图片集删除API (suppressed)
+          req = imageSetApi.deleteImageSet(file.id);
+          break;
         default:
           throw new Error('未知文件类型');
       }
@@ -101,6 +106,9 @@ export function useFileOperations() {
         .filter((row) => row.fileType === 'video')
         .map((row) => row.id);
       const kmls = movingFiles.value.filter((row) => row.fileType === 'kml').map((row) => row.id);
+      const imageSets = movingFiles.value
+        .filter((row) => row.fileType === 'image-set')
+        .map((row) => row.id);
 
       // 如果moveToFolderId是0，则表示根目录，应设为null
       const targetFolderId = moveToFolderId.value === 0 ? null : moveToFolderId.value;
@@ -115,6 +123,9 @@ export function useFileOperations() {
       }
       if (kmls.length > 0) {
         movePromises.push(kmlApi.batchMoveKmlFilesToFolder(kmls, targetFolderId));
+      }
+      if (imageSets.length > 0) {
+        movePromises.push(imageSetApi.batchMoveToFolder(imageSets, targetFolderId));
       }
 
       if (movePromises.length === 0) {

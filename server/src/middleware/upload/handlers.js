@@ -318,10 +318,158 @@ const handleBatchUpload = (req, res, next) => {
   });
 };
 
+/**
+ * 处理图片集上传
+ */
+const handleImageSetUpload = (req, res, next) => {
+  uploaders.imageSet.array('files', 50)(req, res, async (err) => {
+    if (err) {
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('图片集文件上传错误:', err);
+      } catch (_) {}
+
+      if (err instanceof multer.MulterError) {
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return res.status(400).json(errorResponse('文件大小超出限制'));
+          case 'LIMIT_FILE_COUNT':
+            return res.status(400).json(errorResponse('文件数量超出限制（最多50张）'));
+          default:
+            return res.status(400).json(errorResponse('文件上传失败'));
+        }
+      }
+
+      return res.status(400).json(errorResponse(err.message));
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json(errorResponse('请选择要上传的图片文件'));
+    }
+
+    try {
+      const thumbnailDir = path.join(uploadDir, 'thumbnails');
+
+      // 处理每个上传的文件
+      const uploadedFiles = await Promise.all(
+        req.files.map(async (file) => {
+          // 生成缩略图
+          const thumbnailFilename = `thumb-${file.filename}`;
+          const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+
+          const thumbnailGenerated = await generateThumbnail(file.path, thumbnailPath);
+
+          return {
+            originalName: file.originalname,
+            filename: file.filename,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            imageUrl: buildFileUrl(req, `uploads/image-sets/${file.filename}`),
+            thumbnailUrl: thumbnailGenerated
+              ? buildFileUrl(req, `uploads/thumbnails/${thumbnailFilename}`)
+              : null,
+          };
+        })
+      );
+
+      req.uploadedFiles = uploadedFiles;
+      next();
+    } catch (error) {
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理图片集上传文件失败:', error);
+      } catch (_) {}
+
+      // 清理已上传的文件
+      if (req.files) {
+        await cleanupFiles(req.files.map((file) => file.path));
+      }
+
+      return res.status(500).json(errorResponse('处理图片集上传文件失败'));
+    }
+  });
+};
+
+/**
+ * 处理添加图片到图片集
+ */
+const handleImageSetAddImages = (req, res, next) => {
+  uploaders.imageSet.array('files', 50)(req, res, async (err) => {
+    if (err) {
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('添加图片文件上传错误:', err);
+      } catch (_) {}
+
+      if (err instanceof multer.MulterError) {
+        switch (err.code) {
+          case 'LIMIT_FILE_SIZE':
+            return res.status(400).json(errorResponse('文件大小超出限制'));
+          case 'LIMIT_FILE_COUNT':
+            return res.status(400).json(errorResponse('文件数量超出限制（最多50张）'));
+          default:
+            return res.status(400).json(errorResponse('文件上传失败'));
+        }
+      }
+
+      return res.status(400).json(errorResponse(err.message));
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json(errorResponse('请选择要上传的图片文件'));
+    }
+
+    try {
+      const thumbnailDir = path.join(uploadDir, 'thumbnails');
+
+      // 处理每个上传的文件
+      const uploadedFiles = await Promise.all(
+        req.files.map(async (file) => {
+          // 生成缩略图
+          const thumbnailFilename = `thumb-${file.filename}`;
+          const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+
+          const thumbnailGenerated = await generateThumbnail(file.path, thumbnailPath);
+
+          return {
+            originalName: file.originalname,
+            filename: file.filename,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            imageUrl: buildFileUrl(req, `uploads/image-sets/${file.filename}`),
+            thumbnailUrl: thumbnailGenerated
+              ? buildFileUrl(req, `uploads/thumbnails/${thumbnailFilename}`)
+              : null,
+          };
+        })
+      );
+
+      req.uploadedFiles = uploadedFiles;
+      next();
+    } catch (error) {
+      try {
+        const Logger = require('../../utils/logger');
+        Logger.error('处理添加图片文件失败:', error);
+      } catch (_) {}
+
+      // 清理已上传的文件
+      if (req.files) {
+        await cleanupFiles(req.files.map((file) => file.path));
+      }
+
+      return res.status(500).json(errorResponse('处理添加图片文件失败'));
+    }
+  });
+};
+
 module.exports = {
   handleSingleUpload,
   handleBatchUpload,
   handleKmlUpload,
   handleBasemapKmlUpload,
   handleVideoUpload,
+  handleImageSetUpload,
+  handleImageSetAddImages,
 };

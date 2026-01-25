@@ -1,5 +1,6 @@
 const PanoramaModel = require('../models/panorama.model');
 const VideoPointModel = require('../models/video-point.model');
+const ImageSetModel = require('../models/image-set.model');
 const KmlFileModel = require('../models/kml-file.model');
 const FolderModel = require('../models/folder.model');
 const Logger = require('../utils/logger');
@@ -39,9 +40,10 @@ class PointsController {
       }
 
       // 并行获取全景图和视频点位（不包括KML文件）
-      const [panoramaResult, videoResult] = await Promise.all([
+      const [panoramaResult, videoResult, imageSetResult] = await Promise.all([
         PanoramaModel.findAll(searchParams),
         VideoPointModel.findAll(searchParams),
+        ImageSetModel.findAll(searchParams),
       ]);
 
       // 合并数据并添加类型标识
@@ -68,8 +70,21 @@ class PointsController {
         thumbnailUrl: item.thumbnail_url,
       }));
 
+      const imageSets = imageSetResult.data.map((item) => ({
+        ...item,
+        type: 'image-set',
+        lat: item.latitude,
+        lng: item.longitude,
+        gcj02Lat: item.gcj02_lat,
+        gcj02Lng: item.gcj02_lng,
+        url: item.cover_url,
+        coverUrl: item.cover_url,
+        thumbnailUrl: item.thumbnail_url,
+        imageCount: item.image_count,
+      }));
+
       // 合并并排序（不包括KML文件）
-      const allPoints = [...panoramas, ...videos].sort(
+      const allPoints = [...panoramas, ...videos, ...imageSets].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
@@ -128,9 +143,10 @@ class PointsController {
       }
 
       // 并行获取全景图和视频点位
-      const [panoramas, videos] = await Promise.all([
+      const [panoramas, videos, imageSets] = await Promise.all([
         PanoramaModel.findByBounds(bounds),
         VideoPointModel.findByBounds(bounds),
+        ImageSetModel.findByBounds(bounds),
       ]);
 
       // 添加类型标识
@@ -157,7 +173,20 @@ class PointsController {
         thumbnailUrl: item.thumbnail_url,
       }));
 
-      const allPoints = [...panoramaPoints, ...videoPoints];
+      const imageSetPoints = imageSets.map((item) => ({
+        ...item,
+        type: 'image-set',
+        lat: item.latitude,
+        lng: item.longitude,
+        gcj02Lat: item.gcj02_lat,
+        gcj02Lng: item.gcj02_lng,
+        url: item.cover_url,
+        coverUrl: item.cover_url,
+        thumbnailUrl: item.thumbnail_url,
+        imageCount: item.image_count,
+      }));
+
+      const allPoints = [...panoramaPoints, ...videoPoints, ...imageSetPoints];
 
       res.json({
         success: true,
@@ -219,17 +248,19 @@ class PointsController {
   static async getPointsStats(req, res) {
     try {
       const ownerId = req.user?.id;
-      const [panoramaStats, videoStats] = await Promise.all([
+      const [panoramaStats, videoStats, imageSetStats] = await Promise.all([
         PanoramaModel.getStats(ownerId),
         VideoPointModel.getStats(ownerId),
+        ImageSetModel.getStats(ownerId),
       ]);
 
       const stats = {
-        total: panoramaStats.total + videoStats.total,
-        visible: panoramaStats.visible + videoStats.visible,
-        hidden: panoramaStats.hidden + videoStats.hidden,
+        total: panoramaStats.total + videoStats.total + imageSetStats.total,
+        visible: panoramaStats.visible + videoStats.visible + (imageSetStats.visible || 0),
+        hidden: panoramaStats.hidden + videoStats.hidden + (imageSetStats.hidden || 0),
         panoramas: panoramaStats,
         videos: videoStats,
+        imageSets: imageSetStats,
       };
 
       res.json({

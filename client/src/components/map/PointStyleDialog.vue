@@ -13,13 +13,14 @@
         v-model:selected-type="selectedPointType"
         :video-styles="videoStyles"
         :panorama-styles="panoramaStyles"
+        :image-set-styles="imageSetStyles"
       />
 
       <!-- 右侧：样式编辑器 -->
       <div class="style-editor-panel">
         <div v-if="selectedPointType" class="editor-content">
           <div class="editor-header">
-            <h4>{{ selectedPointType === 'video' ? '视频点位' : '全景图点位' }}样式设置</h4>
+            <h4>{{ getEditorTitle(selectedPointType) }}样式设置</h4>
           </div>
 
           <PointStyleEditor
@@ -83,6 +84,7 @@ const {
   saving,
   videoStyles,
   panoramaStyles,
+  imageSetStyles,
   currentStyles,
   loadAllStyles,
   setCurrentStyles,
@@ -90,6 +92,20 @@ const {
   resetStyles,
   restoreOriginalStyles,
 } = usePointStyle();
+
+// 获取编辑器标题
+const getEditorTitle = (type) => {
+  switch (type) {
+    case 'video':
+      return '视频点位';
+    case 'panorama':
+      return '全景图点位';
+    case 'image-set':
+      return '图片集点位';
+    default:
+      return '点位';
+  }
+};
 
 // 监听对话框显示状态
 watch(visible, async (newVisible) => {
@@ -133,6 +149,8 @@ const handleStyleChange = () => {
     videoStyles.value = { ...currentStyles };
   } else if (selectedPointType.value === 'panorama') {
     panoramaStyles.value = { ...currentStyles };
+  } else if (selectedPointType.value === 'image-set') {
+    imageSetStyles.value = { ...currentStyles };
   }
 };
 

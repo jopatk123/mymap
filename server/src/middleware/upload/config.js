@@ -9,6 +9,7 @@ const ensureUploadDir = async () => {
   const thumbnailDir = path.join(uploadDir, 'thumbnails');
   const kmlDir = path.join(uploadDir, 'kml');
   const videoDir = path.join(uploadDir, 'videos');
+  const imageSetDir = path.join(uploadDir, 'image-sets');
 
   try {
     await fs.mkdir(uploadDir, { recursive: true });
@@ -16,6 +17,7 @@ const ensureUploadDir = async () => {
     await fs.mkdir(thumbnailDir, { recursive: true });
     await fs.mkdir(kmlDir, { recursive: true });
     await fs.mkdir(videoDir, { recursive: true });
+    await fs.mkdir(imageSetDir, { recursive: true });
   } catch (error) {
     try {
       const Logger = require('../../utils/logger');

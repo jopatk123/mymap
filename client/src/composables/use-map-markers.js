@@ -22,7 +22,17 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
   // mark intentionally unused helper as referenced for linter
   void vpRemoveMarkersBatch;
 
-  const getPaneNameByType = (type) => (type === 'video' ? 'videoPane' : 'panoramaPane');
+  const getPaneNameByType = (type) => {
+    switch (type) {
+      case 'video':
+        return 'videoPane';
+      case 'image-set':
+        return 'imageSetPane';
+      case 'panorama':
+      default:
+        return 'panoramaPane';
+    }
+  };
 
   const ensureClusterGroup = (type) => clusterManager.ensureClusterGroup(type);
 
@@ -69,7 +79,7 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
       [displayLat, displayLng],
       pointType,
       {
-        title: point.title || (pointType === 'video' ? '视频点位' : '全景图'),
+        title: point.title || (pointType === 'video' ? '视频点位' : pointType === 'image-set' ? '图片集' : '全景图'),
         updateWhenZoom: false,
         pane: paneName,
       },
@@ -118,8 +128,17 @@ export function useMapMarkers(map, markers, onMarkerClick, markerClickDisabled) 
       }
     } catch (err) {}
 
-    const styles =
-      pointType === 'video' ? window.videoPointStyles || {} : window.panoramaPointStyles || {};
+    const styles = (() => {
+      switch (pointType) {
+        case 'video':
+          return window.videoPointStyles || {};
+        case 'image-set':
+          return window.imageSetPointStyles || {};
+        case 'panorama':
+        default:
+          return window.panoramaPointStyles || {};
+      }
+    })();
     const useCluster = Boolean(styles.cluster_enabled);
     if (useCluster) {
       const group = ensureClusterGroup(pointType);

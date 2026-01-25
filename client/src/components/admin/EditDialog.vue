@@ -51,6 +51,7 @@ import { ElMessage } from 'element-plus';
 import { updatePanorama, getPanoramaById } from '@/api/panorama.js';
 import { videoApi } from '@/api/video.js';
 import { kmlApi } from '@/api/kml.js';
+import { imageSetApi } from '@/api/image-set.js';
 
 const props = defineProps({
   modelValue: {
@@ -130,11 +131,13 @@ const fileType = computed(() => props.file?.fileType || props.file?.type || '');
 const isPanorama = computed(() => fileType.value === 'panorama');
 const isVideo = computed(() => fileType.value === 'video');
 const isKml = computed(() => fileType.value === 'kml');
-const showCoordinate = computed(() => isPanorama.value || isVideo.value);
+const isImageSet = computed(() => fileType.value === 'image-set');
+const showCoordinate = computed(() => isPanorama.value || isVideo.value || isImageSet.value);
 const dialogTitle = computed(() => {
   if (isPanorama.value) return '编辑全景图';
   if (isVideo.value) return '编辑视频点位';
   if (isKml.value) return '编辑KML文件';
+  if (isImageSet.value) return '编辑图片集';
   return '编辑文件';
 });
 
@@ -208,6 +211,13 @@ const handleSubmit = async () => {
       if (form.isBasemap) payload.isBasemap = true;
       else payload.isBasemap = false;
       await kmlApi.updateKmlFile(props.file.id, payload);
+    } else if (isImageSet.value) {
+      await imageSetApi.updateImageSet(props.file.id, {
+        title: form.title,
+        description: form.description,
+        latitude: parseFloat(form.lat),
+        longitude: parseFloat(form.lng),
+      });
     } else {
       throw new Error('未知文件类型，无法更新');
     }

@@ -83,6 +83,7 @@ const props = defineProps({
   additionalRules: { type: Object, default: () => ({}) },
   fileValidator: { type: Function, default: null },
   submitHandler: { type: Function, required: true },
+  skipFileCheck: { type: Boolean, default: false },
   externalCanSubmit: { type: Boolean, default: true },
   showBatchButton: { type: Boolean, default: false },
 });
@@ -144,6 +145,10 @@ const coordinateRules = computed(() => {
 
 // 添加最终的canSubmit逻辑
 const effectiveCanSubmit = computed(() => {
+  // 如果跳过文件检查，只检查 externalCanSubmit 和上传状态
+  if (props.skipFileCheck) {
+    return props.externalCanSubmit && !uploading.value && !processing.value;
+  }
   const baseCanSubmit = canSubmit.value;
   const externalCanSubmit = props.externalCanSubmit;
   const result = baseCanSubmit && externalCanSubmit;
