@@ -58,6 +58,15 @@
         >
           {{ kmlLayersVisible ? '隐藏图层' : '显示KML图层' }}
         </el-button>
+
+        <!-- 文件管理按钮 -->
+        <el-button
+          class="btn-file-manage"
+          title="打开文件管理页面"
+          @click.stop="openFileManage"
+        >
+          文件管理
+        </el-button>
       </div>
     </div>
   </div>
@@ -68,6 +77,7 @@ import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
 import ExportControls from './ExportControls.vue';
 import { ArrowDown } from '@element-plus/icons-vue';
+
 // handler for dropdown commands
 const emit = defineEmits([
   'toggle-panorama-list',
@@ -84,6 +94,11 @@ function handlePointSettingsCommand(command) {
   } else if (command === 'point') {
     emit('show-point-settings');
   }
+}
+
+// 打开文件管理页面
+function openFileManage() {
+  window.open('/admin/files', '_blank');
 }
 
 defineProps({
@@ -138,6 +153,14 @@ defineProps({
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     overflow: hidden; /* 确保圆角效果 */
+    
+    /* 防止移动端缩放和移动 */
+    touch-action: manipulation;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    user-select: none;
+    -webkit-user-select: none;
 
     .controls-group {
       display: flex;
@@ -146,6 +169,11 @@ defineProps({
       flex-wrap: nowrap; /* 桌面端不换行 */
       height: 36px; /* 减小高度，更紧凑 */
       pointer-events: auto !important;
+      
+      /* 防止移动端缩放 */
+      touch-action: manipulation;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
 
     /* 移动设备修复：避免 toolbar 因右侧固定偏移或 max-width 被裁剪 */
@@ -156,6 +184,11 @@ defineProps({
         left: 12px !important;
         max-width: calc(100vw - 24px) !important;
         overflow: visible !important; /* 允许内部横向滚动或换行显示 */
+        
+        /* 强制固定定位，防止随地图缩放移动 */
+        position: fixed !important;
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
       }
 
       .controls-group {
@@ -171,6 +204,7 @@ defineProps({
       /* 保证子按钮在横向滚动时仍然是紧凑的 */
       .controls-group ::v-deep .el-button {
         white-space: nowrap;
+        touch-action: manipulation;
       }
     }
 
@@ -383,6 +417,14 @@ defineProps({
       border-color: #e0e0e0 !important;
       color: #424242 !important;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 文件管理按钮（紫色） */
+    .btn-file-manage {
+      background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+      border-color: #9c27b0 !important;
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(156, 39, 176, 0.3);
     }
 
     .btn-toggle-contours {

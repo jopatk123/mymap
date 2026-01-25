@@ -327,5 +327,10 @@ const handleLocateAddress = ({ lat, lng, tip }) => {
   width: 100%;
   height: 100vh;
   display: flex;
+  
+  /* 防止移动端整体页面被缩放 */
+  touch-action: pan-x pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 </style>
