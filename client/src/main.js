@@ -61,11 +61,18 @@ app.use(ElementPlus, {
 });
 
 const authStore = useAuthStore(pinia);
-authStore
-  .loadUser()
-  .catch(() => {
-    // 未登录时忽略错误
-  })
-  .finally(() => {
-    app.mount('#app');
-  });
+const isSuperAdminPage =
+  typeof window !== 'undefined' && window.location.pathname.startsWith('/super-admin');
+
+if (isSuperAdminPage) {
+  app.mount('#app');
+} else {
+  authStore
+    .loadUser()
+    .catch(() => {
+      // 未登录时忽略错误
+    })
+    .finally(() => {
+      app.mount('#app');
+    });
+}

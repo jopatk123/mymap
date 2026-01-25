@@ -73,9 +73,12 @@ api.interceptors.response.use(
 
       // 处理不同的错误状态
       switch (status) {
-        case 401:
+        case 401: {
           ElMessage.error('未授权，请重新登录');
-          if (typeof window !== 'undefined') {
+          const isSuperAdminRequest = requestUrl.includes('/super-admin');
+          const isSuperAdminPage =
+            typeof window !== 'undefined' && window.location.pathname.startsWith('/super-admin');
+          if (!isSuperAdminRequest && !isSuperAdminPage && typeof window !== 'undefined') {
             const current = window.location.pathname + window.location.search;
             const redirect = encodeURIComponent(current);
             if (!window.location.pathname.startsWith('/login')) {
@@ -83,6 +86,7 @@ api.interceptors.response.use(
             }
           }
           break;
+        }
         case 403:
           ElMessage.error('权限不足');
           break;

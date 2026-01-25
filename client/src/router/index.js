@@ -81,6 +81,24 @@ const routes = [
     },
   },
   {
+    path: '/super-admin/login',
+    name: 'SuperAdminLogin',
+    component: () => import('@/views/SuperAdmin/LoginView.vue'),
+    meta: {
+      title: '超级管理员登录',
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/super-admin/users',
+    name: 'SuperAdminUsers',
+    component: () => import('@/views/SuperAdmin/UserManagement.vue'),
+    meta: {
+      title: '用户管理',
+      requiresAuth: false,
+    },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue'),
@@ -110,25 +128,30 @@ router.beforeEach(async (to, from, next) => {
     document.title = to.meta.title;
   }
 
+  const isSuperAdminRoute = to.path.startsWith('/super-admin');
   const authStore = useAuthStore(pinia);
 
-  if (!authStore.initialized) {
-    try {
-      await authStore.loadUser();
-    } catch (_) {
-      // ignore, 401 handled via redirect below
+  if (!isSuperAdminRoute) {
+    if (!authStore.initialized) {
+      try {
+        await authStore.loadUser();
+      } catch (_) {
+        // ignore, 401 handled via redirect below
+      }
+    }
+
+    if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
+      return next({ name: 'Login', query: { redirect: to.fullPath } });
+    }
+
+    // 已登录用户访问普通登录/注册页时重定向
+    if (['Login', 'Register'].includes(to.name) && authStore.isAuthenticated) {
+      const redirectTarget = typeof to.query.redirect === 'string' ? to.query.redirect : '/';
+      return next(redirectTarget);
     }
   }
 
-  if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
-    return next({ name: 'Login', query: { redirect: to.fullPath } });
-  }
-
-  if (['Login', 'Register'].includes(to.name) && authStore.isAuthenticated) {
-    const redirectTarget = typeof to.query.redirect === 'string' ? to.query.redirect : '/';
-    return next(redirectTarget);
-  }
-
+  // 超级管理员页面不受普通用户登录状态影响，由页面自己处理权限
   next();
 });
 

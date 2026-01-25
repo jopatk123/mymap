@@ -87,4 +87,8 @@ router.use('/config', configRoutes);
 const initialViewRoutes = require('./initial-view');
 router.use('/initial-view', initialViewRoutes);
 
+// 超级管理员路由
+const superAdminRoutes = require('./super-admin.routes');
+router.use('/super-admin', superAdminRoutes);
+
 module.exports = router;
