@@ -6,7 +6,24 @@ class QueryBuilder {
     const prefix = tableAlias ? `${tableAlias}.` : '';
 
     if (folderId !== null && folderId !== undefined && folderId !== '') {
-      if (folderId === 0 || folderId === '0') {
+      if (Array.isArray(folderId)) {
+        const hasRoot = folderId.some((id) => id === 0 || id === '0' || id === null);
+        const ids = folderId
+          .filter((id) => id !== 0 && id !== '0' && id !== null && id !== undefined && id !== '')
+          .map((id) => parseInt(id));
+
+        if (ids.length > 0) {
+          const placeholders = ids.map(() => '?').join(',');
+          if (hasRoot) {
+            conditions.push(`(${prefix}folder_id IS NULL OR ${prefix}folder_id IN (${placeholders}))`);
+          } else {
+            conditions.push(`${prefix}folder_id IN (${placeholders})`);
+          }
+          params.push(...ids);
+        } else if (hasRoot) {
+          conditions.push(`${prefix}folder_id IS NULL`);
+        }
+      } else if (folderId === 0 || folderId === '0') {
         conditions.push(`${prefix}folder_id IS NULL`);
       } else {
         conditions.push(`${prefix}folder_id = ?`);

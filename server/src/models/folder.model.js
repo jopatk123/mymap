@@ -326,6 +326,41 @@ class FolderModel {
     return path;
   }
 
+  // 获取指定文件夹的所有子文件夹ID（含自身）
+  static async getDescendantIds(folderId, ownerId = null) {
+    if (!folderId || folderId === '0' || folderId === 0) {
+      return [];
+    }
+
+    const allFolders = await this.findAllFlat(ownerId);
+    const childrenMap = new Map();
+
+    allFolders.forEach((folder) => {
+      const parentKey = folder.parent_id || 0;
+      if (!childrenMap.has(parentKey)) {
+        childrenMap.set(parentKey, []);
+      }
+      childrenMap.get(parentKey).push(folder.id);
+    });
+
+    const result = new Set();
+    const stack = [parseInt(folderId)];
+
+    while (stack.length > 0) {
+      const currentId = stack.pop();
+      if (!currentId || result.has(currentId)) continue;
+      result.add(currentId);
+      const children = childrenMap.get(currentId) || [];
+      for (const childId of children) {
+        if (!result.has(childId)) {
+          stack.push(childId);
+        }
+      }
+    }
+
+    return Array.from(result);
+  }
+
   // 获取所有可见的文件夹ID（递归检查父文件夹）
   static async getVisibleFolderIds(ownerId = null) {
     const allFolders = await this.findAllFlat(ownerId);

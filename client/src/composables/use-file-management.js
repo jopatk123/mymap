@@ -14,6 +14,8 @@ export function useFileManagement() {
     fileType: 'all',
     keyword: '',
     includeHidden: true,
+    // 是否包含所有子文件夹内容
+    includeSubfolders: false,
     // 是否仅显示底图 KML（默认 false）
     basemapOnly: false,
     // 是否包含底图（用于包含底图与普通文件同时显示）
@@ -38,6 +40,7 @@ export function useFileManagement() {
         keyword: keyword,
         includeHidden: searchForm.includeHidden,
         fileType: searchForm.fileType,
+        includeSubfolders: searchForm.includeSubfolders,
         // 将 basemap 参数透传给后端
         includeBasemap: searchForm.includeBasemap,
         basemapOnly: searchForm.basemapOnly,
@@ -82,6 +85,7 @@ export function useFileManagement() {
     searchForm.fileType = 'all';
     searchForm.keyword = '';
     searchForm.includeHidden = false;
+    searchForm.includeSubfolders = false;
     pagination.page = 1;
     await loadFileList();
   };

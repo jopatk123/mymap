@@ -27,6 +27,14 @@
           @change="$emit('search', { ...localForm })"
         />
       </el-form-item>
+      <el-form-item label="子文件夹" class="subfolders-switch">
+        <el-checkbox
+          v-model="localForm.includeSubfolders"
+          @change="$emit('search', { ...localForm })"
+        >
+          包含所有子文件夹内容
+        </el-checkbox>
+      </el-form-item>
       <el-form-item class="search-buttons">
         <el-button type="primary" @click="$emit('search', { ...localForm })">搜索</el-button>
         <el-button @click="$emit('refresh')">刷新</el-button>
@@ -226,6 +234,10 @@ onUnmounted(() => {
       grid-column: 1;
     }
 
+    .subfolders-switch {
+      grid-column: 2;
+    }
+
     .search-buttons {
       grid-column: 2;
       display: flex;
@@ -276,6 +288,7 @@ onUnmounted(() => {
     .type-select,
     .keyword-input,
     .hidden-switch,
+    .subfolders-switch,
     .search-buttons {
       grid-column: 1;
     }

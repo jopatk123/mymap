@@ -289,7 +289,25 @@ class FolderController {
         keyword = '',
         includeHidden = false,
         fileType = 'all', // all, panorama, video, kml
+        includeSubfolders = false,
       } = req.query;
+
+      const ownerId = req.user?.id;
+
+      // 处理包含子文件夹逻辑：构建 folderId 列表
+      let folderIdParam = folderId === '0' ? 0 : parseInt(folderId) || null;
+      const includeChildren = includeSubfolders === 'true' || includeSubfolders === true;
+
+      if (includeChildren) {
+        if (folderIdParam === 0 || folderIdParam === null) {
+          const allFolders = await FolderModel.findAllFlat(ownerId);
+          const allFolderIds = allFolders.map((f) => f.id);
+          folderIdParam = [0, ...allFolderIds];
+        } else {
+          const descendantIds = await FolderModel.getDescendantIds(folderIdParam, ownerId);
+          folderIdParam = descendantIds.length > 0 ? descendantIds : [folderIdParam];
+        }
+      }
 
       // 规范化 keyword：去除首尾空白，防止仅为空格时误触发模糊匹配
       const normalizedKeyword =
@@ -299,9 +317,9 @@ class FolderController {
         page: 1, // 先获取所有数据，然后统一分页
         pageSize: 1000, // 设置一个较大的值获取所有数据
         keyword: normalizedKeyword,
-        folderId: folderId === '0' ? 0 : parseInt(folderId) || null,
+        folderId: folderIdParam,
         includeHidden: includeHidden === 'true',
-        ownerId: req.user?.id, // 添加 ownerId 以确保数据隔离
+        ownerId, // 添加 ownerId 以确保数据隔离
       };
 
       let allResults = [];
