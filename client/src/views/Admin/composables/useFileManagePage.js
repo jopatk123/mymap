@@ -8,6 +8,7 @@ import { useBatchOperations } from '@/composables/use-batch-operations';
 import { useFolderStore } from '@/store/folder.js';
 import { buildDownloadTasks, createCsvBlob } from './file-manage-downloads.js';
 import { downloadImageSetAsZip, isImageSetFile } from '@/utils/image-set-downloader.js';
+import { folderApi } from '@/api/folder.js';
 
 function triggerBrowserDownload(url, filename) {
   const anchor = document.createElement('a');
@@ -26,6 +27,21 @@ function scheduleDownloadTasks(tasks) {
       triggerBrowserDownload(task.url, task.filename);
     }, delay);
   });
+}
+
+function normalizeFolderContents(items) {
+  return (items || []).map((item) => ({
+    ...item,
+    fileType: item.fileType || item.type,
+    imageUrl: item.image_url || item.url || item.cover_url,
+    thumbnailUrl: item.thumbnail_url,
+    latitude: item.latitude || item.lat,
+    longitude: item.longitude || item.lng,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+    folderId: item.folder_id,
+    folderName: item.folder_name,
+  }));
 }
 
 export function useFileManagePage() {
@@ -164,6 +180,68 @@ export function useFileManagePage() {
     }
   };
 
+  const fetchAllFiles = async () => {
+    const folderId = selectedFolder.value?.id || 0;
+    const keyword =
+      typeof searchForm.keyword === 'string' ? searchForm.keyword.trim() : searchForm.keyword;
+
+    const response = await folderApi.getFolderContents(folderId, {
+      keyword,
+      includeHidden: searchForm.includeHidden,
+      fileType: searchForm.fileType,
+      includeSubfolders: searchForm.includeSubfolders,
+      includeBasemap: searchForm.includeBasemap,
+      basemapOnly: searchForm.basemapOnly,
+      page: 1,
+      pageSize: 1000000,
+      includeAll: true,
+    });
+
+    return normalizeFolderContents(response.data || []);
+  };
+
+  const handleBatchDownloadAll = async () => {
+    try {
+      downloading.value = true;
+      const allFiles = await fetchAllFiles();
+      if (!allFiles || allFiles.length === 0) {
+        ElMessage.info('暂无可下载文件');
+        return;
+      }
+
+      const imageSets = allFiles.filter(isImageSetFile);
+      const otherFiles = allFiles.filter((f) => !isImageSetFile(f));
+
+      if (imageSets.length > 0) {
+        for (const imageSet of imageSets) {
+          try {
+            ElMessage.info(`正在打包下载图片集: ${imageSet.title || '未命名'}`);
+            await downloadImageSetAsZip(imageSet, (progress) => {
+              if (progress === 100) {
+                ElMessage.success(`图片集 "${imageSet.title || '未命名'}" 下载完成`);
+              }
+            });
+          } catch (error) {
+            console.error('图片集下载失败:', error);
+            ElMessage.error(`图片集 "${imageSet.title || '未命名'}" 下载失败: ${error.message}`);
+          }
+        }
+      }
+
+      if (otherFiles.length > 0) {
+        const tasks = buildDownloadTasks(otherFiles);
+        if (tasks.length > 0) scheduleDownloadTasks(tasks);
+      }
+    } catch (error) {
+      ElMessage.error('下载全部文件失败: ' + error.message);
+    } finally {
+      const settleDelay = 800;
+      setTimeout(() => {
+        downloading.value = false;
+      }, settleDelay);
+    }
+  };
+
   const handleBatchDownloadStats = () => {
     if (!selectedRows.value || selectedRows.value.length === 0) return;
 
@@ -172,6 +250,31 @@ export function useFileManagePage() {
     const filename = `文件统计_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
     triggerBrowserDownload(url, filename);
     URL.revokeObjectURL(url);
+  };
+
+  const handleBatchDownloadStatsAll = async () => {
+    try {
+      downloading.value = true;
+      const allFiles = await fetchAllFiles();
+      if (!allFiles || allFiles.length === 0) {
+        ElMessage.info('暂无可下载统计数据');
+        return;
+      }
+      const blob = createCsvBlob(allFiles);
+      const url = URL.createObjectURL(blob);
+      const filename = `文件统计_全部_${new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, '-')}.csv`;
+      triggerBrowserDownload(url, filename);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      ElMessage.error('下载全部表格统计失败: ' + error.message);
+    } finally {
+      setTimeout(() => {
+        downloading.value = false;
+      }, 300);
+    }
   };
 
   const handleBatchActionWithMove = async (command) => {
@@ -269,6 +372,8 @@ export function useFileManagePage() {
     handleSelectionChange,
     handleBatchActionWithMove,
     handleBatchDownloadStats,
+    handleBatchDownloadAll,
+    handleBatchDownloadStatsAll,
     downloading,
 
     // 文件操作（来自 useFileOperations）

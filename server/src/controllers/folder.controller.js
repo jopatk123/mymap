@@ -290,6 +290,7 @@ class FolderController {
         includeHidden = false,
         fileType = 'all', // all, panorama, video, kml
         includeSubfolders = false,
+        includeAll = false,
       } = req.query;
 
       const ownerId = req.user?.id;
@@ -315,7 +316,7 @@ class FolderController {
 
       const searchParams = {
         page: 1, // 先获取所有数据，然后统一分页
-        pageSize: 1000, // 设置一个较大的值获取所有数据
+        pageSize: includeAll === 'true' || includeAll === true ? 1000000 : 1000, // 下载全部时放大上限
         keyword: normalizedKeyword,
         folderId: folderIdParam,
         includeHidden: includeHidden === 'true',
@@ -414,10 +415,11 @@ class FolderController {
 
       // 手动分页
       const total = allResults.length;
-      const currentPage = parseInt(page);
-      const currentPageSize = parseInt(pageSize);
-      const startIndex = (currentPage - 1) * currentPageSize;
-      const endIndex = startIndex + currentPageSize;
+      const includeAllFlag = includeAll === 'true' || includeAll === true;
+      const currentPage = includeAllFlag ? 1 : parseInt(page);
+      const currentPageSize = includeAllFlag ? total || 1 : parseInt(pageSize);
+      const startIndex = includeAllFlag ? 0 : (currentPage - 1) * currentPageSize;
+      const endIndex = includeAllFlag ? total : startIndex + currentPageSize;
       const paginatedResults = allResults.slice(startIndex, endIndex);
 
       res.json({

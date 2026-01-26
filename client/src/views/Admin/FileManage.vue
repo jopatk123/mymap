@@ -56,6 +56,8 @@
           @batch-move="handleBatchActionWithMove('move')"
           @batch-download="handleBatchActionWithMove('download')"
           @batch-download-stats="handleBatchDownloadStats"
+          @batch-download-all="handleBatchDownloadAll"
+          @batch-download-stats-all="handleBatchDownloadStatsAll"
         />
 
         <!-- 文件列表表格/卡片 -->
@@ -174,6 +176,8 @@ const {
   handleSelectionChange,
   handleBatchActionWithMove,
   handleBatchDownloadStats,
+  handleBatchDownloadAll,
+  handleBatchDownloadStatsAll,
   downloading,
   currentFile,
   actionDialogs,

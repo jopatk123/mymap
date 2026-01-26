@@ -76,13 +76,16 @@
       </el-button>
       <el-dropdown
         trigger="click"
-        :disabled="selectedCount === 0"
         @command="
           (cmd) =>
             cmd === 'download-selected'
               ? $emit('batch-download')
               : cmd === 'download-stats'
               ? $emit('batch-download-stats')
+              : cmd === 'download-all'
+              ? $emit('batch-download-all')
+              : cmd === 'download-stats-all'
+              ? $emit('batch-download-stats-all')
               : null
         "
       >
@@ -92,13 +95,21 @@
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="download-selected">
+            <el-dropdown-item command="download-selected" :disabled="selectedCount === 0">
               <el-icon><Download /></el-icon>
               下载选中文件
             </el-dropdown-item>
-            <el-dropdown-item command="download-stats">
+            <el-dropdown-item command="download-stats" :disabled="selectedCount === 0">
               <el-icon><Download /></el-icon>
               下载表格统计
+            </el-dropdown-item>
+            <el-dropdown-item command="download-all" divided>
+              <el-icon><Download /></el-icon>
+              下载全部文件
+            </el-dropdown-item>
+            <el-dropdown-item command="download-stats-all">
+              <el-icon><Download /></el-icon>
+              下载全部表格统计
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -140,6 +151,8 @@ const emit = defineEmits([
   'batch-move',
   'batch-download',
   'batch-download-stats',
+  'batch-download-all',
+  'batch-download-stats-all',
   'update:search-form',
 ]);
 
