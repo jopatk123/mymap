@@ -5,6 +5,13 @@
   color: #5fb8ff !important; /* 浅蓝色 */
 }
 
+/* 允许弹窗内容文字被选中复制（覆盖地图容器的 user-select: none） */
+.leaflet-popup-content,
+.leaflet-popup-content * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
 .leaflet-popup-content .popup-meta {
   margin: 0 0 4px 0 !important;
   font-size: 12px !important;
