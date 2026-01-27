@@ -59,6 +59,15 @@
           {{ kmlLayersVisible ? '隐藏图层' : '显示KML图层' }}
         </el-button>
 
+        <!-- 隐藏/显示点位（视频、全景图、图片集） -->
+        <el-button
+          class="btn-toggle-markers"
+          :title="markersVisible ? '隐藏点位' : '显示点位'"
+          @click.stop="$emit('toggle-markers')"
+        >
+          {{ markersVisible ? '隐藏点位' : '显示点位' }}
+        </el-button>
+
         <!-- 文件管理按钮 -->
         <el-button
           class="btn-file-manage"
@@ -82,6 +91,7 @@ import { ArrowDown } from '@element-plus/icons-vue';
 const emit = defineEmits([
   'toggle-panorama-list',
   'toggle-kml-layers',
+  'toggle-markers',
   'show-kml-settings',
   'show-point-settings',
   'locate-kml-point',
@@ -107,6 +117,10 @@ defineProps({
     default: true,
   },
   kmlLayersVisible: {
+    type: Boolean,
+    default: true,
+  },
+  markersVisible: {
     type: Boolean,
     default: true,
   },
@@ -415,6 +429,14 @@ defineProps({
       border-color: #e0e0e0 !important;
       color: #424242 !important;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 隐藏/显示点位按钮（青色） */
+    .btn-toggle-markers {
+      background: linear-gradient(135deg, #00bcd4, #0097a7) !important;
+      border-color: #00bcd4 !important;
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3);
     }
 
     /* 文件管理按钮（紫色） */

@@ -159,6 +159,43 @@ export function createMapDataLoader(options) {
     }
   };
 
+  /**
+   * 切换点位（视频、全景图、图片集）的可见性
+   * 通过控制各类型点位的 pane 的 display 样式来实现隐藏/显示
+   * @param {Object} options - 包含 mapRef 和 markersVisibleRef
+   */
+  const toggleMarkers = ({ mapRef, markersVisibleRef }) => {
+    if (!markersVisibleRef) return;
+    markersVisibleRef.value = !markersVisibleRef.value;
+
+    if (windowRef) {
+      windowRef.markersVisible = markersVisibleRef.value;
+    }
+
+    const mapExpose = mapRef?.value;
+    if (!mapExpose) {
+      console.warn('地图组件引用不存在，无法切换点位显示');
+      return;
+    }
+
+    const mapInstance = mapExpose.map;
+    if (!mapInstance || typeof mapInstance.getPane !== 'function') {
+      console.warn('地图实例不存在或不支持 getPane，无法切换点位显示');
+      return;
+    }
+
+    // 通过控制 pane 的 display 属性来隐藏/显示点位
+    const paneNames = ['videoPane', 'panoramaPane', 'imageSetPane'];
+    const displayValue = markersVisibleRef.value ? '' : 'none';
+
+    for (const paneName of paneNames) {
+      const pane = mapInstance.getPane(paneName);
+      if (pane) {
+        pane.style.display = displayValue;
+      }
+    }
+  };
+
   const loadMore = async () => {
     await panoramaStore.loadMore();
   };
@@ -168,6 +205,7 @@ export function createMapDataLoader(options) {
     loadInitialData,
     loadAllPoints,
     toggleKmlLayers,
+    toggleMarkers,
     loadMore,
     retry,
   };

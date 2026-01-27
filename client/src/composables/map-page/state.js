@@ -23,6 +23,7 @@ export function createMapPageState({ panoramaStore, appStore }) {
   const panoramaViewerLoading = ref(false);
   const autoRotating = ref(false);
   const kmlLayersVisible = ref(true);
+  const markersVisible = ref(true);
   const showKmlSettings = ref(false);
   const showPointSettings = ref(false);
   const showContourDialog = ref(false);
@@ -48,6 +49,7 @@ export function createMapPageState({ panoramaStore, appStore }) {
     panoramaViewerLoading,
     autoRotating,
     kmlLayersVisible,
+    markersVisible,
     showKmlSettings,
     showPointSettings,
     showContourDialog,

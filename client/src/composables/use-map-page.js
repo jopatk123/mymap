@@ -45,6 +45,13 @@ export function useMapPage(injected = {}) {
     });
   };
 
+  const toggleMarkers = () => {
+    dataLoader.toggleMarkers({
+      mapRef: state.mapRef,
+      markersVisibleRef: state.markersVisible,
+    });
+  };
+
   const loadMore = async () => {
     await dataLoader.loadMore();
   };
@@ -86,6 +93,7 @@ export function useMapPage(injected = {}) {
     panoramaViewerLoading: state.panoramaViewerLoading,
     autoRotating: state.autoRotating,
     kmlLayersVisible: state.kmlLayersVisible,
+    markersVisible: state.markersVisible,
     showKmlSettings: state.showKmlSettings,
     showPointSettings: state.showPointSettings,
     showContourDialog: state.showContourDialog,
@@ -94,6 +102,7 @@ export function useMapPage(injected = {}) {
     loadInitialData,
     loadMore,
     toggleKmlLayers,
+    toggleMarkers,
     openBatchUploadFromSingle,
   };
 }

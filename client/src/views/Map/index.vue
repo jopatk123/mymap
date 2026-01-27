@@ -33,6 +33,7 @@
     <MapControls
       :panorama-list-visible="panoramaListVisible"
       :kml-layers-visible="kmlLayersVisible"
+      :markers-visible="markersVisible"
       :loading="loading"
       :total-count="totalCount"
       :is-online="isOnline"
@@ -40,6 +41,7 @@
       :visible-k-m-l-points="visibleKMLPoints"
       @toggle-panorama-list="togglePanoramaList"
       @toggle-kml-layers="toggleKmlLayers"
+      @toggle-markers="toggleMarkers"
       @show-kml-settings="showKmlSettings = true"
       @show-point-settings="showPointSettings = true"
       @locate-kml-point="handleLocateKMLPoint"
@@ -155,6 +157,7 @@ const {
   panoramaViewerLoading,
   autoRotating,
   kmlLayersVisible,
+  markersVisible,
   showKmlSettings,
   showPointSettings,
 
@@ -163,6 +166,7 @@ const {
   loadInitialData,
   loadMore,
   toggleKmlLayers,
+  toggleMarkers,
   openBatchUploadFromSingle,
 } = useMapPage();
 
