@@ -96,6 +96,8 @@ export function createViewportClipping(
         return 'videoPane';
       case 'image-set':
         return 'imageSetPane';
+      case 'kml':
+        return 'kmlPane';
       case 'panorama':
       default:
         return 'panoramaPane';
