@@ -362,6 +362,72 @@ const validateBatchMoveParams = (req, res, next) => {
   next();
 };
 
+/**
+ * 验证上传时必须指定有效的 folderId
+ * 确保用户上传文件时选择了一个文件夹
+ */
+const validateRequiredFolderId = async (req, res, next) => {
+  const { folderId } = req.body;
+  const ownerId = req.user?.id;
+
+  // 检查 folderId 是否提供
+  if (folderId === undefined || folderId === null || folderId === '' || folderId === 0) {
+    return res.status(400).json(
+      validationErrorResponse([
+        {
+          field: 'folderId',
+          message: '请选择一个文件夹后再上传文件',
+          value: folderId,
+        },
+      ])
+    );
+  }
+
+  const parsedFolderId = parseInt(folderId);
+  if (isNaN(parsedFolderId) || parsedFolderId <= 0) {
+    return res.status(400).json(
+      validationErrorResponse([
+        {
+          field: 'folderId',
+          message: '无效的文件夹ID',
+          value: folderId,
+        },
+      ])
+    );
+  }
+
+  // 验证文件夹是否存在且属于当前用户
+  try {
+    const FolderModel = require('../models/folder.model');
+    const folder = await FolderModel.findById(parsedFolderId, ownerId);
+    
+    if (!folder) {
+      return res.status(400).json(
+        validationErrorResponse([
+          {
+            field: 'folderId',
+            message: '文件夹不存在或无权访问',
+            value: folderId,
+          },
+        ])
+      );
+    }
+
+    req.body.folderId = parsedFolderId;
+    next();
+  } catch (error) {
+    return res.status(500).json(
+      validationErrorResponse([
+        {
+          field: 'folderId',
+          message: '验证文件夹时发生错误',
+          value: folderId,
+        },
+      ])
+    );
+  }
+};
+
 module.exports = {
   validatePanoramaData,
   validateUpdatePanoramaData,
@@ -371,4 +437,5 @@ module.exports = {
   validateBatchIds,
   validateBatchMoveParams,
   createValidator,
+  validateRequiredFolderId,
 };

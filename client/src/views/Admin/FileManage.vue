@@ -73,7 +73,7 @@
             @selection-change="handleSelectionChange"
             @view-file="viewFile"
             @edit-file="editFile"
-            @delete-file="(file) => deleteFile(file, loadFileList)"
+            @delete-file="(file) => deleteFile(file, handleDeleteSuccess)"
             @image-error="handleImageError"
           />
 
@@ -113,7 +113,7 @@
       :valid-folders="validFolders"
       :moving="moving"
       @file-updated="handleEditSuccess"
-      @file-deleted="() => handleFileDeleted(loadFileList)"
+      @file-deleted="() => handleFileDeleted(handleDeleteSuccess)"
       @move-confirm="handleMoveConfirmWithCleanup"
       @update:move-to-folder-id="moveToFolderId = $event"
       @update:action-dialogs="(v) => Object.assign(actionDialogs, v)"
@@ -191,6 +191,7 @@ const {
   handleImageError,
   handleUploadSuccess,
   handleEditSuccess,
+  handleDeleteSuccess,
   onRefresh,
 } = useFileManagePage();
 

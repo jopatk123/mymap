@@ -2,6 +2,7 @@ const { getPrisma } = require('../../config/prisma');
 const { initTables } = require('../../config/database');
 const PasswordService = require('./password.service');
 const Logger = require('../../utils/logger');
+const FolderModel = require('../../models/folder.model');
 
 class AuthError extends Error {
   constructor(message, statusCode = 400) {
@@ -86,6 +87,21 @@ class AuthService {
         role,
       },
     });
+
+    // 为新用户创建默认文件夹
+    try {
+      await FolderModel.create({
+        name: '默认文件夹',
+        parentId: null,
+        isVisible: true,
+        sortOrder: 0,
+        ownerId: user.id,
+      });
+      Logger.info(`为用户 ${normalizedUsername} 创建了默认文件夹`);
+    } catch (folderError) {
+      Logger.warn(`为用户 ${normalizedUsername} 创建默认文件夹失败:`, folderError.message);
+      // 不抛出异常，用户注册仍然成功
+    }
 
     Logger.info(`新用户已注册: ${normalizedUsername}`);
     return sanitizeUser(user);

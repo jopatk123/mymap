@@ -20,20 +20,34 @@
       {{ contextMenu.node.is_visible ? '隐藏' : '显示' }}
     </div>
     <div class="menu-divider"></div>
-    <div class="menu-item danger" @click="handleDeleteFolder">
-      <el-icon><Delete /></el-icon>
-      删除文件夹
-    </div>
+    <el-tooltip
+      :disabled="canDelete"
+      content="系统要求至少保留一个文件夹"
+      placement="right"
+    >
+      <div 
+        class="menu-item danger" 
+        :class="{ disabled: !canDelete }"
+        @click="handleDeleteFolder"
+      >
+        <el-icon><Delete /></el-icon>
+        删除文件夹
+      </div>
+    </el-tooltip>
   </div>
 </template>
 
 <script setup>
 import { FolderAdd, Edit, Delete, View, Hide } from '@element-plus/icons-vue';
 
-defineProps({
+const props = defineProps({
   contextMenu: {
     type: Object,
     required: true,
+  },
+  canDelete: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -61,6 +75,9 @@ const handleToggleVisibility = () => {
 };
 
 const handleDeleteFolder = () => {
+  if (!props.canDelete) {
+    return;
+  }
   emit('delete-folder');
   emit('hide');
 };
@@ -92,6 +109,15 @@ const handleDeleteFolder = () => {
 
       &:hover {
         background: #fef0f0;
+      }
+    }
+
+    &.disabled {
+      color: #c0c4cc;
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
       }
     }
 

@@ -4,23 +4,33 @@
 const request = require('supertest');
 const { getPrisma } = require('../../config/prisma');
 const AuthService = require('../../services/identity/auth.service');
+const { query } = require('../../config/database');
 
 // 使用真实的 app，但在测试环境中
 const app = require('../../app');
+
+// 辅助函数：安全删除测试用户（需要先删除关联的文件夹）
+async function safeDeleteTestUser(username) {
+  const prisma = getPrisma();
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (user) {
+    // 先删除用户的文件夹（避免外键约束）
+    await query('DELETE FROM folders WHERE owner_id = ?', [user.id]);
+    await prisma.user.delete({ where: { username } });
+  }
+}
 
 describe('Auth Controller - 集成测试', () => {
   let testUser;
 
   beforeAll(async () => {
     // 确保测试用户不存在
-    const prisma = getPrisma();
-    await prisma.user.deleteMany({ where: { username: 'integrationtest' } });
+    await safeDeleteTestUser('integrationtest');
   });
 
   afterAll(async () => {
     // 清理测试用户
-    const prisma = getPrisma();
-    await prisma.user.deleteMany({ where: { username: 'integrationtest' } });
+    await safeDeleteTestUser('integrationtest');
   });
 
   describe('POST /api/auth/register', () => {

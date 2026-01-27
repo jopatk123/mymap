@@ -9,6 +9,7 @@ const {
   validateId,
   validateBatchIds,
   validateBatchMoveParams,
+  validateRequiredFolderId,
 } = require('../middleware/validator.middleware');
 const { handleSingleUpload, handleBatchUpload } = require('../middleware/upload.middleware');
 const path = require('path');
@@ -42,7 +43,7 @@ router.get('/convert-coordinate', PanoramaController.convertCoordinate);
 router.post('/', validatePanoramaData, PanoramaController.createPanorama);
 
 // 单文件上传
-router.post('/upload', handleSingleUpload, async (req, res) => {
+router.post('/upload', handleSingleUpload, validateRequiredFolderId, async (req, res) => {
   const { uploadedFile } = req;
   const { title, description, lat, lng, folderId } = req.body || {};
 
@@ -93,9 +94,10 @@ router.post('/upload', handleSingleUpload, async (req, res) => {
 });
 
 // 批量文件上传
-router.post('/batch-upload', handleBatchUpload, async (req, res) => {
+router.post('/batch-upload', handleBatchUpload, validateRequiredFolderId, async (req, res) => {
   try {
     const { uploadedFiles } = req;
+    const { folderId } = req.body;
     const results = [];
 
     // 为每个文件创建全景图记录
@@ -110,11 +112,12 @@ router.post('/batch-upload', handleBatchUpload, async (req, res) => {
         thumbnailUrl: file.thumbnailUrl,
         fileSize: file.size,
         fileType: file.mimetype,
+        folderId: folderId, // 使用传入的文件夹ID
       };
 
       try {
         // 创建临时请求对象
-        const tempReq = { body: panoramaData };
+        const tempReq = { body: panoramaData, user: req.user };
         const tempRes = {
           status: () => tempRes,
           json: (data) => data,

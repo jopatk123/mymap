@@ -6,6 +6,7 @@ const {
   validateId,
   validateBatchIds,
   validateBoundsParams,
+  validateRequiredFolderId,
 } = require('../middleware/validator.middleware');
 const { requireAuth } = require('../middleware/auth.middleware');
 
@@ -22,7 +23,7 @@ router.get('/bounds', validateBoundsParams, ImageSetController.getImageSetsByBou
 router.get('/stats', ImageSetController.getImageSetStats);
 
 // 上传并创建图片集
-router.post('/upload', handleImageSetUpload, ImageSetController.createImageSet);
+router.post('/upload', handleImageSetUpload, validateRequiredFolderId, ImageSetController.createImageSet);
 
 // 批量操作路由 - 需要在具体ID路由之前定义
 // 批量删除图片集

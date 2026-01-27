@@ -1,6 +1,7 @@
 <template>
   <FolderTreeView
     :folder-tree="folderTree"
+    :can-delete="canDeleteFolder()"
     @folder-selected="handleFolderSelected"
     @create-folder="handleCreateFolder"
     @create-sub-folder="handleCreateSubFolder"
@@ -49,6 +50,7 @@ const {
   handleFormSubmit,
   handleDialogClose,
   deleteFolder,
+  canDeleteFolder,
 } = useFolderOperations();
 
 // 初始化

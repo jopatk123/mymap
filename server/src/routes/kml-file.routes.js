@@ -6,6 +6,7 @@ const {
   validateId,
   validateBatchIds,
   validateBoundsParams,
+  validateRequiredFolderId,
 } = require('../middleware/validator.middleware');
 const { requireAuth } = require('../middleware/auth.middleware');
 
@@ -22,7 +23,7 @@ router.get('/points/bounds', validateBoundsParams, KmlFileController.getKmlPoint
 router.get('/stats', KmlFileController.getKmlFileStats);
 
 // 上传KML文件
-router.post('/upload', handleKmlUpload, (req, res) => {
+router.post('/upload', handleKmlUpload, validateRequiredFolderId, (req, res) => {
   const { uploadedFile } = req;
   const { title } = req.body;
 

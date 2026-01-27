@@ -56,6 +56,16 @@ export function useFolderOperations() {
   // 删除文件夹
   const deleteFolder = async (folder) => {
     try {
+      // 检查是否是最后一个文件夹
+      const allFolders = folderStore.flatFolders;
+      if (allFolders.length <= 1) {
+        ElMessage.warning({ 
+          message: '无法删除最后一个文件夹，系统要求至少保留一个文件夹', 
+          duration: 3000 
+        });
+        return false;
+      }
+
       await ElMessageBox.confirm(`确定要删除文件夹"${folder.name}"吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -72,6 +82,12 @@ export function useFolderOperations() {
       }
       return false;
     }
+  };
+
+  // 检查是否可以删除文件夹
+  const canDeleteFolder = () => {
+    const allFolders = folderStore.flatFolders;
+    return allFolders.length > 1;
   };
 
   // 处理创建文件夹
@@ -121,6 +137,7 @@ export function useFolderOperations() {
     createFolder,
     updateFolder,
     deleteFolder,
+    canDeleteFolder,
     handleCreateFolder,
     handleCreateSubFolder,
     handleEditFolder,

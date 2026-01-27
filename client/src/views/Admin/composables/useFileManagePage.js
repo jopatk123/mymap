@@ -289,9 +289,10 @@ export function useFileManagePage() {
       return;
     }
 
-    await handleBatchAction(command, () => {
+    await handleBatchAction(command, async () => {
       selectedRows.value = [];
-      loadFileList();
+      await loadFileList();
+      await loadFolders(); // 刷新文件夹计数
     });
   };
 
@@ -307,6 +308,12 @@ export function useFileManagePage() {
     await loadFileList();
     await loadFolders(); // 刷新文件夹计数
     window.dispatchEvent(new CustomEvent('kml-files-updated'));
+  };
+
+  // 删除文件成功后的处理（刷新文件列表和文件夹计数）
+  const handleDeleteSuccess = async () => {
+    await loadFileList();
+    await loadFolders(); // 刷新文件夹计数
   };
 
   const handleShowKmlFiles = async (event) => {
@@ -390,6 +397,7 @@ export function useFileManagePage() {
     handleImageError,
     handleUploadSuccess,
     handleEditSuccess,
+    handleDeleteSuccess,
 
     // 其他
     handleShowKmlFiles,

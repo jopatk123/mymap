@@ -33,6 +33,7 @@
     <FolderContextMenu
       v-if="contextMenu.visible"
       :context-menu="contextMenu"
+      :can-delete="canDelete"
       @create-sub-folder="$emit('create-sub-folder', contextMenu.node)"
       @edit-folder="$emit('edit-folder', contextMenu.node)"
       @toggle-visibility="$emit('toggle-visibility', contextMenu.node)"
@@ -49,10 +50,14 @@ import FolderTreeNode from './FolderTreeNode.vue';
 import FolderContextMenu from './FolderContextMenu.vue';
 import KMLBaseMapFolder from '@/components/map/kml-basemap/KMLBaseMapFolder.vue';
 
-defineProps({
+const props = defineProps({
   folderTree: {
     type: Array,
     required: true,
+  },
+  canDelete: {
+    type: Boolean,
+    default: true,
   },
 });
 

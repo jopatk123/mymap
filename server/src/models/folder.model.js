@@ -124,6 +124,12 @@ class FolderModel {
       }
     }
 
+    // 检查是否是用户的最后一个文件夹（不允许删除）
+    const allFolders = await this.findAllFlat(ownerId);
+    if (allFolders.length <= 1) {
+      throw new Error('无法删除最后一个文件夹，系统要求至少保留一个文件夹');
+    }
+
     // 检查是否有子文件夹
     const children = await this.findChildren(id);
     if (children.length > 0) {

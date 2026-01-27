@@ -6,6 +6,7 @@ const {
   validateId,
   validateBatchIds,
   validateBoundsParams,
+  validateRequiredFolderId,
 } = require('../middleware/validator.middleware');
 const { requireAuth } = require('../middleware/auth.middleware');
 
@@ -22,7 +23,7 @@ router.get('/bounds', validateBoundsParams, VideoPointController.getVideoPointsB
 router.get('/stats', VideoPointController.getVideoPointStats);
 
 // 上传视频文件
-router.post('/upload', handleVideoUpload, (req, res) => {
+router.post('/upload', handleVideoUpload, validateRequiredFolderId, (req, res) => {
   const { uploadedFile } = req;
   const { title, lat, lng } = req.body;
 
