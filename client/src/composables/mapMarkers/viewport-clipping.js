@@ -157,6 +157,15 @@ export function createViewportClipping(
 
   const createMarkerInfo = (point) => {
     if (!map.value) return null;
+    const pointType = point.type || 'panorama';
+    const typeStyles =
+      point.styleConfig ||
+      (pointType === 'video'
+        ? window.videoPointStyles
+        : pointType === 'image-set'
+        ? window.imageSetPointStyles
+        : window.panoramaPointStyles);
+    if (typeStyles && typeStyles.point_visible === false) return null;
     let coordinates = state.coordCache.get(point.id);
     if (!coordinates) {
       coordinates = getDisplayCoordinates(point);
@@ -164,7 +173,6 @@ export function createViewportClipping(
     }
     if (!coordinates) return null;
     const [displayLng, displayLat] = coordinates;
-    const pointType = point.type || 'panorama';
     const paneName = getPaneNameByType(pointType);
     const marker = createPointMarker(
       [displayLat, displayLng],

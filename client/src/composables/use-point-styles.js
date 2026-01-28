@@ -11,6 +11,7 @@ export function usePointStyles() {
 
   // 样式配置缓存
   const videoPointStyles = ref({
+    point_visible: true,
     point_color: '#ff4757',
     point_size: 10,
     point_opacity: 1.0,
@@ -19,6 +20,7 @@ export function usePointStyles() {
   });
 
   const panoramaPointStyles = ref({
+    point_visible: true,
     point_color: '#2ed573',
     point_size: 10,
     point_opacity: 1.0,
@@ -27,6 +29,7 @@ export function usePointStyles() {
   });
 
   const imageSetPointStyles = ref({
+    point_visible: true,
     point_color: '#9b59b6',
     point_size: 10,
     point_opacity: 1.0,

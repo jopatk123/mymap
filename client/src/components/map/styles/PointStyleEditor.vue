@@ -4,6 +4,12 @@
       <h4>点标记样式</h4>
 
       <el-form label-width="100px" size="small" class="compact-form">
+        <el-form-item label="是否显示点位">
+          <el-checkbox v-model="localStyles.visible" @change="handleChange">
+            显示点位
+          </el-checkbox>
+        </el-form-item>
+
         <el-form-item label="标记颜色">
           <el-color-picker v-model="localStyles.color" show-alpha @change="handleChange" />
         </el-form-item>
@@ -87,6 +93,7 @@ const props = defineProps({
   modelValue: {
     type: Object,
     default: () => ({
+        visible: true,
       opacity: 1.0,
       color: '#ff7800',
       size: 8,
@@ -102,6 +109,7 @@ const emit = defineEmits(['update:modelValue', 'change']);
 
 // 本地样式状态
 const localStyles = reactive({
+    visible: true,
   opacity: 1.0,
   color: '#ff7800',
   size: 8,
@@ -118,6 +126,7 @@ watch(
     if (newValue) {
       // 仅拷贝允许的字段，避免将 color/size 等旧字段再次引入
       const allowed = {
+          visible: newValue.visible !== false,
         opacity: newValue.opacity,
         color: newValue.color,
         // 强制为数字，防止字符串导致后续计算出现 NaN
@@ -137,6 +146,7 @@ watch(
 const handleChange = () => {
   // 发出仅包含允许字段的值，不包括 color/size
   emit('update:modelValue', {
+      visible: localStyles.visible !== false,
     opacity: Number(localStyles.opacity) || 1.0,
     color: localStyles.color,
     // 保证发送到父级的是数字类型

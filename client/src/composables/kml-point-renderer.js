@@ -52,6 +52,12 @@ export function createPointRenderer(kmlFile, effectiveStyle) {
       (feature.geometry?.type?.toLowerCase?.() || '') !== 'point';
   } else {
     // 非聚合时，交给 geojson 的 pointToLayer 生成 marker
+    geoJsonOptions.filter = (feature) => {
+      if ((feature.geometry?.type?.toLowerCase?.() || '') === 'point') {
+        return effectiveStyle.point_visible !== false;
+      }
+      return true;
+    };
     geoJsonOptions.pointToLayer = (feature, latlng) => {
       const pointSize = effectiveStyle.point_size;
       const labelSize = Number(effectiveStyle.point_label_size);
@@ -96,6 +102,10 @@ export function processKmlPoints(points, kmlFile, styleConfig) {
 
       const geometryType = processedFeature.geometry?.type?.toLowerCase?.() || '';
       if (useCluster && clusterGroup && geometryType === 'point') {
+        if (effectiveStyle.point_visible === false) {
+          featureCount++;
+          continue;
+        }
         const coords = processedFeature.geometry.coordinates;
         const latlng = L.latLng(coords[1], coords[0]);
         const pointSize = effectiveStyle.point_size;

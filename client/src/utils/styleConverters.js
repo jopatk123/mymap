@@ -1,6 +1,7 @@
 // 转换API格式到组件格式
 export const convertFromApiFormat = (apiData) => {
   const converted = {
+    visible: apiData.point_visible !== false,
     color: apiData.point_color,
     size: Number(apiData.point_size),
     opacity: parseFloat(apiData.point_opacity),
@@ -16,6 +17,7 @@ export const convertFromApiFormat = (apiData) => {
 // 转换组件格式到API格式
 export const convertToApiFormat = (componentData) => {
   const converted = {
+    point_visible: componentData.visible !== false,
     point_color: componentData.color,
     point_size: componentData.size,
     point_opacity: componentData.opacity,

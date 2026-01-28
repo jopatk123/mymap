@@ -66,6 +66,16 @@ export function useMapStyleUpdater(map, markers) {
           }
 
           const pointType = pointData.type || markerInfo.type || 'panorama';
+          const typeStyles =
+            pointData.styleConfig ||
+            (pointType === 'video'
+              ? window.videoPointStyles
+              : pointType === 'image-set'
+              ? window.imageSetPointStyles
+              : window.panoramaPointStyles);
+          if (typeStyles && typeStyles.point_visible === false) {
+            return;
+          }
           const paneName =
             pointType === 'video'
               ? 'videoPane'
@@ -165,6 +175,16 @@ export function useMapStyleUpdater(map, markers) {
           // 使用最新样式创建标记，传入点级 styleConfig
           const paneName =
             type === 'video' ? 'videoPane' : type === 'image-set' ? 'imageSetPane' : 'panoramaPane';
+          const typeStyles =
+            pointData.styleConfig ||
+            (type === 'video'
+              ? window.videoPointStyles
+              : type === 'image-set'
+              ? window.imageSetPointStyles
+              : window.panoramaPointStyles);
+          if (typeStyles && typeStyles.point_visible === false) {
+            continue;
+          }
           const marker = createPointMarker(
             [displayLat, displayLng],
             type,

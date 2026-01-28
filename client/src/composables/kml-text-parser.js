@@ -91,6 +91,12 @@ function createKmlLayer(kmlFile, effectiveStyle) {
     geoJsonOptions.filter = (feature) =>
       (feature.geometry?.type?.toLowerCase?.() || '') !== 'point';
   } else {
+    geoJsonOptions.filter = (feature) => {
+      if ((feature.geometry?.type?.toLowerCase?.() || '') === 'point') {
+        return effectiveStyle.point_visible !== false;
+      }
+      return true;
+    };
     geoJsonOptions.pointToLayer = (feature, latlng) => {
       const pointSize = effectiveStyle.point_size;
       const labelSize = Number(effectiveStyle.point_label_size);
@@ -202,7 +208,8 @@ function addPlacemarkFeatures(
 
   // 添加点（同时附带原始WGS84坐标用于弹窗展示）
   const batchMarkers = [];
-  featureData.points.forEach((point) => {
+  if (effectiveStyle.point_visible !== false) {
+    featureData.points.forEach((point) => {
     const coordinates = Array.isArray(point) ? point : point.gcj02;
     const wgs84LatLng = Array.isArray(point) ? null : point.wgs84;
     if (useCluster && clusterGroup) {
@@ -245,10 +252,11 @@ function addPlacemarkFeatures(
         )
       );
     }
-    featureCount++;
-  });
-  if (useCluster && clusterGroup && batchMarkers.length) {
-    clusterGroup.addLayers(batchMarkers);
+      featureCount++;
+    });
+    if (useCluster && clusterGroup && batchMarkers.length) {
+      clusterGroup.addLayers(batchMarkers);
+    }
   }
 
   // 添加线

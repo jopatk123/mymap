@@ -16,6 +16,7 @@ export function useMapInitializer(
     // 将样式配置存储到全局变量，供地图标记使用
     // 确保即使 API 调用失败，也有默认值
     window.videoPointStyles = videoPointStyles.value || {
+      point_visible: true,
       point_color: '#ff4757',
       point_size: 10,
       point_opacity: 1.0,
@@ -24,6 +25,7 @@ export function useMapInitializer(
       point_label_color: '#000000',
     };
     window.panoramaPointStyles = panoramaPointStyles.value || {
+      point_visible: true,
       point_color: '#2ed573',
       point_size: 10,
       point_opacity: 1.0,
@@ -32,6 +34,7 @@ export function useMapInitializer(
       point_label_color: '#000000',
     };
     window.imageSetPointStyles = imageSetPointStyles.value || {
+      point_visible: true,
       point_color: '#9b59b6',
       point_size: 10,
       point_opacity: 1.0,

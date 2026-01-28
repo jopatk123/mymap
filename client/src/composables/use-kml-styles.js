@@ -159,6 +159,7 @@ export function useKmlStyles() {
    */
   const getDefaultStyles = () => {
     return {
+      point_visible: true,
       // 点样式配置
       point_color: '#ff7800',
       point_size: 8,

@@ -6,6 +6,7 @@ class StyleManager {
     this.initialized = false;
     this.styles = {
       video: {
+        point_visible: true,
         point_color: '#ff4757',
         point_size: 10,
         point_opacity: 1.0,
@@ -16,6 +17,7 @@ class StyleManager {
         cluster_color: '#ff4757',
       },
       panorama: {
+        point_visible: true,
         point_color: '#2ed573',
         point_size: 10,
         point_opacity: 1.0,
@@ -26,6 +28,7 @@ class StyleManager {
         cluster_color: '#2ed573',
       },
       imageSet: {
+        point_visible: true,
         point_color: '#9b59b6',
         point_size: 10,
         point_opacity: 1.0,

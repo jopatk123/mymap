@@ -22,6 +22,7 @@ function getIconShapeHtml(size, color, opacity) {
 export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
   if (!window.panoramaPointStyles) {
     window.panoramaPointStyles = {
+      point_visible: true,
       point_color: '#2ed573',
       point_size: 10,
       point_opacity: 1.0,
@@ -108,6 +109,7 @@ export function createPanoramaMarker(latlng, options = {}, styleConfig = null) {
 export function createVideoMarker(latlng, options = {}, styleConfig = null) {
   if (!window.videoPointStyles) {
     window.videoPointStyles = {
+      point_visible: true,
       point_color: '#ff4757',
       point_size: 10,
       point_opacity: 1.0,
@@ -215,6 +217,7 @@ export function createPointMarker(latlng, type, options = {}, styleConfig = null
 export function createImageSetMarker(latlng, options = {}, styleConfig = null) {
   if (!window.imageSetPointStyles) {
     window.imageSetPointStyles = {
+      point_visible: true,
       point_color: '#9b59b6',
       point_size: 10,
       point_opacity: 1.0,

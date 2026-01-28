@@ -45,6 +45,10 @@ export const createMarkerHandlers = ({
     const [displayLng, displayLat] = coordinates;
 
     const pointType = getPointType(point);
+    const effectiveStyle = point.styleConfig || getTypeStyles(pointType);
+    if (effectiveStyle && effectiveStyle.point_visible === false) {
+      return null;
+    }
     const paneName = getPaneNameByType(pointType);
 
     const marker = createPointMarker(
@@ -143,6 +147,9 @@ export const createMarkerHandlers = ({
     const videoStyles = getTypeStyles('video');
     const panoStyles = getTypeStyles('panorama');
     const imageSetStyles = getTypeStyles('image-set');
+    const videoVisible = videoStyles?.point_visible !== false;
+    const panoVisible = panoStyles?.point_visible !== false;
+    const imageSetVisible = imageSetStyles?.point_visible !== false;
     const videoClusterOn = Boolean(videoStyles.cluster_enabled);
     const panoClusterOn = Boolean(panoStyles.cluster_enabled);
     const imageSetClusterOn = Boolean(imageSetStyles.cluster_enabled);
@@ -166,6 +173,10 @@ export const createMarkerHandlers = ({
         }
       } catch (err) {}
       const pointType = getPointType(p);
+      const typeStyles = p.styleConfig || getTypeStyles(pointType);
+      if (typeStyles && typeStyles.point_visible === false) {
+        continue;
+      }
       const paneName = getPaneNameByType(pointType);
       const coordinates = getDisplayCoordinates(p);
       if (!coordinates) continue;
@@ -231,14 +242,23 @@ export const createMarkerHandlers = ({
     }
 
     if (batchVideo.length) {
+      if (!videoVisible) {
+        batchVideo.length = 0;
+      }
       const group = ensureClusterGroup('video');
       batchVideo.forEach((m) => group.addLayer(m.marker));
     }
     if (batchImageSet.length) {
+      if (!imageSetVisible) {
+        batchImageSet.length = 0;
+      }
       const group = ensureClusterGroup('image-set');
       batchImageSet.forEach((m) => group.addLayer(m.marker));
     }
     if (batchPano.length) {
+      if (!panoVisible) {
+        batchPano.length = 0;
+      }
       const group = ensureClusterGroup('panorama');
       batchPano.forEach((m) => group.addLayer(m.marker));
     }

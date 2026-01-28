@@ -273,6 +273,7 @@ class ConfigService {
       version: '1.0.0',
       pointStyles: {
         panorama: {
+          point_visible: true,
           point_color: '#2ed573',
           point_size: 8,
           point_opacity: 1.0,
@@ -282,6 +283,7 @@ class ConfigService {
           cluster_color: '#2ed573',
         },
         video: {
+          point_visible: true,
           point_color: '#ff4757',
           point_size: 10,
           point_opacity: 1.0,
@@ -291,6 +293,7 @@ class ConfigService {
           cluster_color: '#ff4757',
         },
         imageSet: {
+          point_visible: true,
           point_color: '#9b59b6',
           point_size: 10,
           point_opacity: 1.0,
@@ -302,6 +305,7 @@ class ConfigService {
       },
       kmlStyles: {
         default: {
+          point_visible: true,
           point_color: '#ff7800',
           point_size: 8,
           point_opacity: 1.0,

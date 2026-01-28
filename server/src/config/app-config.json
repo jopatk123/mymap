@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
+      "point_visible": false,
       "point_color": "#ff4757",
       "point_size": 8,
       "point_opacity": 1,
@@ -13,6 +14,7 @@
       "cluster_icon_color": "#ff4757"
     },
     "video": {
+      "point_visible": false,
       "point_color": "#ff4757",
       "point_size": 6,
       "point_opacity": 1,
@@ -26,6 +28,7 @@
     "imageSet": {
       "cluster_enabled": false,
       "cluster_color": "#ff4757",
+      "point_visible": true,
       "point_color": "rgb(199, 212, 19)",
       "point_size": 9,
       "point_opacity": 1,
@@ -36,7 +39,30 @@
     }
   },
   "kmlStyles": {
+    "2": {
+      "point_visible": true,
+      "point_color": "#ff7800",
+      "point_size": 8,
+      "point_opacity": 1,
+      "point_label_size": 0,
+      "point_label_color": "#000000",
+      "line_color": "#ff7800",
+      "line_width": 2,
+      "line_opacity": 0.8,
+      "line_style": "solid",
+      "polygon_fill_color": "#ff7800",
+      "polygon_fill_opacity": 0.3,
+      "polygon_stroke_color": "#ff7800",
+      "polygon_stroke_width": 2,
+      "polygon_stroke_style": "solid",
+      "cluster_enabled": true,
+      "cluster_icon_color": "#00ff00",
+      "cluster_text_color": "#000000",
+      "cluster_color": "#00ff00",
+      "point_icon_type": "marker"
+    },
     "6": {
+      "point_visible": true,
       "point_color": "#ff7800",
       "point_size": 9,
       "point_opacity": 1,
@@ -58,6 +84,7 @@
       "point_icon_type": "marker"
     },
     "7": {
+      "point_visible": true,
       "point_color": "#ff7800",
       "point_size": 8,
       "point_opacity": 1,
@@ -79,6 +106,7 @@
       "point_icon_type": "marker"
     },
     "8": {
+      "point_visible": true,
       "point_color": "#ff7800",
       "point_size": 8,
       "point_opacity": 1,
@@ -100,6 +128,7 @@
       "point_icon_type": "marker"
     },
     "default": {
+      "point_visible": true,
       "point_color": "#ff7800",
       "point_size": 8,
       "point_opacity": 1,

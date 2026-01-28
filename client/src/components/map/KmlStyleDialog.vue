@@ -189,6 +189,7 @@ const selectKmlFile = async (kmlFile) => {
 
     // 分组样式配置
     currentStyles.point = {
+      visible: styles.point_visible !== false,
       color: styles.point_color,
       size: Number(styles.point_size),
       opacity: parseFloat(styles.point_opacity),
@@ -298,6 +299,7 @@ const handleCancel = () => {
 // 转换样式格式为API格式
 const convertToApiFormat = (styles) => {
   return {
+    point_visible: styles.point.visible !== false,
     point_color: styles.point.color,
     point_size: styles.point.size,
     point_opacity: styles.point.opacity,
@@ -324,6 +326,7 @@ const convertToApiFormat = (styles) => {
 // 获取默认样式
 const getDefaultStyles = () => {
   return {
+    point_visible: true,
     point_color: '#ff7800',
     point_size: 8,
     point_opacity: 1.0,

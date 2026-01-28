@@ -100,6 +100,7 @@ export function createKmlViewportRenderer({
 
   const addVisibleMarkers = () => {
     if (!map.value || !clusterGroup) return;
+    if (styleConfig?.point_visible === false) return;
     const bounds = map.value.getBounds()?.pad(viewportPadding);
     if (!bounds) return;
     if (!indexBuilt) buildSpatialIndex();
