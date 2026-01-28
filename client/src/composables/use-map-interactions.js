@@ -204,18 +204,41 @@ export function useMapInteractions(
     try {
       // 重新加载所有点位数据
       const { pointsApi } = await import('@/api/points.js');
-      const response = await pointsApi.getAllPoints({
+      const pageSize = 10000;
+      const firstResponse = await pointsApi.getAllPoints({
         page: 1,
-        pageSize: 10000,
+        pageSize,
         respectFolderVisibility: true,
       });
 
-      if (!response || !response.data) {
+      if (!firstResponse || !firstResponse.data) {
         throw new Error('获取点位数据失败');
       }
 
+      const firstData = Array.isArray(firstResponse.data) ? firstResponse.data : [];
+      const pagination = firstResponse.pagination || {};
+      const total = Number(pagination.total) || firstData.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+      const responses = [];
+      for (let page = 2; page <= totalPages; page += 1) {
+        responses.push(
+          pointsApi.getAllPoints({
+            page,
+            pageSize,
+            respectFolderVisibility: true,
+          })
+        );
+      }
+
+      const restResponses = responses.length > 0 ? await Promise.all(responses) : [];
+      const allPoints = [
+        ...firstData,
+        ...restResponses.flatMap((resp) => (Array.isArray(resp?.data) ? resp.data : [])),
+      ];
+
       // 过滤有效的点位数据
-      const filteredPoints = response.data.filter((point) => {
+      const filteredPoints = allPoints.filter((point) => {
         // 排除KML文件
         if (point.type === 'kml') return false;
 

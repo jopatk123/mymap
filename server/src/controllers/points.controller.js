@@ -19,9 +19,7 @@ class PointsController {
       } = req.query;
       const ownerId = req.user?.id;
 
-      let searchParams = {
-        page: 1,
-        pageSize: 1000, // 获取所有数据，后续统一分页
+      const baseParams = {
         keyword,
         folderId: folderId ? parseInt(folderId) : null,
         includeHidden: includeHidden === 'true',
@@ -32,22 +30,53 @@ class PointsController {
       if (respectFolderVisibility === 'true' || respectFolderVisibility === true) {
         try {
           const visibleFolderIds = await FolderModel.getVisibleFolderIds(ownerId);
-          searchParams.visibleFolderIds = visibleFolderIds;
+          baseParams.visibleFolderIds = visibleFolderIds;
         } catch (folderError) {
           Logger.warn('获取可见文件夹ID失败，使用默认设置:', folderError);
           // 如果获取可见文件夹失败，不设置visibleFolderIds，这样会返回所有数据
         }
       }
 
+      const fetchAllPages = async (model, params, { chunkSize = 5000, maxPages = 20 } = {}) => {
+        const data = [];
+        let currentPage = 1;
+        let totalPages = 1;
+
+        while (currentPage <= totalPages && currentPage <= maxPages) {
+          const result = await model.findAll({
+            ...params,
+            page: currentPage,
+            pageSize: chunkSize,
+          });
+
+          if (Array.isArray(result?.data)) {
+            data.push(...result.data);
+          }
+
+          totalPages = result?.totalPages || Math.ceil((result?.total || 0) / chunkSize) || 1;
+          currentPage += 1;
+        }
+
+        if (currentPage <= totalPages) {
+          Logger.warn(
+            '点位数量超过分页抓取上限，已截断返回: currentPage=%s, totalPages=%s',
+            currentPage,
+            totalPages
+          );
+        }
+
+        return data;
+      };
+
       // 并行获取全景图和视频点位（不包括KML文件）
-      const [panoramaResult, videoResult, imageSetResult] = await Promise.all([
-        PanoramaModel.findAll(searchParams),
-        VideoPointModel.findAll(searchParams),
-        ImageSetModel.findAll(searchParams),
+      const [panoramasRaw, videosRaw, imageSetsRaw] = await Promise.all([
+        fetchAllPages(PanoramaModel, baseParams),
+        fetchAllPages(VideoPointModel, baseParams),
+        fetchAllPages(ImageSetModel, baseParams),
       ]);
 
       // 合并数据并添加类型标识
-      const panoramas = panoramaResult.data.map((item) => ({
+      const panoramas = panoramasRaw.map((item) => ({
         ...item,
         type: 'panorama',
         lat: item.latitude,
@@ -58,7 +87,7 @@ class PointsController {
         thumbnailUrl: item.thumbnail_url,
       }));
 
-      const videos = videoResult.data.map((item) => ({
+      const videos = videosRaw.map((item) => ({
         ...item,
         type: 'video',
         lat: item.latitude,
@@ -70,7 +99,7 @@ class PointsController {
         thumbnailUrl: item.thumbnail_url,
       }));
 
-      const imageSets = imageSetResult.data.map((item) => ({
+      const imageSets = imageSetsRaw.map((item) => ({
         ...item,
         type: 'image-set',
         lat: item.latitude,

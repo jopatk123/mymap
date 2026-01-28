@@ -13,6 +13,9 @@ export function createMapDataLoader(options) {
     delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   } = options;
 
+  const ALL_POINTS_PAGE_SIZE = 10000;
+  const MAX_POINTS_PAGES = 20;
+
   const retry = async (fn, { retries = 3, baseDelay = 200 } = {}) => {
     let attempt = 0;
     let lastError;
@@ -32,14 +35,56 @@ export function createMapDataLoader(options) {
     return undefined;
   };
 
+  const fetchAllPoints = async () => {
+    const firstResponse = await pointsApi.getAllPoints({
+      page: 1,
+      pageSize: ALL_POINTS_PAGE_SIZE,
+      respectFolderVisibility: true,
+    });
+
+    const firstData = Array.isArray(firstResponse?.data) ? firstResponse.data : [];
+    const pagination = firstResponse?.pagination || {};
+    const total = Number(pagination.total) || firstData.length;
+    const pageSize = Number(pagination.pageSize) || ALL_POINTS_PAGE_SIZE;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    if (totalPages <= 1) {
+      return firstData;
+    }
+
+    const cappedPages = Math.min(totalPages, MAX_POINTS_PAGES);
+    const requests = [];
+    for (let page = 2; page <= cappedPages; page += 1) {
+      requests.push(
+        pointsApi.getAllPoints({
+          page,
+          pageSize,
+          respectFolderVisibility: true,
+        })
+      );
+    }
+
+    const responses = await Promise.all(requests);
+    const merged = [
+      ...firstData,
+      ...responses.flatMap((response) => (Array.isArray(response?.data) ? response.data : [])),
+    ];
+
+    const uniqueMap = new Map();
+    for (const point of merged) {
+      const key = point?.id ?? `${point?.type || 'point'}:${point?.lat}:${point?.lng}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, point);
+      }
+    }
+
+    return Array.from(uniqueMap.values());
+  };
+
   const loadAllPoints = async () => {
     try {
-      const [pointsResponse, kmlFilesResponse] = await Promise.all([
-        pointsApi.getAllPoints({
-          page: 1,
-          pageSize: 10000,
-          respectFolderVisibility: true,
-        }),
+      const [allPoints, kmlFilesResponse] = await Promise.all([
+        fetchAllPoints(),
         kmlApi.getKmlFiles({
           respectFolderVisibility: true,
           includeBasemap: false,
@@ -47,7 +92,6 @@ export function createMapDataLoader(options) {
         }),
       ]);
 
-      const allPoints = pointsResponse.data || [];
       const filteredPoints = allPoints.filter((point) => {
         if (point.type === 'kml') return false;
         const lat = point.lat ?? point.latitude;

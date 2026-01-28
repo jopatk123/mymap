@@ -14,7 +14,7 @@
       "cluster_icon_color": "#ff4757"
     },
     "video": {
-      "point_visible": false,
+      "point_visible": true,
       "point_color": "#ff4757",
       "point_size": 6,
       "point_opacity": 1,
