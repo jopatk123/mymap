@@ -86,6 +86,7 @@ import SearchTool from './SearchTool.vue';
 import AreaControls from './area-selector/AreaControls.vue';
 import ExportControls from './ExportControls.vue';
 import { ArrowDown } from '@element-plus/icons-vue';
+import { useMapControls } from './use-map-controls';
 
 // handler for dropdown commands
 const emit = defineEmits([
@@ -98,18 +99,7 @@ const emit = defineEmits([
   'locate-address',
 ]);
 
-function handlePointSettingsCommand(command) {
-  if (command === 'kml') {
-    emit('show-kml-settings');
-  } else if (command === 'point') {
-    emit('show-point-settings');
-  }
-}
-
-// 打开文件管理页面
-function openFileManage() {
-  window.open('/admin/files', '_blank');
-}
+const { handlePointSettingsCommand, openFileManage } = useMapControls(emit);
 
 defineProps({
   panoramaListVisible: {

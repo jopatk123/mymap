@@ -1,5 +1,7 @@
 import { getDisplayCoordinates } from '@/utils/coordinate-transform.js';
 import { createPointMarker } from '@/utils/map-utils.js';
+import { createViewportIndexWorker } from './viewport-index-worker.js';
+import { adjustCellSizeByZoom, buildSpatialIndexSync } from './viewport-index.js';
 
 // 管理视口裁剪逻辑（空间网格、差异更新、事件绑定）
 export function createViewportClipping(
@@ -33,61 +35,17 @@ export function createViewportClipping(
   let indexWorker = null;
   const ensureIndexWorker = () => {
     if (indexWorker) return indexWorker;
-    try {
-      const workerCode = `
-      self.onmessage = function(e) {
-        const msg = e.data;
-        if (!msg || msg.type !== 'buildIndex') return;
-        const points = msg.points || [];
-        const cellSize = msg.cellSizeDeg || 0.05;
-        const index = Object.create(null);
-        for (let i = 0; i < points.length; i++) {
-          const p = points[i];
-          try {
-            const coords = p && p.wgs84_lng != null && p.wgs84_lat != null ? [p.wgs84_lng, p.wgs84_lat] : (p && p.coordinates ? (Array.isArray(p.coordinates) ? p.coordinates : null) : null);
-            if (!coords) continue;
-            const lng = coords[0]; const lat = coords[1];
-            if (!isFinite(lng) || !isFinite(lat)) continue;
-            const x = Math.floor(lng / cellSize);
-            const y = Math.floor(lat / cellSize);
-            const key = x + ':' + y;
-            if (!index[key]) index[key] = [];
-            index[key].push(p);
-          } catch (err) { /* skip bad point */ }
-        }
-        self.postMessage({ type: 'indexBuilt', index });
-      };
-      `;
-      const blob = new Blob([workerCode], { type: 'application/javascript' });
-      indexWorker = new Worker(URL.createObjectURL(blob));
-      indexWorker.onmessage = (ev) => {
-        const msg = ev.data;
-        if (!msg) return;
-        if (msg.type === 'indexBuilt') {
-          try {
-            // convert received plain object to Map for existing code compatibility
-            state.spatialIndex = new Map(Object.entries(msg.index || {}));
-            // debug logging removed
-          } catch (err) {
-            try {
-              console.warn('Failed to apply spatial index from worker', err);
-            } catch {}
-          }
-        }
-      };
-      indexWorker.onerror = (err) => {
+    indexWorker = createViewportIndexWorker({
+      onIndexBuilt: (index) => {
+        state.spatialIndex = new Map(Object.entries(index || {}));
+      },
+      onError: (err) => {
         try {
           console.warn('Index worker error', err);
         } catch {}
-      };
-      return indexWorker;
-    } catch (err) {
-      try {
-        console.warn('Failed to create index worker', err);
-      } catch {}
-      indexWorker = null;
-      return null;
-    }
+      },
+    });
+    return indexWorker;
   };
 
   const getPaneNameByType = (type) => {
@@ -122,7 +80,10 @@ export function createViewportClipping(
   const buildSpatialIndex = () => {
     // 优先使用 worker 进行索引构建
     const worker = ensureIndexWorker();
-    adjustCellSizeByZoom();
+    const nextSize = adjustCellSizeByZoom(map, state.cellSizeDeg);
+    if (Math.abs(nextSize - state.cellSizeDeg) > 1e-9) {
+      state.cellSizeDeg = nextSize;
+    }
     if (worker) {
       try {
         // worker 接收原始点数组；为避免 circular 引用，传送最小字段
@@ -147,46 +108,13 @@ export function createViewportClipping(
         } catch {}
       }
     }
-
-    // fallback: 同步构建（原实现）
-    state.spatialIndex.clear();
-    for (const p of state.sourcePoints) {
-      let coords = state.coordCache.get(p.id);
-      if (!coords) {
-        coords = getDisplayCoordinates(p);
-        if (coords) state.coordCache.set(p.id, coords);
-      }
-      if (!coords) continue;
-      const [lng, lat] = coords;
-      if (!isFinite(lat) || !isFinite(lng)) continue;
-      const key = getCellKey(lng, lat);
-      let bucket = state.spatialIndex.get(key);
-      if (!bucket) {
-        bucket = [];
-        state.spatialIndex.set(key, bucket);
-      }
-      bucket.push(p);
-    }
-    // debug logging removed
-  };
-
-  // 根据当前地图缩放级别自适应 cellSizeDeg
-  const adjustCellSizeByZoom = () => {
-    try {
-      const z = typeof map.value.getZoom === 'function' ? map.value.getZoom() : null;
-      if (typeof z !== 'number' || isNaN(z)) return;
-      // 经验映射：缩放越小（更远），cell 更大；缩放越大（更近），cell 更精细
-      let newSize = 0.05;
-      if (z <= 6) newSize = 1.0;
-      else if (z <= 9) newSize = 0.5;
-      else if (z <= 12) newSize = 0.1;
-      else if (z <= 15) newSize = 0.05;
-      else newSize = 0.02;
-      if (Math.abs(newSize - state.cellSizeDeg) > 1e-9) {
-        state.cellSizeDeg = newSize;
-        // debug logging removed
-      }
-    } catch {}
+    buildSpatialIndexSync({
+      sourcePoints: state.sourcePoints,
+      coordCache: state.coordCache,
+      spatialIndex: state.spatialIndex,
+      getDisplayCoordinates,
+      getCellKey,
+    });
   };
 
   const getCandidatesByBounds = (west, south, east, north) => {
@@ -439,7 +367,10 @@ export function createViewportClipping(
         state.prevInterval = null;
       }
       // 缩放结束后根据新缩放级别调整栅格大小并重建索引
-      adjustCellSizeByZoom();
+      const nextSize = adjustCellSizeByZoom(map, state.cellSizeDeg);
+      if (Math.abs(nextSize - state.cellSizeDeg) > 1e-9) {
+        state.cellSizeDeg = nextSize;
+      }
       if (!state.buildIndexScheduled) {
         state.buildIndexScheduled = true;
         setTimeout(() => {
