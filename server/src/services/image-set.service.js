@@ -1,8 +1,16 @@
 const ImageSetModel = require('../models/image-set.model');
 const ImageSetImageModel = require('../models/image-set-image.model');
-const path = require('path');
-const fs = require('fs').promises;
 const Logger = require('../utils/logger');
+const {
+  parseIdOrThrow,
+  ensureArrayOrThrow,
+  normalizeFolderId,
+  computeImageStats,
+  insertImageRecords,
+  updateImageSetStats,
+  cleanupUploadedFiles,
+  deletePhysicalFiles,
+} = require('./image-set.helpers');
 
 class ImageSetService {
   /**
@@ -34,13 +42,13 @@ class ImageSetService {
    * 根据ID获取图片集详情（含图片列表）
    */
   static async getImageSetById(id, ownerId = null) {
-    if (!id || isNaN(id)) throw new Error('无效的图片集ID');
+    const parsedId = parseIdOrThrow(id, '无效的图片集ID');
 
-    const imageSet = await ImageSetModel.findById(parseInt(id), ownerId);
+    const imageSet = await ImageSetModel.findById(parsedId, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
 
     // 获取图片列表
-    const images = await ImageSetImageModel.findByImageSetId(parseInt(id));
+    const images = await ImageSetImageModel.findByImageSetId(parsedId);
     imageSet.images = images;
 
     return imageSet;
@@ -90,13 +98,7 @@ class ImageSetService {
 
     try {
       await transaction(async (db) => {
-        // 计算图片统计信息
-        const imageCount = images.length;
-        const totalSize = images.reduce((sum, img) => sum + (img.fileSize || 0), 0);
-
-        // 获取封面（第一张图片）
-        const coverUrl = images.length > 0 ? images[0].imageUrl : null;
-        const thumbnailUrl = images.length > 0 ? images[0].thumbnailUrl : null;
+        const { imageCount, totalSize, coverUrl, thumbnailUrl } = computeImageStats(images);
 
         // 坐标转换
         const { wgs84ToGcj02 } = require('../utils/coordinate');
@@ -121,7 +123,7 @@ class ImageSetService {
           gcj02Lng || null,
           imageCount,
           totalSize,
-          folderId && parseInt(folderId) !== 0 ? parseInt(folderId) : null,
+          normalizeFolderId(folderId),
           1,
           0,
           ownerId || null,
@@ -132,32 +134,13 @@ class ImageSetService {
         if (!insertedId) throw new Error('创建图片集记录失败');
 
         // 插入图片记录
-        for (let i = 0; i < images.length; i++) {
-          const img = images[i];
-          const imgSql = `INSERT INTO image_set_images (
-            image_set_id, image_url, thumbnail_url,
-            file_name, file_size, file_type,
-            width, height, sort_order, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-
-          await db.run(imgSql, [
-            insertedId,
-            img.imageUrl,
-            img.thumbnailUrl,
-            img.fileName,
-            img.fileSize || null,
-            img.fileType || null,
-            img.width || null,
-            img.height || null,
-            img.sortOrder ?? i,
-          ]);
-        }
+        await insertImageRecords(db, insertedId, images);
       });
 
       return await this.getImageSetById(insertedId, ownerId);
     } catch (txErr) {
       // 事务失败，尝试清理已上传的文件
-      await this.cleanupUploadedFiles(images);
+      await cleanupUploadedFiles(images);
       throw txErr;
     }
   }
@@ -166,7 +149,7 @@ class ImageSetService {
    * 更新图片集
    */
   static async updateImageSet(id, updateData, ownerId = null) {
-    if (!id || isNaN(id)) throw new Error('无效的图片集ID');
+    parseIdOrThrow(id, '无效的图片集ID');
 
     const imageSet = await ImageSetModel.update(parseInt(id), updateData, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
@@ -178,9 +161,9 @@ class ImageSetService {
    * 删除图片集
    */
   static async deleteImageSet(id, ownerId = null) {
-    if (!id || isNaN(id)) throw new Error('无效的图片集ID');
+    const parsedId = parseIdOrThrow(id, '无效的图片集ID');
 
-    const imageSet = await this.getImageSetById(parseInt(id), ownerId);
+    const imageSet = await this.getImageSetById(parsedId, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
 
     const { transaction } = require('../config/database');
@@ -189,12 +172,12 @@ class ImageSetService {
       // 删除图片记录（外键级联会自动删除，但我们需要先获取文件路径）
       const [imgRows] = await db.all(
         'SELECT * FROM image_set_images WHERE image_set_id = ?',
-        [parseInt(id)]
+        [parsedId]
       );
 
       // 删除图片集记录
       let sql = 'DELETE FROM image_sets WHERE id = ?';
-      const params = [parseInt(id)];
+      const params = [parsedId];
       if (ownerId) {
         sql += ' AND owner_id = ?';
         params.push(ownerId);
@@ -205,7 +188,7 @@ class ImageSetService {
       }
 
       // 在事务内删除物理文件
-      await this.deletePhysicalFiles(imageSet.images || imgRows || []);
+      await deletePhysicalFiles(imageSet.images || imgRows || []);
     });
 
     return true;
@@ -215,7 +198,7 @@ class ImageSetService {
    * 批量删除图片集
    */
   static async batchDeleteImageSets(ids, ownerId = null) {
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
+    ensureArrayOrThrow(ids, '请提供有效的ID列表');
 
     const toDelete = [];
     for (const id of ids) {
@@ -242,7 +225,7 @@ class ImageSetService {
 
       // 删除物理文件
       for (const imageSet of toDelete) {
-        await this.deletePhysicalFiles(imageSet.images || []);
+        await deletePhysicalFiles(imageSet.images || []);
       }
     });
 
@@ -253,7 +236,7 @@ class ImageSetService {
    * 批量更新可见性
    */
   static async batchUpdateVisibility(ids, isVisible, ownerId = null) {
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
+    ensureArrayOrThrow(ids, '请提供有效的ID列表');
     return await ImageSetModel.batchUpdateVisibility(ids, isVisible, ownerId);
   }
 
@@ -261,7 +244,7 @@ class ImageSetService {
    * 批量移动到文件夹
    */
   static async batchMoveToFolder(ids, folderId, ownerId = null) {
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('请提供有效的ID列表');
+    ensureArrayOrThrow(ids, '请提供有效的ID列表');
     return await ImageSetModel.batchMoveToFolder(ids, folderId, ownerId);
   }
 
@@ -269,7 +252,7 @@ class ImageSetService {
    * 更新可见性
    */
   static async updateVisibility(id, isVisible, ownerId = null) {
-    if (!id || isNaN(id)) throw new Error('无效的图片集ID');
+    parseIdOrThrow(id, '无效的图片集ID');
     const imageSet = await ImageSetModel.update(parseInt(id), { isVisible }, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
     return imageSet;
@@ -279,7 +262,7 @@ class ImageSetService {
    * 移动到文件夹
    */
   static async moveToFolder(id, folderId, ownerId = null) {
-    if (!id || isNaN(id)) throw new Error('无效的图片集ID');
+    parseIdOrThrow(id, '无效的图片集ID');
     const imageSet = await ImageSetModel.update(parseInt(id), { folderId }, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
     return imageSet;
@@ -289,10 +272,10 @@ class ImageSetService {
    * 添加图片到图片集
    */
   static async addImages(imageSetId, images, ownerId = null) {
-    if (!imageSetId || isNaN(imageSetId)) throw new Error('无效的图片集ID');
-    if (!Array.isArray(images) || images.length === 0) throw new Error('请提供图片列表');
+    const parsedId = parseIdOrThrow(imageSetId, '无效的图片集ID');
+    ensureArrayOrThrow(images, '请提供图片列表');
 
-    const imageSet = await ImageSetModel.findById(parseInt(imageSetId), ownerId);
+    const imageSet = await ImageSetModel.findById(parsedId, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
 
     const { transaction } = require('../config/database');
@@ -302,54 +285,17 @@ class ImageSetService {
         // 获取当前最大排序值
         const [maxResult] = await db.all(
           'SELECT MAX(sort_order) as maxSort FROM image_set_images WHERE image_set_id = ?',
-          [parseInt(imageSetId)]
+          [parsedId]
         );
         let startOrder = (maxResult?.[0]?.maxSort || 0) + 1;
 
-        // 插入图片记录
-        for (let i = 0; i < images.length; i++) {
-          const img = images[i];
-          const imgSql = `INSERT INTO image_set_images (
-            image_set_id, image_url, thumbnail_url,
-            file_name, file_size, file_type,
-            width, height, sort_order, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-
-          await db.run(imgSql, [
-            parseInt(imageSetId),
-            img.imageUrl,
-            img.thumbnailUrl,
-            img.fileName,
-            img.fileSize || null,
-            img.fileType || null,
-            img.width || null,
-            img.height || null,
-            startOrder + i,
-          ]);
-        }
-
-        // 更新图片集统计信息
-        const stats = await ImageSetImageModel.getImageSetStats(parseInt(imageSetId));
-        const firstImage = await db.get(
-          'SELECT * FROM image_set_images WHERE image_set_id = ? ORDER BY sort_order ASC LIMIT 1',
-          [parseInt(imageSetId)]
-        );
-
-        await db.run(
-          `UPDATE image_sets SET 
-            image_count = ?, 
-            total_size = ?, 
-            cover_url = ?,
-            thumbnail_url = ?,
-            updated_at = datetime('now') 
-          WHERE id = ?`,
-          [stats.count, stats.totalSize, firstImage?.image_url, firstImage?.thumbnail_url, parseInt(imageSetId)]
-        );
+        await insertImageRecords(db, parsedId, images, startOrder, false);
+        await updateImageSetStats(db, parsedId);
       });
 
-      return await this.getImageSetById(parseInt(imageSetId), ownerId);
+      return await this.getImageSetById(parsedId, ownerId);
     } catch (txErr) {
-      await this.cleanupUploadedFiles(images);
+      await cleanupUploadedFiles(images);
       throw txErr;
     }
   }
@@ -358,14 +304,14 @@ class ImageSetService {
    * 从图片集删除图片
    */
   static async removeImage(imageSetId, imageId, ownerId = null) {
-    if (!imageSetId || isNaN(imageSetId)) throw new Error('无效的图片集ID');
-    if (!imageId || isNaN(imageId)) throw new Error('无效的图片ID');
+    const parsedSetId = parseIdOrThrow(imageSetId, '无效的图片集ID');
+    const parsedImageId = parseIdOrThrow(imageId, '无效的图片ID');
 
-    const imageSet = await ImageSetModel.findById(parseInt(imageSetId), ownerId);
+    const imageSet = await ImageSetModel.findById(parsedSetId, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
 
-    const image = await ImageSetImageModel.findById(parseInt(imageId));
-    if (!image || image.image_set_id !== parseInt(imageSetId)) {
+    const image = await ImageSetImageModel.findById(parsedImageId);
+    if (!image || image.image_set_id !== parsedSetId) {
       throw new Error('图片不存在或不属于该图片集');
     }
 
@@ -373,41 +319,26 @@ class ImageSetService {
 
     await transaction(async (db) => {
       // 删除图片记录
-      await db.run('DELETE FROM image_set_images WHERE id = ?', [parseInt(imageId)]);
+      await db.run('DELETE FROM image_set_images WHERE id = ?', [parsedImageId]);
 
       // 删除物理文件
-      await this.deletePhysicalFiles([image]);
+      await deletePhysicalFiles([image]);
 
       // 更新图片集统计信息
-      const stats = await ImageSetImageModel.getImageSetStats(parseInt(imageSetId));
-      const firstImage = await db.get(
-        'SELECT * FROM image_set_images WHERE image_set_id = ? ORDER BY sort_order ASC LIMIT 1',
-        [parseInt(imageSetId)]
-      );
-
-      await db.run(
-        `UPDATE image_sets SET 
-          image_count = ?, 
-          total_size = ?, 
-          cover_url = ?,
-          thumbnail_url = ?,
-          updated_at = datetime('now') 
-        WHERE id = ?`,
-        [stats.count, stats.totalSize, firstImage?.image_url || null, firstImage?.thumbnail_url || null, parseInt(imageSetId)]
-      );
+      await updateImageSetStats(db, parsedSetId);
     });
 
-    return await this.getImageSetById(parseInt(imageSetId), ownerId);
+    return await this.getImageSetById(parsedSetId, ownerId);
   }
 
   /**
    * 更新图片排序
    */
   static async updateImageOrder(imageSetId, imageOrders, ownerId = null) {
-    if (!imageSetId || isNaN(imageSetId)) throw new Error('无效的图片集ID');
+    const parsedId = parseIdOrThrow(imageSetId, '无效的图片集ID');
     if (!Array.isArray(imageOrders)) throw new Error('请提供排序列表');
 
-    const imageSet = await ImageSetModel.findById(parseInt(imageSetId), ownerId);
+    const imageSet = await ImageSetModel.findById(parsedId, ownerId);
     if (!imageSet) throw new Error('图片集不存在');
 
     await ImageSetImageModel.batchUpdateSortOrder(imageOrders);
@@ -417,81 +348,18 @@ class ImageSetService {
     await transaction(async (db) => {
       const firstImage = await db.get(
         'SELECT * FROM image_set_images WHERE image_set_id = ? ORDER BY sort_order ASC LIMIT 1',
-        [parseInt(imageSetId)]
+        [parsedId]
       );
 
       if (firstImage) {
         await db.run(
           'UPDATE image_sets SET cover_url = ?, thumbnail_url = ?, updated_at = datetime(\'now\') WHERE id = ?',
-          [firstImage.image_url, firstImage.thumbnail_url, parseInt(imageSetId)]
+          [firstImage.image_url, firstImage.thumbnail_url, parsedId]
         );
       }
     });
 
-    return await this.getImageSetById(parseInt(imageSetId), ownerId);
-  }
-
-  /**
-   * 清理上传的文件（事务失败时调用）
-   */
-  static async cleanupUploadedFiles(images) {
-    for (const img of images) {
-      try {
-        if (img.imageUrl) {
-          const filename = path.basename(img.imageUrl);
-          const filePath = path.join(process.cwd(), 'uploads', 'image-sets', filename);
-          await fs.unlink(filePath).catch(() => {});
-        }
-        if (img.thumbnailUrl) {
-          const thumbFilename = path.basename(img.thumbnailUrl);
-          const thumbPath = path.join(process.cwd(), 'uploads', 'thumbnails', thumbFilename);
-          await fs.unlink(thumbPath).catch(() => {});
-        }
-      } catch (e) {
-        Logger.warn('清理上传文件失败:', e);
-      }
-    }
-  }
-
-  /**
-   * 删除物理文件
-   */
-  static async deletePhysicalFiles(images) {
-    for (const img of images) {
-      try {
-        // 删除原图
-        if (img.image_url || img.imageUrl) {
-          const url = img.image_url || img.imageUrl;
-          const filename = path.basename(url);
-          const filePath = path.join(process.cwd(), 'uploads', 'image-sets', filename);
-          try {
-            await fs.unlink(filePath);
-            Logger.debug('删除图片文件成功', { filePath });
-          } catch (err) {
-            if (err.code !== 'ENOENT') {
-              Logger.warn('删除图片文件失败', { filePath, error: err.message });
-            }
-          }
-        }
-
-        // 删除缩略图
-        if (img.thumbnail_url || img.thumbnailUrl) {
-          const url = img.thumbnail_url || img.thumbnailUrl;
-          const thumbFilename = path.basename(url);
-          const thumbPath = path.join(process.cwd(), 'uploads', 'thumbnails', thumbFilename);
-          try {
-            await fs.unlink(thumbPath);
-            Logger.debug('删除缩略图成功', { thumbPath });
-          } catch (err) {
-            if (err.code !== 'ENOENT') {
-              Logger.warn('删除缩略图失败', { thumbPath, error: err.message });
-            }
-          }
-        }
-      } catch (e) {
-        Logger.warn('删除物理文件失败:', e);
-      }
-    }
+    return await this.getImageSetById(parsedId, ownerId);
   }
 }
 

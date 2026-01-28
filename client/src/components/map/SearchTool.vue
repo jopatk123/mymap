@@ -161,6 +161,7 @@ import { debounce } from 'lodash-es';
 import { ElMessage } from 'element-plus';
 import { amapApi } from '@/api/amap.js';
 import { kmlSearchApi } from '@/api/kml-search.js';
+import { useHighlight } from '@/composables/use-highlight.js';
 
 const emit = defineEmits(['locate-kml-point', 'locate-address']);
 
@@ -177,6 +178,8 @@ const kmlSearching = ref(false);
 const addressSearchKeyword = ref('');
 const addressResults = ref([]);
 const addressSearching = ref(false);
+
+const { safeHighlight } = useHighlight();
 
 // 切换搜索对话框
 const toggleSearchDialog = () => {
@@ -301,241 +304,10 @@ const selectAddressResult = (tip) => {
   ElMessage.success({ message: `已定位到：${tip.name}`, duration: 1000 });
 };
 
-// 将文本按关键字分割为安全的片段数组 { text, isMatch }
-const safeHighlight = (text, keyword) => {
-  if (!text || !keyword) return [{ text, isMatch: false }];
-
-  // 对 keyword 做转义，避免 regex 注入
-  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(${esc(keyword)})`, 'gi');
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    const idx = match.index;
-    if (idx > lastIndex) {
-      parts.push({ text: text.substring(lastIndex, idx), isMatch: false });
-    }
-    parts.push({ text: match[0], isMatch: true });
-    lastIndex = idx + match[0].length;
-  }
-  if (lastIndex < text.length) {
-    parts.push({ text: text.substring(lastIndex), isMatch: false });
-  }
-  return parts;
-};
-
 // 监听搜索类型变化，重置搜索状态
 watch(searchType, () => {
   resetSearch();
 });
 </script>
 
-<style lang="scss" scoped>
-.search-tool {
-  display: inline-flex;
-  align-items: center;
-  height: 44px;
-
-  .el-button {
-    height: 44px !important;
-    min-width: 88px;
-    padding: 0 14px !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    border-radius: 0 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    opacity: 1 !important;
-    white-space: nowrap;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-      z-index: 1;
-      opacity: 1 !important;
-      filter: brightness(1.1);
-    }
-
-    &:active {
-      transform: translateY(-1px);
-      opacity: 1 !important;
-      transition: all 0.1s ease;
-    }
-
-    &:focus {
-      outline: none !important;
-      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2) !important;
-      opacity: 1 !important;
-    }
-
-    .el-icon {
-      margin-right: 6px;
-      font-size: 15px;
-    }
-  }
-
-  /* 平板端适配 */
-  @media (max-width: 1024px) {
-    .el-button {
-      min-width: 76px;
-      padding: 0 10px !important;
-      font-size: 12px !important;
-
-      .el-icon {
-        margin-right: 4px;
-        font-size: 14px;
-      }
-    }
-  }
-
-  /* 移动端适配 */
-  @media (max-width: 768px) {
-    height: 40px;
-
-    .el-button {
-      height: 40px !important;
-      min-width: 80px;
-      max-width: 120px;
-      padding: 0 10px !important;
-      font-size: 12px !important;
-      border-radius: 8px !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-
-      .el-icon {
-        margin-right: 3px;
-        font-size: 13px;
-      }
-    }
-  }
-
-  @media (max-width: 480px) {
-    height: 36px;
-
-    .el-button {
-      height: 36px !important;
-      min-width: 70px;
-      padding: 0 8px !important;
-      font-size: 11px !important;
-
-      .el-icon {
-        margin-right: 2px;
-        font-size: 12px;
-      }
-    }
-  }
-
-  /* 超宽屏幕优化 */
-  @media (min-width: 1440px) {
-    .el-button {
-      min-width: 96px;
-      padding: 0 16px !important;
-      font-size: 14px !important;
-
-      .el-icon {
-        margin-right: 8px;
-        font-size: 16px;
-      }
-    }
-  }
-}
-
-.search-content {
-  .search-type-tabs {
-    margin-bottom: 16px;
-    text-align: center;
-  }
-
-  .search-section {
-    .search-input-section {
-      margin-bottom: 16px;
-    }
-
-    .search-results {
-      .results-header {
-        padding: 8px 0;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 8px;
-
-        .results-count {
-          font-size: 14px;
-          color: #666;
-        }
-      }
-
-      .result-item {
-        padding: 12px;
-        border: 1px solid #eee;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-
-        &:hover {
-          border-color: #409eff;
-          background-color: #f0f8ff;
-        }
-
-        .result-title {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-weight: 500;
-          color: #303133;
-          margin-bottom: 4px;
-
-          .el-icon {
-            color: #409eff;
-          }
-        }
-
-        .result-description {
-          font-size: 12px;
-          color: #666;
-          margin-bottom: 4px;
-          line-height: 1.4;
-        }
-
-        .result-meta {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: #999;
-
-          .source-file {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-          }
-        }
-      }
-    }
-
-    .no-results {
-      text-align: center;
-      padding: 40px 20px;
-    }
-
-    .search-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 20px;
-      color: #666;
-    }
-  }
-}
-
-// 高亮样式
-:deep(mark) {
-  background-color: #fff3cd;
-  color: #856404;
-  padding: 1px 2px;
-  border-radius: 2px;
-}
-</style>
+<style lang="scss" src="./SearchTool.scss" scoped></style>
