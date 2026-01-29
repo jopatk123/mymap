@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "pointStyles": {
     "panorama": {
-      "point_visible": false,
+      "point_visible": true,
       "point_color": "#ff4757",
       "point_size": 8,
       "point_opacity": 1,
