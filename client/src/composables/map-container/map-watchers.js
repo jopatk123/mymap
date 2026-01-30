@@ -67,11 +67,19 @@ export function setupMapContainerWatchers(options) {
   register(
     watch(
       () => props.center,
-      (newCenter) => {
+      (newCenter, oldCenter) => {
         if (!map?.value) return;
         if (!Array.isArray(newCenter) || newCenter.length !== 2) return;
         const [lat, lng] = newCenter;
         if (lat == null || lng == null) return;
+        if (
+          Array.isArray(oldCenter) &&
+          oldCenter.length === 2 &&
+          oldCenter[0] === lat &&
+          oldCenter[1] === lng
+        ) {
+          return;
+        }
         setCenter(lat, lng, props.zoom);
       },
       { immediate: true }
@@ -81,9 +89,10 @@ export function setupMapContainerWatchers(options) {
   register(
     watch(
       () => props.zoom,
-      (newZoom) => {
+      (newZoom, oldZoom) => {
         if (!map?.value) return;
         if (typeof newZoom !== 'number') return;
+        if (typeof oldZoom === 'number' && oldZoom === newZoom) return;
         const [lat, lng] = Array.isArray(props.center) ? props.center : [null, null];
         if (lat == null || lng == null) return;
         setCenter(lat, lng, newZoom);
