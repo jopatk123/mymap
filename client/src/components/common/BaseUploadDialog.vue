@@ -113,10 +113,29 @@ const coordinateRules = computed(() => {
 
   return {
     lat: [
-      { required: true, message: '请输入纬度', trigger: 'blur' },
       {
         validator: (rule, value, callback) => {
-          const lat = parseFloat(value);
+          const latValue = value === '' || value === null || value === undefined ? null : value;
+          const lngValue = form.lng === '' || form.lng === null || form.lng === undefined ? null : form.lng;
+          
+          // 如果两个都为空，允许通过（将使用默认值）
+          if (latValue === null && lngValue === null) {
+            callback();
+            return;
+          }
+          
+          // 如果只填了一个，报错
+          if (latValue === null && lngValue !== null) {
+            callback(new Error('请同时填写纬度和经度，或两者都不填'));
+            return;
+          }
+          if (latValue !== null && lngValue === null) {
+            callback(new Error('请同时填写纬度和经度，或两者都不填'));
+            return;
+          }
+          
+          // 如果都填了，验证范围
+          const lat = parseFloat(latValue);
           if (isNaN(lat) || lat < -90 || lat > 90) {
             callback(new Error('纬度必须在 -90 到 90 之间'));
           } else {
@@ -127,10 +146,29 @@ const coordinateRules = computed(() => {
       },
     ],
     lng: [
-      { required: true, message: '请输入经度', trigger: 'blur' },
       {
         validator: (rule, value, callback) => {
-          const lng = parseFloat(value);
+          const lngValue = value === '' || value === null || value === undefined ? null : value;
+          const latValue = form.lat === '' || form.lat === null || form.lat === undefined ? null : form.lat;
+          
+          // 如果两个都为空，允许通过（将使用默认值）
+          if (lngValue === null && latValue === null) {
+            callback();
+            return;
+          }
+          
+          // 如果只填了一个，报错
+          if (lngValue === null && latValue !== null) {
+            callback(new Error('请同时填写纬度和经度，或两者都不填'));
+            return;
+          }
+          if (lngValue !== null && latValue === null) {
+            callback(new Error('请同时填写纬度和经度，或两者都不填'));
+            return;
+          }
+          
+          // 如果都填了，验证范围
+          const lng = parseFloat(lngValue);
           if (isNaN(lng) || lng < -180 || lng > 180) {
             callback(new Error('经度必须在 -180 到 180 之间'));
           } else {

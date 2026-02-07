@@ -48,6 +48,14 @@
       </div>
     </template>
   </el-dialog>
+
+  <!-- 图片放大预览 -->
+  <ImagePreview
+    v-model:visible="showImagePreview"
+    :image-url="currentImage?.image_url || currentImage?.imageUrl"
+    :image-alt="currentImage?.file_name || '图片'"
+    @close="showImagePreview = false"
+  />
 </template>
 
 <script setup>
@@ -57,6 +65,7 @@ import {
   ImageInfoBar,
   ThumbnailStrip,
   LoadingOverlay,
+  ImagePreview,
 } from './image-set-viewer/index.js';
 import {
   useImageNavigation,
@@ -88,6 +97,9 @@ const visible = computed({
 
 // 全屏状态
 const isFullscreen = ref(false);
+
+// 图片预览状态
+const showImagePreview = ref(false);
 
 // 使用 composables
 const { isMobile } = useMobileDetection();
@@ -137,9 +149,9 @@ const handleDownload = () => {
   downloadImage(currentImage.value, currentIndex.value);
 };
 
-// 点击图片（预留扩展）
+// 点击图片，打开放大预览
 const handleImageClick = () => {
-  // 可以添加放大查看等功能
+  showImagePreview.value = true;
 };
 
 // 关闭处理

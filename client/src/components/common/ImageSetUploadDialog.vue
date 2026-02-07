@@ -8,9 +8,11 @@
     :show-location-btn="false"
     :external-can-submit="canSubmit"
     :skip-file-check="true"
+    :show-batch-button="true"
     :submit-handler="handleImageSetUpload"
     @update:model-value="$emit('update:modelValue', $event)"
     @success="handleSuccess"
+    @batch-upload="handleOpenBatchUpload"
   >
     <template #file-upload="{ form }">
       <el-form-item label="拍摄坐标" required>
@@ -45,7 +47,7 @@ const props = defineProps({
   modelValue: Boolean,
 });
 
-const emit = defineEmits(['update:modelValue', 'success']);
+const emit = defineEmits(['update:modelValue', 'success', 'open-batch-upload']);
 
 const uploadAreaRef = ref(null);
 const selectedFiles = ref([]);
@@ -101,8 +103,16 @@ const handleImageSetUpload = async (form, { setProgress }) => {
 
   formData.append('title', form.title);
   formData.append('description', form.description || '');
-  formData.append('lat', form.lat);
-  formData.append('lng', form.lng);
+  
+  // 处理经纬度：如果都未填写，使用默认值（纬度26，经度119）
+  const hasLat = form.lat !== null && form.lat !== undefined && form.lat !== '';
+  const hasLng = form.lng !== null && form.lng !== undefined && form.lng !== '';
+  
+  const finalLat = hasLat ? form.lat : 26;
+  const finalLng = hasLng ? form.lng : 119;
+  
+  formData.append('lat', finalLat);
+  formData.append('lng', finalLng);
 
   if (form.folderId !== undefined && form.folderId !== null) {
     formData.append('folderId', form.folderId);
@@ -124,6 +134,12 @@ const handleSuccess = () => {
   }
   selectedFiles.value = [];
   emit('success');
+};
+
+// 打开批量上传：关闭当前对话框并通知父层打开批量上传
+const handleOpenBatchUpload = () => {
+  emit('update:modelValue', false);
+  emit('open-batch-upload');
 };
 </script>
 

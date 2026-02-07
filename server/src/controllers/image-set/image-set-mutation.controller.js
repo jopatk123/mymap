@@ -20,8 +20,28 @@ class ImageSetMutationController {
         return res.status(400).json(errorResponse('图片集标题为必填项'));
       }
 
-      if (!lat || !lng) {
-        return res.status(400).json(errorResponse('图片集位置坐标为必填项'));
+      // 验证经纬度：必须同时填写或同时为空
+      const hasLat = lat !== null && lat !== undefined && lat !== '';
+      const hasLng = lng !== null && lng !== undefined && lng !== '';
+      
+      // 如果只填了一个，报错
+      if (hasLat && !hasLng) {
+        return res.status(400).json(errorResponse('请同时填写纬度和经度，或两者都不填'));
+      }
+      if (!hasLat && hasLng) {
+        return res.status(400).json(errorResponse('请同时填写纬度和经度，或两者都不填'));
+      }
+      
+      // 如果都未填写，使用默认值（纬度26，经度119）
+      const finalLat = hasLat ? parseFloat(lat) : 26;
+      const finalLng = hasLng ? parseFloat(lng) : 119;
+      
+      // 验证经纬度值的有效性
+      if (isNaN(finalLat) || finalLat < -90 || finalLat > 90) {
+        return res.status(400).json(errorResponse('纬度必须在 -90 到 90 之间'));
+      }
+      if (isNaN(finalLng) || finalLng < -180 || finalLng > 180) {
+        return res.status(400).json(errorResponse('经度必须在 -180 到 180 之间'));
       }
 
       // 构建图片列表
@@ -39,8 +59,8 @@ class ImageSetMutationController {
       const imageSet = await ImageSetService.createImageSet({
         title,
         description,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
+        lat: finalLat,
+        lng: finalLng,
         folderId: folderId ? parseInt(folderId) : null,
         images,
         ownerId,

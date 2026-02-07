@@ -91,7 +91,7 @@ class ImageSetService {
     const { title, description, lat, lng, folderId, images = [], ownerId } = data;
 
     if (!title) throw new Error('图片集标题为必填项');
-    if (!lat || !lng) throw new Error('图片集位置坐标为必填项');
+    // 移除经纬度必填验证，允许使用默认值
 
     const { transaction } = require('../config/database');
     let insertedId = null;

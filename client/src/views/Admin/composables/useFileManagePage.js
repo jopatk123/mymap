@@ -90,6 +90,7 @@ export function useFileManagePage() {
     showImageSetUploadDialog: false,
     showKmlUploadDialog: false,
     showPanoramaBatchUploadDialog: false,
+    showImageSetBatchUploadDialog: false,
   });
 
   const folderPath = computed(() => {

@@ -22,6 +22,13 @@
     <!-- 图片集上传对话框 -->
     <ImageSetUploadDialog
       v-model="localDialogs.showImageSetUploadDialog"
+      @open-batch-upload="handleOpenImageSetBatchUpload"
+      @success="$emit('upload-success')"
+    />
+
+    <!-- 图片集批量上传对话框 -->
+    <ImageSetBatchUploadDialog
+      v-model="localDialogs.showImageSetBatchUploadDialog"
       @success="$emit('upload-success')"
     />
 
@@ -38,6 +45,7 @@ import UploadDialog from '@/components/common/UploadDialog.vue';
 import VideoUploadDialog from '@/components/common/VideoUploadDialog.vue';
 import PointUploadDialog from '@/components/common/PointUploadDialog.vue';
 import ImageSetUploadDialog from '@/components/common/ImageSetUploadDialog.vue';
+import ImageSetBatchUploadDialog from '@/components/common/ImageSetBatchUploadDialog.vue';
 import PanoramaBatchUploadDialog from '@/components/common/PanoramaBatchUploadDialog.vue';
 
 import { reactive, watch } from 'vue';
@@ -75,5 +83,10 @@ watch(
 function handleOpenBatchUpload() {
   localDialogs.showUploadDialog = false;
   localDialogs.showPanoramaBatchUploadDialog = true;
+}
+
+function handleOpenImageSetBatchUpload() {
+  localDialogs.showImageSetUploadDialog = false;
+  localDialogs.showImageSetBatchUploadDialog = true;
 }
 </script>
