@@ -147,6 +147,12 @@ export function useMapInteractions(
 
   // 查看全景图 - 直接打开全景图查看器
   const viewPanorama = (panorama) => {
+    if (panorama?.type === 'image-set' || panorama?.imageCount !== undefined) {
+      selectedImageSet.value = panorama;
+      showImageSetViewer.value = true;
+      return;
+    }
+
     selectedPanorama.value = panorama;
     panoramaStore.setCurrentPanorama(panorama);
     showPanoramaViewer.value = true;
