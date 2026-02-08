@@ -49,7 +49,7 @@
 
     <!-- 空状态 -->
     <div v-if="!loading && panoramas.length === 0" class="empty-state">
-      <el-empty description="暂无点位数据" />
+      <el-empty :image-size="60" description="请在上方输入关键词搜索点位" />
     </div>
   </div>
 </template>

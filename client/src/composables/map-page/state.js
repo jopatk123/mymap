@@ -28,9 +28,13 @@ export function createMapPageState({ panoramaStore, appStore }) {
   const showPointSettings = ref(false);
   const showContourDialog = ref(false);
 
-  const totalCount = computed(() =>
-    Array.isArray(panoramaRefs.panoramas.value) ? panoramaRefs.panoramas.value.length : 0
-  );
+  const totalCount = computed(() => {
+    // 优先使用 window.allPoints 获取真实总数（地图标记数据源）
+    if (typeof window !== 'undefined' && Array.isArray(window.allPoints)) {
+      return window.allPoints.length;
+    }
+    return panoramaRefs.pagination.value?.total || 0;
+  });
 
   return {
     panoramaRefs,

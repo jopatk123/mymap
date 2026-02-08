@@ -186,13 +186,14 @@ export function useMapInteractions(
 
   // 搜索处理
   const handleSearch = async (params) => {
-    if (params.keyword.trim()) {
+    if (params.keyword?.trim()) {
       panoramaStore.setSearchParams(params);
+      await panoramaStore.fetchPanoramas();
     } else {
+      // 清空搜索时不加载全部，直接清空列表以节省流量
       panoramaStore.clearSearchParams();
+      panoramaStore.setPanoramas([]);
     }
-
-    await panoramaStore.fetchPanoramas();
   };
 
   // 切换侧边栏
@@ -267,11 +268,12 @@ export function useMapInteractions(
       } catch (err) {
         window.allPoints = filteredPoints;
       }
-      panoramaStore.setPanoramas(filteredPoints);
-      // 上传后刷新总数
+      // 不将全量点位写入 panoramaStore（侧边栏列表），仅更新总数
+      // 侧边栏通过搜索按需加载
+      panoramaStore.setPanoramas([]);
       panoramaStore.setPagination({
         page: 1,
-        pageSize: filteredPoints.length,
+        pageSize: 20,
         total: filteredPoints.length,
       });
 
@@ -288,10 +290,19 @@ export function useMapInteractions(
       // 从store中移除已删除的全景图
       await panoramaStore.deletePanoramaAsync(deletedId);
 
-      // 重新加载地图标记
+      // 同步移除 window.allPoints 中的对应点位
+      if (typeof window !== 'undefined' && Array.isArray(window.allPoints)) {
+        window.allPoints = window.allPoints.filter((p) => p.id !== deletedId);
+      }
+      if (typeof window !== 'undefined' && Array.isArray(window.basePoints)) {
+        window.basePoints = window.basePoints.filter((p) => p.id !== deletedId);
+      }
+
+      // 重新加载地图标记（从 window.allPoints）
       if (mapRef.value) {
         mapRef.value.clearMarkers();
-        mapRef.value.addPanoramaMarkers(visiblePanoramas.value);
+        const points = (typeof window !== 'undefined' && window.allPoints) || [];
+        mapRef.value.addPointMarkers(points);
       }
 
       // 清空选择状态

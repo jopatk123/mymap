@@ -142,10 +142,11 @@ export function createMapDataLoader(options) {
       await retry(() => loadAllPoints(), { retries: 3, baseDelay: 150 });
 
       if (windowRef && Array.isArray(windowRef.allPoints) && windowRef.allPoints.length > 0) {
-        panoramaStore.setPanoramas(windowRef.allPoints);
+        // 不将全量点位写入 panoramaStore（侧边栏列表），避免浪费流量和渲染资源
+        // 地图标记直接从 window.allPoints 读取，侧边栏通过搜索按需加载
         panoramaStore.setPagination({
           page: 1,
-          pageSize: windowRef.allPoints.length,
+          pageSize: 20,
           total: windowRef.allPoints.length,
         });
       }
