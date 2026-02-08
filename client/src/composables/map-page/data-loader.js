@@ -154,6 +154,26 @@ export function createMapDataLoader(options) {
       await delay(500);
       if (!mapRef?.value) return;
 
+      if (windowRef && Array.isArray(windowRef.allPoints) && windowRef.allPoints.length > 0) {
+        try {
+          const mod = await import('@/utils/marker-refresh.js');
+          const points = windowRef.allPoints;
+
+          let refreshed = await mod.refreshAllMarkers(points);
+          if (!refreshed) {
+            await delay(200);
+            refreshed = await mod.refreshAllMarkers(points);
+          }
+        } catch (error) {
+          try {
+            mapRef.value?.clearMarkers?.();
+            mapRef.value?.addPointMarkers?.(windowRef.allPoints);
+          } catch (innerError) {
+            // ignore marker refresh failures
+          }
+        }
+      }
+
       if (!appStore.initialViewSettings?.enabled) {
         mapRef.value.fitBounds?.();
       }
