@@ -162,6 +162,7 @@ export const createMarkerHandlers = ({
     const batchVideo = [];
     const batchPano = [];
     const batchImageSet = [];
+    const normalBatch = [];
 
     for (const p of points) {
       try {
@@ -229,11 +230,23 @@ export const createMarkerHandlers = ({
 
       const markerInfo = { id: p.id, marker, type: pointType, data: p };
       if (pointType === 'video') {
-        batchVideo.push(markerInfo);
+        if (videoClusterOn) {
+          batchVideo.push(markerInfo);
+        } else {
+          normalBatch.push(markerInfo);
+        }
       } else if (pointType === 'image-set') {
-        batchImageSet.push(markerInfo);
+        if (imageSetClusterOn) {
+          batchImageSet.push(markerInfo);
+        } else {
+          normalBatch.push(markerInfo);
+        }
       } else {
-        batchPano.push(markerInfo);
+        if (panoClusterOn) {
+          batchPano.push(markerInfo);
+        } else {
+          normalBatch.push(markerInfo);
+        }
       }
 
       if (viewportState.enabled) {
@@ -241,35 +254,35 @@ export const createMarkerHandlers = ({
       }
     }
 
-    if (batchVideo.length) {
-      if (!videoVisible) {
-        batchVideo.length = 0;
-      }
+    if (batchVideo.length && videoVisible) {
       const group = ensureClusterGroup('video');
       batchVideo.forEach((m) => group.addLayer(m.marker));
     }
-    if (batchImageSet.length) {
-      if (!imageSetVisible) {
-        batchImageSet.length = 0;
-      }
+    if (batchImageSet.length && imageSetVisible) {
       const group = ensureClusterGroup('image-set');
       batchImageSet.forEach((m) => group.addLayer(m.marker));
     }
-    if (batchPano.length) {
-      if (!panoVisible) {
-        batchPano.length = 0;
-      }
+    if (batchPano.length && panoVisible) {
       const group = ensureClusterGroup('panorama');
       batchPano.forEach((m) => group.addLayer(m.marker));
     }
+    if (normalBatch.length) {
+      for (const m of normalBatch) {
+        if (m.marker && map.value) {
+          m.marker.addTo(map.value);
+        }
+      }
+    }
 
-    ensureZoomGuards();
+    if (batchVideo.length || batchImageSet.length || batchPano.length) {
+      ensureZoomGuards();
+    }
 
-    markers.value.push(...batchVideo, ...batchImageSet, ...batchPano);
+    markers.value.push(...batchVideo, ...batchImageSet, ...batchPano, ...normalBatch);
     if (!window.currentMarkers) {
       window.currentMarkers = [];
     }
-    window.currentMarkers.push(...batchVideo, ...batchImageSet, ...batchPano);
+    window.currentMarkers.push(...batchVideo, ...batchImageSet, ...batchPano, ...normalBatch);
   };
 
   return {
