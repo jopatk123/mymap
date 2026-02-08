@@ -3,7 +3,7 @@ export const UI_CONFIG = {
   // 分页配置
   PAGINATION: {
     DEFAULT_PAGE_SIZE: 20,
-    PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
+    PAGE_SIZE_OPTIONS: [10, 20, 50, 100, 500],
   },
 
   // 侧边栏配置

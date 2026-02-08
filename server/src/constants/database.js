@@ -2,7 +2,7 @@
 module.exports = {
   // 分页默认值
   DEFAULT_PAGE_SIZE: 20,
-  MAX_PAGE_SIZE: 100,
+  MAX_PAGE_SIZE: 500,
 
   // 排序字段
   ALLOWED_SORT_FIELDS: {

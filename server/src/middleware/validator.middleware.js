@@ -132,11 +132,11 @@ const searchSchema = Joi.object({
     'number.min': '页码不能小于1',
   }),
 
-  pageSize: Joi.number().integer().min(1).max(100).messages({
+  pageSize: Joi.number().integer().min(1).max(500).messages({
     'number.base': '每页数量必须是数字',
     'number.integer': '每页数量必须是整数',
     'number.min': '每页数量不能小于1',
-    'number.max': '每页数量不能大于100',
+    'number.max': '每页数量不能大于500',
   }),
 })
   .and('lat', 'lng')
