@@ -95,7 +95,7 @@ const config = {
   session: {
     secret: process.env.SESSION_SECRET || 'dev-session-secret',
     name: process.env.SESSION_NAME || 'mymap.sid',
-    maxAge: parseInt(process.env.SESSION_MAX_AGE, 10) || 30 * 60 * 1000,
+    maxAge: parseInt(process.env.SESSION_MAX_AGE, 10) || 30 * 24 * 60 * 60 * 1000, // 默认 30 天
     // When deploying behind HTTPS, set SESSION_COOKIE_SECURE=1; otherwise keep false so cookies work on HTTP
     // Tri-state: true/false when explicitly configured, otherwise undefined (falls back by environment)
     cookieSecure: parseOptionalBooleanEnv(process.env.SESSION_COOKIE_SECURE),
